@@ -1,0 +1,283 @@
+<div class="editor-shell">
+  <nav class="panel-tabs" aria-label="Navegación del panel">
+    <button [class.active]="activePanel === 'scene'" (click)="activePanel = 'scene'">
+      <span class="tab-icon">◈</span>{{ language === 'es' ? 'Escena' : 'Scene' }}
+    </button>
+    <button [class.active]="activePanel === 'settings'" (click)="activePanel = 'settings'">
+      <span class="tab-icon">⚙</span>{{ language === 'es' ? 'Ajustes' : 'Settings' }}
+    </button>
+  </nav>
+
+  <ng-container *ngIf="activePanel === 'scene'; else settingsPanel">
+    <section class="panel-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'PROYECTO' : 'PROJECT' }}</span>
+          <h2>{{ language === 'es' ? 'Objetos' : 'Objects' }}</h2>
+        </div>
+        <span class="count-badge">{{ sceneObjects.length }}</span>
+      </div>
+      <div class="primitive-grid">
+        <button title="Agregar cubo" (click)="addPrimitive('box')"><span>▧</span>{{ language === 'es' ? 'Cubo' : 'Cube' }}</button>
+        <button title="Agregar esfera" (click)="addPrimitive('sphere')"><span>●</span>{{ language === 'es' ? 'Esfera' : 'Sphere' }}</button>
+        <button title="Agregar cilindro" (click)="addPrimitive('cylinder')"><span>⬭</span>{{ language === 'es' ? 'Cilindro' : 'Cylinder' }}</button>
+        <button title="Agregar toro" (click)="addPrimitive('torus')"><span>◎</span>{{ language === 'es' ? 'Toro' : 'Torus' }}</button>
+      </div>
+      <div class="object-list">
+        <button
+          class="object-row"
+          *ngFor="let item of sceneObjects; trackBy: trackById"
+          [class.selected]="item.id === selectedObjectId"
+          (click)="selectObject(item.id)"
+        >
+          <span class="object-glyph">◇</span>
+          <span class="object-name">{{ item.name }}</span>
+          <span class="object-state" *ngIf="item.id === selectedObjectId">●</span>
+        </button>
+        <div class="empty-state" *ngIf="sceneObjects.length === 0">
+          {{ language === 'es' ? 'Agrega una forma para comenzar.' : 'Add a shape to get started.' }}
+        </div>
+      </div>
+      <div class="parts-heading" *ngIf="sceneObjects.length">
+        <span>{{ language === 'es' ? 'JERARQUÍA DEL MODELO' : 'MODEL HIERARCHY' }}</span>
+        <span>{{ sceneNodes.length }}</span>
+      </div>
+      <label class="tree-search" *ngIf="sceneNodes.length">
+        <span>⌕</span>
+        <input
+          type="search"
+          [placeholder]="language === 'es' ? 'Buscar piezas…' : 'Search parts…'"
+          [(ngModel)]="searchTerm"
+        />
+      </label>
+      <button class="focus-button" *ngIf="sceneNodes.length" (click)="focusSelectedNode()">
+        {{ language === 'es' ? '◎  Enfocar pieza seleccionada' : '◎  Focus selected part' }}
+      </button>
+      <div class="scene-tree" *ngIf="sceneNodes.length">
+        <div
+          class="tree-row"
+          *ngFor="let node of filteredSceneNodes; trackBy: trackById"
+          [class.selected]="node.id === selectedNodeId"
+          [class.hidden-node]="!node.visible"
+          [style.--node-depth]="node.depth"
+          (click)="selectNode(node.id)"
+          [title]="node.name"
+        >
+          <span class="tree-kind">{{ node.kind === 'mesh' ? '◇' : node.kind === 'object' ? '▱' : '▾' }}</span>
+          <span class="tree-name">{{ node.name }}</span>
+          <button
+            class="visibility-button"
+            [attr.aria-label]="node.visible ? 'Ocultar ' + node.name : 'Mostrar ' + node.name"
+            [title]="node.visible ? 'Ocultar pieza' : 'Mostrar pieza'"
+            (click)="toggleNodeVisibility(node, $event)"
+          >{{ node.visible ? '◉' : '○' }}</button>
+        </div>
+        <p class="empty-state" *ngIf="filteredSceneNodes.length === 0">
+          {{ language === 'es' ? 'No hay piezas con ese nombre.' : 'No matching parts.' }}
+        </p>
+      </div>
+      <button class="delete-button" [disabled]="!selectedObjectId" (click)="deleteSelectedObject()">
+        {{ language === 'es' ? '−  Eliminar modelo seleccionado' : '−  Delete selected model' }}
+      </button>
+    </section>
+
+    <section class="panel-section properties-section">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'TRANSFORMAR' : 'TRANSFORM' }}</span>
+          <h2>{{ language === 'es' ? 'Propiedades' : 'Properties' }}</h2>
+        </div>
+        <button class="icon-action" title="Restablecer transformaciones" (click)="onResetTransforms()">↺</button>
+      </div>
+      <div class="gizmo-buttons">
+        <button [class.active]="activeGizmoMode === 'translate'" (click)="setGizmoMode('translate')" title="Mover">↔</button>
+        <button [class.active]="activeGizmoMode === 'rotate'" (click)="setGizmoMode('rotate')" title="Rotar">⟳</button>
+        <button [class.active]="activeGizmoMode === 'scale'" (click)="setGizmoMode('scale')" title="Escalar">⤢</button>
+      </div>
+
+      <div class="control-group">
+        <label>{{ language === 'es' ? 'Posición' : 'Position' }} <span>{{ posX }}, {{ posY }}, {{ posZ }}</span></label>
+        <div class="axis-controls">
+          <label class="axis-input axis-x"><span>X</span><input type="number" step="0.1" [(ngModel)]="posX" (ngModelChange)="onPositionChange('x', $event)" /></label>
+          <label class="axis-input axis-y"><span>Y</span><input type="number" step="0.1" [(ngModel)]="posY" (ngModelChange)="onPositionChange('y', $event)" /></label>
+          <label class="axis-input axis-z"><span>Z</span><input type="number" step="0.1" [(ngModel)]="posZ" (ngModelChange)="onPositionChange('z', $event)" /></label>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>{{ language === 'es' ? 'Rotación' : 'Rotation' }} <span>{{ rotX }}° / {{ rotY }}° / {{ rotZ }}°</span></label>
+        <div class="axis-controls">
+          <label class="axis-input axis-x"><span>X</span><input type="number" step="5" [(ngModel)]="rotX" (ngModelChange)="onRotationChange('x', $event)" /></label>
+          <label class="axis-input axis-y"><span>Y</span><input type="number" step="5" [(ngModel)]="rotY" (ngModelChange)="onRotationChange('y', $event)" /></label>
+          <label class="axis-input axis-z"><span>Z</span><input type="number" step="5" [(ngModel)]="rotZ" (ngModelChange)="onRotationChange('z', $event)" /></label>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>{{ language === 'es' ? 'Escala uniforme' : 'Uniform scale' }} <span>{{ scale | number: '1.1-2' }}×</span></label>
+        <input type="range" min="0.1" max="5" step="0.1" [(ngModel)]="scale" (input)="onScaleChange()" />
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'APARIENCIA' : 'APPEARANCE' }}</span>
+          <h2>{{ language === 'es' ? 'Materiales' : 'Materials' }}</h2>
+        </div>
+      </div>
+      <div class="material-card" *ngFor="let mat of materials; trackBy: trackByUuid">
+        <div class="material-row">
+          <span class="material-dot" [style.background]="mat.color ?? '#8290a5'"></span>
+          <span class="material-name">{{ mat.name }}</span>
+          <span class="material-type">{{ mat.type }}</span>
+          <input
+            *ngIf="mat.color"
+            type="color"
+            [ngModel]="mat.color"
+            (ngModelChange)="onMaterialColorChange(mat.uuid, $event)"
+          />
+        </div>
+        <div class="material-properties">
+          <label *ngIf="mat.roughness !== null">
+            <span>{{ language === 'es' ? 'Rugosidad' : 'Roughness' }}</span>
+            <input type="range" min="0" max="1" step="0.01" [ngModel]="mat.roughness" (ngModelChange)="onMaterialPropertyChange(mat.uuid, 'roughness', $event)" />
+            <small>{{ mat.roughness | number: '1.2-2' }}</small>
+          </label>
+          <label *ngIf="mat.metalness !== null">
+            <span>{{ language === 'es' ? 'Metal' : 'Metalness' }}</span>
+            <input type="range" min="0" max="1" step="0.01" [ngModel]="mat.metalness" (ngModelChange)="onMaterialPropertyChange(mat.uuid, 'metalness', $event)" />
+            <small>{{ mat.metalness | number: '1.2-2' }}</small>
+          </label>
+          <label>
+            <span>{{ language === 'es' ? 'Opacidad' : 'Opacity' }}</span>
+            <input type="range" min="0" max="1" step="0.01" [ngModel]="mat.opacity" (ngModelChange)="onMaterialPropertyChange(mat.uuid, 'opacity', $event)" />
+            <small>{{ mat.opacity | percent }}</small>
+          </label>
+        </div>
+      </div>
+      <p class="empty-state" *ngIf="materials.length === 0">
+        {{ language === 'es' ? 'Selecciona un objeto para editar sus materiales.' : 'Select an object to edit its materials.' }}
+      </p>
+    </section>
+  </ng-container>
+
+  <ng-template #settingsPanel>
+    <section class="panel-section settings-panel">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'PERSONALIZACIÓN' : 'CUSTOMIZATION' }}</span>
+          <h2>{{ language === 'es' ? 'Preferencias' : 'Preferences' }}</h2>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div><strong>{{ language === 'es' ? 'Tema de interfaz' : 'Interface theme' }}</strong><small>{{ language === 'es' ? 'Ajusta el aspecto del espacio de trabajo' : 'Choose your workspace appearance' }}</small></div>
+        <select [ngModel]="theme" (ngModelChange)="setTheme($event)">
+          <option value="dark">{{ language === 'es' ? 'Oscuro' : 'Dark' }}</option>
+          <option value="light">{{ language === 'es' ? 'Claro' : 'Light' }}</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><strong>{{ language === 'es' ? 'Color de acento' : 'Accent color' }}</strong><small>{{ language === 'es' ? 'Color principal de los controles' : 'Primary interface color' }}</small></div>
+        <input type="color" [(ngModel)]="accentColor" (input)="applyAppearance()" />
+      </div>
+      <div class="setting-row">
+        <div><strong>{{ language === 'es' ? 'Idioma' : 'Language' }}</strong><small>{{ language === 'es' ? 'Idioma de la interfaz' : 'Interface language' }}</small></div>
+        <select [ngModel]="language" (ngModelChange)="setLanguage($event)">
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><strong>{{ language === 'es' ? 'Posición de notificaciones' : 'Notification position' }}</strong><small>{{ language === 'es' ? 'Elige dónde aparecen los avisos' : 'Choose where alerts appear' }}</small></div>
+        <select [ngModel]="notificationPosition" (ngModelChange)="setNotificationPosition($event)">
+          <option value="top-right">{{ language === 'es' ? 'Arriba a la derecha' : 'Top right' }}</option>
+          <option value="top-center">{{ language === 'es' ? 'Arriba al centro' : 'Top center' }}</option>
+          <option value="top-left">{{ language === 'es' ? 'Arriba a la izquierda' : 'Top left' }}</option>
+          <option value="bottom-right">{{ language === 'es' ? 'Abajo a la derecha' : 'Bottom right' }}</option>
+          <option value="bottom-center">{{ language === 'es' ? 'Abajo al centro' : 'Bottom center' }}</option>
+          <option value="bottom-left">{{ language === 'es' ? 'Abajo a la izquierda' : 'Bottom left' }}</option>
+        </select>
+      </div>
+      <div class="setting-divider"></div>
+      <div class="setting-row">
+        <div><strong>{{ language === 'es' ? 'Fondo del visor' : 'Viewport background' }}</strong><small>{{ language === 'es' ? 'Color del entorno 3D' : '3D environment color' }}</small></div>
+        <input type="color" [(ngModel)]="bgColor" (input)="onBgColorChange()" />
+      </div>
+      <div class="control-group lighting-control">
+        <label>{{ language === 'es' ? 'Iluminación' : 'Lighting' }} <span>{{ lightIntensity | number: '1.1-1' }}</span></label>
+        <input type="range" min="0.2" max="4" step="0.1" [(ngModel)]="lightIntensity" (input)="onLightIntensityChange()" />
+      </div>
+      <button class="setting-toggle" [class.enabled]="isWireframe" (click)="onToggleWireframe()">
+        <span>{{ language === 'es' ? 'Vista de estructura' : 'Wireframe view' }}</span><span>{{ isWireframe ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="isOrthographic" (click)="onToggleCamera()">
+        <span>{{ language === 'es' ? 'Cámara ortográfica' : 'Orthographic camera' }}</span><span>{{ isOrthographic ? 'ON' : 'OFF' }}</span>
+      </button>
+      <div class="setting-divider"></div>
+      <span class="eyebrow viewport-eyebrow">{{ language === 'es' ? 'CONTROLES DE VISOR' : 'VIEWPORT CONTROLS' }}</span>
+      <div class="camera-presets">
+        <button (click)="setCameraView('perspective')">{{ language === 'es' ? '3D' : '3D' }}</button>
+        <button (click)="setCameraView('front')">{{ language === 'es' ? 'Frente' : 'Front' }}</button>
+        <button (click)="setCameraView('side')">{{ language === 'es' ? 'Lado' : 'Side' }}</button>
+        <button (click)="setCameraView('top')">{{ language === 'es' ? 'Arriba' : 'Top' }}</button>
+      </div>
+      <button class="setting-toggle" [class.enabled]="showGrid" (click)="onToggleGrid()">
+        <span>{{ language === 'es' ? 'Cuadrícula' : 'Grid' }}</span><span>{{ showGrid ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="showAxes" (click)="onToggleAxes()">
+        <span>{{ language === 'es' ? 'Ejes XYZ' : 'XYZ axes' }}</span><span>{{ showAxes ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="showShadows" (click)="onToggleShadows()">
+        <span>{{ language === 'es' ? 'Sombras en tiempo real' : 'Real-time shadows' }}</span><span>{{ showShadows ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="autoRotate" (click)="autoRotate = !autoRotate; onAutoRotateChange()">
+        <span>{{ language === 'es' ? 'Rotación automática' : 'Auto rotate' }}</span><span>{{ autoRotate ? 'ON' : 'OFF' }}</span>
+      </button>
+      <div class="control-group">
+        <label>{{ language === 'es' ? 'Exposición' : 'Exposure' }} <span>{{ exposure | number: '1.1-2' }}</span></label>
+        <input type="range" min="0.3" max="2.5" step="0.05" [(ngModel)]="exposure" (input)="onExposureChange()" />
+      </div>
+      <div class="setting-divider"></div>
+      <span class="eyebrow viewport-eyebrow">{{ language === 'es' ? 'INSPECCIÓN Y EFECTOS' : 'INSPECTION & FX' }}</span>
+      <div class="control-group">
+        <label>{{ language === 'es' ? 'Vista explosionada' : 'Exploded view' }} <span>{{ explodedAmount | percent }}</span></label>
+        <input type="range" min="0" max="1" step="0.01" [(ngModel)]="explodedAmount" (input)="onExplodedChange()" />
+      </div>
+      <button class="setting-toggle" [class.enabled]="clippingEnabled" (click)="clippingEnabled = !clippingEnabled; onClippingChange()">
+        <span>{{ language === 'es' ? 'Plano de corte' : 'Section plane' }}</span><span>{{ clippingEnabled ? 'ON' : 'OFF' }}</span>
+      </button>
+      <div class="axis-controls clipping-controls" *ngIf="clippingEnabled">
+        <select aria-label="Eje de corte" [(ngModel)]="clippingAxis" (ngModelChange)="onClippingChange()">
+          <option value="x">Eje X</option><option value="y">Eje Y</option><option value="z">Eje Z</option>
+        </select>
+        <input type="range" min="-5" max="5" step="0.05" [(ngModel)]="clippingOffset" (input)="onClippingChange()" />
+      </div>
+      <button class="setting-toggle" [class.enabled]="bloomEnabled" (click)="bloomEnabled = !bloomEnabled; onBloomChange()">
+        <span>Bloom cinematográfico</span><span>{{ bloomEnabled ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="depthOfFieldEnabled" (click)="depthOfFieldEnabled = !depthOfFieldEnabled; onDepthOfFieldChange()">
+        <span>{{ language === 'es' ? 'Profundidad de campo' : 'Depth of field' }}</span><span>{{ depthOfFieldEnabled ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="vignetteEnabled" (click)="vignetteEnabled = !vignetteEnabled; onVignetteChange()">
+        <span>{{ language === 'es' ? 'Viñeta y aberración' : 'Vignette & chromatic' }}</span><span>{{ vignetteEnabled ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="hotspotMode" (click)="hotspotMode = !hotspotMode; onHotspotModeChange()">
+        <span>{{ language === 'es' ? 'Colocar marcadores' : 'Place hotspots' }}</span><span>{{ hotspotMode ? 'ON' : 'OFF' }}</span>
+      </button>
+      <div class="hotspot-editor" *ngFor="let hotspot of hotspots; trackBy: trackById">
+        <input [ngModel]="hotspot.label" (ngModelChange)="renameHotspot(hotspot, $event)" aria-label="Etiqueta del marcador" />
+        <button (click)="removeHotspot(hotspot)" [attr.aria-label]="language === 'es' ? 'Eliminar marcador' : 'Remove hotspot'">×</button>
+      </div>
+      <div class="setting-divider"></div>
+      <span class="eyebrow viewport-eyebrow">{{ language === 'es' ? 'AUDIO REACTIVO' : 'AUDIO REACTIVE' }}</span>
+      <div class="audio-actions">
+        <label class="audio-file-button">
+          {{ language === 'es' ? 'Elegir audio' : 'Choose audio' }}
+          <input type="file" accept="audio/*" (change)="startAudioFile($event)" />
+        </label>
+        <button (click)="startMicrophone()" [disabled]="audioEnabled">{{ language === 'es' ? 'Micrófono' : 'Microphone' }}</button>
+        <button (click)="stopAudio()" [disabled]="!audioEnabled">{{ language === 'es' ? 'Detener' : 'Stop' }}</button>
+      </div>
+      <small class="audio-status" *ngIf="audioStatus">{{ audioStatus }}</small>
+    </section>
+  </ng-template>
+</div>

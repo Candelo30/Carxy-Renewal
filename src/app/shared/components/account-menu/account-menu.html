@@ -1,0 +1,98 @@
+@let user = user$ | async;
+<div class="account-menu">
+  <button
+    class="account-trigger"
+    type="button"
+    [class.settings-trigger]="!user"
+    [attr.aria-expanded]="open"
+    [attr.aria-label]="user ? 'Abrir menú de cuenta' : 'Abrir ajustes'"
+    title="Cuenta y ajustes"
+    (click)="open = !open"
+  >
+    @if (user) {
+      <img [src]="user.photoURL || fallbackAvatar" alt="" (error)="onAvatarError($event)" />
+    } @else {
+      <span aria-hidden="true">⚙</span>
+    }
+  </button>
+  @if (open) {
+    <div class="account-popover">
+      @if (user) {
+        <a class="account-profile" [routerLink]="['/profile', user.uid]" (click)="open = false">
+          <img [src]="user.photoURL || fallbackAvatar" alt="" (error)="onAvatarError($event)" />
+          <span><strong>{{ user.displayName }}</strong><small>Ver perfil</small></span>
+        </a>
+        <a routerLink="/my-models" (click)="open = false">Mis creaciones</a>
+      } @else {
+        <a routerLink="/login" (click)="open = false">Iniciar sesión</a>
+      }
+      <button type="button" (click)="toggleSettings()">⚙ Ajustes de apariencia</button>
+      @if (user) {
+        <button type="button" class="logout" (click)="logout()">Cerrar sesión</button>
+      }
+    </div>
+  }
+</div>
+
+@if (settingsOpen) {
+  <div class="settings-backdrop" (click)="settingsOpen = false">
+    <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="appearance-title" (click)="$event.stopPropagation()">
+      <button class="settings-close" type="button" aria-label="Cerrar ajustes" (click)="settingsOpen = false">×</button>
+      <p class="eyebrow">CARXY STUDIO</p>
+      <h2 id="appearance-title">Ajustes de apariencia</h2>
+      <p>Personaliza el espacio de trabajo. Los cambios se guardan en este dispositivo.</p>
+      <label class="theme-choice">
+        <span><strong>Tema</strong><small>Elige el aspecto general de la aplicación</small></span>
+        <select [(ngModel)]="preferences.theme" (ngModelChange)="saveAppearance()">
+          <option value="dark">Oscuro</option>
+          <option value="light">Claro</option>
+        </select>
+      </label>
+      <label class="color-choice">
+        <span><strong>Color de acento</strong><small>Elige el color de acento de la aplicación</small></span>
+        <input type="color" [(ngModel)]="preferences.accentColor" (ngModelChange)="saveAppearance()" />
+      </label>
+      @if (user) {
+        <section class="delete-account">
+          <h3>Eliminar cuenta</h3>
+          <p>Se borrarán tu perfil, publicaciones y seguimientos. Tus conversaciones se conservarán y tus mensajes aparecerán como “Cuenta eliminada”.</p>
+          @if (!accountDeletionOpen) {
+            <button class="delete-account-start" type="button" (click)="accountDeletionOpen = true">Eliminar mi cuenta</button>
+          } @else {
+            <label class="delete-confirm-label">
+              Escribe ELIMINAR para confirmar
+              <input
+                name="deleteConfirmation"
+                [(ngModel)]="deleteConfirmation"
+                autocomplete="off"
+                [disabled]="deletingAccount"
+              />
+            </label>
+            @if (auth.requiresPasswordForAccountDeletion) {
+              <label class="delete-confirm-label">
+                Contraseña
+                <input
+                  name="deletePassword"
+                  [(ngModel)]="deletePassword"
+                  type="password"
+                  autocomplete="current-password"
+                  [disabled]="deletingAccount"
+                />
+              </label>
+            }
+            <div class="delete-account-actions">
+              <button
+                class="delete-account-confirm"
+                type="button"
+                [disabled]="deletingAccount || deleteConfirmation !== 'ELIMINAR' || (auth.requiresPasswordForAccountDeletion && !deletePassword)"
+                (click)="deleteAccount(user.uid)"
+              >{{ deletingAccount ? 'Eliminando…' : 'Confirmar eliminación' }}</button>
+              <button type="button" [disabled]="deletingAccount" (click)="cancelAccountDeletion()">Cancelar</button>
+            </div>
+          }
+        </section>
+      }
+      <button class="settings-done" type="button" (click)="finishSettings()">Listo</button>
+    </section>
+  </div>
+}

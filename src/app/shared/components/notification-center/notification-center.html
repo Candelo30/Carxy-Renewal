@@ -1,0 +1,30 @@
+<section
+  class="notification-region"
+  [class.top-left]="notificationService.position() === 'top-left'"
+  [class.top-center]="notificationService.position() === 'top-center'"
+  [class.top-right]="notificationService.position() === 'top-right'"
+  [class.bottom-left]="notificationService.position() === 'bottom-left'"
+  [class.bottom-center]="notificationService.position() === 'bottom-center'"
+  [class.bottom-right]="notificationService.position() === 'bottom-right'"
+  aria-label="Notificaciones"
+  aria-live="polite"
+  aria-relevant="additions text"
+>
+  @for (notification of notificationService.notifications(); track notification.id) {
+    <article [class]="'notification ' + notification.type" [attr.role]="notification.type === 'error' ? 'alert' : 'status'">
+      <span class="notification-icon" aria-hidden="true">
+        @switch (notification.type) {
+          @case ('success') { ✓ }
+          @case ('error') { ! }
+          @case ('warning') { ⚠ }
+          @default { i }
+        }
+      </span>
+      <div class="notification-copy">
+        <strong>{{ notification.title }}</strong>
+        <p>{{ notification.message }}</p>
+      </div>
+      <button type="button" aria-label="Cerrar notificación" (click)="notificationService.dismiss(notification.id)">×</button>
+    </article>
+  }
+</section>

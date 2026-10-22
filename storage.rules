@@ -1,0 +1,53 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isModerator() {
+      return signedIn()
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isBanned != true
+        && userRole() in ['admin', 'moderator'];
+    }
+
+    function canReadPost(fileName, extensionPattern) {
+      let postId = fileName.replace(extensionPattern, '');
+      let postPath = /databases/(default)/documents/posts/$(postId);
+      return firestore.exists(postPath)
+        && (
+          firestore.get(postPath).data.isPrivate != true
+          || (signedIn() && firestore.get(postPath).data.author.uid == request.auth.uid)
+          || isModerator()
+        );
+    }
+
+    match /models/{uid}/{fileName} {
+      allow read: if (fileName.matches('^[A-Za-z0-9-]+\\.glb$')
+        && ((signedIn() && request.auth.uid == uid)
+          || isModerator()
+          || canReadPost(fileName, '\\.glb$')));
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.size <= 100 * 1024 * 1024
+        && request.resource.contentType == 'model/gltf-binary';
+      allow delete: if (signedIn() && request.auth.uid == uid) || isModerator();
+    }
+
+    match /thumbnails/{uid}/{fileName} {
+      allow read: if (fileName.matches('^[A-Za-z0-9-]+\\.png$')
+        && ((signedIn() && request.auth.uid == uid)
+          || isModerator()
+          || canReadPost(fileName, '\\.png$')));
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.size <= 8 * 1024 * 1024
+        && request.resource.contentType == 'image/png';
+      allow delete: if (signedIn() && request.auth.uid == uid) || isModerator();
+    }
+  }
+}

@@ -1,0 +1,12 @@
+<div
+  class="loading-state"
+  [class.loading-inline]="variant() === 'inline'"
+  role="status"
+  aria-live="polite"
+>
+  <span class="loading-mark" aria-hidden="true">
+    <span class="loading-orbit"></span>
+    <span class="loading-core"></span>
+  </span>
+  <span class="loading-label">{{ label() }}</span>
+</div>

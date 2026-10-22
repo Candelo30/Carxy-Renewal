@@ -1,0 +1,29 @@
+<div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+  <section class="publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-title" (click)="$event.stopPropagation()">
+    <button class="close" type="button" aria-label="Cerrar" (click)="close()">×</button>
+    <p class="eyebrow">FORMA COMMUNITY</p>
+    <h1 id="publish-title">Publicar modelo</h1>
+    <p class="intro">Comparte una captura y una copia GLB de tu escena con la comunidad.</p>
+    @if (preview) {
+      <img class="preview" [src]="preview" alt="Vista previa del modelo 3D" />
+    } @else {
+      <div class="preview empty-preview">El visor no está disponible para capturar.</div>
+    }
+    <label>Título<input [(ngModel)]="title" maxlength="100" placeholder="Ej. Concepto de vehículo eléctrico" /></label>
+    <label>Descripción<textarea [(ngModel)]="description" maxlength="2000" rows="4" placeholder="Cuenta cómo creaste este modelo…"></textarea></label>
+    @if (!(user$ | async)) {
+      <p class="inline-note">Necesitas una sesión para publicar. <a routerLink="/login" (click)="close()">Iniciar sesión</a></p>
+    }
+    @if (error) { <p class="error" role="alert">{{ error }}</p> }
+    <footer>
+      <button class="secondary" type="button" (click)="close()">Cancelar</button>
+      <button class="primary" type="button" [disabled]="busy || !(user$ | async)" (click)="publish()">
+        @if (busy) {
+          <app-loading-spinner variant="inline" label="Publicando tu modelo…" />
+        } @else {
+          Publicar en la comunidad
+        }
+      </button>
+    </footer>
+  </section>
+</div>

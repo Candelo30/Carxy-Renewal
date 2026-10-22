@@ -1,0 +1,457 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--surface-main);
+  color: var(--text-primary);
+}
+
+.profile-shell {
+  min-height: 100dvh;
+}
+
+.site-header {
+  display: flex;
+  height: 72px;
+  align-items: center;
+  gap: 32px;
+  padding: 0 clamp(18px, 5vw, 72px);
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-panel) 94%, transparent);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+}
+
+.brand > img {
+  display: block;
+  width: 38px;
+  height: 38px;
+}
+
+.brand b {
+  font-size: 0.78rem;
+}
+
+.brand small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.55rem;
+}
+
+nav {
+  display: flex;
+  flex: 1;
+  gap: 24px;
+}
+
+nav a,
+.sign-in {
+  color: var(--text-muted);
+  font-size: 0.83rem;
+  text-decoration: none;
+}
+
+nav a:hover,
+.sign-in:hover {
+  color: var(--accent-color);
+}
+
+.profile-hero {
+  position: relative;
+  display: flex;
+  max-width: 1150px;
+  min-height: 190px;
+  align-items: center;
+  gap: 25px;
+  margin: 60px auto 50px;
+  padding: 26px;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--surface-panel);
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--surface-main) 45%, transparent);
+}
+
+.profile-hero > .avatar {
+  flex: none;
+  width: 124px;
+  height: 124px;
+  border: 3px solid var(--border-color);
+  border-radius: 50%;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--surface-main) 40%, transparent);
+  object-fit: cover;
+}
+
+.profile-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  color: var(--accent-color);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.profile-info h1 {
+  overflow-wrap: anywhere;
+  margin-bottom: 7px;
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  letter-spacing: -0.035em;
+}
+
+.profile-info > p:not(.eyebrow) {
+  max-width: 680px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 20px;
+  margin-top: 18px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.stats span {
+  padding-right: 14px;
+  border-right: 1px solid var(--border-color);
+}
+
+.stats span:last-child {
+  border-right: 0;
+}
+
+.stats b {
+  color: var(--text-primary);
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.follow-button,
+.message-button,
+.manage-button,
+.edit-button,
+.save-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.follow-button:hover,
+.message-button:hover,
+.manage-button:hover,
+.edit-button:hover,
+.save-button:hover {
+  border-color: var(--accent-color);
+  background: var(--surface-active);
+  color: var(--accent-color);
+}
+
+.message-button {
+  border-color: var(--border-color);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.manage-button {
+  flex: none;
+  white-space: nowrap;
+  border-color: var(--border-color);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.guest-follow {
+  margin-top: 16px;
+}
+
+.edit-button,
+.save-button {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.portfolio {
+  max-width: 1150px;
+  margin: auto;
+  padding: 0 24px 70px;
+}
+
+.portfolio h2 {
+  margin-bottom: 22px;
+  font-size: 1.35rem;
+}
+
+.manage-inline {
+  display: inline-block;
+  margin: -10px 0 17px;
+  color: var(--accent-color);
+  font-size: 0.77rem;
+  text-decoration: none;
+}
+
+.manage-inline:hover {
+  text-decoration: underline;
+}
+
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 18px;
+}
+
+.post-grid article {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 13px;
+  background: var(--surface-panel);
+}
+
+.post-grid article > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.6;
+  object-fit: cover;
+}
+
+.post-grid article > div {
+  padding: 13px;
+}
+
+.model-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.model-card-heading h3 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-card-heading button {
+  flex: none;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 42%, var(--border-color));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-raised));
+  color: var(--accent-color);
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.model-card-heading button:hover {
+  border-color: var(--accent-color);
+  background: var(--surface-active);
+  color: var(--accent-color);
+}
+.model-card-heading .private-badge {
+  flex: none;
+  margin: 0;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: var(--surface-active);
+  color: var(--text-muted);
+  font-size: 0.59rem;
+}
+
+.post-grid p {
+  display: -webkit-box;
+  min-height: 35px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.post-grid article > div > span {
+  display: block;
+  margin-top: 10px;
+  color: var(--accent-color);
+  font-size: 0.72rem;
+}
+
+.portfolio .post-grid article > app-model-preview {
+  display: block;
+}
+
+.empty,
+.not-found {
+  display: grid;
+  min-height: 250px;
+  place-content: center;
+  justify-items: center;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.empty a,
+.not-found a {
+  margin-top: 16px;
+  color: var(--accent-color);
+}
+
+.edit-dialog {
+  width: min(480px, calc(100% - 30px));
+  margin: auto;
+  padding: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+.edit-dialog::backdrop {
+  background: color-mix(in srgb, var(--surface-main) 78%, transparent);
+  backdrop-filter: blur(5px);
+}
+
+.dismiss {
+  float: right;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.7rem;
+  cursor: pointer;
+}
+
+.edit-dialog h2 {
+  margin-bottom: 18px;
+}
+
+.edit-dialog label {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.edit-dialog input,
+.edit-dialog textarea {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-control);
+  color: var(--text-primary);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.status {
+  color: var(--color-success);
+}
+
+.save-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+@media (max-width: 700px) {
+  .site-header {
+    height: auto;
+    min-height: 68px;
+    flex-wrap: wrap;
+    gap: 9px 16px;
+    padding: 10px 16px;
+  }
+
+  .site-header nav {
+    order: 3;
+    flex: 1 0 100%;
+    gap: 18px;
+    overflow-x: auto;
+  }
+
+  .site-header nav a {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .profile-hero {
+    align-items: center;
+    gap: 16px;
+    margin: 28px 12px 32px;
+    padding: 19px;
+    border-radius: 15px;
+  }
+
+  .profile-hero > .avatar {
+    width: 82px;
+    height: 82px;
+  }
+
+  .profile-info h1 {
+    font-size: clamp(1.35rem, 6vw, 1.8rem);
+  }
+
+  .stats {
+    gap: 9px 12px;
+    font-size: 0.72rem;
+  }
+
+  .stats span {
+    padding-right: 9px;
+  }
+
+  .portfolio {
+    padding: 0 16px 48px;
+  }
+}
+
+@media (max-width: 430px) {
+  .profile-hero {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .profile-info {
+    flex: 1 1 calc(100% - 100px);
+  }
+
+  .profile-actions,
+  .guest-follow {
+    width: 100%;
+  }
+
+  .profile-actions > *,
+  .manage-button,
+  .edit-button {
+    flex: 1;
+  }
+}

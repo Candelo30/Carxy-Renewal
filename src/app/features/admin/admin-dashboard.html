@@ -1,0 +1,58 @@
+<main class="admin-shell">
+  <header class="topbar">
+    <a routerLink="/feed" class="brand"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>STUDIO ADMIN</small></b></a>
+    <nav><a routerLink="/feed">Comunidad</a><a routerLink="/my-models">Mis creaciones</a><a routerLink="/editor">Editor</a></nav>
+    <span class="admin-badge">⌘ ADMIN</span><app-activity-notifications /><app-account-menu />
+  </header>
+  @if (vm$ | async; as vm) {
+    <section class="page-content">
+      <div class="heading"><div><p class="eyebrow">CONTROL CENTER</p><h1>{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}</h1><p>Gestiona acceso, roles y publicaciones de la comunidad.</p></div><span class="secure">● Sesión verificada · {{ vm.user?.role }}</span></div>
+      @if (!moderationOnly && vm.user?.role === 'admin') {
+        <div class="tabs"><button [class.active]="tab === 'users'" (click)="tab = 'users'">Usuarios <span>{{ vm.users.length }}</span></button><button [class.active]="tab === 'content'" (click)="tab = 'content'">Publicaciones <span>{{ vm.posts.length }}</span></button></div>
+      } @else {
+        <div class="tabs"><button class="active">Publicaciones <span>{{ vm.posts.length }}</span></button></div>
+      }
+      @if (error) { <p class="alert error" role="alert">{{ error }}</p> }
+      @if (status) { <p class="alert success" role="status">{{ status }}</p> }
+      @if (!moderationOnly && tab === 'users' && vm.user?.role === 'admin') {
+        <section class="panel">
+          <div class="panel-heading"><div><h2>Usuarios registrados</h2><p>Los roles limitan las acciones en la aplicación y en las reglas de Firebase.</p></div><span>{{ vm.users.length }} cuentas</span></div>
+          <div class="table-wrap"><table><thead><tr><th>CREADOR</th><th>EMAIL</th><th>REGISTRO</th><th>ROL</th><th>ESTADO</th><th></th></tr></thead>
+            <tbody>@for (user of vm.users; track trackUser($index, user)) {
+              <tr>
+                <td><div class="person">@if (user.photoURL) { <img [src]="user.photoURL" alt="" /> } @else { <span class="avatar">{{ user.displayName.slice(0, 1) }}</span> }<div><strong>{{ user.displayName }}</strong><small>{{ user.uid }}</small></div></div></td>
+                <td>{{ user.email || '—' }}</td>
+                <td>{{ user.createdAt | date:'mediumDate' }}</td>
+                <td><select [value]="user.role" [disabled]="user.uid === vm.user?.uid" (change)="changeRole(user, $event, vm.user)">@for (role of roles; track role) { <option [value]="role">{{ role }}</option> }</select></td>
+                <td><span class="state" [class.banned]="user.isBanned">{{ user.isBanned ? 'Suspendida' : 'Activa' }}</span></td>
+                <td><button class="small-button" [disabled]="user.uid === vm.user?.uid" (click)="toggleBan(user, vm.user)">{{ user.isBanned ? 'Reactivar' : 'Suspender' }}</button></td>
+              </tr>
+            }</tbody>
+          </table></div>
+        </section>
+      } @else {
+        <section class="panel">
+          <div class="panel-heading"><div><h2>Modelos de la comunidad</h2><p>Oculta una publicación o elimínala junto con el modelo y su miniatura de Storage.</p></div><span>{{ vm.posts.length }} modelos</span></div>
+          @if (vm.posts.length) {
+            <div class="moderation-grid">@for (post of vm.posts; track trackPost($index, post)) {
+              <article class="content-card">
+                <img [src]="post.thumbnailUrl" [alt]="post.title" />
+                <div><div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
+                  <p>{{ post.description || 'Sin descripción' }}</p><small>Por {{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }}</small>
+                  <button class="danger" (click)="requestDelete(post, deleteDialog)">Eliminar publicación y archivos</button>
+                </div>
+              </article>
+            }</div>
+          } @else { <div class="empty">No hay modelos para moderar.</div> }
+        </section>
+      }
+    </section>
+    <dialog #deleteDialog class="confirm-dialog">
+      <form method="dialog"><button class="dismiss" value="cancel">×</button><p class="eyebrow">ACCIÓN IRREVERSIBLE</p><h2>Eliminar publicación</h2><p>Se eliminará “{{ postToDelete?.title }}”, la miniatura, el archivo 3D y sus comentarios.</p>
+        <footer><button class="cancel" value="cancel">Cancelar</button><button type="button" class="danger" (click)="confirmDelete(deleteDialog)">Eliminar definitivamente</button></footer>
+      </form>
+    </dialog>
+  } @else {
+    <app-loading-spinner label="Cargando panel de control…" />
+  }
+</main>

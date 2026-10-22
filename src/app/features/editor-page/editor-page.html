@@ -1,0 +1,41 @@
+<main
+  class="editor-layout"
+  [class.presentation-mode]="presentationMode"
+  [class.panel-collapsed]="!modelEditorOpen"
+>
+  <header class="top-toolbar-area">
+    <app-top-toolbar
+      [language]="language"
+      (presentationChange)="presentationMode = $event"
+      (publishClick)="onPublishClick()"
+    />
+  </header>
+  <aside class="editor-panel-area">
+    <app-model-editor (languageChange)="language = $event" />
+  </aside>
+  <section class="viewer-area">
+    <app-model-viewer />
+    <button
+      type="button"
+      class="panel-toggle"
+      [attr.aria-expanded]="modelEditorOpen"
+      [attr.aria-label]="modelEditorOpen
+        ? (language === 'es' ? 'Contraer editor de modelo' : 'Collapse model editor')
+        : (language === 'es' ? 'Abrir editor de modelo' : 'Open model editor')"
+      [title]="modelEditorOpen
+        ? (language === 'es' ? 'Contraer editor' : 'Collapse editor')
+        : (language === 'es' ? 'Abrir editor' : 'Open editor')"
+      (click)="modelEditorOpen = !modelEditorOpen"
+    >
+      <span aria-hidden="true">{{ modelEditorOpen ? '◀' : '▶' }}</span>
+      <span class="toggle-label">
+        {{ modelEditorOpen
+          ? (language === 'es' ? 'Ocultar panel' : 'Hide panel')
+          : (language === 'es' ? 'Editor' : 'Editor') }}
+      </span>
+    </button>
+  </section>
+</main>
+@if (publishModalOpen) {
+  <app-publish-modal (closed)="publishModalOpen = false" />
+}

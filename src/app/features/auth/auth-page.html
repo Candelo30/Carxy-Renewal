@@ -1,0 +1,41 @@
+<main class="auth-page">
+  <a class="brand" routerLink="/editor"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>3D STUDIO</small></b></a>
+  @if (user$ | async; as user) {
+    <section class="auth-card signed-in">
+      <span class="success-mark">✓</span><p class="eyebrow">SESIÓN ACTIVA</p><h1>Hola, {{ user.displayName }}</h1>
+      <p>Tu espacio de creación está listo.</p>
+      <a class="primary" routerLink="/feed">Ir a la comunidad</a>
+      <button class="text-button" type="button" (click)="logout()">Cerrar sesión</button>
+    </section>
+  } @else {
+    <section class="auth-card">
+      <p class="eyebrow">TU PORTAFOLIO 3D</p>
+      <h1>{{ mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta' }}</h1>
+      <p class="subtext">{{ mode === 'login' ? 'Inicia sesión para conectar con otros creadores.' : 'Comparte tus modelos y descubre nuevas ideas.' }}</p>
+      @if (!auth.isConfigured) {
+        <div class="local-banner">Modo local de demostración. Los datos quedan en este navegador; configura Firebase para cuentas reales y sincronización en la nube.</div>
+      }
+      <form (ngSubmit)="submit()">
+        @if (mode === 'register') {
+          <label>Nombre visible<input name="displayName" [(ngModel)]="displayName" required minlength="2" maxlength="60" autocomplete="name" /></label>
+        }
+        <label>Correo electrónico<input name="email" type="email" [(ngModel)]="email" required autocomplete="email" /></label>
+        <label>Contraseña<input name="password" type="password" [(ngModel)]="password" required minlength="6" autocomplete="{{ mode === 'login' ? 'current-password' : 'new-password' }}" /></label>
+        @if (error) { <p class="error" role="alert">{{ error }}</p> }
+        <button class="primary full" [disabled]="busy" type="submit">
+          @if (busy) {
+            <app-loading-spinner variant="inline" label="Conectando con tu cuenta…" />
+          } @else {
+            {{ mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta' }}
+          }
+        </button>
+      </form>
+      <div class="divider"><span>o continúa con</span></div>
+      <button class="google" type="button" [disabled]="!auth.isConfigured" (click)="googleLogin()">G&nbsp; Continuar con Google</button>
+      <p class="switch">{{ mode === 'login' ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?' }}
+        <a [routerLink]="mode === 'login' ? '/register' : '/login'">{{ mode === 'login' ? 'Regístrate' : 'Inicia sesión' }}</a>
+      </p>
+    </section>
+  }
+  <a class="back-link" routerLink="/editor">← Volver al editor</a>
+</main>

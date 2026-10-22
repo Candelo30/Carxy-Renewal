@@ -1,0 +1,111 @@
+<div class="toolbar-container">
+  <div class="brand" [attr.aria-label]="brand.name + ' ' + brand.product">
+    <img class="carxy-icon" src="/carxy-mark.svg" alt="" />
+    <span class="brand-copy">
+      <strong class="brand-title">{{ brand.name }}</strong>
+      <small>{{ brand.product }}</small>
+    </span>
+  </div>
+
+  <div class="workspace-label">
+    <span class="status-dot"></span> {{ language === 'es' ? 'ESPACIO DE TRABAJO' : 'WORKSPACE' }}
+  </div>
+
+  <nav class="social-links" aria-label="Navegación de comunidad">
+    <a routerLink="/feed">{{ language === 'es' ? 'Comunidad' : 'Community' }}</a>
+    @if (user$ | async; as user) {
+      <a routerLink="/my-models">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</a>
+      <a routerLink="/chat">{{ language === 'es' ? 'Mensajes' : 'Messages' }}</a>
+      @if (user.role === 'admin') {
+        <a routerLink="/admin">Admin</a>
+      } @else if (user.role === 'moderator') {
+        <a routerLink="/moderation">{{ language === 'es' ? 'Moderar' : 'Moderate' }}</a>
+      }
+    }
+  </nav>
+
+  <details class="compact-navigation">
+    <summary class="btn btn-secondary">
+      {{ language === 'es' ? 'Espacio de trabajo' : 'Workspace' }} <span aria-hidden="true">⌄</span>
+    </summary>
+    <nav
+      class="compact-navigation-menu"
+      [attr.aria-label]="
+        language === 'es' ? 'Navegación del espacio de trabajo' : 'Workspace navigation'
+      "
+    >
+      <span class="compact-workspace-label"
+        ><span class="status-dot"></span
+        >{{ language === 'es' ? 'ESPACIO DE TRABAJO' : 'WORKSPACE' }}</span
+      >
+      <a routerLink="/feed">{{ language === 'es' ? 'Comunidad' : 'Community' }}</a>
+      @if (user$ | async; as user) {
+        <a routerLink="/my-models">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</a>
+        <a routerLink="/chat">{{ language === 'es' ? 'Mensajes' : 'Messages' }}</a>
+        @if (user.role === 'admin') {
+          <a routerLink="/admin">Admin</a>
+        } @else if (user.role === 'moderator') {
+          <a routerLink="/moderation">{{ language === 'es' ? 'Moderar' : 'Moderate' }}</a>
+        }
+      }
+    </nav>
+  </details>
+
+  <div class="actions">
+    <input
+      type="file"
+      #fileInput
+      (change)="onFileSelected($event)"
+      accept=".glb,.gltf"
+      class="visually-hidden"
+    />
+
+    <button (click)="fileInput.click()" class="btn btn-secondary import-button">
+      <span>↑</span>{{ language === 'es' ? 'Importar' : 'Import' }}
+    </button>
+    <details class="view-tools">
+      <summary class="btn btn-secondary">
+        {{ language === 'es' ? 'Vista' : 'View' }} <span aria-hidden="true">⌄</span>
+      </summary>
+      <div
+        class="view-tools-menu"
+        [attr.aria-label]="language === 'es' ? 'Herramientas de vista' : 'View tools'"
+      >
+        <button type="button" (click)="onResetCamera()">
+          <span aria-hidden="true">⌖</span
+          >{{ language === 'es' ? 'Centrar cámara' : 'Focus camera' }}
+        </button>
+        <button type="button" (click)="onTakeScreenshot()">
+          <span aria-hidden="true">▧</span>{{ language === 'es' ? 'Capturar PNG' : 'Capture PNG' }}
+        </button>
+        <button type="button" (click)="onPresentation()" [class.active]="presentationEnabled">
+          <span aria-hidden="true">▶</span
+          >{{ language === 'es' ? 'Modo presentación' : 'Presentation mode' }}
+        </button>
+        <button type="button" (click)="onRecordTurntable()">
+          <span aria-hidden="true">●</span
+          >{{ language === 'es' ? 'Grabar recorrido' : 'Record turntable' }}
+        </button>
+        <button type="button" (click)="onStartAR()">
+          <span aria-hidden="true">◇</span
+          >{{ language === 'es' ? 'Realidad aumentada' : 'Augmented reality' }}
+        </button>
+      </div>
+    </details>
+    <button (click)="publishClick.emit()" class="btn btn-secondary publish-button">
+      {{ language === 'es' ? 'Publicar' : 'Publish' }}
+    </button>
+    <button (click)="onExport()" class="btn btn-primary export-button">
+      <span>↓</span>{{ language === 'es' ? 'Exportar escena' : 'Export scene' }}
+    </button>
+    @if (!(user$ | async)) {
+      <a class="auth-link" routerLink="/login">{{ language === 'es' ? 'Entrar' : 'Sign in' }}</a>
+    } @else {
+      <app-activity-notifications />
+    }
+    <app-account-menu />
+  </div>
+</div>
+@if (statusMessage) {
+  <div class="toolbar-status">{{ statusMessage }}</div>
+}

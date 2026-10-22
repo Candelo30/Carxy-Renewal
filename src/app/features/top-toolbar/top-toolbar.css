@@ -1,0 +1,370 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+
+.social-links {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  margin: 0 10px;
+  white-space: nowrap;
+}
+
+.social-links a,
+.auth-link {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.social-links a:hover,
+.auth-link:hover {
+  color: var(--accent-color);
+}
+
+.compact-navigation {
+  display: none;
+  position: relative;
+}
+
+.compact-navigation summary {
+  list-style: none;
+}
+
+.compact-navigation summary::-webkit-details-marker {
+  display: none;
+}
+
+.compact-navigation-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  width: max-content;
+  min-width: 205px;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-panel);
+  box-shadow: 0 12px 32px #0005;
+}
+
+.compact-navigation-menu a {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  text-decoration: none;
+}
+
+.compact-navigation-menu a:hover {
+  background: var(--surface-active);
+  color: var(--accent-color);
+}
+
+.compact-workspace-label {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.61rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.auth-link {
+  padding: 8px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.carxy-icon {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+
+.brand-copy strong,
+.brand-copy small {
+  display: block;
+}
+
+.brand-copy strong {
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.brand-title {
+  color: var(--text-primary);
+}
+
+.brand-copy small {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.54rem;
+  letter-spacing: 0.17em;
+}
+
+.workspace-label {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 7px 1px 0;
+  border-radius: 50%;
+  background: #69d69b;
+  box-shadow: 0 0 10px #69d69b75;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions > app-activity-notifications,
+.actions > app-account-menu {
+  display: inline-flex;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+
+.view-tools {
+  position: relative;
+}
+
+.view-tools summary {
+  list-style: none;
+}
+
+.view-tools summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-tools-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 8;
+  display: grid;
+  width: max-content;
+  min-width: 205px;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-panel);
+  box-shadow: 0 12px 32px #0005;
+}
+
+.view-tools-menu button {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-tools-menu button:hover,
+.view-tools-menu button.active {
+  background: color-mix(in srgb, var(--accent-color) 14%, var(--surface-raised));
+  color: var(--accent-color);
+}
+
+.view-tools-menu button span {
+  width: 18px;
+  color: var(--accent-color);
+  text-align: center;
+}
+
+.toolbar-status {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  z-index: 5;
+  max-width: min(420px, 70vw);
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  box-shadow: 0 8px 26px #0004;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 35px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.btn-secondary {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-active);
+}
+
+.btn-primary {
+  border-color: var(--border-color);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  border-color: var(--accent-color);
+  background: var(--surface-active);
+  color: var(--accent-color);
+}
+
+.btn.active {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 760px) {
+  .workspace-label,
+  .social-links { display: none; }
+}
+
+@media (max-width: 1100px) {
+  :host { height: auto; }
+  .toolbar-container {
+    height: auto;
+    min-height: 0;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px 12px;
+  }
+  .brand { order: 0; }
+  .compact-navigation {
+    display: block;
+    order: 1;
+  }
+  .workspace-label {
+    display: none;
+  }
+  .social-links {
+    display: none;
+  }
+  .actions {
+    order: 2;
+    min-width: 0;
+    width: 100%;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    overflow: visible;
+  }
+  .btn {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 520px) {
+  :host { height: auto; }
+  .toolbar-container {
+    height: auto;
+    min-height: 0;
+    gap: 6px 8px;
+  }
+  .carxy-icon { width: 34px; height: 34px; }
+  .brand { gap: 5px; }
+  .brand-copy strong { font-size: 0.82rem; letter-spacing: 0.1em; }
+  .brand-copy small { display: none; }
+  .compact-navigation summary { min-height: 30px; padding: 0 8px; font-size: 0.65rem; }
+  .actions {
+    gap: 4px;
+  }
+  .btn { min-height: 30px; }
+  .import-button,
+  .export-button { width: 34px; padding: 0; font-size: 0; }
+  .import-button span,
+  .export-button span { font-size: 1rem; }
+  .publish-button { padding: 0 8px; }
+  .auth-link { padding: 6px 7px; }
+}

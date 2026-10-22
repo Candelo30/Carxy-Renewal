@@ -1,0 +1,58 @@
+<main class="chat-shell">
+  <header class="site-header"><a class="brand" routerLink="/editor"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>3D STUDIO</small></b></a><nav><a routerLink="/feed">Comunidad</a><a routerLink="/editor">Editor 3D</a></nav><app-activity-notifications /><app-account-menu /></header>
+  <section class="chat-layout">
+    <aside class="conversations"><p class="eyebrow">CREADORES</p><h1>Mensajes</h1><p>Inicia una conversación directa usando el UID público del creador.</p>
+      @if (user$ | async; as user) {
+        <section class="recent-conversations" aria-labelledby="recent-conversations-title">
+          <h2 id="recent-conversations-title">Recientes</h2>
+          @let conversations = conversations$ | async;
+          @if (conversations?.length) {
+            <div class="recent-list">
+              @for (conversation of conversations; track conversation.id) {
+                @let peer = peerId(conversation, user.uid);
+                <button
+                  class="recent-chat"
+                  type="button"
+                  [class.selected]="conversation.id === chatId"
+                  (click)="selectConversation(conversation, user.uid)"
+                >
+                  <img [src]="conversation.partner?.photoURL || '/user-avatar.svg'" alt="" (error)="useFallbackAvatar($event)" />
+                  <span class="recent-chat-copy">
+                    <strong>{{ conversation.partner?.displayName || peer }}</strong>
+                    <small>{{ conversation.lastMessage ? (conversation.lastMessage.senderId === user.uid ? 'Tú: ' : '') + conversation.lastMessage.text : 'Conversación abierta' }}</small>
+                  </span>
+                  <time>{{ conversation.updatedAt | date:'shortDate' }}</time>
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="no-recent-chats">Aún no tienes conversaciones. Abre un perfil para enviar un mensaje o inicia un chat por UID.</p>
+          }
+        </section>
+      }
+      <h2 class="new-conversation-title">Nuevo chat</h2>
+      <form (ngSubmit)="openConversation()"><label for="peer">UID del creador</label><input id="peer" name="peer" [(ngModel)]="partnerId" placeholder="UID de Firebase o modo local" required /><button type="submit">Abrir conversación</button></form>
+      @if (error) { <p class="error">{{ error }}</p> }
+      @if (!auth.isConfigured) { <p class="notice">Modo local: los mensajes solo se sincronizan en este navegador.</p> }
+    </aside>
+    <section class="conversation">
+      @if (messages$; as stream) {
+        <div class="conversation-header"><div class="avatar">✦</div><div><strong>Conversación directa</strong><small>{{ partnerId }}</small></div></div>
+        <div class="message-list">
+          @if (stream | async; as messages) {
+            @if (messages.length) {
+              @for (message of messages; track message.id) {
+                <article class="message" [class.own]="message.senderId === (user$ | async)?.uid"><b>{{ message.senderName }}</b><p>{{ message.text }}</p><time>{{ message.createdAt | date:'short' }}</time></article>
+              }
+            } @else { <div class="empty">Aún no hay mensajes. Saluda para iniciar la conversación.</div> }
+          } @else {
+            <app-loading-spinner variant="inline" label="Conectando conversación…" />
+          }
+        </div>
+        <form class="composer" (ngSubmit)="send()"><input name="message" [(ngModel)]="message" maxlength="2000" placeholder="Escribe un mensaje…" required /><button type="submit" [disabled]="!message.trim()">Enviar</button></form>
+      } @else {
+        <div class="empty"><span>✉</span><h2>Tus conversaciones</h2><p>Escribe el UID de otro creador para iniciar un chat privado.</p></div>
+      }
+    </section>
+  </section>
+</main>

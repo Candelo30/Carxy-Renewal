@@ -1,0 +1,63 @@
+<main class="dashboard-shell">
+  <header class="site-header">
+    <a class="brand" routerLink="/editor"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>3D STUDIO</small></b></a>
+    <nav><a routerLink="/feed">Comunidad</a><a routerLink="/editor">Editor 3D</a><a routerLink="/chat">Mensajes</a></nav>
+    @if (auth.user$ | async; as user) {
+      <app-activity-notifications />
+      <app-account-menu />
+    }
+  </header>
+  @if (vm$ | async; as vm) {
+    <section class="content">
+      <div class="heading"><div><p class="eyebrow">TU ESPACIO DE TRABAJO</p><h1>Mis creaciones</h1><p>Administra tu portafolio, visibilidad y métricas.</p></div><a routerLink="/editor" class="create">＋ Crear modelo</a></div>
+      <div class="metrics">
+        <article><span>◇</span><div><small>MODELOS</small><strong>{{ vm.posts.length }}</strong></div></article>
+        <article><span>♡</span><div><small>LIKES RECIBIDOS</small><strong>{{ totalLikes(vm.posts) }}</strong></div></article>
+        <article><span>◉</span><div><small>VISTAS</small><strong>{{ totalViews(vm.posts) }}</strong></div></article>
+        <article><span>↗</span><div><small>REMIXES</small><strong>{{ totalRemixes(vm.posts) }}</strong></div></article>
+      </div>
+      @if (error) { <p class="alert error" role="alert">{{ error }}</p> }
+      @if (status) { <p class="alert success" role="status">{{ status }}</p> }
+      <div class="section-heading"><div><p class="eyebrow">PORTAFOLIO</p><h2>Todos tus modelos</h2></div><span>{{ vm.posts.length }} publicaciones</span></div>
+      @if (vm.posts.length) {
+        <div class="model-grid">
+          @for (post of vm.posts; track trackPost($index, post)) {
+            <article class="model-card">
+              <div class="image-wrap"><img [src]="post.thumbnailUrl" [alt]="'Render de ' + post.title" /><span class="privacy" [class.private]="post.isPrivate">{{ post.isPrivate ? 'PRIVADO' : 'PÚBLICO' }}</span></div>
+              <div class="card-body">
+                <div class="model-heading"><div><h3>{{ post.title }}</h3><time>{{ post.createdAt | date:'mediumDate' }}</time></div><button class="more" [attr.aria-label]="'Editar ' + post.title" (click)="edit(post, editDialog)">···</button></div>
+                <p class="description">{{ post.description || 'Sin descripción.' }}</p>
+                @if (post.tags?.length) { <div class="tags">@for (tag of post.tags; track tag) { <span>#{{ tag }}</span> }</div> }
+                <div class="stats"><span>♡ {{ post.likesCount ?? post.likes }}</span><span>◉ {{ post.viewsCount ?? 0 }}</span><span>↗ {{ post.remixCount ?? 0 }}</span></div>
+                <div class="actions">
+                  <button class="open" [disabled]="busy" (click)="openInEditor(post)">↗ Abrir y editar</button>
+                  <button [attr.aria-label]="post.isPrivate ? 'Hacer público' : 'Hacer privado'" [title]="post.isPrivate ? 'Hacer público' : 'Hacer privado'" (click)="togglePrivacy(post)">{{ post.isPrivate ? '◌' : '◎' }}</button>
+                  <button class="delete" aria-label="Eliminar modelo" title="Eliminar modelo" (click)="requestDelete(post, deleteDialog)">⌫</button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty"><span>◇</span><h2>Aún no tienes modelos publicados</h2><p>Publica una creación para gestionarla y revisar sus métricas aquí.</p><a routerLink="/editor">Abrir el editor 3D</a></div>
+      }
+    </section>
+    <dialog #editDialog class="modal">
+      <form (ngSubmit)="saveMetadata(editDialog)"><button class="dismiss" type="button" (click)="editDialog.close()">×</button><p class="eyebrow">PORTAFOLIO</p><h2>Editar metadatos</h2>
+        <label>Título<input name="title" [(ngModel)]="title" required maxlength="100" /></label>
+        <label>Descripción<textarea name="description" [(ngModel)]="description" maxlength="2000" rows="4"></textarea></label>
+        <label>Etiquetas<input name="tags" [(ngModel)]="tagsText" placeholder="vehículo, sci-fi, concept" /><small>Separa las etiquetas con comas (máximo 12).</small></label>
+        @if (error) { <p class="error">{{ error }}</p> }
+        <footer><button type="button" class="cancel" (click)="editDialog.close()">Cancelar</button><button class="save" [disabled]="busy">Guardar cambios</button></footer>
+      </form>
+    </dialog>
+    <dialog #deleteDialog class="modal">
+      <div><button class="dismiss" type="button" (click)="deleteDialog.close()">×</button><p class="eyebrow">ACCIÓN IRREVERSIBLE</p><h2>Eliminar modelo</h2><p>Se eliminarán “{{ deletingPost?.title }}”, su archivo 3D y su miniatura. Esta acción no se puede deshacer.</p>
+        @if (error) { <p class="error">{{ error }}</p> }
+        <footer><button type="button" class="cancel" (click)="deleteDialog.close()">Cancelar</button><button class="danger" [disabled]="busy" (click)="confirmDelete(deleteDialog)">Eliminar definitivamente</button></footer>
+      </div>
+    </dialog>
+  } @else {
+    <app-loading-spinner label="Cargando tus creaciones…" />
+  }
+</main>

@@ -1,0 +1,10 @@
+<div
+  class="navigation-loading"
+  [class.is-visible]="navigationLoading()"
+  role="progressbar"
+  aria-label="Cargando página"
+  [attr.aria-hidden]="!navigationLoading()"
+  [attr.aria-valuetext]="navigationLoading() ? 'Cargando' : null"
+></div>
+<router-outlet />
+<app-notification-center />

@@ -1,0 +1,29 @@
+@if (user$ | async; as user) {
+  @let items = (activities$ | async) ?? [];
+  <div class="activity-menu">
+    <button class="activity-trigger" type="button" [attr.aria-expanded]="open" aria-label="Notificaciones" title="Notificaciones" (click)="open = !open">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+      @if (unreadCount(items); as unread) { <span class="badge">{{ unread > 9 ? '9+' : unread }}</span> }
+    </button>
+    @if (open) {
+      <section class="activity-popover" aria-label="Actividad reciente">
+        <header><div><strong>Notificaciones</strong><small>{{ unreadCount(items) }} sin leer</small></div>
+          <button type="button" [disabled]="unreadCount(items) === 0" (click)="markAllRead(items, user.uid)">Marcar todas</button>
+        </header>
+        @if (items.length) {
+          <div class="activity-list">
+            @for (item of items; track item.id) {
+              <a [routerLink]="['/profile', item.actorId]" [class.unread]="!item.read" (click)="markRead(item, user.uid)">
+                <img [src]="item.actorPhotoURL || '/user-avatar.svg'" alt="" />
+                <span><strong>{{ item.actorName }}</strong> {{ messageFor(item) }}<small>{{ item.createdAt | date:'short' }}</small></span>
+                @if (!item.read) { <i aria-label="Sin leer"></i> }
+              </a>
+            }
+          </div>
+        } @else {
+          <p class="activity-empty">Aún no tienes actividad. Cuando alguien te siga, dé like o comente, aparecerá aquí.</p>
+        }
+      </section>
+    }
+  </div>
+}

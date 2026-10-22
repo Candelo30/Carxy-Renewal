@@ -1,0 +1,443 @@
+/* You can add global styles to this file, and also import other style files */
+/* src/styles.css */
+
+/* 1. Reset Global y Box-Sizing */
+:root {
+  color-scheme: dark;
+  --accent-color: #8b5cf6;
+  --surface-main: #171a22;
+  --surface-panel: #1e222d;
+  --surface-raised: #252a36;
+  --surface-active: #303746;
+  --surface-control: #151821;
+  --border-color: #343b4a;
+  --text-primary: #f3f4f8;
+  --text-muted: #929bad;
+  --text-on-accent: #ffffff;
+  --color-danger: #ff9aa9;
+  --color-success: #8be1b8;
+  --color-warning: #efc98f;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --surface-main: #f0f2f7;
+  --surface-panel: #ffffff;
+  --surface-raised: #f5f6fa;
+  --surface-active: #e7eaf2;
+  --surface-control: #ffffff;
+  --border-color: #dce0e9;
+  --text-primary: #202431;
+  --text-muted: #626c7d;
+  --text-on-accent: #ffffff;
+  --color-danger: #b42332;
+  --color-success: #25845e;
+  --color-warning: #86530a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 2. Configuración de pantalla completa y tipografía */
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--surface-main);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 3. Estilizado de Scrollbar Oscuro (para el panel lateral) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-panel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* 4. Heredar fuentes en elementos de formulario */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* 5. Estilizado personalizado para Sliders (Range Inputs) */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  outline: none;
+  margin: 8px 0;
+}
+
+/* Bolita del slider (Chrome, Safari, Edge) */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background-color 0.2s ease;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  background: var(--accent-color);
+  transform: scale(1.15);
+}
+
+/* Bolita del slider (Firefox) */
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background-color 0.2s ease;
+}
+
+html[data-theme='light'] :is(
+  app-auth-page,
+  app-feed-page,
+  app-profile-page,
+  app-chat-page,
+  app-admin-dashboard,
+  app-my-models,
+  app-editor-page
+) {
+  background: var(--surface-main);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] :is(
+  app-auth-page,
+  app-feed-page,
+  app-profile-page,
+  app-chat-page,
+  app-admin-dashboard,
+  app-my-models,
+  app-editor-page,
+  app-publish-modal
+) :is(
+  .site-header,
+  .topbar,
+  .top-toolbar-area,
+  .editor-panel-area,
+  .conversations,
+  .tabs,
+  .panel,
+  .post-card,
+  .post-grid article,
+  .model-card,
+  .content-card,
+  .metrics article,
+  .auth-card,
+  .publish-modal,
+  .edit-dialog,
+  .confirm-dialog,
+  .modal,
+  .chat-layout
+) {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] :is(
+  app-auth-page,
+  app-feed-page,
+  app-profile-page,
+  app-chat-page,
+  app-admin-dashboard,
+  app-my-models,
+  app-editor-page,
+  app-publish-modal
+) :is(input, textarea, select, .message, .card-actions button, .actions button, .small-button, .cancel) {
+  border-color: var(--border-color);
+  background: var(--surface-control);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] :is(
+  app-auth-page,
+  app-feed-page,
+  app-profile-page,
+  app-chat-page,
+  app-admin-dashboard,
+  app-my-models,
+  app-editor-page,
+  app-publish-modal
+) :is(
+  h1,
+  h2,
+  h3,
+  .author-row,
+  .card-content h3,
+  .comments strong,
+  .person strong,
+  .stats b,
+  .profile-info h1,
+  .portfolio h2,
+  .heading h1,
+  .heading h2,
+  .panel-heading h2,
+  .conversations h1,
+  .content-title h3,
+  .conversation-header strong
+) {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] :is(
+  app-auth-page,
+  app-feed-page,
+  app-profile-page,
+  app-chat-page,
+  app-admin-dashboard,
+  app-my-models,
+  app-editor-page,
+  app-publish-modal
+) :is(
+  .brand small,
+  .eyebrow,
+  .description,
+  .intro,
+  .subtext,
+  .section-heading > span,
+  .empty,
+  .empty-state p,
+  .profile-info > p,
+  .stats,
+  .creator-id,
+  .panel-heading p,
+  .panel-heading > span,
+  .conversations > p,
+  .conversation-header small,
+  .author-row time,
+  .comments,
+  .message time,
+  .heading p,
+  .model-heading time,
+  .content-card p,
+  .content-card small,
+  .person small,
+  .inline-note,
+  .empty-preview
+) {
+  color: var(--text-muted);
+}
+
+html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-admin-dashboard, app-my-models) nav a,
+html[data-theme='light'] :is(app-auth-page, app-feed-page, app-profile-page, app-chat-page, app-admin-dashboard, app-my-models) label {
+  color: var(--text-primary);
+}
+
+input[type='range']::-moz-range-thumb:hover {
+  background: var(--accent-color);
+  transform: scale(1.15);
+}
+
+html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard)
+  :is(.site-header, .topbar) {
+  border-color: var(--border-color);
+  background: color-mix(in srgb, var(--surface-panel) 94%, transparent);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard)
+  :is(nav a, .author-row a, .profile-link) {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-feed-page {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-feed-page .hero {
+  border-color: color-mix(in srgb, var(--accent-color) 28%, var(--border-color));
+  background: var(--surface-panel);
+}
+
+html[data-theme='light'] app-feed-page :is(.hero p:not(.eyebrow), .description, .empty-state p) {
+  color: var(--text-muted);
+}
+
+html[data-theme='light'] app-feed-page :is(.post-card, .preview-switch, .empty-state) {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-feed-page :is(.preview-switch, .card-actions button, .comment-form input) {
+  border-color: var(--border-color);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-feed-page .preview-switch button.active {
+  color: var(--accent-color);
+}
+
+html[data-theme='light'] app-feed-page .comments {
+  color: var(--text-muted);
+}
+
+html[data-theme='light'] app-profile-page {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-profile-page .post-grid article {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+}
+
+html[data-theme='light'] app-profile-page :is(.profile-info > p:not(.eyebrow), .stats, .creator-id, .post-grid p) {
+  color: var(--text-muted);
+}
+
+html[data-theme='light'] app-profile-page .edit-dialog {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-profile-page .edit-dialog :is(label, input, textarea) {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-chat-page {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-chat-page :is(.conversations, .message, .message.own) {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-chat-page :is(.conversations input, .composer input) {
+  border-color: var(--border-color);
+  background: var(--surface-control);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-chat-page :is(.message b, .empty h2) {
+  color: var(--accent-color);
+}
+
+html[data-theme='light'] app-my-models {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-my-models :is(.metrics article, .model-card, .modal) {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-my-models :is(.heading p:not(.eyebrow), .description, .empty p, .stats) {
+  color: var(--text-muted);
+}
+
+html[data-theme='light'] app-my-models :is(.actions button, .modal input, .modal textarea, .modal .cancel) {
+  border-color: var(--border-color);
+  background: var(--surface-control);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-admin-dashboard {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-admin-dashboard :is(.tabs, .panel, .content-card, .confirm-dialog) {
+  border-color: var(--border-color);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-admin-dashboard :is(td, .person strong, .panel-heading h2, .content-title h3) {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] app-admin-dashboard :is(.panel-heading, td) {
+  border-color: var(--border-color);
+}
+
+html[data-theme='light'] app-admin-dashboard :is(.table-wrap select, .small-button, .confirm-dialog .cancel) {
+  border-color: var(--border-color);
+  background: var(--surface-control);
+  color: var(--text-primary);
+}
+
+:is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar) > app-account-menu {
+  flex:none;
+  margin-left:auto;
+}
+
+:is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar) > app-activity-notifications {
+  flex:none;
+  margin-left:0;
+}
+
+:is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar):has(> app-activity-notifications) > app-activity-notifications {
+  margin-left:auto;
+}
+
+:is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar):has(> app-activity-notifications) > app-account-menu {
+  margin-left:0;
+}
+
+@media (max-width:700px) {
+  :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar) > nav {
+    order:3;
+    flex:1 0 100%;
+  }
+
+  :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar) > app-activity-notifications {
+    order:1;
+    margin-left:auto;
+  }
+
+  :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) :is(.site-header, .topbar) > app-account-menu {
+    order:2;
+    margin-left:0;
+  }
+}

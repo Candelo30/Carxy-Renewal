@@ -1,0 +1,17 @@
+<div class="viewer-container">
+  <canvas #rendererCanvas class="webgl-canvas" (pointerdown)="onCanvasPointerDown($event)"></canvas>
+  <div class="hotspot-layer">
+    @for (hotspot of hotspots; track hotspot.id) {
+      @if (hotspot.visible) {
+        <div
+          class="hotspot-label"
+          [style.left.px]="hotspot.screenX"
+          [style.top.px]="hotspot.screenY"
+        >
+          <span class="hotspot-pin"></span>
+          <span>{{ hotspot.label }}</span>
+        </div>
+      }
+    }
+  </div>
+</div>

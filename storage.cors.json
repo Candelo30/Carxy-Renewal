@@ -1,0 +1,14 @@
+[
+  {
+    "origin": [
+      "http://localhost:4200",
+      "http://localhost:4202",
+      "https://wrwlb43x-4200.use2.devtunnels.ms",
+      "https://carxy-f3e27.web.app",
+      "https://carxy-f3e27.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Accept-Ranges"],
+    "maxAgeSeconds": 3600
+  }
+]

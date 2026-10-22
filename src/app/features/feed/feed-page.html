@@ -1,0 +1,152 @@
+<main class="social-shell">
+  <header class="site-header">
+    <a class="brand" routerLink="/editor"
+      ><img src="/carxy-mark.svg" alt="" /><span><b>CARXY</b><small>3D STUDIO</small></span></a
+    >
+    <nav>
+      <a class="selected" routerLink="/feed">Comunidad</a><a routerLink="/editor">Editor 3D</a>
+      @if (user$ | async; as user) {
+        <a routerLink="/my-models">Mis creaciones</a><a routerLink="/chat">Mensajes</a>
+        @if (user.role === 'admin') {
+          <a routerLink="/admin">Admin</a>
+        } @else if (user.role === 'moderator') {
+          <a routerLink="/moderation">Moderar</a>
+        }
+      }
+    </nav>
+    @if (!(user$ | async)) {
+      <a class="sign-in" routerLink="/login">Iniciar sesión</a>
+    } @else {
+      <app-activity-notifications />
+    }
+    <app-account-menu />
+  </header>
+  <section class="feed-content">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">DESCUBRE · CREA · REMIXEA</p>
+        <h1>El arte toma forma<br /><span>en tres dimensiones.</span></h1>
+        <p>
+          Explora trabajos de la comunidad y abre cualquier modelo para crear tu propia versión.
+        </p>
+      </div>
+      <a class="create-button" routerLink="/editor">＋ Crear un modelo</a>
+    </div>
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">EXPLORAR</p>
+        <h2>Creaciones recientes</h2>
+      </div>
+      <span>Comunidad 3D</span>
+    </div>
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+    @let posts = posts$ | async;
+    @if (posts === null) {
+      <app-loading-spinner label="Preparando la comunidad…" />
+    } @else {
+      @if (posts.length) {
+        <div class="post-grid">
+          @for (post of posts; track post.id) {
+            <article class="post-card">
+              @if (previewModes[post.id] === '3d') {
+                <app-model-preview [modelUrl]="post.modelUrl" />
+              } @else {
+                <img
+                  class="thumbnail"
+                  [src]="post.thumbnailUrl"
+                  [alt]="'Render de ' + post.title"
+                />
+              }
+              <div class="preview-switch" role="group" [attr.aria-label]="'Vista de ' + post.title">
+                <button
+                  type="button"
+                  [class.active]="previewModes[post.id] !== '3d'"
+                  (click)="setPreviewMode(post, 'image')"
+                >
+                  ▧ Imagen
+                </button>
+                <button
+                  type="button"
+                  [class.active]="previewModes[post.id] === '3d'"
+                  (click)="setPreviewMode(post, '3d')"
+                >
+                  ◇ Ver en 3D
+                </button>
+              </div>
+              <div class="card-content">
+                <div class="author-row">
+                  @if (post.author.photoURL) {
+                    <img
+                      class="avatar"
+                      [src]="post.author.photoURL"
+                      alt=""
+                      (error)="useFallbackAvatar($event)"
+                    />
+                  } @else {
+                    <img class="avatar" src="/user-avatar.svg" alt="" />
+                  }
+                  <a [routerLink]="['/profile', post.author.uid]">{{ post.author.displayName }}</a>
+                  <time>{{ post.createdAt | date: 'mediumDate' }}</time>
+                </div>
+                @if (user$ | async; as currentUser) {
+                  @if (currentUser.uid !== post.author.uid) {
+                    @let following =
+                      (social.isFollowing$(currentUser.uid, post.author.uid) | async) ?? false;
+                    <button
+                      class="follow-inline"
+                      type="button"
+                      [attr.aria-label]="
+                        following
+                          ? 'Dejar de seguir a ' + post.author.displayName
+                          : 'Seguir a ' + post.author.displayName
+                      "
+                      (click)="toggleFollow(post, currentUser, following)"
+                    >
+                      {{ following ? 'Dejar de seguir' : 'Seguir creador' }}
+                    </button>
+                  }
+                }
+                <h3>{{ post.title }}</h3>
+                <p class="description">{{ post.description || 'Sin descripción.' }}</p>
+                <div class="card-actions">
+                  <button type="button" (click)="like(post)">♡ {{ post.likes }}</button>
+                  <button type="button" class="remix" (click)="remix(post)">
+                    ↗ Remix / Editar en 3D
+                  </button>
+                </div>
+                @let comments = (social.comments$(post.id) | async) ?? [];
+                @if (comments.length) {
+                  <div class="comments">
+                    @for (comment of comments; track trackComment($index, comment)) {
+                      <p>
+                        <strong>{{ comment.author.displayName }}:</strong> {{ comment.text }}
+                      </p>
+                    }
+                  </div>
+                }
+                <form class="comment-form" (ngSubmit)="addComment(post)">
+                  <input
+                    name="comment-{{ post.id }}"
+                    [(ngModel)]="commentDrafts[post.id]"
+                    placeholder="Escribe un comentario…"
+                    maxlength="500"
+                  />
+                  <button type="submit" aria-label="Enviar comentario">➤</button>
+                </form>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span>◇</span>
+          <h3>Aquí comienza la comunidad</h3>
+          <p>Sé la primera persona en publicar un modelo 3D.</p>
+          <a routerLink="/editor">Crear y publicar</a>
+        </div>
+      }
+    }
+  </section>
+</main>
