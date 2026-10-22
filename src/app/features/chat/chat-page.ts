@@ -1,8 +1,25 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+  ElementRef,
+  AfterViewChecked,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Observable, Subscription, combineLatest, firstValueFrom, map, of, switchMap, take } from 'rxjs';
+import {
+  Observable,
+  Subscription,
+  combineLatest,
+  firstValueFrom,
+  map,
+  of,
+  switchMap,
+  take,
+} from 'rxjs';
 import { ChatConversation, ChatMessage, User } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
 import { SocialService } from '../../core/services/social';
@@ -14,11 +31,19 @@ import { ActivityNotificationsComponent } from '../../shared/components/activity
 @Component({
   selector: 'app-chat-page',
   standalone: true,
-  imports: [AccountMenuComponent, ActivityNotificationsComponent, AsyncPipe, DatePipe, FormsModule, LoadingSpinner, RouterLink],
+  imports: [
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
+    AsyncPipe,
+    DatePipe,
+    FormsModule,
+    LoadingSpinner,
+    RouterLink,
+  ],
   templateUrl: './chat-page.html',
   styleUrl: './chat-page.css',
 })
-export class ChatPage implements OnInit, OnDestroy {
+export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly user$ = inject(AuthService).user$;
   readonly auth = inject(AuthService);
   private readonly social = inject(SocialService);
@@ -26,17 +51,26 @@ export class ChatPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly subscription = new Subscription();
   private currentUser: User | null = null;
+  @ViewChild('messageList') private messageListContainer!: ElementRef;
   readonly conversations$ = this.user$.pipe(
-    switchMap((user) => user
-      ? this.social.chatConversations$(user.uid).pipe(
-          switchMap((conversations) => conversations.length
-            ? combineLatest(conversations.map((conversation) => this.social.profile$(this.peerId(conversation, user.uid)).pipe(
-                map((partner) => ({ ...conversation, partner })),
-              )))
-            : of([]),
-          ),
-        )
-      : of([]),
+    switchMap((user) =>
+      user
+        ? this.social
+            .chatConversations$(user.uid)
+            .pipe(
+              switchMap((conversations) =>
+                conversations.length
+                  ? combineLatest(
+                      conversations.map((conversation) =>
+                        this.social
+                          .profile$(this.peerId(conversation, user.uid))
+                          .pipe(map((partner) => ({ ...conversation, partner }))),
+                      ),
+                    )
+                  : of([]),
+              ),
+            )
+        : of([]),
     ),
   );
   partnerId = '';
@@ -46,14 +80,18 @@ export class ChatPage implements OnInit, OnDestroy {
   messages$?: Observable<ChatMessage[]>;
 
   ngOnInit(): void {
-    this.subscription.add(this.auth.user$.subscribe((user) => {
-      this.currentUser = user;
-      this.openRequestedConversation();
-    }));
-    this.subscription.add(this.route.queryParamMap.subscribe((params) => {
-      this.partnerId = params.get('peer') ?? '';
-      this.openRequestedConversation();
-    }));
+    this.subscription.add(
+      this.auth.user$.subscribe((user) => {
+        this.currentUser = user;
+        this.openRequestedConversation();
+      }),
+    );
+    this.subscription.add(
+      this.route.queryParamMap.subscribe((params) => {
+        this.partnerId = params.get('peer') ?? '';
+        this.openRequestedConversation();
+      }),
+    );
   }
 
   openConversation(): void {
@@ -72,6 +110,24 @@ export class ChatPage implements OnInit, OnDestroy {
       this.error = error instanceof Error ? error.message : 'No se pudo abrir la conversación.';
       this.notifications.error(this.error);
     });
+  }
+
+  ngAfterViewChecked() {
+    this.scrollToBottom();
+  }
+
+  scrollToBottom(): void {
+    try {
+      this.messageListContainer.nativeElement.scrollTop =
+        this.messageListContainer.nativeElement.scrollHeight;
+    } catch (err) {}
+  }
+
+  deselectChat(): void {
+    this.chatId = '';
+    this.partnerId = '';
+    this.messages$ = undefined;
+    this.error = '';
   }
 
   peerId(conversation: ChatConversation, uid: string): string {
