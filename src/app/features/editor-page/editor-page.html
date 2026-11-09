@@ -43,6 +43,15 @@
     </button>
   </section>
 </main>
+
+<!-- Onboarding tutorial -->
+@if (onboardingOpen) {
+  <app-onboarding
+    [step]="onboardingStep"
+    (onComplete)="onOnboardingComplete()"
+  ></app-onboarding>
+}
+
 @if (publishModalOpen) {
   <app-publish-modal (closed)="publishModalOpen = false" />
 }

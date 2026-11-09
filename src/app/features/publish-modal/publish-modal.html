@@ -1,29 +1,119 @@
-<div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+<div class="publish-backdrop" (click)="close()" (keydown.escape)="close()">
   <section class="publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-title" (click)="$event.stopPropagation()">
-    <button class="close" type="button" aria-label="Cerrar" (click)="close()">×</button>
-    <p class="eyebrow">FORMA COMMUNITY</p>
-    <h1 id="publish-title">Publicar modelo</h1>
-    <p class="intro">Comparte una captura y una copia GLB de tu escena con la comunidad.</p>
-    @if (preview) {
-      <img class="preview" [src]="preview" alt="Vista previa del modelo 3D" />
-    } @else {
-      <div class="preview empty-preview">El visor no está disponible para capturar.</div>
+    <button class="btn-close" type="button" aria-label="Cerrar" (click)="close()">✕</button>
+
+    <!-- Paso indicator -->
+    <div class="publish-steps">
+      @for (step of [1, 2, 3, 4]; track step) {
+        <div class="step" [class.active]="currentStep >= step" [class.current]="currentStep === step">
+          <span class="step-number">{{ step }}</span>
+          <span class="step-line"></span>
+        </div>
+      }
+    </div>
+
+    <p class="eyebrow" id="publish-title">PUBLICAR MODELO 3D</p>
+    <h1>{{ stepLabel }}</h1>
+
+    <!-- Step 1: Datos del modelo -->
+    @if (currentStep === 1) {
+      <div class="step-content">
+        <p class="step-description">Dale un nombre y cuenta qué creaste. Esto ayudará a otros a encontrar tu modelo.</p>
+        <label>
+          <span>Título <span class="required">*</span></span>
+          <input type="text" [(ngModel)]="title" maxlength="100" placeholder="Ej. Concepto de vehículo eléctrico" />
+        </label>
+        <label>
+          <span>Descripción</span>
+          <textarea [(ngModel)]="description" maxlength="2000" rows="4" placeholder="Cuenta cómo creaste este modelo…"></textarea>
+        </label>
+        @if (error) { <p class="error">{{ error }}</p> }
+      </div>
     }
-    <label>Título<input [(ngModel)]="title" maxlength="100" placeholder="Ej. Concepto de vehículo eléctrico" /></label>
-    <label>Descripción<textarea [(ngModel)]="description" maxlength="2000" rows="4" placeholder="Cuenta cómo creaste este modelo…"></textarea></label>
-    @if (!(user$ | async)) {
-      <p class="inline-note">Necesitas una sesión para publicar. <a routerLink="/login" (click)="close()">Iniciar sesión</a></p>
+
+    <!-- Step 2: Etiquetas y visibilidad -->
+    @if (currentStep === 2) {
+      <div class="step-content">
+        <p class="step-description">Organiza tu modelo con etiquetas y elige quién puede verlo.</p>
+        <label>
+          <span>Etiquetas</span>
+          <input type="text" [(ngModel)]="tags" placeholder="vehículo, sci-fi, concept" />
+          <small>Separa con comas (máximo 12).</small>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" [(ngModel)]="isPrivate" />
+          <span>Modelo privado (solo tú podrás verlo)</span>
+        </label>
+        @if (error) { <p class="error">{{ error }}</p> }
+      </div>
     }
-    @if (error) { <p class="error" role="alert">{{ error }}</p> }
-    <footer>
-      <button class="secondary" type="button" (click)="close()">Cancelar</button>
-      <button class="primary" type="button" [disabled]="busy || !(user$ | async)" (click)="publish()">
-        @if (busy) {
-          <app-loading-spinner variant="inline" label="Publicando tu modelo…" />
+
+    <!-- Step 3: Vista previa -->
+    @if (currentStep === 3) {
+      <div class="step-content">
+        <p class="step-description">Revisa cómo se verá tu modelo en la comunidad.</p>
+        <div class="preview-wrap">
+          @if (preview) {
+            <img class="preview-img" [src]="preview" alt="Vista previa del modelo 3D" />
+          } @else {
+            <div class="preview-empty">Vista previa no disponible</div>
+          }
+        </div>
+        <div class="preview-info">
+          <span class="info-item">📦 Formato: GLB</span>
+          <span class="info-item">🖼️ Miniatura: PNG</span>
+          <span class="info-item">🔒 {{ isPrivate ? 'Privado' : 'Público' }}</span>
+        </div>
+        @if (error) { <p class="error">{{ error }}</p> }
+      </div>
+    }
+
+    <!-- Step 4: Publicar y compartir -->
+    @if (currentStep === 4) {
+      <div class="step-content">
+        @if (publishedPostId) {
+          <div class="success-state">
+            <div class="success-icon">🚀</div>
+            <h2>¡Publicado!</h2>
+            <p>“{{ publishedPostTitle }}” está disponible en la comunidad CARXY.</p>
+          </div>
+
+          <div class="share-section">
+            <p class="share-label">Código de la escena (para compartir con colaboradores)</p>
+            <div class="code-wrap">
+              <textarea readonly class="share-code">{{ shareCode }}</textarea>
+              <button class="btn-copy" type="button" (click)="copyShareCode()">Copiar</button>
+            </div>
+            <p class="share-hint">Envía este código a otro creador para que pueda importar tu escena en su editor.</p>
+          </div>
         } @else {
-          Publicar en la comunidad
+          <p class="step-description">¡Listo! Publica tu modelo para compartirlo con la comunidad.</p>
+          @if (error) { <p class="error">{{ error }}</p> }
         }
-      </button>
+      </div>
+    }
+
+    <!-- Footer actions -->
+    <footer class="publish-footer">
+      @if (currentStep > 1) {
+        <button class="btn-ghost" type="button" (click)="prevStep()">◀ Anterior</button>
+      }
+      <div class="footer-actions">
+        @if (currentStep === 4 && publishedPostId) {
+          <button class="btn-primary" type="button" (click)="close()">Listo</button>
+        } @else {
+          <button class="btn-ghost" type="button" (click)="close()">Cancelar</button>
+          <button class="btn-primary" type="button" [disabled]="busy" (click)="currentStep < 4 ? nextStep() : publish()">
+            @if (busy) {
+              <app-loading-spinner variant="inline" label="Procesando…" />
+            } @else if (currentStep === 4) {
+              Publicar y compartir
+            } @else {
+              Siguiente ▶
+            }
+          </button>
+        }
+      </div>
     </footer>
   </section>
 </div>

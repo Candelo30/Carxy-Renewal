@@ -69,6 +69,7 @@ export class ThreeEngineService implements OnDestroy {
   public clippingEnabled = false;
   public presentationEnabled = false;
   public arSupported = false;
+  public ownCursorUid: string | null = null;
   public readonly collaboratorJoined$ = new Subject<{ uid: string; displayName: string; color: string }>();
   public readonly collaboratorLeft$ = new Subject<string>();
   public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
@@ -1363,6 +1364,21 @@ export class ThreeEngineService implements OnDestroy {
     this.collaboratorLeft$.next(uid);
   }
 
+  setOwnCursorUid(uid: string): void {
+    this.ownCursorUid = uid;
+    if (!this.collaborators.has(uid)) {
+      this.joinCollaboration(uid, uid);
+    }
+  }
+
+  updateOwnCursor(x: number, y: number): void {
+    if (!this.ownCursorUid || !this.canvas) return;
+    const collab = this.collaborators.get(this.ownCursorUid);
+    if (!collab) return;
+    this.moveCollaboratorMarker(this.ownCursorUid, x, y);
+    this.remoteCursor$.next({ uid: this.ownCursorUid, x, y, color: collab.color });
+  }
+
   updateCollaboratorCursor(uid: string, x: number, y: number): void {
     const collab = this.collaborators.get(uid);
     if (!collab) return;
@@ -1460,6 +1476,20 @@ export class ThreeEngineService implements OnDestroy {
         return;
       }
     }
+  }
+
+  // --- Compartir escena (colaboración) ---
+
+  exportSceneWithMetadata(metadata: { title: string; description: string; authorId: string; authorName: string }): string {
+    const scene = this.serializeScene();
+    const payload = {
+      type: 'carxy-scene',
+      version: 1,
+      metadata,
+      scene,
+      exportedAt: Date.now(),
+    };
+    return JSON.stringify(payload);
   }
 
   public ngOnDestroy(): void {
