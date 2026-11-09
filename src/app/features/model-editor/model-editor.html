@@ -158,6 +158,36 @@
         {{ language === 'es' ? 'Selecciona un objeto para editar sus materiales.' : 'Select an object to edit its materials.' }}
       </p>
     </section>
+
+    <section class="panel-section collaboration-section">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'COLABORACIÓN' : 'COLLABORATION' }}</span>
+          <h2>{{ language === 'es' ? 'Edición en tiempo real' : 'Real-time editing' }}</h2>
+        </div>
+        <button class="icon-action" (click)="toggleCollaborationPanel()" title="Panel de colaboradores">👥</button>
+      </div>
+      <div class="collaborator-list" [class.hidden]="!collaborationOpen">
+        @if (collaborators.length) {
+          @for (c of collaborators; track c.uid) {
+            <div class="collaborator-row">
+              <span class="collaborator-dot" [style.background]="c.color"></span>
+              <span class="collaborator-name">{{ c.displayName }}</span>
+              @if (c.objectId) {
+                <span class="collaborator-status">{{ language === 'es' ? 'Editando objeto' : 'Editing object' }}</span>
+              }
+            </div>
+          }
+        } @else {
+          <p class="empty-state">{{ language === 'es' ? 'Solas en esta escena' : 'You are alone in this scene' }}</p>
+        }
+        <div class="collaborator-actions">
+          <button class="small-button" (click)="toggleCollaborationPanel()">
+            {{ collaborationOpen ? (language === 'es' ? 'Ocultar panel' : 'Hide panel') : (language === 'es' ? 'Mostrar colaboradores' : 'Show collaborators') }}
+          </button>
+        </div>
+      </div>
+    </section>
   </ng-container>
 
   <ng-template #settingsPanel>

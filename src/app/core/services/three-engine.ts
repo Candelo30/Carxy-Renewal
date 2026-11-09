@@ -69,6 +69,11 @@ export class ThreeEngineService implements OnDestroy {
   public clippingEnabled = false;
   public presentationEnabled = false;
   public arSupported = false;
+  public readonly collaboratorJoined$ = new Subject<{ uid: string; displayName: string; color: string }>();
+  public readonly collaboratorLeft$ = new Subject<string>();
+  public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
+  public readonly collaboratorSelection$ = new Subject<{ uid: string; objectId: string | null }>();
+  public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string }>();
 
   private canvas?: HTMLCanvasElement;
   private renderer?: THREE.WebGLRenderer;
@@ -115,6 +120,8 @@ export class ThreeEngineService implements OnDestroy {
   private arHitTestSource?: XRHitTestSource;
   private arReticle?: THREE.Mesh;
   private arReferenceSpace?: XRReferenceSpace;
+  private readonly collaborators = new Map<string, { displayName: string; color: string; objectId: string | null; x: number; y: number }>();
+  private readonly collaboratorObjects = new Map<string, THREE.Group>(); // uid -> grupo visual del cursor/avatar remoto
   private readonly initialPositions = new WeakMap<THREE.Group, THREE.Vector3>();
   private readonly initialNodeTransforms = new WeakMap<THREE.Object3D, {
     position: THREE.Vector3;
@@ -1153,6 +1160,124 @@ export class ThreeEngineService implements OnDestroy {
     if (property === 'opacity') {
       material.transparent = value < 1;
       material.needsUpdate = true;
+    }
+  }
+
+  // ========================================================================
+  // COLABORACIÓN EN TIEMPO REAL
+  // ========================================================================
+
+  joinCollaboration(uid: string, displayName: string): void {
+    if (this.collaborators.has(uid)) return;
+    const color = this.collaboratorColor(uid);
+    this.collaborators.set(uid, { displayName, color, objectId: null, x: 0, y: 0 });
+    this.collaboratorJoined$.next({ uid, displayName, color });
+    this.spawnCollaboratorMarker(uid, color);
+  }
+
+  leaveCollaboration(uid: string): void {
+    if (!this.collaborators.has(uid)) return;
+    this.collaborators.delete(uid);
+    this.removeCollaboratorMarker(uid);
+    this.collaboratorLeft$.next(uid);
+  }
+
+  updateCollaboratorCursor(uid: string, x: number, y: number): void {
+    const collab = this.collaborators.get(uid);
+    if (!collab) return;
+    collab.x = x;
+    collab.y = y;
+    this.moveCollaboratorMarker(uid, x, y);
+    this.remoteCursor$.next({ uid, x, y, color: collab.color });
+  }
+
+  setCollaboratorSelection(uid: string, objectId: string | null): void {
+    const collab = this.collaborators.get(uid);
+    if (!collab) return;
+    collab.objectId = objectId;
+    this.collaboratorSelection$.next({ uid, objectId });
+    this.updateCollaboratorMarker(uid);
+  }
+
+  applyRemoteTransform(uid: string, objectId: string, position: { x: number; y: number; z: number }, rotation: { x: number; y: number; z: number }, scale: { x: number; y: number; z: number }): void {
+    const target = this.objects.find((item) => item.id === objectId)?.object;
+    if (!target) return;
+    target.position.set(position.x, position.y, position.z);
+    target.rotation.set(rotation.x, rotation.y, rotation.z);
+    target.scale.set(scale.x, scale.y, scale.z);
+    this.collaboratorTransform$.next({ uid, objectId, position, rotation, scale });
+  }
+
+  getCollaborators(): Array<{ uid: string; displayName: string; color: string; objectId: string | null }> {
+    return Array.from(this.collaborators.entries()).map(([uid, c]) => ({ uid, displayName: c.displayName, color: c.color, objectId: c.objectId }));
+  }
+
+  private collaboratorColor(uid: string): string {
+    const colors = ['#8b5cf6', '#38bdf8', '#f59e0b', '#34d399', '#fb923c', '#a78bfa', '#c4b5fd', '#f472b6'];
+    let hash = 0;
+    for (let i = 0; i < uid.length; i++) {
+      hash = (hash << 5) - hash + uid.charCodeAt(i);
+      hash |= 0;
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  private spawnCollaboratorMarker(uid: string, color: string): void {
+    if (!this.scene) return;
+    const group = new THREE.Group();
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 12, 12),
+      new THREE.MeshBasicMaterial({ color, depthTest: false })
+    );
+    sphere.renderOrder = 100;
+    group.add(sphere);
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({ color, transparent: true, opacity: 0.9 }));
+    label.scale.set(0.5, 0.5, 1);
+    label.position.y = 0.25;
+    group.add(label);
+    this.scene.add(group);
+    this.collaboratorObjects.set(uid, group);
+  }
+
+  private removeCollaboratorMarker(uid: string): void {
+    const group = this.collaboratorObjects.get(uid);
+    if (!group) return;
+    this.scene?.remove(group);
+    group.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        (child.material as THREE.Material).dispose();
+      }
+    });
+    this.collaboratorObjects.delete(uid);
+  }
+
+  private moveCollaboratorMarker(uid: string, x: number, y: number): void {
+    const group = this.collaboratorObjects.get(uid);
+    if (!group || !this.camera || !this.canvas) return;
+    // Convertir coordenadas de pantalla (0-1) a mundo 3D cerca de la cámara
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(x * 2 - 1, -(y * 2 - 1)), this.camera);
+    const dir = raycaster.ray.direction;
+    const pos = raycaster.ray.origin.clone().addScaledVector(dir, 3);
+    group.position.copy(pos);
+  }
+
+  private updateCollaboratorMarker(uid: string): void {
+    const group = this.collaboratorObjects.get(uid);
+    if (!group) return;
+    const collab = this.collaborators.get(uid);
+    if (!collab) return;
+    // Si hay un objeto seleccionado, mover el marcador cerca de él
+    if (collab.objectId) {
+      const target = this.objects.find((item) => item.id === collab.objectId)?.object;
+      if (target) {
+        const pos = new THREE.Vector3();
+        target.getWorldPosition(pos);
+        pos.y += 0.5;
+        group.position.copy(pos);
+        return;
+      }
     }
   }
 
