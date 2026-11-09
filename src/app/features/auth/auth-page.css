@@ -141,6 +141,94 @@ input:focus {
   font-size: 0.82rem;
 }
 
+.status {
+  color: var(--color-success);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.verify-hint {
+  margin: -8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 45%, var(--border-color));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--surface-panel));
+  color: var(--color-warning);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.password-field {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.password-field input {
+  flex: 1;
+}
+
+.toggle-visibility {
+  flex: none;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.strength {
+  display: grid;
+  gap: 6px;
+  margin-top: -6px;
+}
+
+.strength-bar {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-color);
+  overflow: hidden;
+}
+
+.strength-bar::after {
+  display: block;
+  height: 100%;
+  width: 33%;
+  border-radius: inherit;
+  background: var(--color-danger);
+  content: '';
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.strength[data-level='fair'] .strength-bar::after {
+  width: 66%;
+  background: var(--color-warning);
+}
+
+.strength[data-level='strong'] .strength-bar::after {
+  width: 100%;
+  background: var(--color-success);
+}
+
+.strength small {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.forgot {
+  margin: 12px 0 0;
+  text-align: right;
+  font-size: 0.78rem;
+}
+
+.forgot a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
 .divider {
   display: flex;
   align-items: center;

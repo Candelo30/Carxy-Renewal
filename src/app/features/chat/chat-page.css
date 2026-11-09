@@ -61,6 +61,58 @@ nav a:hover {
   color: var(--accent-color);
 }
 
+/* Botón para regresar al panel de conversaciones */
+.back-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-color);
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+}
+
+@media (max-width: 720px) {
+  .chat-layout {
+    height: calc(100dvh - 120px);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Muestra la flecha de regreso en pantallas pequeñas */
+  .back-button {
+    display: inline-flex;
+  }
+
+  /* Si NO hay un chat seleccionado: Muestra la lista y oculta la conversación */
+  .chat-layout:not(.has-chat) .conversations {
+    display: block;
+    max-height: 100%;
+    border-right: 0;
+  }
+
+  .chat-layout:not(.has-chat) .conversation {
+    display: none;
+  }
+
+  /* Si SÍ hay un chat seleccionado: Oculta la lista y muestra la conversación completa */
+  .chat-layout.has-chat .conversations {
+    display: none;
+  }
+
+  .chat-layout.has-chat .conversation {
+    display: flex;
+    height: 100%;
+  }
+}
+
 .chat-layout {
   display: grid;
   width: min(1160px, calc(100% - 36px));
@@ -257,7 +309,10 @@ nav a:hover {
 .conversation {
   display: flex;
   min-width: 0;
+  min-height: 0; /* Agregado: permite achicar los flex items */
   flex-direction: column;
+  height: 100%; /* Agregado: ocupa exactamente la altura asignada por el grid */
+  overflow: hidden; /* Agregado: recorta cualquier desbordamiento fuera de límite */
 }
 
 .conversation-header {
@@ -294,7 +349,8 @@ nav a:hover {
   flex: 1;
   flex-direction: column;
   gap: 12px;
-  overflow: auto;
+  overflow-y: auto; /* Forzar scroll únicamente en el eje Y */
+  min-height: 0; /* Agregado: clave para evitar que crezca infinitamente */
   padding: 20px;
 }
 
@@ -394,6 +450,10 @@ nav a:hover {
 
   .conversations label {
     grid-column: 1 / -1;
+  }
+
+  .conversations {
+    display: none;
   }
 }
 
