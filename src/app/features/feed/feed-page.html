@@ -26,6 +26,24 @@
       <span>Comunidad 3D</span>
     </div>
 
+    <div class="view-tabs">
+      <button
+        class="view-tab"
+        [class.active]="isViewMode('recent')"
+        (click)="setViewMode('recent')"
+      >⏱ Recientes</button>
+      <button
+        class="view-tab"
+        [class.active]="isViewMode('featured')"
+        (click)="setViewMode('featured')"
+      >⭐ Destacados</button>
+      <button
+        class="view-tab"
+        [class.active]="isViewMode('trending')"
+        (click)="setViewMode('trending')"
+      >📈 Tendencias</button>
+    </div>
+
     <div class="feed-filters">
       <div class="search-wrap">
         <label class="search-label" for="feed-search">Buscar modelos</label>
@@ -147,6 +165,12 @@
                     ↗ Remix / Editar en 3D
                   </button>
                   <button type="button" class="report-button" title="Reportar" (click)="openReport(post, reportDialog)">⚑</button>
+                  <button
+                    type="button"
+                    class="collection-button"
+                    title="Guardar en colección"
+                    (click)="toggleCollection(post)"
+                  >🔖</button>
                 </div>
                 @let comments = (social.comments$(post.id) | async) ?? [];
                 @if (comments.length) {

@@ -54,6 +54,9 @@ export interface Post3D {
   tags?: string[];
   modelPath?: string;
   thumbnailPath?: string;
+  featured?: boolean;
+  trendingScore?: number;
+  featuredAt?: number;
 }
 
 export interface Comment {

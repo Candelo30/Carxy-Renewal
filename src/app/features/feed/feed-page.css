@@ -595,6 +595,64 @@ h2 {
   border-color: var(--text-primary);
 }
 
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-panel);
+  overflow-x: auto;
+}
+
+.view-tab {
+  flex: none;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+}
+
+.view-tab:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-raised));
+}
+
+.view-tab.active {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 15%, var(--surface-raised));
+}
+
+.collection-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.collection-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+}
+
 @media (max-width: 700px) {
   .site-header {
     height: auto;
