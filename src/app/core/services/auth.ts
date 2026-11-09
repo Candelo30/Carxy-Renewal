@@ -8,9 +8,12 @@ import {
   GoogleAuthProvider,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
   updateProfile,
 } from '@angular/fire/auth';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
@@ -20,6 +23,28 @@ import { LOCAL_KEYS, SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { User as SocialUser, UserProfile, UserRole } from '../models/social.models';
 
 const DEFAULT_ROLE: UserRole = 'user';
+const MIN_PASSWORD_LENGTH = 8;
+
+export type PasswordStrength = 'weak' | 'fair' | 'strong';
+
+export function evaluatePasswordStrength(password: string): PasswordStrength {
+  const value = password ?? '';
+  let score = 0;
+  if (value.length >= MIN_PASSWORD_LENGTH) score += 1;
+  if (value.length >= 12) score += 1;
+  if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
+  if (/\d/.test(value)) score += 1;
+  if (/[^A-Za-z0-9]/.test(value)) score += 1;
+  if (score <= 2) return 'weak';
+  if (score <= 3) return 'fair';
+  return 'strong';
+}
+
+export function isPasswordStrongEnough(password: string): boolean {
+  return password.length >= MIN_PASSWORD_LENGTH
+    && /[A-Za-z]/.test(password)
+    && /\d/.test(password);
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -68,6 +93,8 @@ export class AuthService {
           role: DEFAULT_ROLE,
           isBanned: false,
           createdAt: Date.now(),
+          emailVerified: firebaseUser.emailVerified,
+          providers: firebaseUser.providerData.map((provider) => provider.providerId),
         } : null))
       : this.localUser.asObservable();
 
@@ -87,13 +114,20 @@ export class AuthService {
     const accounts = this.readAccounts();
     const account = accounts.find((item) => item.email === email.trim().toLowerCase());
     if (!account) throw new Error('No existe una cuenta local con ese correo. Regístrate primero.');
+    if (!password) throw new Error('Escribe tu contraseña.');
     this.setLocalUser(account);
   }
 
   async register(email: string, password: string, displayName: string): Promise<void> {
+    this.assertPasswordPolicy(password);
     if (this.auth) {
       const credential = await createUserWithEmailAndPassword(this.auth, email, password);
       await updateProfile(credential.user, { displayName });
+      try {
+        await sendEmailVerification(credential.user);
+      } catch (error) {
+        console.warn('No se pudo enviar el correo de verificación.', error);
+      }
       if (this.firestore) {
         await setDoc(doc(this.firestore, 'users', credential.user.uid), {
           uid: credential.user.uid,
@@ -121,9 +155,88 @@ export class AuthService {
       role: DEFAULT_ROLE,
       isBanned: false,
       createdAt: Date.now(),
+      emailVerified: true,
     };
     this.writeAccounts([...accounts, user]);
     this.setLocalUser(user);
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) throw new Error('Escribe el correo de tu cuenta.');
+    if (!this.auth) {
+      throw new Error('La recuperación de contraseña requiere Firebase configurado.');
+    }
+    await sendPasswordResetEmail(this.auth, normalized);
+  }
+
+  async sendVerificationEmail(): Promise<void> {
+    const currentUser = this.auth?.currentUser;
+    if (!currentUser) throw new Error('Inicia sesión para verificar tu correo.');
+    if (currentUser.emailVerified) throw new Error('Tu correo ya está verificado.');
+    await sendEmailVerification(currentUser);
+  }
+
+  get hasPasswordProvider(): boolean {
+    return !!this.auth?.currentUser?.providerData.some((provider) => provider.providerId === 'password');
+  }
+
+  get emailVerified(): boolean {
+    if (this.auth?.currentUser) return this.auth.currentUser.emailVerified;
+    return this.localUser.value?.emailVerified !== false;
+  }
+
+  async changePassword(currentPassword: string, nextPassword: string): Promise<void> {
+    this.assertPasswordPolicy(nextPassword);
+    const currentUser = this.auth?.currentUser;
+    if (!currentUser?.email) {
+      throw new Error('Cambia tu contraseña desde una cuenta con correo y contraseña.');
+    }
+    if (!currentUser.providerData.some((provider) => provider.providerId === 'password')) {
+      throw new Error('Tu cuenta usa un proveedor externo. Gestiona la contraseña desde ese proveedor.');
+    }
+    await reauthenticateWithCredential(
+      currentUser,
+      EmailAuthProvider.credential(currentUser.email, currentPassword),
+    );
+    await updatePassword(currentUser, nextPassword);
+  }
+
+  authErrorMessage(error: unknown): string {
+    const code = error && typeof error === 'object' && 'code' in error
+      ? String(error.code)
+      : '';
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'El correo no es válido.';
+      case 'auth/user-disabled':
+        return 'Esta cuenta está deshabilitada. Contacta con soporte.';
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'Correo o contraseña incorrectos.';
+      case 'auth/email-already-in-use':
+        return 'Ya existe una cuenta con ese correo.';
+      case 'auth/weak-password':
+        return 'La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Espera unos minutos o restablece tu contraseña.';
+      case 'auth/requires-recent-login':
+        return 'Por seguridad, vuelve a iniciar sesión e inténtalo de nuevo.';
+      case 'auth/network-request-failed':
+      case 'auth/operation-not-allowed':
+        return 'Firebase Authentication no está listo. En Firebase Console, habilita Email/Password (y Google si lo usas).';
+      case 'auth/popup-closed-by-user':
+        return 'Se cerró la ventana de Google antes de completar el acceso.';
+      default:
+        return error instanceof Error ? error.message : 'No se pudo completar la autenticación.';
+    }
+  }
+
+  private assertPasswordPolicy(password: string): void {
+    if (!isPasswordStrongEnough(password)) {
+      throw new Error('La contraseña debe tener al menos 8 caracteres, incluir letras y al menos un número.');
+    }
   }
 
   async loginWithGoogle(): Promise<void> {
@@ -214,6 +327,8 @@ export class AuthService {
         role: DEFAULT_ROLE,
         isBanned: user.isBanned === true,
         createdAt: typeof user.createdAt === 'number' ? user.createdAt : Date.now(),
+        emailVerified: user.emailVerified !== false,
+        providers: Array.isArray(user.providers) ? user.providers.filter((item): item is string => typeof item === 'string') : ['password'],
       };
     } catch (error) {
       console.warn('La sesión local estaba dañada y se cerró.', error);
@@ -282,6 +397,8 @@ export class AuthService {
       role: role === 'admin' || role === 'moderator' ? role : DEFAULT_ROLE,
       isBanned: profile?.['isBanned'] === true,
       createdAt: this.timestampToMillis(createdAt),
+      emailVerified: firebaseUser.emailVerified,
+      providers: firebaseUser.providerData.map((provider) => provider.providerId),
     };
   }
 
