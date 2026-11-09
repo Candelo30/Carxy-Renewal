@@ -1125,7 +1125,8 @@ export class ThreeEngineService implements OnDestroy {
       group.position.x += 1.1;
       this.addObject(group, `${payload.name || 'Objeto'} pegado`);
       return true;
-    } catch {
+    } catch (error) {
+      console.warn('No se pudo pegar el objeto 3D del portapapeles.', error);
       return false;
     }
   }
