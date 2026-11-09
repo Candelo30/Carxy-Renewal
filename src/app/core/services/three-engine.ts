@@ -11,7 +11,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 
-export type PrimitiveType = 'box' | 'sphere' | 'cylinder' | 'torus';
+export type PrimitiveType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'cone' | 'plane' | 'ring';
 
 export interface SceneObject {
   id: string;
@@ -69,11 +69,15 @@ export class ThreeEngineService implements OnDestroy {
   public clippingEnabled = false;
   public presentationEnabled = false;
   public arSupported = false;
+  public ownCursorUid: string | null = null;
   public readonly collaboratorJoined$ = new Subject<{ uid: string; displayName: string; color: string }>();
   public readonly collaboratorLeft$ = new Subject<string>();
   public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
   public readonly collaboratorSelection$ = new Subject<{ uid: string; objectId: string | null }>();
   public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string }>();
+  public snapToGrid = false;
+  public gridStep = 0.5;
+  readonly layerChanged$ = new Subject<string>();
 
   private canvas?: HTMLCanvasElement;
   private renderer?: THREE.WebGLRenderer;
@@ -121,7 +125,9 @@ export class ThreeEngineService implements OnDestroy {
   private arReticle?: THREE.Mesh;
   private arReferenceSpace?: XRReferenceSpace;
   private readonly collaborators = new Map<string, { displayName: string; color: string; objectId: string | null; x: number; y: number }>();
-  private readonly collaboratorObjects = new Map<string, THREE.Group>(); // uid -> grupo visual del cursor/avatar remoto
+  private readonly collaboratorObjects = new Map<string, THREE.Group>();
+  private readonly layers = new Map<string, Set<THREE.Object3D>>();
+  private readonly objectLayer = new Map<THREE.Object3D, string>();
   private readonly initialPositions = new WeakMap<THREE.Group, THREE.Vector3>();
   private readonly initialNodeTransforms = new WeakMap<THREE.Object3D, {
     position: THREE.Vector3;
@@ -887,6 +893,19 @@ export class ThreeEngineService implements OnDestroy {
         geometry = new THREE.TorusGeometry(0.8, 0.28, 18, 48);
         name = 'Toro';
         break;
+      case 'cone':
+        geometry = new THREE.ConeGeometry(0.8, 1.6, 32);
+        name = 'Cono';
+        break;
+      case 'plane':
+        geometry = new THREE.PlaneGeometry(1.6, 1.6);
+        geometry.rotateX(-Math.PI / 2);
+        name = 'Plano';
+        break;
+      case 'ring':
+        geometry = new THREE.TorusGeometry(0.8, 0.2, 16, 32);
+        name = 'Anillo';
+        break;
       default:
         geometry = new THREE.BoxGeometry(1.6, 1.6, 1.6);
         name = 'Cubo';
@@ -896,6 +915,9 @@ export class ThreeEngineService implements OnDestroy {
       sphere: '#38bdf8',
       cylinder: '#f59e0b',
       torus: '#34d399',
+      cone: '#fb923c',
+      plane: '#a78bfa',
+      ring: '#c4b5fd',
     };
     const material = new THREE.MeshStandardMaterial({
       color: primitiveColors[type],
@@ -926,12 +948,134 @@ export class ThreeEngineService implements OnDestroy {
         child.receiveShadow = true;
       }
     });
+    if (this.snapToGrid) {
+      object.position.x = Math.round(object.position.x / this.gridStep) * this.gridStep;
+      object.position.y = Math.round(object.position.y / this.gridStep) * this.gridStep;
+      object.position.z = Math.round(object.position.z / this.gridStep) * this.gridStep;
+    }
     const item = { id: `object-${this.nextObjectId++}`, name, object };
     this.initialPositions.set(object, object.position.clone());
     this.objects.push(item);
     this.scene.add(object);
     this.selectObject(item.id);
     this.sceneChanged$.next();
+  }
+
+  // --- Medición de distancia 3D ---
+
+  measureDistance(pointA: THREE.Vector3, pointB: THREE.Vector3): number {
+    return pointA.distanceTo(pointB);
+  }
+
+  measureDistanceBetweenObjects(idA: string, idB: string): number | null {
+    const a = this.objects.find((item) => item.id === idA)?.object;
+    const b = this.objects.find((item) => item.id === idB)?.object;
+    if (!a || !b) return null;
+    const pa = new THREE.Vector3();
+    const pb = new THREE.Vector3();
+    a.getWorldPosition(pa);
+    b.getWorldPosition(pb);
+    return pa.distanceTo(pb);
+  }
+
+  // --- Capas / Layers ---
+
+  addToLayer(objectId: string, layerName: string): void {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return;
+    const prev = this.objectLayer.get(item.object);
+    if (prev === layerName) return;
+    if (prev) {
+      this.layers.get(prev)?.delete(item.object);
+      this.layerChanged$.next(prev);
+    }
+    if (!this.layers.has(layerName)) this.layers.set(layerName, new Set());
+    this.layers.get(layerName)!.add(item.object);
+    this.objectLayer.set(item.object, layerName);
+    this.layerChanged$.next(layerName);
+  }
+
+  removeFromLayer(objectId: string): void {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return;
+    const layer = this.objectLayer.get(item.object);
+    if (!layer) return;
+    this.layers.get(layer)?.delete(item.object);
+    this.objectLayer.delete(item.object);
+    this.layerChanged$.next(layer);
+  }
+
+  setLayerVisibility(layerName: string, visible: boolean): void {
+    const members = this.layers.get(layerName);
+    if (!members) return;
+    members.forEach((object) => {
+      object.traverse((child) => {
+        child.visible = visible;
+      });
+    });
+  }
+
+  getLayerVisibility(layerName: string): boolean | null {
+    const members = this.layers.get(layerName);
+    if (!members || members.size === 0) return null;
+    const first = members.values().next().value;
+    if (!first) return null;
+    return first.visible;
+  }
+
+  getLayers(): string[] {
+    return Array.from(this.layers.keys());
+  }
+
+  getObjectLayer(objectId: string): string | null {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return null;
+    return this.objectLayer.get(item.object) ?? null;
+  }
+
+  // --- Snap a grid ---
+
+  setSnapToGrid(enabled: boolean, step = 0.5): void {
+    this.snapToGrid = enabled;
+    this.gridStep = step;
+  }
+
+  applySnapToGrid(): void {
+    if (!this.snapToGrid || !this.currentModel) return;
+    this.currentModel.position.x = Math.round(this.currentModel.position.x / this.gridStep) * this.gridStep;
+    this.currentModel.position.y = Math.round(this.currentModel.position.y / this.gridStep) * this.gridStep;
+    this.currentModel.position.z = Math.round(this.currentModel.position.z / this.gridStep) * this.gridStep;
+    this.transformChanged$.next();
+  }
+
+  // --- Compartir escena (colaboración) ---
+
+  exportSceneWithMetadata(metadata: { title: string; description: string; authorId: string; authorName: string }): string {
+    const scene = this.serializeScene();
+    const payload = {
+      type: 'carxy-scene',
+      version: 1,
+      metadata,
+      scene,
+      exportedAt: Date.now(),
+    };
+    return JSON.stringify(payload);
+  }
+
+  importSceneWithMetadata(raw: string): { metadata: unknown; scene: string } | null {
+    try {
+      const payload = JSON.parse(raw) as {
+        type?: string;
+        version?: number;
+        metadata?: unknown;
+        scene?: string;
+        exportedAt?: number;
+      };
+      if (payload.type !== 'carxy-scene' || !payload.scene) return null;
+      return { metadata: payload.metadata ?? {}, scene: payload.scene };
+    } catch {
+      return null;
+    }
   }
 
   public deleteCurrentModel(): void {
@@ -1220,6 +1364,21 @@ export class ThreeEngineService implements OnDestroy {
     this.collaboratorLeft$.next(uid);
   }
 
+  setOwnCursorUid(uid: string): void {
+    this.ownCursorUid = uid;
+    if (!this.collaborators.has(uid)) {
+      this.joinCollaboration(uid, uid);
+    }
+  }
+
+  updateOwnCursor(x: number, y: number): void {
+    if (!this.ownCursorUid || !this.canvas) return;
+    const collab = this.collaborators.get(this.ownCursorUid);
+    if (!collab) return;
+    this.moveCollaboratorMarker(this.ownCursorUid, x, y);
+    this.remoteCursor$.next({ uid: this.ownCursorUid, x, y, color: collab.color });
+  }
+
   updateCollaboratorCursor(uid: string, x: number, y: number): void {
     const collab = this.collaborators.get(uid);
     if (!collab) return;
@@ -1317,6 +1476,20 @@ export class ThreeEngineService implements OnDestroy {
         return;
       }
     }
+  }
+
+  // --- Compartir escena (colaboración) ---
+
+  exportSceneWithMetadata(metadata: { title: string; description: string; authorId: string; authorName: string }): string {
+    const scene = this.serializeScene();
+    const payload = {
+      type: 'carxy-scene',
+      version: 1,
+      metadata,
+      scene,
+      exportedAt: Date.now(),
+    };
+    return JSON.stringify(payload);
   }
 
   public ngOnDestroy(): void {
