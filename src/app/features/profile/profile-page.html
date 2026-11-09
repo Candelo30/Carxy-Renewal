@@ -8,61 +8,189 @@
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   @if (error) { <p class="error" role="alert">{{ error }}</p> }
+
   @if (profile$ | async; as state) {
     @if (state.profile; as profile) {
+      <!-- Hero del perfil -->
       <section class="profile-hero">
-        <img class="avatar" [src]="profile.photoURL || '/user-avatar.svg'" alt="" (error)="useFallbackAvatar($event)" />
-        <div class="profile-info"><p class="eyebrow">CREADOR 3D</p><h1>{{ profile.displayName }}</h1><p>{{ profile.bio || 'Este creador todavía no ha escrito una biografía.' }}</p><div class="stats"><span><b>{{ state.posts.length }}</b> modelos</span><span><b>{{ totalLikes(state.posts) }}</b> likes</span><span><b>{{ state.followCounts.followers }}</b> seguidores</span><span><b>{{ state.followCounts.following }}</b> siguiendo</span></div>
-          @if (state.currentUser; as currentUser) {
-            @if (currentUser.uid !== profile.uid) {
-              @let following = (social.isFollowing$(currentUser.uid, profile.uid) | async) ?? false;
-              <div class="profile-actions">
-                <button
-                  class="follow-button"
-                  type="button"
-                  [attr.aria-label]="following ? 'Dejar de seguir a ' + profile.displayName : 'Seguir a ' + profile.displayName"
-                  (click)="toggleFollow(profile, currentUser, following)"
-                >{{ following ? 'Dejar de seguir' : 'Seguir' }}</button>
-                <a class="message-button" [routerLink]="['/chat']" [queryParams]="{ peer: profile.uid }">Enviar mensaje</a>
-              </div>
-            }
-          } @else {
-            <a class="follow-button guest-follow" routerLink="/login">Inicia sesión para seguir</a>
+        <div class="hero-avatar">
+          <img
+            class="avatar-large"
+            [src]="profile.photoURL || '/user-avatar.svg'"
+            alt=""
+            (error)="useFallbackAvatar($event)"
+          />
+          @if (isOwner(profile, state.currentUser)) {
+            <div class="avatar-badge">Tú</div>
           }
         </div>
-        @if (isOwner(profile, state.currentUser)) {
-          <a class="manage-button" routerLink="/my-models">Gestionar mis diseños</a>
-        }
-        @if (isOwner(profile, state.currentUser)) {
-          <button class="edit-button" type="button" (click)="prepareEdit(profile); editDialog.showModal()">Editar perfil</button>
+
+        <div class="hero-info">
+          <div class="hero-badges">
+            @if (profile.role === 'admin') { <span class="badge badge-admin">Admin</span> }
+            @if (profile.role === 'moderator') { <span class="badge badge-mod">Moderador</span> }
+            @if (profile.emailVerified) { <span class="badge badge-verified">Verificado</span> }
+          </div>
+          <h1>{{ profile.displayName }}</h1>
+          <p class="hero-bio">{{ profile.bio || 'Este creador todavía no ha escrito una biografía.' }}</p>
+
+          <div class="hero-stats">
+            <div class="stat"><strong>{{ state.posts.length }}</strong><span>Modelos</span></div>
+            <div class="stat"><strong>{{ totalLikes(state.posts) }}</strong><span>Likes recibidos</span></div>
+            <div class="stat"><strong>{{ state.followCounts.followers }}</strong><span>Seguidores</span></div>
+            <div class="stat"><strong>{{ state.followCounts.following }}</strong><span>Siguiendo</span></div>
+          </div>
+
+          <div class="hero-actions">
+            @if (state.currentUser; as currentUser) {
+              @if (currentUser.uid !== profile.uid) {
+                @let isFollowing = (social.isFollowing$(currentUser.uid, profile.uid) | async) ?? false;
+                <button
+                  class="btn-follow"
+                  [class.following]="isFollowing"
+                  (click)="toggleFollow(profile, currentUser, isFollowing)"
+                >
+                  {{ isFollowing ? 'Siguiendo' : 'Seguir' }}
+                </button>
+                <a class="btn-message" [routerLink]="['/chat']" [queryParams]="{ peer: profile.uid }">Mensaje</a>
+              }
+            } @else {
+              <a class="btn-follow guest" routerLink="/login">Inicia sesión para seguir</a>
+            }
+            @if (isOwner(profile, state.currentUser)) {
+              <a class="btn-manage" routerLink="/my-models">Gestionar diseños</a>
+              <button class="btn-edit" type="button" (click)="prepareEdit(profile); editDialog.showModal()">Editar perfil</button>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Actividad reciente -->
+      <section class="activity-section">
+        <div class="section-header">
+          <h2>Actividad reciente</h2>
+          <a routerLink="/feed">Ver todo →</a>
+        </div>
+        @if (activity$ | async; as activities) {
+          @if (activities.length) {
+            <div class="activity-list">
+              @for (item of activities; track item.id) {
+                <div class="activity-item">
+                  <img
+                    class="activity-avatar"
+                    [src]="item.actorPhotoURL || '/user-avatar.svg'"
+                    alt=""
+                    (error)="useFallbackAvatar($event)"
+                  />
+                  <div class="activity-content">
+                    <strong>{{ item.actorName }}</strong> {{ activityLabel(item) }}
+                    <span class="activity-time">{{ item.createdAt | date:'short' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="activity-empty">Aún no tienes actividad reciente.</p>
+          }
         }
       </section>
-      <section class="portfolio"><p class="eyebrow">PORTAFOLIO</p><h2>{{ isOwner(profile, state.currentUser) ? 'Mis diseños' : 'Modelos publicados' }}</h2>
-        @if (isOwner(profile, state.currentUser)) {
-          <a class="manage-inline" routerLink="/my-models">Administrar privacidad, detalles y archivos →</a>
-        }
+
+      <!-- Modelos favoritos (colecciones) -->
+      @if (state.currentUser?.uid === profile.uid) {
+        <section class="collections-section">
+          <div class="section-header">
+            <h2>Mis colecciones</h2>
+            <button class="btn-new-collection" type="button">+ Nueva colección</button>
+          </div>
+          @let colls = userCollections | async;
+          @if (colls?.length) {
+            <div class="collections-grid">
+              @for (col of colls; track col.id) {
+                <div class="collection-card">
+                  <div class="collection-info">
+                    <h3>{{ col.name }}</h3>
+                    <p>{{ col.description || 'Sin descripción' }}</p>
+                    <span class="collection-count">{{ col.postIds.length }} modelos</span>
+                  </div>
+                  <span class="collection-badge">{{ col.isPublic ? 'Público' : 'Privado' }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="collections-empty">No tienes colecciones todavía. Guarda modelos desde la comunidad.</p>
+          }
+        </section>
+      }
+
+      <!-- Portafolio -->
+      <section class="portfolio-section">
+        <div class="section-header">
+          <h2>{{ isOwner(profile, state.currentUser) ? 'Mis diseños' : 'Modelos publicados' }}</h2>
+          @if (isOwner(profile, state.currentUser)) {
+            <a class="btn-manage-inline" routerLink="/my-models">Administrar →</a>
+          }
+        </div>
+
         @if (state.posts.length) {
-          <div class="post-grid">@for (post of state.posts; track trackPost($index, post)) {
-            <article>
-              @if (previewModes[post.id]) { <app-model-preview [modelUrl]="post.modelUrl" /> }
-              @else { <img [src]="post.thumbnailUrl" [alt]="'Render de ' + post.title" /> }
-              <div><div class="model-card-heading"><h3>{{ post.title }}</h3>@if (post.isPrivate) { <span class="private-badge">Privado</span> }<button type="button" (click)="togglePreview(post.id)">{{ previewModes[post.id] ? 'Ver imagen' : 'Vista 3D' }}</button></div><p>{{ post.description || 'Sin descripción.' }}</p><span>♡ {{ post.likes }} · {{ post.createdAt | date:'mediumDate' }}</span></div>
-            </article>
-          }</div>
-        } @else { <div class="empty"><h3>Aún no hay modelos publicados</h3><a routerLink="/editor">Abrir el editor</a></div> }
+          <div class="post-grid">
+            @for (post of state.posts; track trackPost($index, post)) {
+              <article class="portfolio-card">
+                <div class="card-media">
+                  @if (previewModes[post.id]) {
+                    <app-model-preview [modelUrl]="post.modelUrl" />
+                  } @else {
+                    <img [src]="post.thumbnailUrl" [alt]="'Render de ' + post.title" />
+                  }
+                  @if (post.isPrivate) { <span class="badge-badge private">Privado</span> }
+                  <button class="btn-preview" type="button" (click)="togglePreview(post.id)">
+                    {{ previewModes[post.id] ? 'Ver imagen' : 'Vista 3D' }}
+                  </button>
+                </div>
+                <div class="card-body">
+                  <h3>{{ post.title }}</h3>
+                  <p>{{ post.description || 'Sin descripción.' }}</p>
+                  <div class="card-meta">
+                    <span>♡ {{ post.likes }}</span>
+                    <span>· {{ post.createdAt | date:'mediumDate' }}</span>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="portfolio-empty">
+            <span>◇</span>
+            <h3>Aún no hay modelos publicados</h3>
+            <a routerLink="/editor" class="btn-create">Abrir el editor</a>
+          </div>
+        }
       </section>
+
+      <!-- Dialog editar perfil -->
       <dialog #editDialog class="edit-dialog">
         <form (ngSubmit)="saveProfile(profile, editDialog)">
-          <button class="dismiss" type="button" (click)="editDialog.close()">×</button><p class="eyebrow">TU CUENTA</p><h2>Editar perfil</h2>
+          <button class="dismiss" type="button" (click)="editDialog.close()">×</button>
+          <p class="eyebrow">TU CUENTA</p>
+          <h2>Editar perfil</h2>
           <label>Nombre visible<input name="name" [(ngModel)]="name" required maxlength="60" /></label>
           <label>Biografía<textarea name="bio" [(ngModel)]="bio" rows="4" maxlength="500"></textarea></label>
           <label>URL de foto<input name="photo" [(ngModel)]="photoURL" type="url" placeholder="https://…" /></label>
-          @if (error) { <p class="error">{{ error }}</p> } @if (status) { <p class="status">{{ status }}</p> }
-          <button class="save-button" type="submit">Guardar cambios</button>
+          @if (error) { <p class="error">{{ error }}</p> }
+          @if (status) { <p class="status">{{ status }}</p> }
+          <footer class="edit-dialog-footer">
+            <button type="button" class="btn-cancel" (click)="editDialog.close()">Cancelar</button>
+            <button class="btn-save" type="submit">Guardar cambios</button>
+          </footer>
         </form>
       </dialog>
+
     } @else {
-      <section class="not-found"><h1>Perfil no encontrado</h1><p>Este creador todavía no tiene publicaciones visibles.</p><a routerLink="/feed">Volver a la comunidad</a></section>
+      <section class="not-found">
+        <span>❓</span>
+        <h1>Perfil no encontrado</h1>
+        <p>Este creador todavía no tiene publicaciones visibles.</p>
+        <a routerLink="/feed" class="btn-primary">Volver a la comunidad</a>
+      </section>
     }
   } @else {
     <app-loading-spinner label="Cargando perfil y portafolio…" />

@@ -3,20 +3,22 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
-import { Post3D, User } from '../../core/models/social.models';
+import { ActivityNotification, Post3D, User } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
+import { CollectionService } from '../../core/services/collection';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
-import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
   imports: [
+    ShellHeaderComponent,
     ShellHeaderComponent,
     AccountMenuComponent,
     ActivityNotificationsComponent,
@@ -34,9 +36,12 @@ export class ProfilePage {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   readonly social = inject(SocialService);
+  readonly collection = inject(CollectionService);
   private readonly notifications = inject(NotificationService);
+
   readonly user$ = this.auth.user$;
   mobileMenuOpen = false;
+
   readonly posts$ = this.social.posts$.pipe(
     catchError((error: unknown) => {
       console.error('No se pudo cargar el portafolio del creador.', error);
@@ -48,6 +53,7 @@ export class ProfilePage {
       return of([]);
     }),
   );
+
   readonly profile$ = this.route.paramMap.pipe(switchMap((params) => {
     const uid = params.get('uid') ?? '';
     return combineLatest([this.posts$, this.auth.user$, this.social.profile$(uid)]).pipe(
@@ -66,6 +72,19 @@ export class ProfilePage {
       startWith(null),
     );
   }));
+
+  // Actividad reciente del usuario (notificaciones)
+  readonly activity$ = this.auth.user$.pipe(
+    switchMap((user) =>
+      user ? this.social.activityNotifications$(user.uid) : of([] as ActivityNotification[]),
+    ),
+    map((items) => items.slice(0, 6)),
+    startWith([] as ActivityNotification[]),
+  );
+
+  // Colecciones del usuario (modelos favoritos guardados)
+  readonly userCollections = this.collection.collections$;
+
   name = '';
   bio = '';
   photoURL = '';
@@ -122,7 +141,9 @@ export class ProfilePage {
     try {
       if (following) await this.social.unfollowUser(currentUser.uid, profile.uid);
       else await this.social.followUser(currentUser, profile.uid);
-      this.notifications.success(following ? 'Dejaste de seguir a este creador.' : `Ahora sigues a ${profile.displayName}.`);
+      this.notifications.success(
+        following ? 'Dejaste de seguir a este creador.' : `Ahora sigues a ${profile.displayName}.`,
+      );
     } catch (error) {
       this.notifications.error(error instanceof Error ? error.message : 'No se pudo actualizar el seguimiento.');
     }
@@ -130,5 +151,11 @@ export class ProfilePage {
 
   togglePreview(postId: string): void {
     this.previewModes[postId] = !this.previewModes[postId];
+  }
+
+  activityLabel(item: ActivityNotification): string {
+    if (item.kind === 'follow') return 'comenzó a seguirte';
+    if (item.kind === 'like') return 'marcó tu modelo como favorito';
+    return 'comentó en tu modelo';
   }
 }
