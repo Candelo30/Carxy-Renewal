@@ -22,6 +22,9 @@
         <button title="Agregar esfera" (click)="addPrimitive('sphere')"><span>●</span>{{ language === 'es' ? 'Esfera' : 'Sphere' }}</button>
         <button title="Agregar cilindro" (click)="addPrimitive('cylinder')"><span>⬭</span>{{ language === 'es' ? 'Cilindro' : 'Cylinder' }}</button>
         <button title="Agregar toro" (click)="addPrimitive('torus')"><span>◎</span>{{ language === 'es' ? 'Toro' : 'Torus' }}</button>
+        <button title="Agregar cono" (click)="addCone()"><span>△</span>{{ language === 'es' ? 'Cono' : 'Cone' }}</button>
+        <button title="Agregar plano" (click)="addPlane()"><span>▱</span>{{ language === 'es' ? 'Plano' : 'Plane' }}</button>
+        <button title="Agregar anillo" (click)="addRing()"><span>◊</span>{{ language === 'es' ? 'Anillo' : 'Ring' }}</button>
       </div>
       <div class="object-list">
         <button
@@ -92,6 +95,10 @@
           ↧
         </label>
         <button class="icon-action" [disabled]="exportBusy" (click)="exportSceneGLB()" title="Exportar escena a GLB">💾</button>
+        <button class="icon-action" [class.active]="measuringDistance" (click)="toggleMeasureDistance()" title="Medir distancia entre objetos">📏</button>
+        <button class="icon-action" [class.active]="snapEnabled" (click)="toggleSnapToGrid()" title="Activar/desactivar snap a cuadrícula">⊗</button>
+        <button class="icon-action" [disabled]="shareBusy" (click)="shareScene()" title="Compartir escena (código para colaboradores)">🔗</button>
+        <button class="icon-action" (click)="importSharedScenePrompt()" title="Importar escena compartida">↪</button>
       </div>
     </section>
 
@@ -181,6 +188,36 @@
       <p class="empty-state" *ngIf="materials.length === 0">
         {{ language === 'es' ? 'Selecciona un objeto para editar sus materiales.' : 'Select an object to edit its materials.' }}
       </p>
+    </section>
+
+    <section class="panel-section">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'CAPAS' : 'LAYERS' }}</span>
+          <h2>{{ language === 'es' ? 'Organizar por capas' : 'Organize by layers' }}</h2>
+        </div>
+        <button class="icon-action" (click)="addLayer()" title="Agregar capa">＋</button>
+      </div>
+      <div class="layer-list">
+        @for (layer of layers; track layer) {
+          <div class="layer-row" [class.selected]="selectedLayer === layer" [class.visible]="isLayerVisible(layer)">
+            <button class="layer-visibility" (click)="toggleLayerVisibility(layer)" [attr.aria-label]="isLayerVisible(layer) ? 'Ocultar capa ' + layer : 'Mostrar capa ' + layer">
+              {{ isLayerVisible(layer) ? '👁' : '🙈' }}
+            </button>
+            <span class="layer-name">{{ layer }}</span>
+            <button class="layer-assign" [disabled]="!selectedObjectId" (click)="assignSelectedToLayer()" title="Asignar seleccionado">➤</button>
+            <button class="layer-remove" (click)="removeSelectedFromLayer()" title="Quitar seleccionado de esta capa">−</button>
+          </div>
+        }
+        @if (layers.length === 0) {
+          <p class="empty-state">No hay capas. Agrega una para organizar objetos.</p>
+        }
+        @if (layers.length) {
+          <div class="layer-actions">
+            <button class="small-button" [disabled]="!selectedLayer" (click)="removeLayer()">Eliminar capa seleccionada</button>
+          </div>
+        }
+      </div>
     </section>
   </ng-container>
 
