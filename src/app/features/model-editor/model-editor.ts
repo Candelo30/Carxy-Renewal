@@ -18,6 +18,8 @@ import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
 import { LocalStateService } from '../../core/services/local-state';
 import { NotificationService } from '../../core/services/notifications';
+import { FileHandler } from '../../core/services/file-handler';
+import { EditorHistoryService } from '../../core/services/editor-history';
 import type { NotificationPosition } from '../../core/models/social.models';
 import type {
   EditableMaterial,
@@ -80,6 +82,15 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly localState = inject(LocalStateService);
   private readonly notifications = inject(NotificationService);
+  private readonly fileHandler = inject(FileHandler);
+  private readonly editorHistory = inject(EditorHistoryService);
+
+  public canUndo = false;
+  public canRedo = false;
+  public dimensions: { width: number; height: number; depth: number } | null = null;
+  public exportBusy = false;
+  public importBusy = false;
+  public presentationBusy = false;
 
   constructor(
     private threeEngine: ThreeEngineService,
@@ -107,6 +118,16 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.updateSelectionState();
       this.syncValuesFromEngine();
       this.loadMaterialsFromEngine();
+      this.measureDimensions();
+    }));
+    this.editorHistory.attach();
+    this.subscriptions.add(this.editorHistory.canUndo$.subscribe((value) => {
+      this.canUndo = value;
+      this.cdr.detectChanges();
+    }));
+    this.subscriptions.add(this.editorHistory.canRedo$.subscribe((value) => {
+      this.canRedo = value;
+      this.cdr.detectChanges();
     }));
     this.subscriptions.add(
       merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
@@ -411,6 +432,154 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   focusSelectedNode(): void {
     this.threeEngine.focusSelectedNode();
+  }
+
+  private measureDimensions(): void {
+    const model = this.threeEngine.getCurrentModel();
+    if (!model) {
+      this.dimensions = null;
+      return;
+    }
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    this.dimensions = {
+      width: Number(size.x.toFixed(2)),
+      height: Number(size.y.toFixed(2)),
+      depth: Number(size.z.toFixed(2)),
+    };
+  }
+
+  // --- Historial (deshacer / rehacer) ---
+
+  undo(): void {
+    if (!this.editorHistory.undo()) return;
+    this.notifications.info('Deshacer realizado.', 'Historial');
+  }
+
+  redo(): void {
+    if (!this.editorHistory.redo()) return;
+    this.notifications.info('Rehacer realizado.', 'Historial');
+  }
+
+  clearHistory(): void {
+    this.editorHistory.clear();
+    this.notifications.info('Historial limpiado.', 'Historial');
+  }
+
+  // --- Duplicar / copiar / pegar ---
+
+  duplicateSelectedObject(): void {
+    const ok = this.threeEngine.duplicateSelected();
+    if (!ok) {
+      this.notifications.warning('Selecciona un objeto para duplicar.');
+      return;
+    }
+    this.notifications.success('Objeto duplicado.', 'Duplicar');
+  }
+
+  copySelectedToClipboard(): void {
+    const payload = this.threeEngine.copySelectedToClipboard();
+    if (!payload) {
+      this.notifications.warning('Selecciona un objeto para copiar.');
+      return;
+    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    void navigator.clipboard.writeText(payload).then(() => {
+      this.notifications.success('Objeto copiado al portapapeles.', 'Copiar');
+    }, () => {
+      this.notifications.error('No se pudo acceder al portapapeles.', 'Copiar');
+    });
+  }
+
+  pasteFromClipboard(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    navigator.clipboard.readText().then((raw) => {
+      const ok = this.threeEngine.pasteObjectFromClipboard(raw);
+      if (!ok) {
+        this.notifications.warning('No hay un objeto 3D válido en el portapapeles.');
+        return;
+      }
+      this.notifications.success('Objeto pegado desde el portapapeles.', 'Pegar');
+    }, () => {
+      this.notifications.error('No se pudo leer el portapapeles.', 'Pegar');
+    });
+  }
+
+  // --- Exportar / importar escena ---
+
+  async exportSceneGLB(): Promise<void> {
+    this.exportBusy = true;
+    try {
+      this.fileHandler.exportCurrentModelGLB();
+    } catch (error) {
+      this.notifications.error(
+        error instanceof Error ? error.message : 'No se pudo exportar la escena.',
+        'Exportar',
+      );
+    } finally {
+      this.exportBusy = false;
+    }
+  }
+
+  async importSceneFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
+      this.notifications.warning('Selecciona un archivo .glb o .gltf.');
+      return;
+    }
+    this.importBusy = true;
+    try {
+      this.fileHandler.loadLocalGLTF(file);
+    } catch (error) {
+      this.notifications.error(
+        error instanceof Error ? error.message : 'No se pudo importar el modelo.',
+        'Importar',
+      );
+    } finally {
+      this.importBusy = false;
+    }
+  }
+
+  // --- Capturar imagen ---
+
+  captureScreenshot(): void {
+    const image = this.threeEngine.captureImageDataUrl();
+    if (!image) {
+      this.notifications.warning('No se pudo capturar la vista actual.');
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = `carxy-render-${Date.now()}.png`;
+    link.click();
+    this.notifications.success('Imagen capturada y descargada.', 'Captura');
+  }
+
+  // --- Presentación / turntable ---
+
+  togglePresentation(): void {
+    const enabled = this.threeEngine.togglePresentation();
+    this.notifications.info(
+      enabled ? 'Modo presentación activado.' : 'Modo presentación desactivado.',
+      'Presentación',
+    );
+  }
+
+  async recordTurntable(): Promise<void> {
+    this.presentationBusy = true;
+    try {
+      this.threeEngine.recordTurntable(10);
+    } catch (error) {
+      this.notifications.error(
+        error instanceof Error ? error.message : 'No se pudo grabar el video.',
+        'Turntable',
+      );
+    } finally {
+      this.presentationBusy = false;
+    }
   }
 
   ngOnDestroy(): void {

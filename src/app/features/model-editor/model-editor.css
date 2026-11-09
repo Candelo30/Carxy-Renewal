@@ -667,8 +667,90 @@ input[type='range'] {
   font-size: 0.66rem;
 }
 
+.scene-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 8px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-raised);
+}
+
+.icon-action {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex: none;
+}
+
+.icon-action:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.icon-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dimensions-group {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-panel);
+}
+
+.dimensions-group label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.dimensions-group .axis-input {
+  color: var(--text-primary);
+  font-size: 0.72rem;
+}
+
+.dimensions-group .axis-input strong {
+  color: var(--accent-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.dimensions-group small {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+}
+
 @media (max-width: 760px) {
   .panel-tabs {
     margin-bottom: 16px;
+  }
+
+  .scene-actions {
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .icon-action {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
 }

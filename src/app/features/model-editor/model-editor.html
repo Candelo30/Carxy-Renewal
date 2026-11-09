@@ -79,6 +79,20 @@
       <button class="delete-button" [disabled]="!selectedObjectId" (click)="deleteSelectedObject()">
         {{ language === 'es' ? '−  Eliminar modelo seleccionado' : '−  Delete selected model' }}
       </button>
+
+      <div class="scene-actions">
+        <button class="icon-action" [disabled]="!canUndo" (click)="undo()" title="Deshacer">↩</button>
+        <button class="icon-action" [disabled]="!canRedo" (click)="redo()" title="Rehacer">↪</button>
+        <button class="icon-action" [disabled]="!selectedObjectId" (click)="duplicateSelectedObject()" title="Duplicar objeto">∂</button>
+        <button class="icon-action" [disabled]="!selectedObjectId" (click)="copySelectedToClipboard()" title="Copiar al portapapeles">📋</button>
+        <button class="icon-action" (click)="pasteFromClipboard()" title="Pegar desde portapapeles">📥</button>
+        <button class="icon-action" (click)="captureScreenshot()" title="Capturar imagen del viewport">📸</button>
+        <label class="icon-action" title="Importar escena GLB/GLTF">
+          <input type="file" accept=".glb,.gltf" (change)="importSceneFile($event)" style="display:none" />
+          ↧
+        </label>
+        <button class="icon-action" [disabled]="exportBusy" (click)="exportSceneGLB()" title="Exportar escena a GLB">💾</button>
+      </div>
     </section>
 
     <section class="panel-section properties-section">
@@ -114,6 +128,16 @@
       <div class="control-group">
         <label>{{ language === 'es' ? 'Escala uniforme' : 'Uniform scale' }} <span>{{ scale | number: '1.1-2' }}×</span></label>
         <input type="range" min="0.1" max="5" step="0.1" [(ngModel)]="scale" (input)="onScaleChange()" />
+      </div>
+
+      <div class="control-group dimensions-group" *ngIf="dimensions">
+        <label>{{ language === 'es' ? 'Dimensiones' : 'Dimensions' }}</label>
+        <div class="axis-controls">
+          <span class="axis-input"><span>Ancho</span> <strong>{{ dimensions.width }}</strong></span>
+          <span class="axis-input"><span>Alto</span> <strong>{{ dimensions.height }}</strong></span>
+          <span class="axis-input"><span>Fondo</span> <strong>{{ dimensions.depth }}</strong></span>
+        </div>
+        <small>{{ language === 'es' ? 'Tamaño del objeto seleccionado (unidades 3D)' : 'Size of selected object (3D units)' }}</small>
       </div>
     </section>
 
@@ -278,6 +302,17 @@
         <button (click)="stopAudio()" [disabled]="!audioEnabled">{{ language === 'es' ? 'Detener' : 'Stop' }}</button>
       </div>
       <small class="audio-status" *ngIf="audioStatus">{{ audioStatus }}</small>
+
+      <div class="setting-divider"></div>
+      <span class="eyebrow viewport-eyebrow">{{ language === 'es' ? 'PRESENTACIÓN Y COMPARTIR' : 'PRESENTATION & SHARE' }}</span>
+      <div class="setting-toggle" [class.enabled]="threeEngine.presentationEnabled" (click)="togglePresentation()">
+        <span>{{ language === 'es' ? 'Modo presentación (turntable)' : 'Presentation mode (turntable)' }}</span>
+        <span>{{ threeEngine.presentationEnabled ? 'ON' : 'OFF' }}</span>
+      </div>
+      <button class="setting-toggle" [disabled]="presentationBusy" (click)="recordTurntable()">
+        <span>{{ language === 'es' ? 'Grabar video de presentación' : 'Record presentation video' }}</span>
+        <span>{{ presentationBusy ? 'Grabando…' : '' }}</span>
+      </button>
     </section>
   </ng-template>
 </div>
