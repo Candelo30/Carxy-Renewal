@@ -1,5 +1,5 @@
 <div class="viewer-container">
-  <canvas #rendererCanvas class="webgl-canvas" (pointerdown)="onCanvasPointerDown($event)"></canvas>
+  <canvas #rendererCanvas class="webgl-canvas" (pointerdown)="onCanvasPointerDown($event)" (mousemove)="onCanvasMouseMove($event)"></canvas>
   <div class="hotspot-layer">
     @for (hotspot of hotspots; track hotspot.id) {
       @if (hotspot.visible) {
@@ -12,6 +12,17 @@
           <span>{{ hotspot.label }}</span>
         </div>
       }
+    }
+  </div>
+
+  <!-- Cursores remotos de colaboradores -->
+  <div class="remote-cursors-layer">
+    @for (cursor of remoteCursors.values(); track cursor.uid) {
+      <app-collaborator-cursor
+        [collab]="{ uid: cursor.uid, displayName: cursor.displayName, color: cursor.color }"
+        [cursorX]="cursor.x * 100"
+        [cursorY]="cursor.y * 100"
+      />
     }
   </div>
 </div>
