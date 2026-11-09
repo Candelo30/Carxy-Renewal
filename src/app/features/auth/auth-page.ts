@@ -3,7 +3,12 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, firstValueFrom, take } from 'rxjs';
-import { AuthService } from '../../core/services/auth';
+import {
+  AuthService,
+  evaluatePasswordStrength,
+  isPasswordStrongEnough,
+  PasswordStrength,
+} from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
@@ -22,12 +27,14 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
   styleUrl: './auth-page.css',
 })
 export class AuthPage implements OnInit, OnDestroy {
-  mode: 'login' | 'register' = 'login';
+  mode: 'login' | 'register' | 'reset' = 'login';
   email = '';
   password = '';
   displayName = '';
   error = '';
+  status = '';
   busy = false;
+  showPassword = false;
   readonly user$ = inject(AuthService).user$;
   readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
@@ -36,29 +43,49 @@ export class AuthPage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly subscription = new Subscription();
 
+  get passwordStrength(): PasswordStrength {
+    return evaluatePasswordStrength(this.password);
+  }
+
+  get passwordReady(): boolean {
+    return isPasswordStrongEnough(this.password);
+  }
+
   ngOnInit(): void {
     this.subscription.add(this.route.data.subscribe((data) => {
-      this.mode = data['mode'] === 'register' ? 'register' : 'login';
+      const mode = data['mode'];
+      this.mode = mode === 'register' || mode === 'reset' ? mode : 'login';
     }));
   }
 
   async submit(): Promise<void> {
     this.error = '';
+    this.status = '';
     this.busy = true;
     try {
+      if (this.mode === 'reset') {
+        await this.auth.sendPasswordReset(this.email);
+        this.status = 'Te enviamos un enlace para restablecer la contraseña. Revisa tu bandeja y spam.';
+        this.notifications.success(this.status, 'Correo enviado');
+        return;
+      }
       if (this.mode === 'register') {
+        if (!this.passwordReady) {
+          throw new Error('La contraseña debe tener al menos 8 caracteres, incluir letras y un número.');
+        }
         await this.auth.register(this.email, this.password, this.displayName);
+        this.notifications.success(
+          'Cuenta creada. Revisa tu correo para verificarla y proteger tu espacio.',
+          'Cuenta creada',
+        );
       } else {
         await this.auth.login(this.email, this.password);
+        this.notifications.success('Has iniciado sesión correctamente.', 'Sesión iniciada');
       }
-      this.notifications.success(
-        this.mode === 'register' ? 'Tu cuenta ya está lista.' : 'Has iniciado sesión correctamente.',
-        this.mode === 'register' ? 'Cuenta creada' : 'Sesión iniciada',
-      );
       await this.finishLogin();
     } catch (error) {
       console.error('No se pudo completar la autenticación.', error);
-      this.error = this.authErrorMessage(error);
+      this.error = this.auth.authErrorMessage(error);
       this.notifications.error(this.error, 'Error de acceso');
       this.changeDetector.markForCheck();
     } finally {
@@ -75,20 +102,10 @@ export class AuthPage implements OnInit, OnDestroy {
       await this.finishLogin();
     } catch (error) {
       console.error('No se pudo autenticar con Google.', error);
-      this.error = this.authErrorMessage(error);
+      this.error = this.auth.authErrorMessage(error);
       this.notifications.error(this.error, 'Error de acceso');
       this.changeDetector.markForCheck();
     }
-  }
-
-  private authErrorMessage(error: unknown): string {
-    const code = error && typeof error === 'object' && 'code' in error
-      ? String(error.code)
-      : '';
-    if (code === 'auth/network-request-failed' || code === 'auth/operation-not-allowed') {
-      return 'Firebase Authentication no está listo. En Firebase Console, inicializa Authentication y habilita Email/Password (y Google si usarás ese acceso).';
-    }
-    return error instanceof Error ? error.message : 'No se pudo completar la autenticación.';
   }
 
   private async finishLogin(): Promise<void> {
@@ -102,7 +119,7 @@ export class AuthPage implements OnInit, OnDestroy {
       await this.auth.logout();
       this.notifications.info('Tu sesión se ha cerrado.');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo cerrar sesión.';
+      const message = this.auth.authErrorMessage(error);
       this.notifications.error(message, 'Error al cerrar sesión');
     }
   }

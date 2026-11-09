@@ -1,5 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, ElementRef, HostListener, inject, OnDestroy, PLATFORM_ID, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  PLATFORM_ID,
+  ViewChild,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { LocalStateService } from '../../core/services/local-state';

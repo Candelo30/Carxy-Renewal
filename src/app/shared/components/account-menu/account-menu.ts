@@ -3,7 +3,12 @@ import { Component, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/services/auth';
+import {
+  AuthService,
+  evaluatePasswordStrength,
+  isPasswordStrongEnough,
+  PasswordStrength,
+} from '../../../core/services/auth';
 import { LocalStateService } from '../../../core/services/local-state';
 import { NotificationService } from '../../../core/services/notifications';
 import { EditorPreferences } from '../../../core/models/social.models';
@@ -22,6 +27,7 @@ export class AccountMenuComponent {
   readonly preferences: EditorPreferences;
   open = false;
   settingsOpen = false;
+  settingsTab: 'appearance' | 'security' = 'appearance';
   readonly auth = inject(AuthService);
   private readonly social = inject(SocialService);
   private readonly state = inject(LocalStateService);
@@ -32,9 +38,25 @@ export class AccountMenuComponent {
   deleteConfirmation = '';
   deletePassword = '';
   deletingAccount = false;
+  currentPassword = '';
+  nextPassword = '';
+  confirmPassword = '';
+  changingPassword = false;
+  sendingVerification = false;
 
   constructor() {
     this.preferences = this.state.loadPreferences();
+  }
+
+  get nextPasswordStrength(): PasswordStrength {
+    return evaluatePasswordStrength(this.nextPassword);
+  }
+
+  get canChangePassword(): boolean {
+    return this.auth.hasPasswordProvider
+      && !!this.currentPassword
+      && isPasswordStrongEnough(this.nextPassword)
+      && this.nextPassword === this.confirmPassword;
   }
 
   onAvatarError(event: Event): void {
@@ -42,9 +64,10 @@ export class AccountMenuComponent {
     if (image instanceof HTMLImageElement) image.src = this.fallbackAvatar;
   }
 
-  toggleSettings(): void {
+  toggleSettings(tab: 'appearance' | 'security' = 'appearance'): void {
     this.open = false;
-    this.settingsOpen = !this.settingsOpen;
+    this.settingsTab = tab;
+    this.settingsOpen = true;
   }
 
   saveAppearance(): void {
@@ -65,6 +88,34 @@ export class AccountMenuComponent {
     this.deletePassword = '';
   }
 
+  async sendVerification(): Promise<void> {
+    this.sendingVerification = true;
+    try {
+      await this.auth.sendVerificationEmail();
+      this.notifications.success('Revisa tu bandeja de entrada (y spam) para verificar el correo.', 'Verificación enviada');
+    } catch (error) {
+      this.notifications.error(this.auth.authErrorMessage(error), 'No se pudo verificar');
+    } finally {
+      this.sendingVerification = false;
+    }
+  }
+
+  async changePassword(): Promise<void> {
+    if (!this.canChangePassword) return;
+    this.changingPassword = true;
+    try {
+      await this.auth.changePassword(this.currentPassword, this.nextPassword);
+      this.currentPassword = '';
+      this.nextPassword = '';
+      this.confirmPassword = '';
+      this.notifications.success('Tu contraseña se actualizó. Usa la nueva en el próximo inicio de sesión.', 'Contraseña actualizada');
+    } catch (error) {
+      this.notifications.error(this.auth.authErrorMessage(error), 'No se pudo cambiar la contraseña');
+    } finally {
+      this.changingPassword = false;
+    }
+  }
+
   async deleteAccount(uid: string): Promise<void> {
     if (this.deleteConfirmation !== 'ELIMINAR') return;
     this.deletingAccount = true;
@@ -78,7 +129,7 @@ export class AccountMenuComponent {
       this.notifications.success('Tu cuenta se eliminó y tus conversaciones quedaron anonimizadas.', 'Cuenta eliminada');
     } catch (error) {
       console.error('No se pudo completar la eliminación de la cuenta.', error);
-      this.notifications.error(error instanceof Error ? error.message : 'No se pudo eliminar la cuenta.', 'Error al eliminar la cuenta');
+      this.notifications.error(this.auth.authErrorMessage(error), 'Error al eliminar la cuenta');
     } finally {
       this.deletingAccount = false;
     }
@@ -93,7 +144,7 @@ export class AccountMenuComponent {
       this.notifications.info('Tu sesión se ha cerrado.');
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : 'No se pudo cerrar la sesión.',
+        this.auth.authErrorMessage(error),
         'Error al cerrar sesión',
       );
     }

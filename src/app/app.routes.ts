@@ -24,6 +24,11 @@ export const routes: Routes = [
     data: { mode: 'register' },
   },
   {
+    path: 'forgot-password',
+    loadComponent: () => import('./features/auth/auth-page').then((module) => module.AuthPage),
+    data: { mode: 'reset' },
+  },
+  {
     path: 'profile/:uid',
     loadComponent: () => import('./features/profile/profile-page').then((module) => module.ProfilePage),
   },
