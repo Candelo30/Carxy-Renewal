@@ -107,14 +107,18 @@
         }
       </div>
       <div class="header-sub-actions">
-        <button class="btn-ghost" type="button" (click)="publishClick.emit()">
-          <span>＋</span>
-          {{ language === 'es' ? 'Publicar' : 'Publish' }}
-        </button>
-        <button class="btn-ghost" type="button" [class.active]="presentationEnabled" (click)="togglePresentation()">
-          <span>▶</span>
-          {{ language === 'es' ? 'Presentación' : 'Presentation' }}
-        </button>
+        @if (showPublish) {
+          <button class="btn-ghost" type="button" (click)="publishClick.emit()">
+            <span>＋</span>
+            {{ language === 'es' ? 'Publicar' : 'Publish' }}
+          </button>
+        }
+        @if (showPresentation) {
+          <button class="btn-ghost" type="button" [class.active]="presentationEnabled" (click)="togglePresentation()">
+            <span>▶</span>
+            {{ language === 'es' ? 'Presentación' : 'Presentation' }}
+          </button>
+        }
       </div>
     </div>
   }

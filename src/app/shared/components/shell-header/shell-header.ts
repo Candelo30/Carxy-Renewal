@@ -46,6 +46,8 @@ export class ShellHeaderComponent {
   @Input() showSearch = true;
   @Input() showNav = true;
   @Input() authMode = false;
+  @Input() showPublish = false;
+  @Input() showPresentation = false;
   @Input() title = '';
   @Input() subtitle = '';
   @Output() languageChange = new EventEmitter<'es' | 'en'>();

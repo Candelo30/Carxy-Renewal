@@ -99,11 +99,14 @@ export class SocialService {
         .pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))))
     : this.localPosts.asObservable();
 
+  private readonly adminUsersRefresh$ = new BehaviorSubject<void>(undefined);
+
   readonly adminUsers$: Observable<UserProfile[]> = this.firestore
     ? combineLatest([
+        this.adminUsersRefresh$,
         collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.users), { idField: 'uid' }),
         collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.privateUsers), { idField: 'uid' }),
-      ]).pipe(map(([publicUsers, privateUsers]) => {
+      ]).pipe(map(([_, publicUsers, privateUsers]) => {
         const privateByUid = new Map(privateUsers.map((item) => [String(item['uid']), item]));
         return publicUsers.map((item) => this.normalizeAdminUser(
           item as Record<string, unknown>,
@@ -733,6 +736,7 @@ export class SocialService {
   async setUserRole(uid: string, role: UserRole): Promise<void> {
     if (this.firestore) {
       await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.users, uid), { role });
+      this.adminUsersRefresh$.next(undefined);
       return;
     }
     throw new Error('La gestión de roles requiere Firebase configurado.');
