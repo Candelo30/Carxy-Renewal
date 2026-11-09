@@ -34,4 +34,5 @@ export const LOCAL_KEYS = {
   modelDatabase: 'forma-social-models',
   preferences: 'forma-3d-preferences',
   draft: 'forma-3d-draft',
+  onboarding: 'forma-3d-onboarding',
 } as const;
