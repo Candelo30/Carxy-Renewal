@@ -1,7 +1,8 @@
-<header class="shell-header">
+<header class="shell-header" [class.auth-mode]="authMode">
   <!-- Barra superior fija -->
   <div class="header-bar">
     <div class="header-start">
+      @if (!authMode) {
       <button
         class="nav-toggle"
         type="button"
@@ -12,6 +13,7 @@
         <span class="hamburger"></span>
         <span class="hamburger"></span>
       </button>
+      }
 
       <a class="brand-link" routerLink="/editor" aria-label="CARXY 3D STUDIO">
         <div class="brand-mark">
@@ -48,6 +50,7 @@
     </div>
     }
 
+    @if (!authMode) {
     <div class="header-end">
       @if (showNav) {
         <nav class="header-nav">
@@ -88,10 +91,12 @@
         <app-account-menu class="compact" />
       </div>
     </div>
+    }
+
   </div>
 
   <!-- Sub-header con título y acciones secundarias (solo en páginas con título) -->
-  @if (title || subtitle) {
+  @if (!authMode && (title || subtitle)) {
     <div class="header-sub">
       <div class="header-sub-content">
         @if (title) {
