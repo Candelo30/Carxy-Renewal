@@ -7,6 +7,7 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  background: var(--surface-main);
 }
 
 .webgl-canvas {
@@ -17,6 +18,11 @@
   height: 100%;
   outline: none;
   z-index: 10;
+  cursor: crosshair;
+}
+
+/* Ocultar cursor del navegador sobre el canvas para evitar el cuadro blanco */
+.webgl-canvas:hover {
   cursor: crosshair;
 }
 
@@ -59,8 +65,106 @@
   inset: 0;
   pointer-events: none;
   overflow: visible;
+  z-index: 20;
 }
 
 .remote-cursors-layer app-collaborator-cursor {
   position: absolute;
+}
+
+/* Panel de controles 3D - debe estar por encima del canvas */
+.viewer-controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 12px;
+  gap: 10px;
+  z-index: 60; /* Por encima del canvas (z-index: 10) */
+  pointer-events: auto;
+}
+
+.viewer-controls .control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: color-mix(in srgb, var(--surface-panel) 85%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 6px;
+}
+
+.viewer-controls .control-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-right: 6px;
+}
+
+.viewer-controls .view-btn,
+.viewer-controls .toggle-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 140ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer-controls .view-btn:hover,
+.viewer-controls .toggle-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+}
+
+.viewer-controls .view-btn.active,
+.viewer-controls .toggle-btn.active {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  color: #ffffff;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-color) 40%, transparent);
+}
+
+.measure-info {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Responsivo para el panel de controles */
+@media (max-width: 760px) {
+  .viewer-controls {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .viewer-controls .control-group {
+    padding: 6px 8px;
+    gap: 5px;
+  }
+
+  .viewer-controls .control-label {
+    font-size: 0.64rem;
+    margin-right: 4px;
+  }
+
+  .viewer-controls .view-btn,
+  .viewer-controls .toggle-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
 }

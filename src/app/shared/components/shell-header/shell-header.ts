@@ -77,6 +77,14 @@ export class ShellHeaderComponent {
     this.presentationChange.emit(this.presentationEnabled);
   }
 
+  toggleMobileMenu(): void {
+    this.openMobileMenu = !this.openMobileMenu;
+  }
+
+  closeMobileMenu(): void {
+    this.openMobileMenu = false;
+  }
+
   get isAdmin(): boolean {
     return false; // se resuelve en el template con user$
   }

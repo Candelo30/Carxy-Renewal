@@ -2,19 +2,19 @@
   <!-- Barra superior fija -->
   <div class="header-bar">
     <div class="header-start">
-      @if (!authMode) {
+      <!-- Menú hamburguesa - siempre visible en móvil, opcional en desktop -->
       <button
         class="nav-toggle"
         type="button"
         aria-label="Abrir menú principal"
-        (click)="menuToggle.emit()"
+        (click)="toggleMobileMenu()"
       >
-        <span class="hamburger"></span>
-        <span class="hamburger"></span>
-        <span class="hamburger"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
       </button>
-      }
 
+      <!-- Logo de marca -->
       <a class="brand-link" routerLink="/editor" aria-label="CARXY 3D STUDIO">
         <div class="brand-mark">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -29,6 +29,7 @@
       </a>
     </div>
 
+    <!-- Centro: búsqueda (oculto en móvil) -->
     @if (showSearch) {
     <div class="header-center">
       <div class="search-field">
@@ -45,45 +46,45 @@
         @if (searchQuery) {
           <button class="search-clear" type="button" (click)="clearSearch()">×</button>
         }
-
       </div>
     </div>
     }
 
+    <!-- Fin: navegación + acciones -->
     @if (!authMode) {
     <div class="header-end">
       @if (showNav) {
-        <nav class="header-nav">
-          <a routerLink="/feed" routerLinkActive="active">
-            <span class="nav-icon">🌐</span>
-            <span class="nav-label">{{ language === 'es' ? 'Comunidad' : 'Community' }}</span>
+      <nav class="header-nav">
+        <a routerLink="/feed" routerLinkActive="active">
+          <span class="nav-icon">🌐</span>
+          <span class="nav-label">{{ language === 'es' ? 'Comunidad' : 'Community' }}</span>
+        </a>
+        <a routerLink="/editor" routerLinkActive="active">
+          <span class="nav-icon">🛠️</span>
+          <span class="nav-label">{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</span>
+        </a>
+        <a routerLink="/my-models" routerLinkActive="active">
+          <span class="nav-icon">📦</span>
+          <span class="nav-label">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</span>
+        </a>
+        @if (user$ | async; as user) {
+          <a routerLink="/chat" routerLinkActive="active">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">{{ language === 'es' ? 'Mensajes' : 'Messages' }}</span>
           </a>
-          <a routerLink="/editor" routerLinkActive="active">
-            <span class="nav-icon">🛠️</span>
-            <span class="nav-label">{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</span>
-          </a>
-          <a routerLink="/my-models" routerLinkActive="active">
-            <span class="nav-icon">📦</span>
-            <span class="nav-label">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</span>
-          </a>
-          @if (user$ | async; as user) {
-            <a routerLink="/chat" routerLinkActive="active">
-              <span class="nav-icon">💬</span>
-              <span class="nav-label">{{ language === 'es' ? 'Mensajes' : 'Messages' }}</span>
+          @if (user.role === 'admin') {
+            <a routerLink="/admin" routerLinkActive="active">
+              <span class="nav-icon">🛡️</span>
+              <span class="nav-label">Admin</span>
             </a>
-            @if (user.role === 'admin') {
-              <a routerLink="/admin" routerLinkActive="active">
-                <span class="nav-icon">🛡️</span>
-                <span class="nav-label">Admin</span>
-              </a>
-            } @else if (user.role === 'moderator') {
-              <a routerLink="/moderation" routerLinkActive="active">
-                <span class="nav-icon">👮</span>
-                <span class="nav-label">{{ language === 'es' ? 'Moderar' : 'Moderate' }}</span>
-              </a>
-            }
+          } @else if (user.role === 'moderator') {
+            <a routerLink="/moderation" routerLinkActive="active">
+              <span class="nav-icon">👮</span>
+              <span class="nav-label">{{ language === 'es' ? 'Moderar' : 'Moderate' }}</span>
+            </a>
           }
-        </nav>
+        }
+      </nav>
       }
 
       <div class="header-actions">
@@ -95,7 +96,7 @@
 
   </div>
 
-  <!-- Sub-header con título y acciones secundarias (solo en páginas con título) -->
+  <!-- Sub-header con título y acciones secundarias -->
   @if (!authMode && (title || subtitle)) {
     <div class="header-sub">
       <div class="header-sub-content">
@@ -125,9 +126,9 @@
 
   <!-- Menú móvil desplegable -->
   @if (openMobileMenu) {
-    <div class="mobile-menu-overlay" (click)="openMobileMenu = false"></div>
+    <div class="mobile-menu-overlay" (click)="closeMobileMenu()"></div>
     <div class="mobile-menu">
-      <button class="mobile-menu-close" type="button" (click)="openMobileMenu = false">✕</button>
+      <button class="mobile-menu-close" type="button" (click)="closeMobileMenu()">✕</button>
       <div class="mobile-section">
         <h3 class="mobile-section-title">{{ language === 'es' ? 'Navegación' : 'Navigation' }}</h3>
         <a routerLink="/feed" class="mobile-link">{{ language === 'es' ? 'Comunidad' : 'Community' }}</a>
@@ -145,7 +146,7 @@
           } @else if (user.role === 'moderator') {
             <a routerLink="/moderation" class="mobile-link">{{ language === 'es' ? 'Moderación' : 'Moderation' }}</a>
           }
-          <button class="mobile-link mobile-link-danger" type="button" (click)="openMobileMenu = false; auth.logout()">
+          <button class="mobile-link mobile-link-danger" type="button" (click)="closeMobileMenu(); auth.logout()">
             {{ language === 'es' ? 'Cerrar sesión' : 'Sign out' }}
           </button>
         </div>

@@ -8,21 +8,13 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 100;
   width: 100%;
   border-bottom: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--surface-panel) 92%, transparent);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
   transition: transform 220ms ease, box-shadow 220ms ease;
-}
-
-/* Asegurar que el contenido no quede detrás del header fijo */
-.shell-header + *,
-main.page-with-header,
-.editor-layout,
-.editor-page-main {
-  margin-top: 64px;
 }
 
 .shell-header.elevated {
@@ -68,7 +60,7 @@ main.page-with-header,
   background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
 }
 
-.nav-toggle .hamburger {
+.nav-toggle .hamburger-line {
   display: block;
   width: 18px;
   height: 2px;
@@ -342,7 +334,8 @@ main.page-with-header,
   inset: 0;
   background: color-mix(in srgb, #000 55%, transparent);
   backdrop-filter: blur(6px);
-  z-index: 50;
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 60;
 }
 
 .mobile-menu {
@@ -355,7 +348,7 @@ main.page-with-header,
   background: var(--surface-panel);
   border-left: 1px solid var(--border-color);
   box-shadow: -8px 0 32px color-mix(in srgb, #000 35%, transparent);
-  z-index: 55;
+  z-index: 65;
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
@@ -465,7 +458,7 @@ main.page-with-header,
   }
 
   .header-center {
-    display: none; /* búsqueda oculta en móvil, se accede por menú o se muestra compacta */
+    display: none;
   }
 
   .header-nav {
@@ -505,7 +498,7 @@ main.page-with-header,
   }
 
   .brand-text {
-    display: none; /* solo icono en pantallas muy pequeñas */
+    display: none;
   }
 
   .header-end {
@@ -530,7 +523,7 @@ main.page-with-header,
   }
 }
 
-/* Compact mode (usado dentro de otras páginas pequeñas) */
+/* Compact mode */
 .app-shell-header.compact .header-bar {
   height: 48px;
   min-height: 48px;
