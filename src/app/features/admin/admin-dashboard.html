@@ -5,8 +5,28 @@
     <span class="admin-badge">⌘ ADMIN</span><app-activity-notifications /><app-account-menu />
   </header>
   @if (vm$ | async; as vm) {
+    @if (stats$ | async; as stats) {
+      <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon">👥</span><div><small>Usuarios totales</small><strong>{{ stats.totalUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">✅</span><div><small>Activos</small><strong>{{ stats.activeUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">⛔</span><div><small>Suspendidos</small><strong>{{ stats.suspendedUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">🛡️</span><div><small>Administradores</small><strong>{{ stats.adminUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">📦</span><div><small>Publicaciones</small><strong>{{ stats.totalPosts }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">⚑</span><div><small>Reportes abiertos</small><strong>{{ stats.openReports }}</strong></div></article>
+      </div>
+    }
     <section class="page-content">
-      <div class="heading"><div><p class="eyebrow">CONTROL CENTER</p><h1>{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}</h1><p>Gestiona acceso, roles y publicaciones de la comunidad.</p></div><span class="secure">● Sesión verificada · {{ vm.user?.role }}</span></div>
+      <div class="heading">
+        <div>
+          <p class="eyebrow">CONTROL CENTER</p>
+          <h1>{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}</h1>
+          <p>Gestiona acceso, roles y publicaciones de la comunidad.</p>
+        </div>
+        <div class="heading-actions">
+          <button class="refresh-button" type="button" (click)="refresh()">↻ Refrescar datos</button>
+          <span class="secure">● Sesión verificada · {{ vm.user?.role }}</span>
+        </div>
+      </div>
       @if (!moderationOnly && vm.user?.role === 'admin') {
         <div class="tabs"><button [class.active]="tab === 'users'" (click)="tab = 'users'">Usuarios <span>{{ vm.users.length }}</span></button><button [class.active]="tab === 'content'" (click)="tab = 'content'">Publicaciones <span>{{ vm.posts.length }}</span></button></div>
       } @else {
@@ -34,7 +54,30 @@
         <section class="panel">
           <div class="panel-heading"><div><h2>Modelos de la comunidad</h2><p>Oculta una publicación o elimínala junto con el modelo y su miniatura de Storage.</p></div><span>{{ vm.posts.length }} modelos</span></div>
           @if (vm.posts.length) {
-            <div class="moderation-grid">@for (post of vm.posts; track trackPost($index, post)) {
+            @if (vm.reports?.length) {
+            <section class="panel reports-panel" style="margin-top:16px;">
+              <div class="panel-heading"><div><h2>Reportes de la comunidad</h2><p>Revisa y resuelve los reportes enviados por los usuarios.</p></div><span>{{ vm.reports.length }} reportes</span></div>
+              <div class="table-wrap"><table><thead><tr><th>MODELO</th><th>REPORTADO POR</th><th>MOTIVO</th><th>ESTADO</th><th>FECHA</th><th></th></tr></thead>
+                <tbody>@for (report of vm.reports; track report.id) {
+                  <tr>
+                    <td><strong>{{ report.postTitle }}</strong><br/><small class="creator-id">{{ report.postId }}</small></td>
+                    <td>{{ report.reporterName }}</td>
+                    <td><span class="badge">{{ report.reason }}</span></td>
+                    <td><span class="state">{{ report.status === 'open' ? 'Abierto' : report.status === 'resolved' ? 'Resuelto' : 'Descartado' }}</span></td>
+                    <td>{{ report.createdAt | date:'shortDate' }}</td>
+                    <td>
+                      @if (report.status === 'open') {
+                        <div class="report-actions"><button class="small-button" (click)="resolveReport(report, 'resolved')">Resolver</button><button class="small-button" (click)="resolveReport(report, 'dismissed')">Descartar</button></div>
+                      } @else {
+                        <span class="state" [class.banned]="report.status === 'resolved'">{{ report.status === 'resolved' ? 'Resuelto' : 'Descartado' }}</span>
+                      }
+                    </td>
+                  </tr>
+                }</tbody>
+              </table></div>
+            </section>
+          }
+          <div class="moderation-grid">@for (post of vm.posts; track trackPost($index, post)) {
               <article class="content-card">
                 <img [src]="post.thumbnailUrl" [alt]="post.title" />
                 <div><div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
