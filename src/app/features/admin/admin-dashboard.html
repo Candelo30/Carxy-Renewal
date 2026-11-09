@@ -1,9 +1,12 @@
 <main class="admin-shell">
-  <header class="topbar">
-    <a routerLink="/feed" class="brand"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>STUDIO ADMIN</small></b></a>
-    <nav><a routerLink="/feed">Comunidad</a><a routerLink="/my-models">Mis creaciones</a><a routerLink="/editor">Editor</a></nav>
-    <span class="admin-badge">⌘ ADMIN</span><app-activity-notifications /><app-account-menu />
-  </header>
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="false"
+    [showNav]="true"
+    title="{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}"
+    subtitle="Gestiona acceso, roles y publicaciones de la comunidad"
+    (menuToggle)="toggleMobileMenu()"
+  ></app-shell-header>
   @if (vm$ | async; as vm) {
     <section class="page-content">
       <div class="heading"><div><p class="eyebrow">CONTROL CENTER</p><h1>{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}</h1><p>Gestiona acceso, roles y publicaciones de la comunidad.</p></div><span class="secure">● Sesión verificada · {{ vm.user?.role }}</span></div>

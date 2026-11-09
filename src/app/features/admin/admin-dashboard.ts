@@ -10,11 +10,13 @@ import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [
+    ShellHeaderComponent,
     AccountMenuComponent,
     ActivityNotificationsComponent,
     AsyncPipe,
@@ -29,6 +31,7 @@ import { ActivityNotificationsComponent } from '../../shared/components/activity
 export class AdminDashboardComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly social = inject(SocialService);
+  mobileMenuOpen = false;
   readonly vm$: Observable<{
     user: UserProfile | null;
     users: UserProfile[];
@@ -57,6 +60,10 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.moderationOnly = this.route.snapshot.data['moderationOnly'] === true;
     if (this.moderationOnly) this.tab = 'content';
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   async changeRole(

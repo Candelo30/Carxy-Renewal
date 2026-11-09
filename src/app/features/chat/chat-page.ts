@@ -10,11 +10,21 @@ import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-chat-page',
   standalone: true,
-  imports: [AccountMenuComponent, ActivityNotificationsComponent, AsyncPipe, DatePipe, FormsModule, LoadingSpinner, RouterLink],
+  imports: [
+    ShellHeaderComponent,
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
+    AsyncPipe,
+    DatePipe,
+    FormsModule,
+    LoadingSpinner,
+    RouterLink,
+  ],
   templateUrl: './chat-page.html',
   styleUrl: './chat-page.css',
 })
@@ -26,6 +36,7 @@ export class ChatPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly subscription = new Subscription();
   private currentUser: User | null = null;
+  mobileMenuOpen = false;
   readonly conversations$ = this.user$.pipe(
     switchMap((user) => user
       ? this.social.chatConversations$(user.uid).pipe(
@@ -54,6 +65,10 @@ export class ChatPage implements OnInit, OnDestroy {
       this.partnerId = params.get('peer') ?? '';
       this.openRequestedConversation();
     }));
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   openConversation(): void {

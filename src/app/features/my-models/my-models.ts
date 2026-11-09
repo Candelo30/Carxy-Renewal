@@ -11,16 +11,27 @@ import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-my-models',
   standalone: true,
-  imports: [AccountMenuComponent, ActivityNotificationsComponent, AsyncPipe, DatePipe, FormsModule, LoadingSpinner, RouterLink],
+  imports: [
+    ShellHeaderComponent,
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
+    AsyncPipe,
+    DatePipe,
+    FormsModule,
+    LoadingSpinner,
+    RouterLink,
+  ],
   templateUrl: './my-models.html',
   styleUrl: './my-models.css',
 })
 export class MyModelsComponent {
   readonly auth = inject(AuthService);
+  mobileMenuOpen = false;
   readonly vm$: Observable<{ user: UserProfile | null; posts: Post3D[] } | null> = this.auth.user$.pipe(
     switchMap((user) => {
       const viewModel$: Observable<{ user: UserProfile | null; posts: Post3D[] }> = user
@@ -41,6 +52,10 @@ export class MyModelsComponent {
   private readonly files = inject(FileHandler);
   private readonly router = inject(Router);
   private readonly notifications = inject(NotificationService);
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
 
   totalLikes(posts: Post3D[]): number {
     return posts.reduce((sum, post) => sum + (post.likesCount ?? post.likes), 0);

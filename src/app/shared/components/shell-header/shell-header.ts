@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -6,7 +6,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../../core/services/auth';
@@ -20,9 +20,7 @@ import { ActivityNotificationsComponent } from '../activity-notifications/activi
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
     FormsModule,
-    ReactiveFormsModule,
     RouterLink,
     AccountMenuComponent,
     ActivityNotificationsComponent,
