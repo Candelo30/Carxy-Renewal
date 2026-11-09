@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth';
 import { FileHandler } from '../../core/services/file-handler';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
-import { Comment, Post3D, User } from '../../core/models/social.models';
+import { Comment, Post3D, ReportReason, User } from '../../core/models/social.models';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
@@ -47,6 +47,17 @@ export class FeedPage {
   readonly social = this.socialService;
   readonly commentDrafts: Record<string, string> = {};
   readonly previewModes: Record<string, 'image' | '3d'> = {};
+  readonly likeBusy: Record<string, boolean> = {};
+  readonly reportReasons: { value: ReportReason; label: string }[] = [
+    { value: 'spam', label: 'Spam' },
+    { value: 'inappropriate', label: 'Contenido inapropiado' },
+    { value: 'copyright', label: 'Derechos de autor' },
+    { value: 'other', label: 'Otro' },
+  ];
+  reportPostTarget: Post3D | null = null;
+  reportReason: ReportReason = 'spam';
+  reportDetails = '';
+  reporting = false;
   error = '';
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
@@ -60,12 +71,51 @@ export class FeedPage {
       await this.router.navigate(['/login']);
       return;
     }
+    if (this.likeBusy[post.id]) return;
+    this.likeBusy[post.id] = true;
     try {
-      await this.social.like(post, user);
-      this.notifications.success(`Marcaste “${post.title}” como favorito.`, 'Favorito guardado');
+      const liked = await this.social.toggleLike(post, user);
+      this.notifications.success(
+        liked
+          ? `Marcaste “${post.title}” como favorito.`
+          : `Quitaste “${post.title}” de favoritos.`,
+        liked ? 'Favorito guardado' : 'Favorito quitado',
+      );
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'No se pudo marcar como favorito.';
+      this.error = error instanceof Error ? error.message : 'No se pudo actualizar el favorito.';
       this.notifications.error(this.error);
+    } finally {
+      this.likeBusy[post.id] = false;
+    }
+  }
+
+  openReport(post: Post3D, dialog: HTMLDialogElement): void {
+    this.reportPostTarget = post;
+    this.reportReason = 'spam';
+    this.reportDetails = '';
+    dialog.showModal();
+  }
+
+  async submitReport(dialog: HTMLDialogElement): Promise<void> {
+    if (!this.reportPostTarget) return;
+    const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
+    if (!user) {
+      this.notifications.warning('Inicia sesión para reportar contenido.');
+      await this.router.navigate(['/login']);
+      return;
+    }
+    this.reporting = true;
+    try {
+      await this.social.reportPost(this.reportPostTarget, user, this.reportReason, this.reportDetails);
+      this.notifications.success('Gracias. El equipo de moderación revisará el reporte.', 'Reporte enviado');
+      this.reportPostTarget = null;
+      dialog.close();
+    } catch (error) {
+      this.notifications.error(
+        error instanceof Error ? error.message : 'No se pudo enviar el reporte.',
+      );
+    } finally {
+      this.reporting = false;
     }
   }
 

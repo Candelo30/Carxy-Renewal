@@ -170,17 +170,43 @@ service cloud.firestore {
           && request.resource.data.isPrivate is bool
         ) || (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likesCount'])
-          && request.resource.data.likes == resource.data.likes + 1
-          && request.resource.data.likesCount == resource.data.likesCount + 1
+          && request.resource.data.likes is int
+          && request.resource.data.likesCount is int
+          && request.resource.data.likes == request.resource.data.likesCount
+          && request.resource.data.likes >= 0
+          && (
+            (
+              request.resource.data.likes == resource.data.likes + 1
+              && existsAfter(/databases/$(database)/documents/posts/$(postId)/likes/$(request.auth.uid))
+            ) || (
+              request.resource.data.likes == resource.data.likes - 1
+              && !existsAfter(/databases/$(database)/documents/posts/$(postId)/likes/$(request.auth.uid))
+            )
+          )
         ) || (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewsCount'])
           && request.resource.data.viewsCount == resource.data.viewsCount + 1
         ) || (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['remixCount'])
           && request.resource.data.remixCount == resource.data.remixCount + 1
+        ) || (
+          canModerate()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPrivate'])
+          && request.resource.data.isPrivate is bool
         )
       );
       allow delete: if (signedIn() && resource.data.author.uid == request.auth.uid) || canModerate();
+
+      match /likes/{likerUid} {
+        allow read: if true;
+        allow create: if isActiveUser()
+          && request.auth.uid == likerUid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+          && request.resource.data.uid == likerUid
+          && request.resource.data.createdAt is number;
+        allow delete: if isActiveUser() && request.auth.uid == likerUid;
+        allow update: if false;
+      }
 
       match /comments/{commentId} {
         allow read: if get(/databases/$(database)/documents/posts/$(postId)).data.get('isPrivate', false) != true
@@ -199,6 +225,30 @@ service cloud.firestore {
           || (signedIn()
             && get(/databases/$(database)/documents/posts/$(postId)).data.author.uid == request.auth.uid);
       }
+    }
+
+    match /reports/{reportId} {
+      allow read: if canModerate();
+      allow create: if isActiveUser()
+        && request.resource.data.keys().hasOnly([
+          'postId', 'postTitle', 'reporterId', 'reporterName', 'reason', 'details', 'status', 'createdAt'
+        ])
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.reporterName
+          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        && request.resource.data.postId is string
+        && request.resource.data.postTitle is string
+        && request.resource.data.reason in ['spam', 'inappropriate', 'copyright', 'other']
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 500
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt is number
+        && exists(/databases/$(database)/documents/posts/$(request.resource.data.postId));
+      allow update: if canModerate()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])
+        && request.resource.data.status in ['resolved', 'dismissed']
+        && request.resource.data.resolvedAt is number;
+      allow delete: if isAdmin();
     }
 
     match /chats/{chatId} {

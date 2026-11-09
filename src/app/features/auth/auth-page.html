@@ -4,14 +4,25 @@
     <section class="auth-card signed-in">
       <span class="success-mark">✓</span><p class="eyebrow">SESIÓN ACTIVA</p><h1>Hola, {{ user.displayName }}</h1>
       <p>Tu espacio de creación está listo.</p>
+      @if (user.emailVerified === false) {
+        <p class="verify-hint">Tu correo aún no está verificado. Ábrelo desde Ajustes → Seguridad para proteger la cuenta.</p>
+      }
       <a class="primary" routerLink="/feed">Ir a la comunidad</a>
       <button class="text-button" type="button" (click)="logout()">Cerrar sesión</button>
     </section>
   } @else {
     <section class="auth-card">
-      <p class="eyebrow">TU PORTAFOLIO 3D</p>
-      <h1>{{ mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta' }}</h1>
-      <p class="subtext">{{ mode === 'login' ? 'Inicia sesión para conectar con otros creadores.' : 'Comparte tus modelos y descubre nuevas ideas.' }}</p>
+      <p class="eyebrow">{{ mode === 'reset' ? 'RECUPERACIÓN SEGURA' : 'TU PORTAFOLIO 3D' }}</p>
+      <h1>
+        @if (mode === 'login') { Bienvenido de vuelta }
+        @else if (mode === 'register') { Crea tu cuenta }
+        @else { Restablece tu contraseña }
+      </h1>
+      <p class="subtext">
+        @if (mode === 'login') { Inicia sesión para conectar con otros creadores. }
+        @else if (mode === 'register') { Comparte tus modelos y descubre nuevas ideas. }
+        @else { Te enviaremos un enlace seguro a tu correo para crear una nueva contraseña. }
+      </p>
       @if (!auth.isConfigured) {
         <div class="local-banner">Modo local de demostración. Los datos quedan en este navegador; configura Firebase para cuentas reales y sincronización en la nube.</div>
       }
@@ -20,21 +31,60 @@
           <label>Nombre visible<input name="displayName" [(ngModel)]="displayName" required minlength="2" maxlength="60" autocomplete="name" /></label>
         }
         <label>Correo electrónico<input name="email" type="email" [(ngModel)]="email" required autocomplete="email" /></label>
-        <label>Contraseña<input name="password" type="password" [(ngModel)]="password" required minlength="6" autocomplete="{{ mode === 'login' ? 'current-password' : 'new-password' }}" /></label>
+        @if (mode !== 'reset') {
+          <label class="password-label">
+            Contraseña
+            <div class="password-field">
+              <input
+                name="password"
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="password"
+                required
+                [minlength]="mode === 'register' ? 8 : 6"
+                [attr.autocomplete]="mode === 'login' ? 'current-password' : 'new-password'"
+              />
+              <button type="button" class="toggle-visibility" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                {{ showPassword ? 'Ocultar' : 'Ver' }}
+              </button>
+            </div>
+          </label>
+          @if (mode === 'register' && password) {
+            <div class="strength" [attr.data-level]="passwordStrength" aria-live="polite">
+              <span class="strength-bar"></span>
+              <small>
+                @if (passwordStrength === 'weak') { Débil · usa 8+ caracteres, letras y un número }
+                @else if (passwordStrength === 'fair') { Aceptable · añade mayúsculas o un símbolo }
+                @else { Fuerte · buena protección para tu cuenta }
+              </small>
+            </div>
+          }
+        }
         @if (error) { <p class="error" role="alert">{{ error }}</p> }
-        <button class="primary full" [disabled]="busy" type="submit">
+        @if (status) { <p class="status" role="status">{{ status }}</p> }
+        <button class="primary full" [disabled]="busy || (mode === 'register' && !passwordReady)" type="submit">
           @if (busy) {
             <app-loading-spinner variant="inline" label="Conectando con tu cuenta…" />
+          } @else if (mode === 'login') {
+            Iniciar sesión
+          } @else if (mode === 'register') {
+            Crear cuenta
           } @else {
-            {{ mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta' }}
+            Enviar enlace de recuperación
           }
         </button>
       </form>
-      <div class="divider"><span>o continúa con</span></div>
-      <button class="google" type="button" [disabled]="!auth.isConfigured" (click)="googleLogin()">G&nbsp; Continuar con Google</button>
-      <p class="switch">{{ mode === 'login' ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?' }}
-        <a [routerLink]="mode === 'login' ? '/register' : '/login'">{{ mode === 'login' ? 'Regístrate' : 'Inicia sesión' }}</a>
-      </p>
+      @if (mode === 'login') {
+        <p class="forgot"><a routerLink="/forgot-password">¿Olvidaste tu contraseña?</a></p>
+      }
+      @if (mode !== 'reset') {
+        <div class="divider"><span>o continúa con</span></div>
+        <button class="google" type="button" [disabled]="!auth.isConfigured" (click)="googleLogin()">G&nbsp; Continuar con Google</button>
+        <p class="switch">{{ mode === 'login' ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?' }}
+          <a [routerLink]="mode === 'login' ? '/register' : '/login'">{{ mode === 'login' ? 'Regístrate' : 'Inicia sesión' }}</a>
+        </p>
+      } @else {
+        <p class="switch">¿Ya la recordaste? <a routerLink="/login">Volver al inicio de sesión</a></p>
+      }
     </section>
   }
   <a class="back-link" routerLink="/editor">← Volver al editor</a>

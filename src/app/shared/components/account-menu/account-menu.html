@@ -20,14 +20,23 @@
       @if (user) {
         <a class="account-profile" [routerLink]="['/profile', user.uid]" (click)="open = false">
           <img [src]="user.photoURL || fallbackAvatar" alt="" (error)="onAvatarError($event)" />
-          <span><strong>{{ user.displayName }}</strong><small>Ver perfil</small></span>
+          <span>
+            <strong>{{ user.displayName }}</strong>
+            <small>{{ user.emailVerified === false ? 'Correo sin verificar' : 'Ver perfil' }}</small>
+          </span>
         </a>
         <a routerLink="/my-models" (click)="open = false">Mis creaciones</a>
+        @if (user.role === 'admin') {
+          <a routerLink="/admin" (click)="open = false">Panel admin</a>
+        } @else if (user.role === 'moderator') {
+          <a routerLink="/moderation" (click)="open = false">Moderación</a>
+        }
       } @else {
         <a routerLink="/login" (click)="open = false">Iniciar sesión</a>
       }
-      <button type="button" (click)="toggleSettings()">⚙ Ajustes de apariencia</button>
+      <button type="button" (click)="toggleSettings('appearance')">⚙ Apariencia</button>
       @if (user) {
+        <button type="button" (click)="toggleSettings('security')">🛡 Seguridad</button>
         <button type="button" class="logout" (click)="logout()">Cerrar sesión</button>
       }
     </div>
@@ -36,23 +45,93 @@
 
 @if (settingsOpen) {
   <div class="settings-backdrop" (click)="settingsOpen = false">
-    <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="appearance-title" (click)="$event.stopPropagation()">
+    <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title" (click)="$event.stopPropagation()">
       <button class="settings-close" type="button" aria-label="Cerrar ajustes" (click)="settingsOpen = false">×</button>
       <p class="eyebrow">CARXY STUDIO</p>
-      <h2 id="appearance-title">Ajustes de apariencia</h2>
-      <p>Personaliza el espacio de trabajo. Los cambios se guardan en este dispositivo.</p>
-      <label class="theme-choice">
-        <span><strong>Tema</strong><small>Elige el aspecto general de la aplicación</small></span>
-        <select [(ngModel)]="preferences.theme" (ngModelChange)="saveAppearance()">
-          <option value="dark">Oscuro</option>
-          <option value="light">Claro</option>
-        </select>
-      </label>
-      <label class="color-choice">
-        <span><strong>Color de acento</strong><small>Elige el color de acento de la aplicación</small></span>
-        <input type="color" [(ngModel)]="preferences.accentColor" (ngModelChange)="saveAppearance()" />
-      </label>
+      <h2 id="settings-title">{{ settingsTab === 'security' ? 'Seguridad de la cuenta' : 'Ajustes de apariencia' }}</h2>
       @if (user) {
+        <div class="settings-tabs" role="tablist">
+          <button type="button" role="tab" [class.active]="settingsTab === 'appearance'" (click)="settingsTab = 'appearance'">Apariencia</button>
+          <button type="button" role="tab" [class.active]="settingsTab === 'security'" (click)="settingsTab = 'security'">Seguridad</button>
+        </div>
+      }
+      @if (settingsTab === 'appearance') {
+        <p>Personaliza el espacio de trabajo. Los cambios se guardan en este dispositivo.</p>
+        <label class="theme-choice">
+          <span><strong>Tema</strong><small>Elige el aspecto general de la aplicación</small></span>
+          <select [(ngModel)]="preferences.theme" (ngModelChange)="saveAppearance()">
+            <option value="dark">Oscuro</option>
+            <option value="light">Claro</option>
+          </select>
+        </label>
+        <label class="color-choice">
+          <span><strong>Color de acento</strong><small>Elige el color de acento de la aplicación</small></span>
+          <input type="color" [(ngModel)]="preferences.accentColor" (ngModelChange)="saveAppearance()" />
+        </label>
+        <button class="settings-done" type="button" (click)="finishSettings()">Listo</button>
+      } @else if (user) {
+        <p>Protege tu acceso con verificación de correo y contraseña fuerte.</p>
+        <section class="security-card">
+          <div class="security-row">
+            <div>
+              <strong>Correo</strong>
+              <small>{{ user.email || 'Sin correo' }}</small>
+            </div>
+            <span class="badge" [class.ok]="user.emailVerified !== false" [class.warn]="user.emailVerified === false">
+              {{ user.emailVerified === false ? 'Sin verificar' : 'Verificado' }}
+            </span>
+          </div>
+          @if (user.emailVerified === false && auth.isConfigured) {
+            <button type="button" class="security-action" [disabled]="sendingVerification" (click)="sendVerification()">
+              {{ sendingVerification ? 'Enviando…' : 'Reenviar verificación' }}
+            </button>
+          }
+        </section>
+        <section class="security-card">
+          <div class="security-row">
+            <div>
+              <strong>Métodos de acceso</strong>
+              <small>{{ (user.providers || []).join(' · ') || 'Desconocido' }}</small>
+            </div>
+          </div>
+        </section>
+        @if (auth.hasPasswordProvider) {
+          <section class="security-card">
+            <h3>Cambiar contraseña</h3>
+            <label class="delete-confirm-label">
+              Contraseña actual
+              <input name="currentPassword" type="password" [(ngModel)]="currentPassword" autocomplete="current-password" [disabled]="changingPassword" />
+            </label>
+            <label class="delete-confirm-label">
+              Nueva contraseña
+              <input name="nextPassword" type="password" [(ngModel)]="nextPassword" autocomplete="new-password" [disabled]="changingPassword" />
+            </label>
+            @if (nextPassword) {
+              <div class="pwd-strength" [attr.data-level]="nextPasswordStrength">
+                <span></span>
+                <small>
+                  @if (nextPasswordStrength === 'weak') { Débil }
+                  @else if (nextPasswordStrength === 'fair') { Aceptable }
+                  @else { Fuerte }
+                </small>
+              </div>
+            }
+            <label class="delete-confirm-label">
+              Confirmar nueva contraseña
+              <input name="confirmPassword" type="password" [(ngModel)]="confirmPassword" autocomplete="new-password" [disabled]="changingPassword" />
+            </label>
+            @if (confirmPassword && nextPassword !== confirmPassword) {
+              <p class="field-error">Las contraseñas no coinciden.</p>
+            }
+            <button type="button" class="security-action" [disabled]="changingPassword || !canChangePassword" (click)="changePassword()">
+              {{ changingPassword ? 'Guardando…' : 'Actualizar contraseña' }}
+            </button>
+          </section>
+        } @else {
+          <section class="security-card">
+            <p class="hint">Tu cuenta usa un proveedor externo (p. ej. Google). Gestiona la contraseña desde ese proveedor.</p>
+          </section>
+        }
         <section class="delete-account">
           <h3>Eliminar cuenta</h3>
           <p>Se borrarán tu perfil, publicaciones y seguimientos. Tus conversaciones se conservarán y tus mensajes aparecerán como “Cuenta eliminada”.</p>
@@ -61,23 +140,12 @@
           } @else {
             <label class="delete-confirm-label">
               Escribe ELIMINAR para confirmar
-              <input
-                name="deleteConfirmation"
-                [(ngModel)]="deleteConfirmation"
-                autocomplete="off"
-                [disabled]="deletingAccount"
-              />
+              <input name="deleteConfirmation" [(ngModel)]="deleteConfirmation" autocomplete="off" [disabled]="deletingAccount" />
             </label>
             @if (auth.requiresPasswordForAccountDeletion) {
               <label class="delete-confirm-label">
                 Contraseña
-                <input
-                  name="deletePassword"
-                  [(ngModel)]="deletePassword"
-                  type="password"
-                  autocomplete="current-password"
-                  [disabled]="deletingAccount"
-                />
+                <input name="deletePassword" [(ngModel)]="deletePassword" type="password" autocomplete="current-password" [disabled]="deletingAccount" />
               </label>
             }
             <div class="delete-account-actions">
@@ -91,8 +159,8 @@
             </div>
           }
         </section>
+        <button class="settings-done" type="button" (click)="settingsOpen = false">Cerrar</button>
       }
-      <button class="settings-done" type="button" (click)="finishSettings()">Listo</button>
     </section>
   </div>
 }

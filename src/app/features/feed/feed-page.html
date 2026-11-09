@@ -111,10 +111,24 @@
                 <h3>{{ post.title }}</h3>
                 <p class="description">{{ post.description || 'Sin descripción.' }}</p>
                 <div class="card-actions">
-                  <button type="button" (click)="like(post)">♡ {{ post.likes }}</button>
+                  @if (user$ | async; as likeUser) {
+                    @let isLiked = (social.isLiked$(post.id, likeUser.uid) | async) ?? false;
+                    <button
+                      type="button"
+                      class="like-button"
+                      [class.liked]="isLiked"
+                      [disabled]="likeBusy[post.id]"
+                      [attr.aria-pressed]="isLiked"
+                      [attr.aria-label]="isLiked ? 'Quitar de favoritos' : 'Marcar como favorito'"
+                      (click)="like(post)"
+                    >{{ isLiked ? '♥' : '♡' }} {{ post.likes }}</button>
+                  } @else {
+                    <button type="button" class="like-button" (click)="like(post)">♡ {{ post.likes }}</button>
+                  }
                   <button type="button" class="remix" (click)="remix(post)">
                     ↗ Remix / Editar en 3D
                   </button>
+                  <button type="button" class="report-button" title="Reportar" (click)="openReport(post, reportDialog)">⚑</button>
                 </div>
                 @let comments = (social.comments$(post.id) | async) ?? [];
                 @if (comments.length) {
@@ -149,4 +163,29 @@
       }
     }
   </section>
+  <dialog #reportDialog class="report-dialog">
+    <form method="dialog">
+      <button class="dismiss" value="cancel" type="submit">×</button>
+      <p class="eyebrow">REPORTAR CONTENIDO</p>
+      <h2>¿Qué ocurre con “{{ reportPostTarget?.title }}”?</h2>
+      <label>
+        Motivo
+        <select name="reportReason" [(ngModel)]="reportReason">
+          @for (reason of reportReasons; track reason.value) {
+            <option [value]="reason.value">{{ reason.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Detalles (opcional)
+        <textarea name="reportDetails" [(ngModel)]="reportDetails" rows="3" maxlength="500" placeholder="Cuéntanos qué viste…"></textarea>
+      </label>
+      <footer>
+        <button class="cancel" value="cancel">Cancelar</button>
+        <button type="button" class="danger" [disabled]="reporting" (click)="submitReport(reportDialog)">
+          {{ reporting ? 'Enviando…' : 'Enviar reporte' }}
+        </button>
+      </footer>
+    </form>
+  </dialog>
 </main>

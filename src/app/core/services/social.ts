@@ -29,7 +29,20 @@ import {
 } from '@angular/fire/storage';
 import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, of } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
-import { ActivityNotification, ChatConversation, ChatMessage, Comment, Follow, Post3D, User, UserProfile, UserRole } from '../models/social.models';
+import {
+  ActivityNotification,
+  ChatConversation,
+  ChatMessage,
+  Comment,
+  ContentReport,
+  Follow,
+  Post3D,
+  ReportReason,
+  ReportStatus,
+  User,
+  UserProfile,
+  UserRole,
+} from '../models/social.models';
 import { environment } from '../../../environments/environment';
 
 export function formatStorageError(error: unknown): string {
@@ -61,9 +74,16 @@ export class SocialService {
   private readonly chatStreams = new Map<string, BehaviorSubject<ChatMessage[]>>();
   private readonly localChatChanges = new BehaviorSubject<void>(undefined);
   private readonly localFollows = new BehaviorSubject<Follow[]>(this.readLocal(LOCAL_KEYS.follows, []));
+  private readonly localLikes = new BehaviorSubject<Record<string, string[]>>(
+    this.readLocal(LOCAL_KEYS.likes, {}),
+  );
+  private readonly localReports = new BehaviorSubject<ContentReport[]>(
+    this.readLocal(LOCAL_KEYS.reports, []),
+  );
   private readonly localActivityNotifications = new BehaviorSubject<ActivityNotification[]>(
     this.readLocal(LOCAL_KEYS.activityNotifications, []),
   );
+  private readonly likeInFlight = new Set<string>();
 
   readonly posts$: Observable<Post3D[]> = this.firestore
     ? collectionData(
@@ -208,26 +228,155 @@ export class SocialService {
     };
   }
 
-  async like(post: Post3D, actor?: User): Promise<void> {
+  isLiked$(postId: string, uid: string | null | undefined): Observable<boolean> {
+    if (!uid) return of(false);
     if (this.firestore) {
-      const batch = writeBatch(this.firestore);
-      batch.update(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), {
-        likes: increment(1),
-        likesCount: increment(1),
-      });
-      if (actor && post.author.uid !== actor.uid) {
-        const notificationRef = doc(collection(this.firestore, 'users', post.author.uid, 'notifications'));
-        batch.set(notificationRef, this.notificationData(post.author.uid, actor, 'like', post.id));
+      return docData(doc(this.firestore, SOCIAL_COLLECTIONS.posts, postId, 'likes', uid)).pipe(
+        map((like) => !!like),
+        distinctUntilChanged(),
+      );
+    }
+    return this.localLikes.pipe(
+      map((likes) => (likes[uid] ?? []).includes(postId)),
+      distinctUntilChanged(),
+    );
+  }
+
+  /** @deprecated Use toggleLike — kept for callers that still import like() */
+  async like(post: Post3D, actor?: User): Promise<boolean> {
+    return this.toggleLike(post, actor);
+  }
+
+  async toggleLike(post: Post3D, actor?: User): Promise<boolean> {
+    if (!actor) throw new Error('Inicia sesión para marcar favoritos.');
+    const lockKey = `${actor.uid}:${post.id}`;
+    if (this.likeInFlight.has(lockKey)) return this.isLikedSync(post.id, actor.uid);
+    this.likeInFlight.add(lockKey);
+    try {
+      if (this.firestore) {
+        const likeRef = doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id, 'likes', actor.uid);
+        const postRef = doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id);
+        let liked = false;
+        await runTransaction(this.firestore, async (transaction) => {
+          const existing = await transaction.get(likeRef);
+          if (existing.exists()) {
+            transaction.delete(likeRef);
+            transaction.update(postRef, {
+              likes: increment(-1),
+              likesCount: increment(-1),
+            });
+            liked = false;
+            return;
+          }
+          transaction.set(likeRef, {
+            uid: actor.uid,
+            createdAt: Date.now(),
+          });
+          transaction.update(postRef, {
+            likes: increment(1),
+            likesCount: increment(1),
+          });
+          liked = true;
+        });
+        if (liked && post.author.uid !== actor.uid) {
+          await setDoc(
+            doc(collection(this.firestore, 'users', post.author.uid, 'notifications')),
+            this.notificationData(post.author.uid, actor, 'like', post.id),
+          );
+        }
+        return liked;
       }
-      await batch.commit();
+
+      const likedPosts = new Set(this.localLikes.value[actor.uid] ?? []);
+      const currentlyLiked = likedPosts.has(post.id);
+      if (currentlyLiked) likedPosts.delete(post.id);
+      else likedPosts.add(post.id);
+      const nextLikes = { ...this.localLikes.value, [actor.uid]: [...likedPosts] };
+      this.localLikes.next(nextLikes);
+      this.writeLocal(LOCAL_KEYS.likes, nextLikes);
+      this.persistLocalPosts(this.localPosts.value.map((item) => {
+        if (item.id !== post.id) return item;
+        const next = Math.max(0, item.likes + (currentlyLiked ? -1 : 1));
+        return { ...item, likes: next, likesCount: next };
+      }));
+      if (!currentlyLiked && post.author.uid !== actor.uid) {
+        this.addLocalActivityNotification(post.author.uid, actor, 'like', post.id);
+      }
+      return !currentlyLiked;
+    } finally {
+      this.likeInFlight.delete(lockKey);
+    }
+  }
+
+  private isLikedSync(postId: string, uid: string): boolean {
+    return (this.localLikes.value[uid] ?? []).includes(postId);
+  }
+
+  readonly reports$: Observable<ContentReport[]> = this.firestore
+    ? collectionData(
+        query(collection(this.firestore, SOCIAL_COLLECTIONS.reports), orderBy('createdAt', 'desc'), limit(100)),
+        { idField: 'id' },
+      ).pipe(map((items) => items.map((item) => this.normalizeReport(item as Record<string, unknown>))))
+    : this.localReports.asObservable();
+
+  async reportPost(
+    post: Post3D,
+    reporter: User,
+    reason: ReportReason,
+    details = '',
+  ): Promise<void> {
+    const report: ContentReport = {
+      id: crypto.randomUUID(),
+      postId: post.id,
+      postTitle: post.title,
+      reporterId: reporter.uid,
+      reporterName: reporter.displayName,
+      reason,
+      details: details.trim().slice(0, 500),
+      status: 'open',
+      createdAt: Date.now(),
+    };
+    if (this.firestore) {
+      await setDoc(doc(this.firestore, SOCIAL_COLLECTIONS.reports, report.id), {
+        postId: report.postId,
+        postTitle: report.postTitle,
+        reporterId: report.reporterId,
+        reporterName: report.reporterName,
+        reason: report.reason,
+        details: report.details,
+        status: report.status,
+        createdAt: report.createdAt,
+      });
+      return;
+    }
+    const next = [report, ...this.localReports.value];
+    this.localReports.next(next);
+    this.writeLocal(LOCAL_KEYS.reports, next);
+  }
+
+  async resolveReport(reportId: string, status: Exclude<ReportStatus, 'open'>): Promise<void> {
+    if (this.firestore) {
+      await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.reports, reportId), {
+        status,
+        resolvedAt: Date.now(),
+      });
+      return;
+    }
+    const next = this.localReports.value.map((item) =>
+      item.id === reportId ? { ...item, status, resolvedAt: Date.now() } : item,
+    );
+    this.localReports.next(next);
+    this.writeLocal(LOCAL_KEYS.reports, next);
+  }
+
+  async setPostHidden(post: Post3D, isPrivate: boolean): Promise<void> {
+    if (this.firestore) {
+      await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), { isPrivate });
       return;
     }
     this.persistLocalPosts(this.localPosts.value.map((item) =>
-      item.id === post.id ? { ...item, likes: item.likes + 1 } : item,
+      item.id === post.id ? { ...item, isPrivate } : item,
     ));
-    if (actor && post.author.uid !== actor.uid) {
-      this.addLocalActivityNotification(post.author.uid, actor, 'like', post.id);
-    }
   }
 
   comments$(postId: string): Observable<Comment[]> {
@@ -542,8 +691,14 @@ export class SocialService {
         modelRef ? this.deleteStorageObject(modelRef) : Promise.resolve(),
         thumbnailRef ? this.deleteStorageObject(thumbnailRef) : Promise.resolve(),
       ]);
-      const comments = await getDocs(collection(this.firestore, SOCIAL_COLLECTIONS.posts, post.id, 'comments'));
-      await Promise.all(comments.docs.map((comment) => deleteDoc(comment.ref)));
+      const [comments, likes] = await Promise.all([
+        getDocs(collection(this.firestore, SOCIAL_COLLECTIONS.posts, post.id, 'comments')),
+        getDocs(collection(this.firestore, SOCIAL_COLLECTIONS.posts, post.id, 'likes')),
+      ]);
+      await this.deleteFirestoreDocuments([
+        ...comments.docs.map((comment) => comment.ref),
+        ...likes.docs.map((like) => like.ref),
+      ]);
       await deleteDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id));
       return;
     }
@@ -871,6 +1026,25 @@ export class SocialService {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error ?? new Error('No se pudo abrir la base local de modelos.'));
     });
+  }
+
+  private normalizeReport(data: Record<string, unknown>): ContentReport {
+    const reason = data['reason'];
+    const status = data['status'];
+    return {
+      id: String(data['id'] ?? ''),
+      postId: String(data['postId'] ?? ''),
+      postTitle: String(data['postTitle'] ?? ''),
+      reporterId: String(data['reporterId'] ?? ''),
+      reporterName: String(data['reporterName'] ?? ''),
+      reason: reason === 'spam' || reason === 'inappropriate' || reason === 'copyright' || reason === 'other'
+        ? reason
+        : 'other',
+      details: String(data['details'] ?? ''),
+      status: status === 'resolved' || status === 'dismissed' ? status : 'open',
+      createdAt: this.normalizeTimestamp(data['createdAt']),
+      resolvedAt: data['resolvedAt'] == null ? undefined : this.normalizeTimestamp(data['resolvedAt']),
+    };
   }
 
   private normalizePost(data: Record<string, unknown>): Post3D {
