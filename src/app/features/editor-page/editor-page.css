@@ -4,6 +4,8 @@
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
+  background: var(--surface-main);
+  color: var(--text-primary);
 }
 
 .editor-layout {
@@ -12,22 +14,17 @@
   height: 100%;
   min-height: 0;
   grid-template-rows: 64px minmax(0, 1fr);
-  grid-template-columns: minmax(260px, 318px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
   grid-template-areas: "header header" "sidebar viewer";
-  background: var(--surface-main);
-  color: var(--text-primary);
-  transition: grid-template-columns 180ms ease;
+  transition: grid-template-columns 220ms ease, grid-template-rows 220ms ease;
 }
 
+/* Header usa el shell-header componente (sticky, fuera del grid principal para móvil) */
 .top-toolbar-area {
-  z-index: 10;
-  grid-area: header;
-  min-width: 0;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--surface-panel);
+  display: none; /* ya no se usa directamente, se usa app-shell-header */
 }
 
+/* Sidebar del editor */
 .editor-panel-area {
   grid-area: sidebar;
   min-width: 0;
@@ -36,6 +33,7 @@
   padding: 18px 17px;
   border-right: 1px solid var(--border-color);
   background: var(--surface-panel);
+  transition: opacity 220ms ease, transform 220ms ease;
 }
 
 .viewer-area {
@@ -49,28 +47,30 @@
 
 .panel-toggle {
   position: absolute;
-  z-index: 1;
+  z-index: 40;
   top: 12px;
   left: 12px;
   display: inline-flex;
-  min-height: 36px;
+  min-height: 38px;
   align-items: center;
   gap: 8px;
-  padding: 0 11px;
+  padding: 0 12px;
   border: 1px solid var(--border-color);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--surface-panel) 92%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-panel) 90%, transparent);
   color: var(--text-primary);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 650;
   cursor: pointer;
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--surface-main) 35%, transparent);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--surface-main) 35%, transparent);
+  backdrop-filter: blur(10px);
+  transition: all 180ms ease;
 }
 
 .panel-toggle:hover {
   border-color: var(--accent-color);
-  color: var(--text-primary);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 14%, var(--surface-raised));
 }
 
 .panel-toggle:focus-visible {
@@ -83,7 +83,9 @@
 }
 
 .panel-collapsed .editor-panel-area {
-  display: none;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
 }
 
 .presentation-mode {
@@ -99,66 +101,129 @@
   grid-column: 1 / -1;
 }
 
+/* ==========================================================================
+   RESPONSIVE PROFUNDO — Editor 3D
+   ========================================================================== */
+
+/* Tablet: 761px - 1100px */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .editor-layout {
+    grid-template-rows: 56px minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  }
+
+  .editor-panel-area {
+    padding: 14px 14px;
+  }
+
+  .panel-toggle {
+    top: 10px;
+    left: 10px;
+    font-size: 0.72rem;
+    padding: 0 10px;
+    min-height: 34px;
+  }
+}
+
+/* Móvil grande: 461px - 760px */
 @media (max-width: 760px) {
   .editor-layout {
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 42dvh);
+    grid-template-rows: 56px minmax(0, 1fr) minmax(0, 40dvh);
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "header" "viewer" "sidebar";
   }
 
-  .top-toolbar-area {
-    min-height: 58px;
-    padding: 5px 7px;
-  }
-
   .editor-panel-area {
-    padding: 12px clamp(12px, 4vw, 20px);
+    padding: 12px clamp(12px, 4vw, 18px);
     border-top: 1px solid var(--border-color);
     border-right: 0;
-  }
-
-  app-top-toolbar {
-    display: block;
-  }
-
-  .panel-collapsed {
-    grid-template-rows: auto minmax(0, 1fr) 0;
+    border-bottom: 1px solid var(--border-color);
+    max-height: 40dvh;
+    overflow: auto;
   }
 
   .panel-toggle {
     top: auto;
     bottom: 12px;
     left: 12px;
-  }
-}
-
-@media (min-width: 761px) and (max-width: 1100px) {
-  .editor-layout {
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .top-toolbar-area {
-    min-height: 64px;
-    padding: 8px 12px;
-  }
-}
-
-@media (max-width: 420px) {
-  .editor-layout {
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 44dvh);
+    font-size: 0.72rem;
+    padding: 0 10px;
+    min-height: 34px;
   }
 
   .panel-collapsed {
-    grid-template-rows: auto minmax(0, 1fr) 0;
+    grid-template-rows: 56px minmax(0, 1fr) 0;
+  }
+
+  /* Ocultar el toggle del panel cuando está colapsado en móvil (ya no hay panel) */
+  .panel-collapsed .panel-toggle {
+    display: none;
+  }
+}
+
+/* Móvil pequeño: hasta 460px */
+@media (max-width: 460px) {
+  .editor-layout {
+    grid-template-rows: 52px minmax(0, 1fr) minmax(0, 38dvh);
   }
 
   .editor-panel-area {
     padding: 10px 11px;
+    max-height: 38dvh;
+  }
+
+  .panel-toggle {
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 0.68rem;
+    top: auto;
+    bottom: 10px;
+    left: 10px;
   }
 }
 
+/* Muy pequeño: hasta 360px */
+@media (max-width: 360px) {
+  .editor-panel-area {
+    padding: 8px 10px;
+    max-height: 36dvh;
+    font-size: 0.75rem;
+  }
+}
+
+/* Preferencias de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
-  .editor-layout {
+  .editor-layout,
+  .panel-toggle,
+  .editor-panel-area {
     transition: none;
+  }
+}
+
+/* Orientación landscape en móvil: dar más altura al viewer */
+@media (max-width: 760px) and (orientation: landscape) {
+  .editor-layout {
+    grid-template-rows: 52px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "header" "viewer";
+  }
+
+  .editor-panel-area {
+    display: none;
+  }
+
+  .panel-collapsed {
+    grid-template-rows: 52px minmax(0, 1fr);
+  }
+}
+
+/* Impresión: ocultar controles UI */
+@media print {
+  .panel-toggle,
+  .editor-panel-area {
+    display: none !important;
+  }
+  .viewer-area {
+    grid-column: 1 / -1;
   }
 }

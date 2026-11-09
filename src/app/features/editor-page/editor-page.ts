@@ -4,13 +4,13 @@ import { firstValueFrom, Subscription, take } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { ModelEditor } from '../model-editor/model-editor';
 import { ModelViewer } from '../model-viewer/model-viewer';
-import { TopToolbar } from '../top-toolbar/top-toolbar';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { PublishModalComponent } from '../publish-modal/publish-modal';
 
 @Component({
   selector: 'app-editor-page',
   standalone: true,
-  imports: [ModelEditor, ModelViewer, TopToolbar, PublishModalComponent],
+  imports: [ModelEditor, ModelViewer, ShellHeaderComponent, PublishModalComponent],
   templateUrl: './editor-page.html',
   styleUrl: './editor-page.css',
 })
@@ -19,6 +19,7 @@ export class EditorPage implements OnInit, OnDestroy {
   presentationMode = false;
   publishModalOpen = false;
   modelEditorOpen = true;
+  mobileMenuOpen = false;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -28,6 +29,10 @@ export class EditorPage implements OnInit, OnDestroy {
     this.subscription.add(this.route.queryParamMap.subscribe((params) => {
       if (params.get('publish') === '1') this.publishModalOpen = true;
     }));
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   async onPublishClick(): Promise<void> {

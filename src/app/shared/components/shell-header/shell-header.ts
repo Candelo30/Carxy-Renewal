@@ -1,0 +1,82 @@
+import { AsyncPipe, DatePipe } from '@angular/common';
+import {
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  Output,
+} from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Observable } from 'rxjs';
+import { AuthService } from '../../../core/services/auth';
+import { SocialService } from '../../../core/services/social';
+import { NotificationService } from '../../../core/services/notifications';
+import { AccountMenuComponent } from '../account-menu/account-menu';
+import { ActivityNotificationsComponent } from '../activity-notifications/activity-notifications';
+
+@Component({
+  selector: 'app-shell-header',
+  standalone: true,
+  imports: [
+    AsyncPipe,
+    DatePipe,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
+  ],
+  templateUrl: './shell-header.html',
+  styleUrl: './shell-header.css',
+})
+export class ShellHeaderComponent {
+  readonly auth = inject(AuthService);
+  readonly social = inject(SocialService);
+  readonly notifications = inject(NotificationService);
+
+  readonly user$: Observable<{ uid: string; displayName: string; photoURL: string | null; role: string; emailVerified: boolean } | null> =
+    this.auth.user$ as Observable<{
+      uid: string;
+      displayName: string;
+      photoURL: string | null;
+      role: string;
+      emailVerified: boolean;
+    } | null>;
+
+  @Input() language: 'es' | 'en' = 'es';
+  @Input() showSearch = true;
+  @Input() showNav = true;
+  @Input() title = '';
+  @Input() subtitle = '';
+  @Output() languageChange = new EventEmitter<'es' | 'en'>();
+  @Output() menuToggle = new EventEmitter<void>();
+  @Output() publishClick = new EventEmitter<void>();
+  @Output() presentationChange = new EventEmitter<boolean>();
+
+  openUserMenu = false;
+  openMobileMenu = false;
+  searchQuery = '';
+  presentationEnabled = false;
+
+  trackByUid(_index: number, item: { uid: string }): string {
+    return item.uid;
+  }
+
+  onSearchChange(value: string): void {
+    this.searchQuery = value;
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+  }
+
+  togglePresentation(): void {
+    this.presentationEnabled = !this.presentationEnabled;
+    this.presentationChange.emit(this.presentationEnabled);
+  }
+
+  get isAdmin(): boolean {
+    return false; // se resuelve en el template con user$
+  }
+}
