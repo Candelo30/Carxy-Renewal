@@ -9,16 +9,15 @@ import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { Comment, Post3D, ReportReason, User } from '../../core/models/social.models';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
-import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
-import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { CollectionService } from '../../core/services/collection';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-feed-page',
   standalone: true,
   imports: [
-    AccountMenuComponent,
-    ActivityNotificationsComponent,
+    ShellHeaderComponent,
     AsyncPipe,
     DatePipe,
     FormsModule,
@@ -44,6 +43,14 @@ export class FeedPage {
     map((posts) => {
       if (!posts) return [];
       let filtered = posts;
+      // Filtro por vista (recientes / destacados / tendencias)
+      if (this.viewMode === 'featured') {
+        filtered = filtered.filter((post) => post.featured === true);
+      } else if (this.viewMode === 'trending') {
+        filtered = filtered
+          .filter((post) => (post.trendingScore ?? 0) > 0)
+          .sort((a, b) => (b.trendingScore ?? 0) - (a.trendingScore ?? 0));
+      }
       const q = this.searchTerm.trim().toLowerCase();
       if (q) {
         filtered = filtered.filter((post) =>
@@ -61,11 +68,13 @@ export class FeedPage {
   );
   readonly user$ = inject(AuthService).user$;
   readonly social = this.socialService;
+  readonly collection = inject(CollectionService);
   readonly commentDrafts: Record<string, string> = {};
   readonly previewModes: Record<string, 'image' | '3d'> = {};
   readonly likeBusy: Record<string, boolean> = {};
   searchTerm = '';
   selectedTag = '';
+  viewMode: 'recent' | 'featured' | 'trending' = 'recent';
   readonly allTags$ = this.socialService.posts$.pipe(
     map((posts) => {
       const tags = new Set<string>();
@@ -224,6 +233,42 @@ export class FeedPage {
 
   hasActiveFilters(): boolean {
     return !!this.searchTerm.trim() || !!this.selectedTag;
+  }
+
+  setViewMode(mode: 'recent' | 'featured' | 'trending'): void {
+    this.viewMode = mode;
+    this.selectedTag = '';
+    this.searchTerm = '';
+  }
+
+  toggleMobileMenu(): void {
+    // El menú móvil se gestiona desde el shell-header; este método existe por consistencia.
+  }
+
+  isViewMode(mode: 'recent' | 'featured' | 'trending'): boolean {
+    return this.viewMode === mode;
+  }
+
+  async toggleCollection(post: Post3D): Promise<void> {
+    const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
+    if (!user) {
+      this.notifications.warning('Inicia sesión para guardar modelos en colecciones.');
+      await this.router.navigate(['/login']);
+      return;
+    }
+    const collections = this.collection.getCollections(user.uid);
+    if (collections.length === 0) {
+      this.collection.createCollection('Mis favoritos', 'Modelos que me gustan', false, user.uid);
+    }
+    const defaultCollection = collections[0] ?? this.collection.getCollections(user.uid)[0];
+    const already = this.collection.isInCollection(defaultCollection.id, post.id);
+    if (already) {
+      this.collection.removeFromCollection(defaultCollection.id, post.id);
+      this.notifications.success('Eliminado de tu colección.', 'Colección');
+    } else {
+      this.collection.addToCollection(defaultCollection.id, post.id);
+      this.notifications.success('Agregado a tu colección.', 'Colección');
+    }
   }
 
   useFallbackAvatar(event: Event): void {

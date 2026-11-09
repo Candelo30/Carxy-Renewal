@@ -1,26 +1,12 @@
 <main class="social-shell">
-  <header class="site-header">
-    <a class="brand" routerLink="/editor"
-      ><img src="/carxy-mark.svg" alt="" /><span><b>CARXY</b><small>3D STUDIO</small></span></a
-    >
-    <nav>
-      <a class="selected" routerLink="/feed">Comunidad</a><a routerLink="/editor">Editor 3D</a>
-      @if (user$ | async; as user) {
-        <a routerLink="/my-models">Mis creaciones</a><a routerLink="/chat">Mensajes</a>
-        @if (user.role === 'admin') {
-          <a routerLink="/admin">Admin</a>
-        } @else if (user.role === 'moderator') {
-          <a routerLink="/moderation">Moderar</a>
-        }
-      }
-    </nav>
-    @if (!(user$ | async)) {
-      <a class="sign-in" routerLink="/login">Iniciar sesión</a>
-    } @else {
-      <app-activity-notifications />
-    }
-    <app-account-menu />
-  </header>
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="true"
+    [showNav]="true"
+    title="Comunidad 3D"
+    subtitle="Descubre, crea y remixa modelos en tres dimensiones"
+    (menuToggle)="toggleMobileMenu()"
+  ></app-shell-header>
   <section class="feed-content">
     <div class="hero">
       <div>
@@ -38,6 +24,24 @@
         <h2>Creaciones recientes</h2>
       </div>
       <span>Comunidad 3D</span>
+    </div>
+
+    <div class="view-tabs">
+      <button
+        class="view-tab"
+        [class.active]="isViewMode('recent')"
+        (click)="setViewMode('recent')"
+      >⏱ Recientes</button>
+      <button
+        class="view-tab"
+        [class.active]="isViewMode('featured')"
+        (click)="setViewMode('featured')"
+      >⭐ Destacados</button>
+      <button
+        class="view-tab"
+        [class.active]="isViewMode('trending')"
+        (click)="setViewMode('trending')"
+      >📈 Tendencias</button>
     </div>
 
     <div class="feed-filters">
@@ -161,6 +165,12 @@
                     ↗ Remix / Editar en 3D
                   </button>
                   <button type="button" class="report-button" title="Reportar" (click)="openReport(post, reportDialog)">⚑</button>
+                  <button
+                    type="button"
+                    class="collection-button"
+                    title="Guardar en colección"
+                    (click)="toggleCollection(post)"
+                  >🔖</button>
                 </div>
                 @let comments = (social.comments$(post.id) | async) ?? [];
                 @if (comments.length) {

@@ -451,6 +451,28 @@ export class SocialService {
     ));
   }
 
+  async setFeatured(post: Post3D, featured: boolean): Promise<void> {
+    const patch: Record<string, unknown> = { featured };
+    if (featured) patch['featuredAt'] = Date.now();
+    if (this.firestore) {
+      await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), patch);
+      return;
+    }
+    this.persistLocalPosts(this.localPosts.value.map((item) =>
+      item.id === post.id ? { ...item, featured, featuredAt: featured ? Date.now() : undefined } : item,
+    ));
+  }
+
+  async setTrending(post: Post3D, score: number): Promise<void> {
+    if (this.firestore) {
+      await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), { trendingScore: score });
+      return;
+    }
+    this.persistLocalPosts(this.localPosts.value.map((item) =>
+      item.id === post.id ? { ...item, trendingScore: score } : item,
+    ));
+  }
+
   comments$(postId: string): Observable<Comment[]> {
     const cached = this.commentObservables.get(postId);
     if (cached) return cached;
