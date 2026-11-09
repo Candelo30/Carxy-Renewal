@@ -1,0 +1,83 @@
+<div class="onboarding-overlay">
+  <div class="onboarding-backdrop" (click)="skip()"></div>
+
+  <section class="onboarding-card">
+    <!-- Header -->
+    <header class="onboarding-header">
+      <button class="btn-close" type="button" (click)="skip()" aria-label="Cerrar tutorial">✕</button>
+    </header>
+
+    <!-- Paso actual -->
+    @let step = (currentStep | async) ?? 'welcome';
+    @let label = stepLabel(step);
+
+    <div class="onboarding-body">
+      <div class="step-indicator">
+        <span class="step-circle">{{ getStepNumber(step) }}</span>
+        <div class="step-progress">
+          <div class="step-progress-fill" [style.width.%]="getProgressPercent()"></div>
+        </div>
+        <span class="step-text">{{ step }}</span>
+      </div>
+
+      <h2 class="onboarding-title">{{ label.title }}</h2>
+      <p class="onboarding-description">{{ label.description }}</p>
+
+      <!-- Guía visual por paso -->
+      <div class="step-guide" [class]="'guide-' + step">
+        @if (step === 'welcome') {
+          <div class="guide-welcome">
+            <div class="guide-icon">🎨</div>
+            <p>CARXY es tu estudio de modelado 3D en el navegador. Crea, publica y comparte escenas en tres dimensiones sin instalar nada.</p>
+          </div>
+        } @else if (step === 'add-primitive') {
+          <div class="guide-add">
+            <div class="guide-icon">📦</div>
+            <p>Haz clic en <strong>Cubo</strong>, <strong>Esfera</strong>, <strong>Cilindro</strong> o cualquier forma para añadirla a la escena.</p>
+            <div class="guide-hint">Atajo: usa los botones del panel izquierdo</div>
+          </div>
+        } @else if (step === 'transform') {
+          <div class="guide-transform">
+            <div class="guide-icon">↔</div>
+            <p>Selecciona el objeto y usa los controles de <strong>Posición</strong>, <strong>Rotación</strong> y <strong>Escala</strong> para manipularlo.</p>
+            <div class="guide-hint">Atajos: G = Mover · R = Rotar · S = Escalar</div>
+          </div>
+        } @else if (step === 'material') {
+          <div class="guide-material">
+            <div class="guide-icon">🎨</div>
+            <p>Selecciona el objeto y edita su <strong>color</strong>, <strong>rugosidad</strong> y <strong>opacidad</strong> en el panel de materiales.</p>
+            <div class="guide-hint">Haz clic en el objeto para ver sus materiales</div>
+          </div>
+        } @else if (step === 'publish') {
+          <div class="guide-publish">
+            <div class="guide-icon">🚀</div>
+            <p>Cuando estés listo, haz clic en <strong>Publicar</strong> para compartir tu modelo con la comunidad CARXY.</p>
+            <div class="guide-hint">Tu modelo se publicará con una vista previa y archivo GLB</div>
+          </div>
+        } @else if (step === 'completed') {
+          <div class="guide-completed">
+            <div class="guide-icon">✅</div>
+            <p>¡Has completado el tutorial! Ya sabes crear, editar y publicar modelos 3D.</p>
+            <div class="guide-hint">Explora la comunidad o sigue creando en el editor</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Footer con acciones -->
+    <footer class="onboarding-footer">
+      @if (step !== 'welcome') {
+        <button class="btn-ghost" type="button" (click)="onboarding.skip()" [disabled]="step === 'completed'">Saltar tutorial</button>
+      }
+      <div class="step-actions">
+        @if (isLastStep()) {
+          <button class="btn-primary" type="button" (click)="finish()">Comenzar a crear</button>
+        } @else {
+          <button class="btn-secondary" type="button" (click)="next()" [disabled]="isLastStep()">
+            {{ step === 'publish' ? 'Publicar mi modelo' : 'Siguiente' }} <span>▶</span>
+          </button>
+        }
+      </div>
+    </footer>
+  </section>
+</div>

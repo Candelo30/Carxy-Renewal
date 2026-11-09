@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Shell Header ÔÇö Dise├▒o unificado y moderno para toda la aplicaci├│n
+   Shell Header — Diseño unificado y moderno para toda la aplicación
    ========================================================================== */
 
 .shell-header {
@@ -118,7 +118,7 @@
   color: var(--text-muted);
 }
 
-/* --- Centro: b├║squeda --- */
+/* --- Centro: búsqueda --- */
 .header-center {
   display: flex;
   flex: 1;
@@ -192,7 +192,7 @@
   background: color-mix(in srgb, var(--color-danger) 12%, var(--surface-panel));
 }
 
-/* --- Fin: navegaci├│n + acciones --- */
+/* --- Fin: navegación + acciones --- */
 .header-end {
   display: flex;
   align-items: center;
@@ -253,7 +253,7 @@
   flex: none;
 }
 
-/* --- Sub-header con t├¡tulo --- */
+/* --- Sub-header con título --- */
 .header-sub {
   display: flex;
   align-items: center;
@@ -326,7 +326,7 @@
   background: color-mix(in srgb, var(--accent-color) 16%, var(--surface-raised));
 }
 
-/* --- Men├║ m├│vil --- */
+/* --- Menú móvil --- */
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
@@ -455,7 +455,7 @@
   }
 
   .header-center {
-    display: none; /* b├║squeda oculta en m├│vil, se accede por men├║ o se muestra compacta */
+    display: none; /* búsqueda oculta en móvil, se accede por menú o se muestra compacta */
   }
 
   .header-nav {
@@ -495,7 +495,7 @@
   }
 
   .brand-text {
-    display: none; /* solo icono en pantallas muy peque├▒as */
+    display: none; /* solo icono en pantallas muy pequeñas */
   }
 
   .header-end {
@@ -520,7 +520,7 @@
   }
 }
 
-/* Compact mode (usado dentro de otras p├íginas peque├▒as) */
+/* Compact mode (usado dentro de otras páginas pequeñas) */
 .app-shell-header.compact .header-bar {
   height: 48px;
   min-height: 48px;

@@ -7,7 +7,6 @@
     subtitle="Portafolio y modelos publicados"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
-
   @if (error) { <p class="error" role="alert">{{ error }}</p> }
 
   @if (profile$ | async; as state) {

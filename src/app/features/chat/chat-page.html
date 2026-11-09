@@ -1,16 +1,14 @@
 <main class="chat-shell">
-  <header class="site-header">
-    <a class="brand" routerLink="/editor"
-      ><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>3D STUDIO</small></b></a
-    >
-    <nav><a routerLink="/feed">Comunidad</a><a routerLink="/editor">Editor 3D</a></nav>
-    <app-activity-notifications /><app-account-menu />
-  </header>
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="false"
+    [showNav]="true"
+    title="Mensajes"
+    subtitle="Conversaciones directas con otros creadores"
+    (menuToggle)="toggleMobileMenu()"
+  ></app-shell-header>
   <section class="chat-layout" [class.has-chat]="!!chatId">
-    <aside class="conversations">
-      <p class="eyebrow">CREADORES</p>
-      <h1>Mensajes</h1>
-      <p>Inicia una conversación directa usando el UID público del creador.</p>
+    <aside class="conversations"><p class="eyebrow">CREADORES</p><h1>Mensajes</h1><p>Inicia una conversación directa usando el UID público del creador.</p>
       @if (user$ | async; as user) {
         <section class="recent-conversations" aria-labelledby="recent-conversations-title">
           <h2 id="recent-conversations-title">Recientes</h2>

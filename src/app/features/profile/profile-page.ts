@@ -10,6 +10,8 @@ import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
+import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
@@ -17,6 +19,9 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
   standalone: true,
   imports: [
     ShellHeaderComponent,
+    ShellHeaderComponent,
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
     AsyncPipe,
     DatePipe,
     FormsModule,
@@ -87,6 +92,10 @@ export class ProfilePage {
   error = '';
   readonly previewModes: Record<string, boolean> = {};
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
   totalLikes(posts: Post3D[]): number {
     return posts.reduce((total, post) => total + post.likes, 0);
   }
@@ -142,10 +151,6 @@ export class ProfilePage {
 
   togglePreview(postId: string): void {
     this.previewModes[postId] = !this.previewModes[postId];
-  }
-
-  toggleMobileMenu(): void {
-    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   activityLabel(item: ActivityNotification): string {

@@ -22,6 +22,9 @@
         <button title="Agregar esfera" (click)="addPrimitive('sphere')"><span>●</span>{{ language === 'es' ? 'Esfera' : 'Sphere' }}</button>
         <button title="Agregar cilindro" (click)="addPrimitive('cylinder')"><span>⬭</span>{{ language === 'es' ? 'Cilindro' : 'Cylinder' }}</button>
         <button title="Agregar toro" (click)="addPrimitive('torus')"><span>◎</span>{{ language === 'es' ? 'Toro' : 'Torus' }}</button>
+        <button title="Agregar cono" (click)="addCone()"><span>△</span>{{ language === 'es' ? 'Cono' : 'Cone' }}</button>
+        <button title="Agregar plano" (click)="addPlane()"><span>▱</span>{{ language === 'es' ? 'Plano' : 'Plane' }}</button>
+        <button title="Agregar anillo" (click)="addRing()"><span>◊</span>{{ language === 'es' ? 'Anillo' : 'Ring' }}</button>
       </div>
       <div class="object-list">
         <button
@@ -79,6 +82,24 @@
       <button class="delete-button" [disabled]="!selectedObjectId" (click)="deleteSelectedObject()">
         {{ language === 'es' ? '−  Eliminar modelo seleccionado' : '−  Delete selected model' }}
       </button>
+
+      <div class="scene-actions">
+        <button class="icon-action" [disabled]="!canUndo" (click)="undo()" title="Deshacer">↩</button>
+        <button class="icon-action" [disabled]="!canRedo" (click)="redo()" title="Rehacer">↪</button>
+        <button class="icon-action" [disabled]="!selectedObjectId" (click)="duplicateSelectedObject()" title="Duplicar objeto">∂</button>
+        <button class="icon-action" [disabled]="!selectedObjectId" (click)="copySelectedToClipboard()" title="Copiar al portapapeles">📋</button>
+        <button class="icon-action" (click)="pasteFromClipboard()" title="Pegar desde portapapeles">📥</button>
+        <button class="icon-action" (click)="captureScreenshot()" title="Capturar imagen del viewport">📸</button>
+        <label class="icon-action" title="Importar escena GLB/GLTF">
+          <input type="file" accept=".glb,.gltf" (change)="importSceneFile($event)" style="display:none" />
+          ↧
+        </label>
+        <button class="icon-action" [disabled]="exportBusy" (click)="exportSceneGLB()" title="Exportar escena a GLB">💾</button>
+        <button class="icon-action" [class.active]="measuringDistance" (click)="toggleMeasureDistance()" title="Medir distancia entre objetos">📏</button>
+        <button class="icon-action" [class.active]="snapEnabled" (click)="toggleSnapToGrid()" title="Activar/desactivar snap a cuadrícula">⊗</button>
+        <button class="icon-action" [disabled]="shareBusy" (click)="shareScene()" title="Compartir escena (código para colaboradores)">🔗</button>
+        <button class="icon-action" (click)="importSharedScenePrompt()" title="Importar escena compartida">↪</button>
+      </div>
     </section>
 
     <section class="panel-section properties-section">
@@ -114,6 +135,16 @@
       <div class="control-group">
         <label>{{ language === 'es' ? 'Escala uniforme' : 'Uniform scale' }} <span>{{ scale | number: '1.1-2' }}×</span></label>
         <input type="range" min="0.1" max="5" step="0.1" [(ngModel)]="scale" (input)="onScaleChange()" />
+      </div>
+
+      <div class="control-group dimensions-group" *ngIf="dimensions">
+        <label>{{ language === 'es' ? 'Dimensiones' : 'Dimensions' }}</label>
+        <div class="axis-controls">
+          <span class="axis-input"><span>Ancho</span> <strong>{{ dimensions.width }}</strong></span>
+          <span class="axis-input"><span>Alto</span> <strong>{{ dimensions.height }}</strong></span>
+          <span class="axis-input"><span>Fondo</span> <strong>{{ dimensions.depth }}</strong></span>
+        </div>
+        <small>{{ language === 'es' ? 'Tamaño del objeto seleccionado (unidades 3D)' : 'Size of selected object (3D units)' }}</small>
       </div>
     </section>
 
@@ -157,6 +188,66 @@
       <p class="empty-state" *ngIf="materials.length === 0">
         {{ language === 'es' ? 'Selecciona un objeto para editar sus materiales.' : 'Select an object to edit its materials.' }}
       </p>
+    </section>
+
+    <section class="panel-section">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'CAPAS' : 'LAYERS' }}</span>
+          <h2>{{ language === 'es' ? 'Organizar por capas' : 'Organize by layers' }}</h2>
+        </div>
+        <button class="icon-action" (click)="addLayer()" title="Agregar capa">＋</button>
+      </div>
+      <div class="layer-list">
+        @for (layer of layers; track layer) {
+          <div class="layer-row" [class.selected]="selectedLayer === layer" [class.visible]="isLayerVisible(layer)">
+            <button class="layer-visibility" (click)="toggleLayerVisibility(layer)" [attr.aria-label]="isLayerVisible(layer) ? 'Ocultar capa ' + layer : 'Mostrar capa ' + layer">
+              {{ isLayerVisible(layer) ? '👁' : '🙈' }}
+            </button>
+            <span class="layer-name">{{ layer }}</span>
+            <button class="layer-assign" [disabled]="!selectedObjectId" (click)="assignSelectedToLayer()" title="Asignar seleccionado">➤</button>
+            <button class="layer-remove" (click)="removeSelectedFromLayer()" title="Quitar seleccionado de esta capa">−</button>
+          </div>
+        }
+        @if (layers.length === 0) {
+          <p class="empty-state">No hay capas. Agrega una para organizar objetos.</p>
+        }
+        @if (layers.length) {
+          <div class="layer-actions">
+            <button class="small-button" [disabled]="!selectedLayer" (click)="removeLayer()">Eliminar capa seleccionada</button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="panel-section collaboration-section">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="eyebrow">{{ language === 'es' ? 'COLABORACIÓN' : 'COLLABORATION' }}</span>
+          <h2>{{ language === 'es' ? 'Edición en tiempo real' : 'Real-time editing' }}</h2>
+        </div>
+        <button class="icon-action" (click)="toggleCollaborationPanel()" title="Panel de colaboradores">👥</button>
+      </div>
+      <div class="collaborator-list" [class.hidden]="!collaborationOpen">
+        @if (collaborators.length) {
+          @for (c of collaborators; track c.uid) {
+            <div class="collaborator-row">
+              <span class="collaborator-dot" [style.background]="c.color"></span>
+              <span class="collaborator-name">{{ c.displayName }}</span>
+              @if (c.objectId) {
+                <span class="collaborator-status">{{ language === 'es' ? 'Editando objeto' : 'Editing object' }}</span>
+              }
+            </div>
+          }
+        } @else {
+          <p class="empty-state">{{ language === 'es' ? 'Solas en esta escena' : 'You are alone in this scene' }}</p>
+        }
+        <div class="collaborator-actions">
+          <button class="small-button" (click)="toggleCollaborationPanel()">
+            {{ collaborationOpen ? (language === 'es' ? 'Ocultar panel' : 'Hide panel') : (language === 'es' ? 'Mostrar colaboradores' : 'Show collaborators') }}
+          </button>
+        </div>
+      </div>
     </section>
   </ng-container>
 
@@ -278,6 +369,17 @@
         <button (click)="stopAudio()" [disabled]="!audioEnabled">{{ language === 'es' ? 'Detener' : 'Stop' }}</button>
       </div>
       <small class="audio-status" *ngIf="audioStatus">{{ audioStatus }}</small>
+
+      <div class="setting-divider"></div>
+      <span class="eyebrow viewport-eyebrow">{{ language === 'es' ? 'PRESENTACIÓN Y COMPARTIR' : 'PRESENTATION & SHARE' }}</span>
+      <div class="setting-toggle" [class.enabled]="threeEngine.presentationEnabled" (click)="togglePresentation()">
+        <span>{{ language === 'es' ? 'Modo presentación (turntable)' : 'Presentation mode (turntable)' }}</span>
+        <span>{{ threeEngine.presentationEnabled ? 'ON' : 'OFF' }}</span>
+      </div>
+      <button class="setting-toggle" [disabled]="presentationBusy" (click)="recordTurntable()">
+        <span>{{ language === 'es' ? 'Grabar video de presentación' : 'Record presentation video' }}</span>
+        <span>{{ presentationBusy ? 'Grabando…' : '' }}</span>
+      </button>
     </section>
   </ng-template>
 </div>
