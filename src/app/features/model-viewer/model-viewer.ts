@@ -1,5 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, ElementRef, HostListener, inject, OnDestroy, PLATFORM_ID, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  PLATFORM_ID,
+  ViewChild,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { LocalStateService } from '../../core/services/local-state';
@@ -31,7 +39,9 @@ export class ModelViewer implements OnDestroy {
     this.threeEngine.setGizmoMode(preferences.gizmoMode);
     const draft = this.localState.loadDraft();
     if (draft) this.threeEngine.restoreScene(draft);
-    this.hotspotSubscription = this.threeEngine.hotspotsChanged$.subscribe(() => this.refreshHotspots());
+    this.hotspotSubscription = this.threeEngine.hotspotsChanged$.subscribe(() =>
+      this.refreshHotspots(),
+    );
     if (isPlatformBrowser(this.platformId)) {
       this.projectionTimer = window.setInterval(() => this.refreshHotspots(), 100);
     }

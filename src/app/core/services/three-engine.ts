@@ -957,6 +957,44 @@ export class ThreeEngineService implements OnDestroy {
     this.sceneChanged$.next();
   }
 
+  public duplicateSelected(): boolean {
+    if (!this.scene || !this.currentModel) return false;
+    const source = this.currentModel;
+    const clone = source.clone(true) as THREE.Group;
+    clone.position.x += 1.2;
+    clone.position.z += 0.4;
+    const baseName = source.name?.trim() || 'Objeto';
+    this.addObject(clone, `${baseName} copia`);
+    return true;
+  }
+
+  public copySelectedToClipboard(): string | null {
+    if (!this.currentModel) return null;
+    const payload = {
+      type: 'carxy-object',
+      name: this.currentModel.name || 'Objeto',
+      object: this.currentModel.toJSON(),
+    };
+    return JSON.stringify(payload);
+  }
+
+  public pasteObjectFromClipboard(raw: string): boolean {
+    if (!this.scene || !raw.trim()) return false;
+    try {
+      const payload = JSON.parse(raw) as { type?: string; name?: string; object?: object };
+      if (payload.type !== 'carxy-object' || !payload.object) return false;
+      const loader = new THREE.ObjectLoader();
+      const loaded = loader.parse(payload.object);
+      const group = loaded instanceof THREE.Group ? loaded : new THREE.Group().add(loaded);
+      group.position.x += 1.1;
+      this.addObject(group, `${payload.name || 'Objeto'} pegado`);
+      return true;
+    } catch (error) {
+      console.warn('No se pudo pegar el objeto 3D del portapapeles.', error);
+      return false;
+    }
+  }
+
   private disposeObject(object: THREE.Object3D): void {
     object.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;

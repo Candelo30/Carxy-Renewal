@@ -424,6 +424,94 @@ tbody tr:hover td {
   color: var(--text-primary);
 }
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 11px;
+  background: var(--surface-panel);
+}
+
+.stat-icon {
+  font-size: 1.35rem;
+  flex: none;
+}
+
+.stat-card small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  margin-bottom: 2px;
+}
+
+.stat-card strong {
+  display: block;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.refresh-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.reports-panel {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-panel);
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-panel));
+  color: var(--accent-color);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 35%, var(--border-color));
+}
+
+.report-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.report-actions .small-button {
+  flex: 1;
+}
+
 :is(button, a, select):focus-visible {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
