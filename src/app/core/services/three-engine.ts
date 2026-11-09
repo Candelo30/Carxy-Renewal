@@ -1281,6 +1281,20 @@ export class ThreeEngineService implements OnDestroy {
     }
   }
 
+  // --- Compartir escena (colaboración) ---
+
+  exportSceneWithMetadata(metadata: { title: string; description: string; authorId: string; authorName: string }): string {
+    const scene = this.serializeScene();
+    const payload = {
+      type: 'carxy-scene',
+      version: 1,
+      metadata,
+      scene,
+      exportedAt: Date.now(),
+    };
+    return JSON.stringify(payload);
+  }
+
   public ngOnDestroy(): void {
     this.releaseViewport();
     this.timer.dispose();

@@ -96,6 +96,8 @@ export class SocialService {
     modelBlob: Blob,
     thumbnailDataUrl: string,
     author: User,
+    tags: string[] = [],
+    isPrivate = false,
   ): Promise<Post3D> {
     if (modelBlob.size > environment.uploads.maxModelBytes) {
       throw new Error(`El modelo supera el límite de ${this.formatMegabytes(environment.uploads.maxModelBytes)} MB.`);
@@ -111,6 +113,8 @@ export class SocialService {
     const createdAt = Date.now();
     let modelUrl = `local-model://${postId}`;
     let thumbnailUrl = thumbnailDataUrl;
+
+    const cleanTags = [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 12);
 
     if (this.firestore && this.storage) {
       const modelPath = SOCIAL_STORAGE_PATHS.model(author.uid, postId);
@@ -153,8 +157,8 @@ export class SocialService {
           likesCount: 0,
           viewsCount: 0,
           remixCount: 0,
-          isPrivate: false,
-          tags: [],
+          isPrivate,
+          tags: cleanTags,
           modelPath,
           thumbnailPath,
           createdAt,
@@ -181,8 +185,8 @@ export class SocialService {
         likesCount: 0,
         viewsCount: 0,
         remixCount: 0,
-        isPrivate: false,
-        tags: [],
+        isPrivate,
+        tags: cleanTags,
         createdAt,
       };
       this.persistLocalPosts([post, ...this.localPosts.value]);
@@ -202,8 +206,8 @@ export class SocialService {
       likesCount: 0,
       viewsCount: 0,
       remixCount: 0,
-      isPrivate: false,
-      tags: [],
+      isPrivate,
+      tags: cleanTags,
       createdAt,
     };
   }
