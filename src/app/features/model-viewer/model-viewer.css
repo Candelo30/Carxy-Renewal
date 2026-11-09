@@ -50,3 +50,15 @@
   background: #f59e0b;
   box-shadow: 0 0 9px #f59e0b;
 }
+
+/* Cursores remotos de colaboradores */
+.remote-cursors-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.remote-cursors-layer app-collaborator-cursor {
+  position: absolute;
+}

@@ -11,7 +11,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 
-export type PrimitiveType = 'box' | 'sphere' | 'cylinder' | 'torus';
+export type PrimitiveType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'cone' | 'plane' | 'ring';
 
 export interface SceneObject {
   id: string;
@@ -69,6 +69,15 @@ export class ThreeEngineService implements OnDestroy {
   public clippingEnabled = false;
   public presentationEnabled = false;
   public arSupported = false;
+  public ownCursorUid: string | null = null;
+  public readonly collaboratorJoined$ = new Subject<{ uid: string; displayName: string; color: string }>();
+  public readonly collaboratorLeft$ = new Subject<string>();
+  public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
+  public readonly collaboratorSelection$ = new Subject<{ uid: string; objectId: string | null }>();
+  public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string }>();
+  public snapToGrid = false;
+  public gridStep = 0.5;
+  readonly layerChanged$ = new Subject<string>();
 
   private canvas?: HTMLCanvasElement;
   private renderer?: THREE.WebGLRenderer;
@@ -115,6 +124,10 @@ export class ThreeEngineService implements OnDestroy {
   private arHitTestSource?: XRHitTestSource;
   private arReticle?: THREE.Mesh;
   private arReferenceSpace?: XRReferenceSpace;
+  private readonly collaborators = new Map<string, { displayName: string; color: string; objectId: string | null; x: number; y: number }>();
+  private readonly collaboratorObjects = new Map<string, THREE.Group>();
+  private readonly layers = new Map<string, Set<THREE.Object3D>>();
+  private readonly objectLayer = new Map<THREE.Object3D, string>();
   private readonly initialPositions = new WeakMap<THREE.Group, THREE.Vector3>();
   private readonly initialNodeTransforms = new WeakMap<THREE.Object3D, {
     position: THREE.Vector3;
@@ -880,6 +893,19 @@ export class ThreeEngineService implements OnDestroy {
         geometry = new THREE.TorusGeometry(0.8, 0.28, 18, 48);
         name = 'Toro';
         break;
+      case 'cone':
+        geometry = new THREE.ConeGeometry(0.8, 1.6, 32);
+        name = 'Cono';
+        break;
+      case 'plane':
+        geometry = new THREE.PlaneGeometry(1.6, 1.6);
+        geometry.rotateX(-Math.PI / 2);
+        name = 'Plano';
+        break;
+      case 'ring':
+        geometry = new THREE.TorusGeometry(0.8, 0.2, 16, 32);
+        name = 'Anillo';
+        break;
       default:
         geometry = new THREE.BoxGeometry(1.6, 1.6, 1.6);
         name = 'Cubo';
@@ -889,6 +915,9 @@ export class ThreeEngineService implements OnDestroy {
       sphere: '#38bdf8',
       cylinder: '#f59e0b',
       torus: '#34d399',
+      cone: '#fb923c',
+      plane: '#a78bfa',
+      ring: '#c4b5fd',
     };
     const material = new THREE.MeshStandardMaterial({
       color: primitiveColors[type],
@@ -919,12 +948,134 @@ export class ThreeEngineService implements OnDestroy {
         child.receiveShadow = true;
       }
     });
+    if (this.snapToGrid) {
+      object.position.x = Math.round(object.position.x / this.gridStep) * this.gridStep;
+      object.position.y = Math.round(object.position.y / this.gridStep) * this.gridStep;
+      object.position.z = Math.round(object.position.z / this.gridStep) * this.gridStep;
+    }
     const item = { id: `object-${this.nextObjectId++}`, name, object };
     this.initialPositions.set(object, object.position.clone());
     this.objects.push(item);
     this.scene.add(object);
     this.selectObject(item.id);
     this.sceneChanged$.next();
+  }
+
+  // --- Medición de distancia 3D ---
+
+  measureDistance(pointA: THREE.Vector3, pointB: THREE.Vector3): number {
+    return pointA.distanceTo(pointB);
+  }
+
+  measureDistanceBetweenObjects(idA: string, idB: string): number | null {
+    const a = this.objects.find((item) => item.id === idA)?.object;
+    const b = this.objects.find((item) => item.id === idB)?.object;
+    if (!a || !b) return null;
+    const pa = new THREE.Vector3();
+    const pb = new THREE.Vector3();
+    a.getWorldPosition(pa);
+    b.getWorldPosition(pb);
+    return pa.distanceTo(pb);
+  }
+
+  // --- Capas / Layers ---
+
+  addToLayer(objectId: string, layerName: string): void {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return;
+    const prev = this.objectLayer.get(item.object);
+    if (prev === layerName) return;
+    if (prev) {
+      this.layers.get(prev)?.delete(item.object);
+      this.layerChanged$.next(prev);
+    }
+    if (!this.layers.has(layerName)) this.layers.set(layerName, new Set());
+    this.layers.get(layerName)!.add(item.object);
+    this.objectLayer.set(item.object, layerName);
+    this.layerChanged$.next(layerName);
+  }
+
+  removeFromLayer(objectId: string): void {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return;
+    const layer = this.objectLayer.get(item.object);
+    if (!layer) return;
+    this.layers.get(layer)?.delete(item.object);
+    this.objectLayer.delete(item.object);
+    this.layerChanged$.next(layer);
+  }
+
+  setLayerVisibility(layerName: string, visible: boolean): void {
+    const members = this.layers.get(layerName);
+    if (!members) return;
+    members.forEach((object) => {
+      object.traverse((child) => {
+        child.visible = visible;
+      });
+    });
+  }
+
+  getLayerVisibility(layerName: string): boolean | null {
+    const members = this.layers.get(layerName);
+    if (!members || members.size === 0) return null;
+    const first = members.values().next().value;
+    if (!first) return null;
+    return first.visible;
+  }
+
+  getLayers(): string[] {
+    return Array.from(this.layers.keys());
+  }
+
+  getObjectLayer(objectId: string): string | null {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return null;
+    return this.objectLayer.get(item.object) ?? null;
+  }
+
+  // --- Snap a grid ---
+
+  setSnapToGrid(enabled: boolean, step = 0.5): void {
+    this.snapToGrid = enabled;
+    this.gridStep = step;
+  }
+
+  applySnapToGrid(): void {
+    if (!this.snapToGrid || !this.currentModel) return;
+    this.currentModel.position.x = Math.round(this.currentModel.position.x / this.gridStep) * this.gridStep;
+    this.currentModel.position.y = Math.round(this.currentModel.position.y / this.gridStep) * this.gridStep;
+    this.currentModel.position.z = Math.round(this.currentModel.position.z / this.gridStep) * this.gridStep;
+    this.transformChanged$.next();
+  }
+
+  // --- Compartir escena (colaboración) ---
+
+  exportSceneWithMetadata(metadata: { title: string; description: string; authorId: string; authorName: string }): string {
+    const scene = this.serializeScene();
+    const payload = {
+      type: 'carxy-scene',
+      version: 1,
+      metadata,
+      scene,
+      exportedAt: Date.now(),
+    };
+    return JSON.stringify(payload);
+  }
+
+  importSceneWithMetadata(raw: string): { metadata: unknown; scene: string } | null {
+    try {
+      const payload = JSON.parse(raw) as {
+        type?: string;
+        version?: number;
+        metadata?: unknown;
+        scene?: string;
+        exportedAt?: number;
+      };
+      if (payload.type !== 'carxy-scene' || !payload.scene) return null;
+      return { metadata: payload.metadata ?? {}, scene: payload.scene };
+    } catch {
+      return null;
+    }
   }
 
   public deleteCurrentModel(): void {
@@ -1191,6 +1342,139 @@ export class ThreeEngineService implements OnDestroy {
     if (property === 'opacity') {
       material.transparent = value < 1;
       material.needsUpdate = true;
+    }
+  }
+
+  // ========================================================================
+  // COLABORACIÓN EN TIEMPO REAL
+  // ========================================================================
+
+  joinCollaboration(uid: string, displayName: string): void {
+    if (this.collaborators.has(uid)) return;
+    const color = this.collaboratorColor(uid);
+    this.collaborators.set(uid, { displayName, color, objectId: null, x: 0, y: 0 });
+    this.collaboratorJoined$.next({ uid, displayName, color });
+    this.spawnCollaboratorMarker(uid, color);
+  }
+
+  leaveCollaboration(uid: string): void {
+    if (!this.collaborators.has(uid)) return;
+    this.collaborators.delete(uid);
+    this.removeCollaboratorMarker(uid);
+    this.collaboratorLeft$.next(uid);
+  }
+
+  setOwnCursorUid(uid: string): void {
+    this.ownCursorUid = uid;
+    if (!this.collaborators.has(uid)) {
+      this.joinCollaboration(uid, uid);
+    }
+  }
+
+  updateOwnCursor(x: number, y: number): void {
+    if (!this.ownCursorUid || !this.canvas) return;
+    const collab = this.collaborators.get(this.ownCursorUid);
+    if (!collab) return;
+    this.moveCollaboratorMarker(this.ownCursorUid, x, y);
+    this.remoteCursor$.next({ uid: this.ownCursorUid, x, y, color: collab.color });
+  }
+
+  updateCollaboratorCursor(uid: string, x: number, y: number): void {
+    const collab = this.collaborators.get(uid);
+    if (!collab) return;
+    collab.x = x;
+    collab.y = y;
+    this.moveCollaboratorMarker(uid, x, y);
+    this.remoteCursor$.next({ uid, x, y, color: collab.color });
+  }
+
+  setCollaboratorSelection(uid: string, objectId: string | null): void {
+    const collab = this.collaborators.get(uid);
+    if (!collab) return;
+    collab.objectId = objectId;
+    this.collaboratorSelection$.next({ uid, objectId });
+    this.updateCollaboratorMarker(uid);
+  }
+
+  applyRemoteTransform(uid: string, objectId: string, position: { x: number; y: number; z: number }, rotation: { x: number; y: number; z: number }, scale: { x: number; y: number; z: number }): void {
+    const target = this.objects.find((item) => item.id === objectId)?.object;
+    if (!target) return;
+    target.position.set(position.x, position.y, position.z);
+    target.rotation.set(rotation.x, rotation.y, rotation.z);
+    target.scale.set(scale.x, scale.y, scale.z);
+    this.collaboratorTransform$.next({ uid, objectId, position, rotation, scale });
+  }
+
+  getCollaborators(): Array<{ uid: string; displayName: string; color: string; objectId: string | null }> {
+    return Array.from(this.collaborators.entries()).map(([uid, c]) => ({ uid, displayName: c.displayName, color: c.color, objectId: c.objectId }));
+  }
+
+  private collaboratorColor(uid: string): string {
+    const colors = ['#8b5cf6', '#38bdf8', '#f59e0b', '#34d399', '#fb923c', '#a78bfa', '#c4b5fd', '#f472b6'];
+    let hash = 0;
+    for (let i = 0; i < uid.length; i++) {
+      hash = (hash << 5) - hash + uid.charCodeAt(i);
+      hash |= 0;
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  private spawnCollaboratorMarker(uid: string, color: string): void {
+    if (!this.scene) return;
+    const group = new THREE.Group();
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 12, 12),
+      new THREE.MeshBasicMaterial({ color, depthTest: false })
+    );
+    sphere.renderOrder = 100;
+    group.add(sphere);
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({ color, transparent: true, opacity: 0.9 }));
+    label.scale.set(0.5, 0.5, 1);
+    label.position.y = 0.25;
+    group.add(label);
+    this.scene.add(group);
+    this.collaboratorObjects.set(uid, group);
+  }
+
+  private removeCollaboratorMarker(uid: string): void {
+    const group = this.collaboratorObjects.get(uid);
+    if (!group) return;
+    this.scene?.remove(group);
+    group.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        (child.material as THREE.Material).dispose();
+      }
+    });
+    this.collaboratorObjects.delete(uid);
+  }
+
+  private moveCollaboratorMarker(uid: string, x: number, y: number): void {
+    const group = this.collaboratorObjects.get(uid);
+    if (!group || !this.camera || !this.canvas) return;
+    // Convertir coordenadas de pantalla (0-1) a mundo 3D cerca de la cámara
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(x * 2 - 1, -(y * 2 - 1)), this.camera);
+    const dir = raycaster.ray.direction;
+    const pos = raycaster.ray.origin.clone().addScaledVector(dir, 3);
+    group.position.copy(pos);
+  }
+
+  private updateCollaboratorMarker(uid: string): void {
+    const group = this.collaboratorObjects.get(uid);
+    if (!group) return;
+    const collab = this.collaborators.get(uid);
+    if (!collab) return;
+    // Si hay un objeto seleccionado, mover el marcador cerca de él
+    if (collab.objectId) {
+      const target = this.objects.find((item) => item.id === collab.objectId)?.object;
+      if (target) {
+        const pos = new THREE.Vector3();
+        target.getWorldPosition(pos);
+        pos.y += 0.5;
+        group.position.copy(pos);
+        return;
+      }
     }
   }
 

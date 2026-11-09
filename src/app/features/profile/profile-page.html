@@ -1,11 +1,12 @@
 <main class="profile-shell">
-  <header class="site-header">
-    <a class="brand" routerLink="/editor"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>3D STUDIO</small></b></a>
-    <nav><a routerLink="/feed">Comunidad</a><a routerLink="/editor">Editor 3D</a><a routerLink="/chat">Mensajes</a></nav>
-    @if (!(user$ | async)) { <a class="sign-in" routerLink="/login">Iniciar sesión</a> }
-    <app-activity-notifications />
-    <app-account-menu />
-  </header>
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="false"
+    [showNav]="true"
+    title="Perfil de creador"
+    subtitle="Portafolio y modelos publicados"
+    (menuToggle)="toggleMobileMenu()"
+  ></app-shell-header>
   @if (error) { <p class="error" role="alert">{{ error }}</p> }
   @if (profile$ | async; as state) {
     @if (state.profile; as profile) {

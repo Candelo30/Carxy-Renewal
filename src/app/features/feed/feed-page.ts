@@ -11,6 +11,8 @@ import { Comment, Post3D, ReportReason, User } from '../../core/models/social.mo
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
 import { CollectionService } from '../../core/services/collection';
+import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
@@ -18,6 +20,8 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
   standalone: true,
   imports: [
     ShellHeaderComponent,
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
     AsyncPipe,
     DatePipe,
     FormsModule,
@@ -96,6 +100,7 @@ export class FeedPage {
   reportDetails = '';
   reporting = false;
   error = '';
+  mobileMenuOpen = false;
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
   private readonly files = inject(FileHandler);
@@ -202,6 +207,10 @@ export class FeedPage {
     this.previewModes[post.id] = mode;
   }
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
   async toggleFollow(post: Post3D, user: User, following: boolean): Promise<void> {
     try {
       if (following) await this.social.unfollowUser(user.uid, post.author.uid);
@@ -239,10 +248,6 @@ export class FeedPage {
     this.viewMode = mode;
     this.selectedTag = '';
     this.searchTerm = '';
-  }
-
-  toggleMobileMenu(): void {
-    // El menú móvil se gestiona desde el shell-header; este método existe por consistencia.
   }
 
   isViewMode(mode: 'recent' | 'featured' | 'trending'): boolean {

@@ -11,11 +11,18 @@ import {
 } from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-auth-page',
   standalone: true,
-  imports: [AsyncPipe, FormsModule, LoadingSpinner, RouterLink],
+  imports: [
+    ShellHeaderComponent,
+    AsyncPipe,
+    FormsModule,
+    LoadingSpinner,
+    RouterLink,
+  ],
   templateUrl: './auth-page.html',
   styleUrl: './auth-page.css',
 })

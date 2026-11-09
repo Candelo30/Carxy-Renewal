@@ -11,11 +11,22 @@ import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [AccountMenuComponent, ActivityNotificationsComponent, AsyncPipe, DatePipe, FormsModule, LoadingSpinner, ModelPreviewComponent, RouterLink],
+  imports: [
+    ShellHeaderComponent,
+    AccountMenuComponent,
+    ActivityNotificationsComponent,
+    AsyncPipe,
+    DatePipe,
+    FormsModule,
+    LoadingSpinner,
+    ModelPreviewComponent,
+    RouterLink,
+  ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.css',
 })
@@ -25,6 +36,7 @@ export class ProfilePage {
   readonly social = inject(SocialService);
   private readonly notifications = inject(NotificationService);
   readonly user$ = this.auth.user$;
+  mobileMenuOpen = false;
   readonly posts$ = this.social.posts$.pipe(
     catchError((error: unknown) => {
       console.error('No se pudo cargar el portafolio del creador.', error);
@@ -60,6 +72,10 @@ export class ProfilePage {
   status = '';
   error = '';
   readonly previewModes: Record<string, boolean> = {};
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
 
   totalLikes(posts: Post3D[]): number {
     return posts.reduce((total, post) => total + post.likes, 0);

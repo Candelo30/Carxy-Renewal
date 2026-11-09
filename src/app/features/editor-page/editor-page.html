@@ -3,16 +3,23 @@
   [class.presentation-mode]="presentationMode"
   [class.panel-collapsed]="!modelEditorOpen"
 >
-  <header class="top-toolbar-area">
-    <app-top-toolbar
-      [language]="language"
-      (presentationChange)="presentationMode = $event"
-      (publishClick)="onPublishClick()"
-    />
-  </header>
+  <!-- Header unificado -->
+  <app-shell-header
+    [language]="language"
+    [showSearch]="false"
+    [showNav]="true"
+    title="{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}"
+    subtitle="{{ language === 'es' ? 'Crea, modela y diseña escenas en tres dimensiones.' : 'Create, model and design 3D scenes.' }}"
+    (languageChange)="language = $event"
+    (menuToggle)="toggleMobileMenu()"
+    (publishClick)="onPublishClick()"
+    (presentationChange)="presentationMode = $event"
+  ></app-shell-header>
+
   <aside class="editor-panel-area">
     <app-model-editor (languageChange)="language = $event" />
   </aside>
+
   <section class="viewer-area">
     <app-model-viewer />
     <button
@@ -36,6 +43,15 @@
     </button>
   </section>
 </main>
+
+<!-- Onboarding tutorial -->
+@if (onboardingOpen) {
+  <app-onboarding
+    [step]="onboardingStep"
+    (onComplete)="onOnboardingComplete()"
+  ></app-onboarding>
+}
+
 @if (publishModalOpen) {
   <app-publish-modal (closed)="publishModalOpen = false" />
 }

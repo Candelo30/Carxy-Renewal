@@ -5,7 +5,7 @@
       <button
         class="nav-toggle"
         type="button"
-        aria-label="Abrir men├║ principal"
+        aria-label="Abrir menú principal"
         (click)="menuToggle.emit()"
       >
         <span class="hamburger"></span>
@@ -36,12 +36,12 @@
         <input
           type="search"
           class="search-input"
-          placeholder="Buscar modelos, creadores, etiquetasÔÇª"
+          placeholder="Buscar modelos, creadores, etiquetas…"
           [(ngModel)]="searchQuery"
           (input)="onSearchChange($any($event.target).value)"
         />
         @if (searchQuery) {
-          <button class="search-clear" type="button" (click)="clearSearch()">├ù</button>
+          <button class="search-clear" type="button" (click)="clearSearch()">×</button>
         }
 
       </div>
@@ -52,30 +52,30 @@
       @if (showNav) {
         <nav class="header-nav">
           <a routerLink="/feed" routerLinkActive="active">
-            <span class="nav-icon">­ƒîÉ</span>
+            <span class="nav-icon">🌐</span>
             <span class="nav-label">{{ language === 'es' ? 'Comunidad' : 'Community' }}</span>
           </a>
           <a routerLink="/editor" routerLinkActive="active">
-            <span class="nav-icon">­ƒøá´©Å</span>
+            <span class="nav-icon">🛠️</span>
             <span class="nav-label">{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</span>
           </a>
           <a routerLink="/my-models" routerLinkActive="active">
-            <span class="nav-icon">­ƒôª</span>
+            <span class="nav-icon">📦</span>
             <span class="nav-label">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</span>
           </a>
           @if (user$ | async; as user) {
             <a routerLink="/chat" routerLinkActive="active">
-              <span class="nav-icon">­ƒÆ¼</span>
+              <span class="nav-icon">💬</span>
               <span class="nav-label">{{ language === 'es' ? 'Mensajes' : 'Messages' }}</span>
             </a>
             @if (user.role === 'admin') {
               <a routerLink="/admin" routerLinkActive="active">
-                <span class="nav-icon">­ƒøí´©Å</span>
+                <span class="nav-icon">🛡️</span>
                 <span class="nav-label">Admin</span>
               </a>
             } @else if (user.role === 'moderator') {
               <a routerLink="/moderation" routerLinkActive="active">
-                <span class="nav-icon">­ƒæ«</span>
+                <span class="nav-icon">👮</span>
                 <span class="nav-label">{{ language === 'es' ? 'Moderar' : 'Moderate' }}</span>
               </a>
             }
@@ -90,7 +90,7 @@
     </div>
   </div>
 
-  <!-- Sub-header con t├¡tulo y acciones secundarias (solo en p├íginas con t├¡tulo) -->
+  <!-- Sub-header con título y acciones secundarias (solo en páginas con título) -->
   @if (title || subtitle) {
     <div class="header-sub">
       <div class="header-sub-content">
@@ -103,24 +103,24 @@
       </div>
       <div class="header-sub-actions">
         <button class="btn-ghost" type="button" (click)="publishClick.emit()">
-          <span>´╝ï</span>
+          <span>＋</span>
           {{ language === 'es' ? 'Publicar' : 'Publish' }}
         </button>
         <button class="btn-ghost" type="button" [class.active]="presentationEnabled" (click)="togglePresentation()">
-          <span>ÔûÂ</span>
-          {{ language === 'es' ? 'Presentaci├│n' : 'Presentation' }}
+          <span>▶</span>
+          {{ language === 'es' ? 'Presentación' : 'Presentation' }}
         </button>
       </div>
     </div>
   }
 
-  <!-- Men├║ m├│vil desplegable -->
+  <!-- Menú móvil desplegable -->
   @if (openMobileMenu) {
     <div class="mobile-menu-overlay" (click)="openMobileMenu = false"></div>
     <div class="mobile-menu">
-      <button class="mobile-menu-close" type="button" (click)="openMobileMenu = false">Ô£ò</button>
+      <button class="mobile-menu-close" type="button" (click)="openMobileMenu = false">✕</button>
       <div class="mobile-section">
-        <h3 class="mobile-section-title">{{ language === 'es' ? 'Navegaci├│n' : 'Navigation' }}</h3>
+        <h3 class="mobile-section-title">{{ language === 'es' ? 'Navegación' : 'Navigation' }}</h3>
         <a routerLink="/feed" class="mobile-link">{{ language === 'es' ? 'Comunidad' : 'Community' }}</a>
         <a routerLink="/editor" class="mobile-link">{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</a>
         <a routerLink="/my-models" class="mobile-link">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</a>
@@ -134,19 +134,19 @@
           @if (user.role === 'admin') {
             <a routerLink="/admin" class="mobile-link">Admin</a>
           } @else if (user.role === 'moderator') {
-            <a routerLink="/moderation" class="mobile-link">{{ language === 'es' ? 'Moderaci├│n' : 'Moderation' }}</a>
+            <a routerLink="/moderation" class="mobile-link">{{ language === 'es' ? 'Moderación' : 'Moderation' }}</a>
           }
           <button class="mobile-link mobile-link-danger" type="button" (click)="openMobileMenu = false; auth.logout()">
-            {{ language === 'es' ? 'Cerrar sesi├│n' : 'Sign out' }}
+            {{ language === 'es' ? 'Cerrar sesión' : 'Sign out' }}
           </button>
         </div>
       } @else {
-        <a routerLink="/login" class="mobile-link">{{ language === 'es' ? 'Iniciar sesi├│n' : 'Sign in' }}</a>
+        <a routerLink="/login" class="mobile-link">{{ language === 'es' ? 'Iniciar sesión' : 'Sign in' }}</a>
         <a routerLink="/register" class="mobile-link">{{ language === 'es' ? 'Registrarse' : 'Register' }}</a>
       }
       <div class="mobile-section">
         <h3 class="mobile-section-title">{{ language === 'es' ? 'Idioma' : 'Language' }}</h3>
-        <button class="mobile-link" (click)="language = 'es'; languageChange.emit('es')">Espa├▒ol</button>
+        <button class="mobile-link" (click)="language = 'es'; languageChange.emit('es')">Español</button>
         <button class="mobile-link" (click)="language = 'en'; languageChange.emit('en')">English</button>
       </div>
     </div>
