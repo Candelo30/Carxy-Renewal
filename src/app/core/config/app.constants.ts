@@ -30,6 +30,8 @@ export const LOCAL_KEYS = {
   comments: 'forma-social-comments',
   chats: 'forma-social-chat',
   follows: 'forma-social-follows',
+  likes: 'forma-social-likes',
+  reports: 'forma-social-reports',
   activityNotifications: 'forma-social-activity-notifications',
   modelDatabase: 'forma-social-models',
   preferences: 'forma-3d-preferences',

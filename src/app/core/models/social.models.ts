@@ -10,12 +10,30 @@ export interface User {
   role?: UserRole;
   isBanned?: boolean;
   createdAt?: number;
+  emailVerified?: boolean;
+  providers?: string[];
 }
 
 export interface UserProfile extends User {
   role: UserRole;
   isBanned?: boolean;
   createdAt: number;
+}
+
+export type ReportReason = 'spam' | 'inappropriate' | 'copyright' | 'other';
+export type ReportStatus = 'open' | 'resolved' | 'dismissed';
+
+export interface ContentReport {
+  id: string;
+  postId: string;
+  postTitle: string;
+  reporterId: string;
+  reporterName: string;
+  reason: ReportReason;
+  details: string;
+  status: ReportStatus;
+  createdAt: number;
+  resolvedAt?: number;
 }
 
 export interface Post3D {
