@@ -50,11 +50,11 @@ export class EditorPage implements OnInit, OnDestroy {
 
     // Iniciar onboarding si es la primera vez
     this.subscription.add(this.onboarding.state$.subscribe((state) => {
-      this.onboardingOpen = state.seen && state.currentStep !== 'completed';
+      this.onboardingOpen = !state.seen;
       this.onboardingStep = state.currentStep;
     }));
 
-    // Si ya se vio antes y está completado, no mostrar
+    // Si nunca se vio antes, iniciar
     if (!this.onboarding.state.value.seen) {
       this.onboarding.start();
     }
@@ -107,6 +107,7 @@ export class EditorPage implements OnInit, OnDestroy {
 
   onOnboardingComplete(): void {
     this.onboardingOpen = false;
+    this.onboarding.skip(); // Marcar como completado para que no vuelva a aparecer
   }
 
   ngOnDestroy(): void {

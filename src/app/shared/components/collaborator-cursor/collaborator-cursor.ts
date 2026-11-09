@@ -18,7 +18,7 @@ import { ThreeEngineService } from '../../../core/services/three-engine';
   styles: [`
     :host {
       position: absolute;
-      z-index: 100;
+      z-index: 10;
       pointer-events: none;
       display: flex;
       align-items: center;

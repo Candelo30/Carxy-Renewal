@@ -595,6 +595,41 @@ h2 {
   border-color: var(--text-primary);
 }
 
+/* Comunidad 3D colapsable */
+.community-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--surface-panel);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.community-section-header button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.community-section-header button span {
+  font-size: 1.2rem;
+}
+
+.community-content {
+  transition: all 0.3s ease;
+}
+
+.community-content.hidden {
+  display: none;
+}
+
 @media (max-width: 700px) {
   .site-header {
     height: auto;

@@ -15,14 +15,47 @@
     }
   </div>
 
-  <!-- Cursores remotos de colaboradores -->
+  <!-- Cursores remotos de colaboradores (no mostrar el cursor del propio usuario) -->
   <div class="remote-cursors-layer">
     @for (cursor of remoteCursors.values(); track cursor.uid) {
-      <app-collaborator-cursor
-        [collab]="{ uid: cursor.uid, displayName: cursor.displayName, color: cursor.color }"
-        [cursorX]="cursor.x * 100"
-        [cursorY]="cursor.y * 100"
-      />
+      @if (cursor.uid !== ownCursorUid) {
+        <app-collaborator-cursor
+          [collab]="{ uid: cursor.uid, displayName: cursor.displayName, color: cursor.color }"
+          [cursorX]="cursor.x * 100"
+          [cursorY]="cursor.y * 100"
+        />
+      }
     }
   </div>
+
+  <!-- Panel de controles 3D -->
+  <div class="viewer-controls">
+    <div class="control-group">
+      <span class="control-label">Vista</span>
+      <button class="view-btn" [class.active]="cameraView === 'perspective'" (click)="setCameraView('perspective')">Persp</button>
+      <button class="view-btn" [class.active]="cameraView === 'front'" (click)="setCameraView('front')">Frente</button>
+      <button class="view-btn" [class.active]="cameraView === 'side'" (click)="setCameraView('side')">Lado</button>
+      <button class="view-btn" [class.active]="cameraView === 'top'" (click)="setCameraView('top')">Arriba</button>
+    </div>
+    <div class="control-group">
+      <button class="toggle-btn" [class.active]="showWireframe" (click)="toggleWireframe()" title="Wireframe">▧</button>
+      <button class="toggle-btn" [class.active]="showGrid" (click)="toggleGrid()" title="Cuadrícula">⊗</button>
+      <button class="toggle-btn" [class.active]="showShadows" (click)="toggleShadows()" title="Sombras">☀</button>
+      <button class="toggle-btn" [class.active]="showAxes" (click)="toggleAxes()" title="Ejes">✦</button>
+      <button class="toggle-btn" [class.active]="showClipping" (click)="toggleClipping()" title="Plano de corte">✂</button>
+      <button class="toggle-btn" [class.active]="showBloom" (click)="toggleBloom()" title="Bloom">✨</button>
+      <button class="toggle-btn" [class.active]="showExploded" (click)="toggleExploded()" title="Explosión">☄</button>
+      <button class="toggle-btn" [class.active]="measuringDistance" (click)="toggleMeasureDistance()" title="Medir distancia">📏</button>
+    </div>
+    <div class="control-group">
+      <button class="toggle-btn" (click)="toggleAutoRotate()" [class.active]="isAutoRotate" title="Rotación automática">⟳</button>
+      <button class="toggle-btn" (click)="focusSelectedNode()" title="Enfocar objeto">◎</button>
+      <button class="toggle-btn" (click)="measureSelectedDistance()" [class.active]="measuringDistance" title="Medir distancia">📐</button>
+      <div class="measure-info" *ngIf="measuringDistance && measurementDistance !== null">
+        📏 {{ measurementDistance | number:'1.2-2' }} unidades
+      </div>
+    </div>
+  </div>
+
+  <!-- Cursor del propio usuario oculto (usa el cursor nativo del navegador) -->
 </div>

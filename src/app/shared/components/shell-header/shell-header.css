@@ -19,8 +19,10 @@
 
 /* Asegurar que el contenido no quede detrás del header fijo */
 .shell-header + *,
-main > *:first-child {
-  margin-top: 0;
+main.page-with-header,
+.editor-layout,
+.editor-page-main {
+  margin-top: 64px;
 }
 
 .shell-header.elevated {

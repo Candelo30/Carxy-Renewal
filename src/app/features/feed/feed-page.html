@@ -1,4 +1,4 @@
-<main class="social-shell">
+<main class="social-shell feed-main page-with-header">
   <app-shell-header
     [language]="'es'"
     [showSearch]="true"
@@ -8,6 +8,13 @@
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   <section class="feed-content">
+    <div class="community-section-header">
+      <button class="collapse-btn" (click)="toggleCommunitySection()" [attr.aria-expanded]="communitySectionOpen">
+        <span>{{ communitySectionOpen ? '▼' : '▶' }}</span>
+        Comunidad 3D
+      </button>
+    </div>
+    <div class="community-content" [class.hidden]="!communitySectionOpen">
     <div class="hero">
       <div>
         <p class="eyebrow">DESCUBRE · CREA · REMIXEA</p>
@@ -180,6 +187,7 @@
         </div>
       }
     }
+    </div>
   </section>
   <dialog #reportDialog class="report-dialog">
     <form method="dialog">

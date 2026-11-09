@@ -68,6 +68,7 @@ export class FeedPage {
   readonly likeBusy: Record<string, boolean> = {};
   searchTerm = '';
   selectedTag = '';
+  communitySectionOpen = true;
   readonly allTags$ = this.socialService.posts$.pipe(
     map((posts) => {
       const tags = new Set<string>();
@@ -231,6 +232,10 @@ export class FeedPage {
 
   hasActiveFilters(): boolean {
     return !!this.searchTerm.trim() || !!this.selectedTag;
+  }
+
+  toggleCommunitySection(): void {
+    this.communitySectionOpen = !this.communitySectionOpen;
   }
 
   useFallbackAvatar(event: Event): void {
