@@ -27,11 +27,13 @@ import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-chat-page',
   standalone: true,
   imports: [
+    ShellHeaderComponent,
     AccountMenuComponent,
     ActivityNotificationsComponent,
     AsyncPipe,
@@ -51,6 +53,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private readonly route = inject(ActivatedRoute);
   private readonly subscription = new Subscription();
   private currentUser: User | null = null;
+  mobileMenuOpen = false;
   @ViewChild('messageList') private messageListContainer!: ElementRef;
   readonly conversations$ = this.user$.pipe(
     switchMap((user) =>
@@ -92,6 +95,10 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
         this.openRequestedConversation();
       }),
     );
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   openConversation(): void {

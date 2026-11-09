@@ -12,11 +12,13 @@ import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 
 @Component({
   selector: 'app-feed-page',
   standalone: true,
   imports: [
+    ShellHeaderComponent,
     AccountMenuComponent,
     ActivityNotificationsComponent,
     AsyncPipe,
@@ -87,6 +89,7 @@ export class FeedPage {
   reportDetails = '';
   reporting = false;
   error = '';
+  mobileMenuOpen = false;
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
   private readonly files = inject(FileHandler);
@@ -191,6 +194,10 @@ export class FeedPage {
 
   setPreviewMode(post: Post3D, mode: 'image' | '3d'): void {
     this.previewModes[post.id] = mode;
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   async toggleFollow(post: Post3D, user: User, following: boolean): Promise<void> {

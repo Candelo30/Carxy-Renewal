@@ -1,5 +1,11 @@
 <main class="auth-page">
-  <a class="brand" routerLink="/editor"><img src="/carxy-mark.svg" alt="" /><b>CARXY <small>3D STUDIO</small></b></a>
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="false"
+    [showNav]="false"
+    title="{{ mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta' }}"
+    subtitle="{{ mode === 'login' ? 'Inicia sesión para conectar con otros creadores.' : 'Comparte tus modelos y descubre nuevas ideas.' }}"
+  ></app-shell-header>
   @if (user$ | async; as user) {
     <section class="auth-card signed-in">
       <span class="success-mark">✓</span><p class="eyebrow">SESIÓN ACTIVA</p><h1>Hola, {{ user.displayName }}</h1>

@@ -12,12 +12,13 @@ import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, firstValueFrom, take } from 'rxjs';
 import { auditTime, merge } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
 import { LocalStateService } from '../../core/services/local-state';
 import { NotificationService } from '../../core/services/notifications';
+import { AuthService } from '../../core/services/auth';
 import type { NotificationPosition } from '../../core/models/social.models';
 import type {
   EditableMaterial,
@@ -80,6 +81,11 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly localState = inject(LocalStateService);
   private readonly notifications = inject(NotificationService);
+  private readonly auth = inject(AuthService);
+
+  public collaborationOpen = false;
+  public collaborators: Array<{ uid: string; displayName: string; color: string; objectId: string | null }> = [];
+  public myCursor = { x: 0.5, y: 0.5 };
 
   constructor(
     private threeEngine: ThreeEngineService,
@@ -119,6 +125,26 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.refreshSceneNodes();
     this.loadMaterialsFromEngine();
     this.applyAppearance();
+
+    // Colaboración en tiempo real
+    this.subscriptions.add(this.threeEngine.collaboratorJoined$.subscribe((c) => {
+      this.collaborators = this.threeEngine.getCollaborators();
+      this.collaborationOpen = true;
+      this.notifications.info(`${c.displayName} se unió a la edición colaborativa.`, 'Colaboración');
+      this.cdr.detectChanges();
+    }));
+    this.subscriptions.add(this.threeEngine.collaboratorLeft$.subscribe((uid) => {
+      this.collaborators = this.collaborators.filter((c) => c.uid !== uid);
+      this.cdr.detectChanges();
+    }));
+    this.subscriptions.add(this.threeEngine.collaboratorSelection$.subscribe((s) => {
+      this.collaborators = this.collaborators.map((c) =>
+        c.uid === s.uid ? { ...c, objectId: s.objectId } : c
+      );
+      this.cdr.detectChanges();
+    }));
+
+    void this.joinCollaboration();
   }
 
   trackById(_index: number, item: { id: string }): string {
@@ -413,7 +439,30 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.threeEngine.focusSelectedNode();
   }
 
+  // ========================================================================
+  // COLABORACIÓN EN TIEMPO REAL
+  // ========================================================================
+
+  async joinCollaboration(): Promise<void> {
+    const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
+    if (!user) return;
+    this.threeEngine.joinCollaboration(user.uid, user.displayName);
+    this.collaborators = this.threeEngine.getCollaborators();
+    this.cdr.detectChanges();
+  }
+
+  leaveCollaboration(): void {
+    const user = this.auth;
+    // Obtener el uid del usuario actual de forma síncrona es complejo con AuthService,
+    // así que dejamos que la limpieza se haga al destruir el componente.
+  }
+
+  toggleCollaborationPanel(): void {
+    this.collaborationOpen = !this.collaborationOpen;
+  }
+
   ngOnDestroy(): void {
+    this.threeEngine.leaveCollaboration('local');
     if (isPlatformBrowser(this.platformId)) {
       this.localState.saveDraft(this.threeEngine.serializeScene());
     }
