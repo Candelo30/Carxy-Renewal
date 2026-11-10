@@ -46,7 +46,11 @@ export class I18nService {
     const source = this.lookupSource(key);
 
     if (language === 'es') {
-      const spanish = this.spanishMessage(key) ?? (source ? key : undefined);
+      const spanish = this.spanishMessage(key)
+        ?? (source ? key : undefined)
+        ?? this.lookupOverlay('en', key)
+        ?? message?.en
+        ?? source?.en;
       return this.interpolate(spanish ?? key, params);
     }
 
@@ -381,6 +385,54 @@ export class I18nService {
       'help.noResults': 'No encontramos artículos. Prueba otra búsqueda.',
       'help.communityCta': '¿Necesitas más ayuda? Pregunta a la comunidad',
       'help.contactCta': 'Contactar al equipo',
+      'projects.title': 'Mis proyectos',
+      'projects.subtitle': 'Crea y gestiona tus escenas 3D con colaboradores.',
+      'projects.createNew': 'Crear un proyecto nuevo',
+      'projects.namePlaceholder': 'Nombre del proyecto',
+      'projects.descriptionPlaceholder': 'Descripción (opcional)',
+      'projects.public': 'Proyecto público',
+      'projects.create': 'Crear proyecto',
+      'projects.creating': 'Creando…',
+      'projects.myProjects': 'Mis proyectos',
+      'projects.noProjects': 'Aún no tienes proyectos. Crea el primero.',
+      'projects.noDescription': 'Sin descripción',
+      'projects.updated': 'Actualizado',
+      'projects.publicLabel': 'Público',
+      'projects.privateLabel': 'Privado',
+      'projects.owner': 'Dueño',
+      'projects.created': 'Creado',
+      'projects.openEditor': 'Abrir en el editor',
+      'projects.deleteProject': 'Eliminar proyecto',
+      'projects.members': 'Miembros',
+      'projects.inviteMembers': 'Invitar miembros',
+      'projects.inviteEmailPlaceholder': 'Correo electrónico',
+      'projects.invite': 'Invitar',
+      'projects.inviting': 'Invitando…',
+      'projects.pendingInvitations': 'Invitaciones pendientes',
+      'projects.accept': 'Aceptar',
+      'projects.reject': 'Rechazar',
+      'projects.noPendingInvitations': 'No hay invitaciones pendientes.',
+      'projects.roleOwner': 'Dueño',
+      'projects.roleEditor': 'Editor',
+      'projects.roleViewer': 'Visor',
+      'projects.remove': 'Quitar',
+      'projects.confirmRemoveMember': '¿Seguro que quieres eliminar a este miembro?',
+      'projects.confirmDeleteProject': '¿Seguro que quieres eliminar este proyecto? Esta acción no se puede deshacer.',
+      'projects.invitedBy': 'Invitado por {name}',
+      'projects.project': 'Proyecto',
+      'projects.objectLocked': 'Objeto bloqueado',
+      'projects.objectLockedBy': '{name} está editando este objeto',
+      'projects.objectAlreadyLocked': 'Este objeto ya está bloqueado por otro colaborador.',
+      'projects.lockObject': 'Bloquear objeto',
+      'projects.unlockObject': 'Desbloquear objeto',
+      'projects.sceneUpdatedRemotely': 'Escena actualizada por un colaborador',
+      'projects.activity.object_created': 'creó el objeto',
+      'projects.activity.object_updated': 'modificó el objeto',
+      'projects.activity.object_deleted': 'eliminó el objeto',
+      'projects.activity.material_changed': 'cambió el material',
+      'projects.activity.layer_changed': 'cambió la capa',
+      'projects.activity': 'Actividad',
+      'projects.noActivity': 'Aún no hay actividad.',
       'projects.eyebrow': 'Colaboración',
       'projects.statsProjects': 'Proyectos',
       'projects.statsInvitations': 'Invitaciones',

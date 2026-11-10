@@ -456,5 +456,6 @@ export const SOURCE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Publicación visible para la comunidad.': { en: 'Post visible to the community.', fr: 'Publication visible par la communauté.', pt: 'Publicação visível para a comunidade.' },
   'Reporte resuelto.': { en: 'Report resolved.', fr: 'Signalement résolu.', pt: 'Denúncia resolvida.' },
   'Rol actualizado.': { en: 'Role updated.', fr: 'Rôle mis à jour.', pt: 'Função atualizada.' },
+  'Guardados': { en: 'Saved', fr: 'Enregistrés', pt: 'Salvos' },
 
 };
