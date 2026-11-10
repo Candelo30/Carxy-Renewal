@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Shell Header — barra fija, elegante y responsive
+   Shell Header ÔÇö barra fija, elegante y responsive
    ========================================================================== */
 
 :host {
@@ -34,7 +34,7 @@
   gap: clamp(10px, 2vw, 22px);
 }
 
-/* --- Inicio: menú + marca --- */
+/* --- Inicio: men├║ + marca --- */
 .header-start {
   display: flex;
   align-items: center;
@@ -144,7 +144,7 @@
   white-space: nowrap;
 }
 
-/* --- Centro: búsqueda --- */
+/* --- Centro: b├║squeda --- */
 .header-center {
   display: flex;
   flex: 1 1 auto;
@@ -217,7 +217,7 @@
   background: color-mix(in srgb, var(--color-danger) 14%, var(--surface-panel));
 }
 
-/* --- Fin: navegación + acciones --- */
+/* --- Fin: navegaci├│n + acciones --- */
 .header-end {
   display: flex;
   align-items: center;
@@ -270,7 +270,7 @@
   background: var(--accent-color);
 }
 
-/* Acciones de página: Publicar / Presentación */
+/* Acciones de p├ígina: Publicar / Presentaci├│n */
 .page-actions {
   display: flex;
   align-items: center;
@@ -394,7 +394,7 @@
 }
 
 .lang-select::after {
-  content: '▾';
+  content: 'Ôû¥';
   position: absolute;
   right: 9px;
   pointer-events: none;
@@ -496,7 +496,7 @@
   stroke-linejoin: round;
 }
 
-/* --- Menú desplegable (escritorio y móvil) --- */
+/* --- Men├║ desplegable (escritorio y m├│vil) --- */
 .menu-scrim {
   position: fixed;
   inset: 0;
@@ -724,7 +724,7 @@
     display: none;
   }
 
-  /* Selector de idioma siempre visible en móvil, también en login/registro */
+  /* Selector de idioma siempre visible en m├│vil, tambi├®n en login/registro */
   .lang-select {
     display: inline-flex;
   }
@@ -862,3 +862,4 @@
     animation: none;
   }
 }
+

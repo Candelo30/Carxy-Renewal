@@ -1,12 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import {
-  Component,
-  EventEmitter,
-  inject,
-  Input,
-  Output,
-  ViewChild,
-} from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -42,17 +35,19 @@ export class ShellHeaderComponent {
   readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
 
-  @ViewChild(CommandPaletteComponent)
-  private commandPalette?: CommandPaletteComponent;
-
-  readonly user$: Observable<{ uid: string; displayName: string; photoURL: string | null; role: string; emailVerified: boolean } | null> =
-    this.auth.user$ as Observable<{
-      uid: string;
-      displayName: string;
-      photoURL: string | null;
-      role: string;
-      emailVerified: boolean;
-    } | null>;
+  readonly user$: Observable<{
+    uid: string;
+    displayName: string;
+    photoURL: string | null;
+    role: string;
+    emailVerified: boolean;
+  } | null> = this.auth.user$ as Observable<{
+    uid: string;
+    displayName: string;
+    photoURL: string | null;
+    role: string;
+    emailVerified: boolean;
+  } | null>;
 
   readonly languages = this.i18n.languages;
   readonly currentLanguage = this.i18n.language;
@@ -70,6 +65,8 @@ export class ShellHeaderComponent {
   @Output() menuToggle = new EventEmitter<void>();
   @Output() publishClick = new EventEmitter<void>();
   @Output() presentationChange = new EventEmitter<boolean>();
+
+  @ViewChild(CommandPaletteComponent) commandPalette?: CommandPaletteComponent;
 
   openUserMenu = false;
   openMobileMenu = false;
