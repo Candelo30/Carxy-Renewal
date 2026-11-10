@@ -367,7 +367,7 @@
 
 .lang-select select {
   height: 34px;
-  max-width: 150px;
+  max-width: 140px;
   padding: 0 26px 0 10px;
   border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
   border-radius: 10px;
@@ -724,7 +724,8 @@
     display: none;
   }
 
-  .lang-select {
+  /* En login/registro (auth-mode) no hay menú móvil con selector, así que se mantiene visible */
+  :not(.auth-mode) .lang-select {
     display: none;
   }
 }

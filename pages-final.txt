@@ -1,0 +1,90 @@
+
+> angular-3d-editor@0.0.0 build:pages
+> node scripts/build-pages.mjs
+
+[firebase-config] Sin variables FIREBASE_*: se usa public/firebase-config.js versionado.
+ÔØ» Building...
+Ô£ö Building...
+Initial chunk files | Names                |  Raw size | Estimated transfer size
+main-WNXW2CPC.js    | main                 |   1.49 MB |               346.64 kB
+styles-AQIG3GUM.css | styles               |   9.42 kB |                 1.62 kB
+
+                    | Initial total        |   1.50 MB |               348.26 kB
+
+Lazy chunk files    | Names                |  Raw size | Estimated transfer size
+chunk-BfAwq-_p.js   | -                    | 739.04 kB |               153.63 kB
+chunk-DecLAva2.js   | -                    | 155.22 kB |                31.69 kB
+chunk-CenkI5UR.js   | editor-page          | 136.37 kB |                25.88 kB
+chunk-Ce8PogmR.js   | -                    | 120.42 kB |                28.14 kB
+chunk-b3ULKSh5.js   | help-page            |  51.97 kB |                12.93 kB
+chunk-CwwRbv6W.js   | feed-page            |  43.89 kB |                10.02 kB
+chunk-CTdfYaAI.js   | admin-dashboard      |  37.39 kB |                 7.76 kB
+chunk-Be0ZN9Gg.js   | community-help-page  |  33.19 kB |                 7.11 kB
+chunk-BD3gvUwC.js   | about-page           |  30.52 kB |                 6.78 kB
+chunk-V2t7AhGy.js   | getting-started-page |  25.95 kB |                 6.26 kB
+chunk-BnpaxRUD.js   | my-models            |  23.93 kB |                 5.77 kB
+chunk-B80xzAmA.js   | profile-page         |  20.63 kB |                 5.53 kB
+chunk-Bu9y4EKl.js   | chat-page            |  19.05 kB |                 4.96 kB
+chunk-CquMoy9V.js   | favorites-page       |  18.52 kB |                 4.84 kB
+chunk-DOxud3QY.js   | auth-page            |  17.46 kB |                 4.74 kB
+...and 6 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [16.171 seconds] - 2026-11-10T05:25:33.027Z
+
+Ôû▓ [WARNING] NG8113: AccountMenuComponent is not used within the template of FeedPage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/feed/feed-page.ts:51:4:
+      51 Ôöé     AccountMenuComponent,
+         ÔòÁ     ~~~~~~~~~~~~~~~~~~~~
+
+
+Ôû▓ [WARNING] NG8113: ActivityNotificationsComponent is not used within the template of FeedPage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/feed/feed-page.ts:52:4:
+      52 Ôöé     ActivityNotificationsComponent,
+         ÔòÁ     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Ôû▓ [WARNING] NG8113: AccountMenuComponent is not used within the template of ProfilePage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/profile/profile-page.ts:26:4:
+      26 Ôöé     AccountMenuComponent,
+         ÔòÁ     ~~~~~~~~~~~~~~~~~~~~
+
+
+Ôû▓ [WARNING] NG8113: ActivityNotificationsComponent is not used within the template of ProfilePage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/profile/profile-page.ts:27:4:
+      27 Ôöé     ActivityNotificationsComponent,
+         ÔòÁ     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Ôû▓ [WARNING] NG8113: AccountMenuComponent is not used within the template of ChatPage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/chat/chat-page.ts:41:4:
+      41 Ôöé     AccountMenuComponent,
+         ÔòÁ     ~~~~~~~~~~~~~~~~~~~~
+
+
+Ôû▓ [WARNING] NG8113: ActivityNotificationsComponent is not used within the template of ChatPage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/chat/chat-page.ts:42:4:
+      42 Ôöé     ActivityNotificationsComponent,
+         ÔòÁ     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Ôû▓ [WARNING] NG8113: RouterLink is not used within the template of ChatPage [plugin angular-compiler]
+
+    C:/Users/candelo/Documents/angular-3d-editor/src/app/features/chat/chat-page.ts:47:4:
+      47 Ôöé     RouterLink,
+         ÔòÁ     ~~~~~~~~~~
+
+
+Ôû▓ [WARNING] bundle initial exceeded maximum budget. Budget 1.40 MB was not met by 100.69 kB with a total of 1.50 MB.
+
+
+Output location: C:\Users\candelo\Documents\angular-3d-editor\dist\github-pages
+
+[pages] Listo: base href /Carxy-Renewal/, 404.html, .nojekyll y 22 rutas.
+(node:28552) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
