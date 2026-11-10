@@ -14,6 +14,33 @@ interface ExteriorOption {
   paintEnd: string;
 }
 
+type FinishId = 'gloss' | 'metallic' | 'matte';
+type WheelId = 'sport' | 'steel' | 'aero';
+type BodyId = 'coupe' | 'sedan' | 'familiar';
+
+interface FinishOption {
+  id: FinishId;
+  label: string;
+  gloss: number;
+  sheen: number;
+}
+
+interface WheelOption {
+  id: WheelId;
+  label: string;
+  rim: string;
+  accent: string;
+  hub: string;
+}
+
+interface BodyOption {
+  id: BodyId;
+  label: string;
+  roof: string;
+  rear: string;
+  side: string;
+}
+
 interface InteriorOption {
   id: string;
   label: string;
@@ -78,11 +105,38 @@ export class AboutPage {
   readonly interiorOptions: InteriorOption[] = [
     { id: 'cognac-leather', label: 'Cuero coñac', swatch: '#7c4a21', seat: '#7c4a21' },
     { id: 'black-interior', label: 'Negro', swatch: '#111827', seat: '#111827' },
+    { id: 'red-interior', label: 'Rojo', swatch: '#7f1d1d', seat: '#dc2626' },
+    { id: 'cream-interior', label: 'Marfil', swatch: '#e5dcc5', seat: '#f3ead8' },
   ];
+
+  readonly finishOptions: FinishOption[] = [
+    { id: 'gloss', label: 'Brillante', gloss: 0.32, sheen: 0.9 },
+    { id: 'metallic', label: 'Metalizado', gloss: 0.22, sheen: 0.7 },
+    { id: 'matte', label: 'Mate', gloss: 0, sheen: 0.15 },
+  ];
+
+  readonly wheelOptions: WheelOption[] = [
+    { id: 'sport', label: 'Sport', rim: '#7dd3fc', accent: '#e2e8f0', hub: '#0b1020' },
+    { id: 'steel', label: 'Acero', rim: '#cbd5e1', accent: '#475569', hub: '#1f2937' },
+    { id: 'aero', label: 'Aero', rim: '#a78bfa', accent: '#ddd6fe', hub: '#2e1065' },
+  ];
+
+  readonly bodyOptions: BodyOption[] = [
+    { id: 'coupe', label: 'Coupé', roof: 'M 244 211 C 266 185 322 177 368 179 C 408 181 434 196 446 208 L 244 211 Z', rear: 'M 462 211 C 500 213 522 223 524 241 C 524 251 518 256 505 256 L 462 252 Z', side: 'M 160 240 C 260 232 420 232 518 240' },
+    { id: 'sedan', label: 'Sedán', roof: 'M 238 207 C 258 177 318 165 370 167 C 416 169 444 188 452 207 L 238 207 Z', rear: 'M 452 207 C 500 210 524 224 526 241 C 526 251 519 256 503 256 L 452 252 Z', side: 'M 160 240 C 260 230 420 229 520 240' },
+    { id: 'familiar', label: 'Familiar', roof: 'M 236 207 C 254 174 308 158 362 160 C 410 162 444 182 452 207 L 236 207 Z', rear: 'M 452 207 C 500 210 524 224 526 241 C 526 251 519 256 503 256 L 452 252 Z', side: 'M 160 240 C 260 231 420 231 520 240' },
+  ];
+
+  protected selectedFinishId: FinishId = 'metallic';
+  protected selectedWheelId: WheelId = 'sport';
+  protected selectedBodyId: BodyId = 'coupe';
+  protected showSpoiler = false;
+  protected lightsOn = false;
 
   protected selectedExteriorId = 'midnight-azure';
   protected selectedInteriorId = 'cognac-leather';
   protected savedAt: string | null = null;
+  protected history: string[] = [];
 
   get selectedExterior(): ExteriorOption {
     return this.exteriorOptions.find((option) => option.id === this.selectedExteriorId) ?? this.exteriorOptions[0];
@@ -90,6 +144,30 @@ export class AboutPage {
 
   get selectedInterior(): InteriorOption {
     return this.interiorOptions.find((option) => option.id === this.selectedInteriorId) ?? this.interiorOptions[0];
+  }
+
+  get selectedFinish(): FinishOption {
+    return this.finishOptions.find((option) => option.id === this.selectedFinishId) ?? this.finishOptions[1];
+  }
+
+  get selectedWheel(): WheelOption {
+    return this.wheelOptions.find((option) => option.id === this.selectedWheelId) ?? this.wheelOptions[0];
+  }
+
+  get selectedBody(): BodyOption {
+    return this.bodyOptions.find((option) => option.id === this.selectedBodyId) ?? this.bodyOptions[0];
+  }
+
+  get paintGlossOpacity(): number {
+    return this.selectedFinish.gloss;
+  }
+
+  get paintSheenOpacity(): number {
+    return this.selectedFinish.sheen;
+  }
+
+  get configurationSummary(): string {
+    return `${this.selectedBody.label} · ${this.selectedExterior.label} (${this.selectedFinish.label}) · ${this.selectedInterior.label}`;
   }
 
   protected selectExterior(id: string): void {
@@ -106,8 +184,44 @@ export class AboutPage {
     }
   }
 
+  protected selectFinish(id: FinishId): void {
+    if (this.finishOptions.some((option) => option.id === id)) {
+      this.selectedFinishId = id;
+      this.savedAt = null;
+    }
+  }
+
+  protected selectWheel(id: WheelId): void {
+    if (this.wheelOptions.some((option) => option.id === id)) {
+      this.selectedWheelId = id;
+      this.savedAt = null;
+    }
+  }
+
+  protected selectBody(id: BodyId): void {
+    if (this.bodyOptions.some((option) => option.id === id)) {
+      this.selectedBodyId = id;
+      this.savedAt = null;
+    }
+  }
+
+  protected toggleSpoiler(): void {
+    this.showSpoiler = !this.showSpoiler;
+    this.savedAt = null;
+  }
+
+  protected toggleLights(): void {
+    this.lightsOn = !this.lightsOn;
+    this.savedAt = null;
+  }
+
   protected saveConfiguration(): void {
     this.savedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    this.history = [this.configurationSummary, ...this.history].slice(0, 4);
+  }
+
+  protected clearHistory(): void {
+    this.history = [];
   }
 
   protected toggleRotation(): void {

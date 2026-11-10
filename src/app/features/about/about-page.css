@@ -840,6 +840,36 @@
   line-height: 1.4;
 }
 
+.mockup-history {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mockup-history-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mockup-history-chip {
+  max-width: 340px;
+  padding: 6px 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 .mockup-caption {
   margin-top: 12px;
   color: var(--text-muted);
