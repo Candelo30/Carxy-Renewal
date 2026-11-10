@@ -9,7 +9,7 @@ import {
   AfterViewChecked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   Observable,
   Subscription,
@@ -26,8 +26,6 @@ import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { I18nService } from '../../core/services/i18n';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
-import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
-import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 
@@ -37,13 +35,10 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
   imports: [
     TranslatePipe,
     ShellHeaderComponent,
-    AccountMenuComponent,
-    ActivityNotificationsComponent,
     AsyncPipe,
     DatePipe,
     FormsModule,
     LoadingSpinner,
-    RouterLink,
   ],
   templateUrl: './chat-page.html',
   styleUrl: './chat-page.css',

@@ -99,7 +99,73 @@ export class SocialService {
   readonly allPosts$: Observable<Post3D[]> = this.firestore
     ? collectionData(query(collection(this.firestore, SOCIAL_COLLECTIONS.posts), orderBy('createdAt', 'desc')), { idField: 'id' })
         .pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))))
-    : this.localPosts.asObservable();
+    : this.demoPosts();
+
+  private demoPosts(): Observable<Post3D[]> {
+    const stored = this.localPosts.value;
+    if (stored.length > 0) return this.localPosts.asObservable();
+    const demoAuthor: User = {
+      uid: 'demo-user-1',
+      displayName: 'Creador Demo',
+      email: 'creator@carxy.demo',
+      photoURL: null,
+      bio: '',
+    };
+    const posts: Post3D[] = [
+      {
+        id: 'demo-post-1',
+        title: 'Mi primera escena 3D',
+        description: 'Una escena básica con cubo, esfera y cilindro. Modelo de demostración para el panel de administración.',
+        modelUrl: 'local-model://demo-post-1',
+        thumbnailUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGWWj6JrwAAAABJRU5ErkJggg==',
+        author: demoAuthor,
+        authorId: 'demo-user-1',
+        authorName: 'Creador Demo',
+        likes: 5,
+        likesCount: 5,
+        viewsCount: 24,
+        remixCount: 2,
+        isPrivate: false,
+        tags: ['demo', 'primitivas', '3d'],
+        createdAt: Date.now() - 86400000 * 2,
+      },
+      {
+        id: 'demo-post-2',
+        title: 'Concepto de vehículo eléctrico',
+        description: 'Modelo conceptual de vehículo eléctrico creado en el editor 3D de CARXY.',
+        modelUrl: 'local-model://demo-post-2',
+        thumbnailUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGWWj6JrwAAAABJRU5ErkJggg==',
+        author: demoAuthor,
+        authorId: 'demo-user-1',
+        authorName: 'Creador Demo',
+        likes: 12,
+        likesCount: 12,
+        viewsCount: 56,
+        remixCount: 3,
+        isPrivate: false,
+        tags: ['vehículo', 'concepto', 'demo'],
+        createdAt: Date.now() - 86400000 * 5,
+      },
+      {
+        id: 'demo-post-3',
+        title: 'Modelo privado de prueba',
+        description: 'Este es un modelo privado solo para pruebas del administrador.',
+        modelUrl: 'local-model://demo-post-3',
+        thumbnailUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGWWj6JrwAAAABJRU5ErkJggg==',
+        author: demoAuthor,
+        authorId: 'demo-user-1',
+        authorName: 'Creador Demo',
+        likes: 0,
+        likesCount: 0,
+        viewsCount: 1,
+        remixCount: 0,
+        isPrivate: true,
+        tags: ['privado', 'demo'],
+        createdAt: Date.now() - 86400000 * 1,
+      },
+    ];
+    return of(posts);
+  }
 
   private readonly adminUsersRefresh$ = new BehaviorSubject<void>(undefined);
 
@@ -115,7 +181,54 @@ export class SocialService {
           privateByUid.get(String(item['uid'])) as Record<string, unknown> | undefined,
         ));
       }))
-    : of(this.localAccounts());
+    : of(this.demoUsers());
+
+  private demoUsers(): UserProfile[] {
+    const stored = this.localAccounts();
+    if (stored.length > 0) return stored;
+    return [
+      {
+        uid: 'demo-admin-1',
+        displayName: 'Administrador',
+        email: 'admin@carxy.demo',
+        photoURL: null,
+        bio: 'Administrador del sistema',
+        role: 'admin',
+        isBanned: false,
+        createdAt: Date.now() - 86400000 * 30,
+      },
+      {
+        uid: 'demo-mod-1',
+        displayName: 'Moderador Demo',
+        email: 'mod@carxy.demo',
+        photoURL: null,
+        bio: 'Moderador de contenido',
+        role: 'moderator',
+        isBanned: false,
+        createdAt: Date.now() - 86400000 * 15,
+      },
+      {
+        uid: 'demo-user-1',
+        displayName: 'Creador Demo',
+        email: 'creator@carxy.demo',
+        photoURL: null,
+        bio: 'Creador de contenido 3D',
+        role: 'user',
+        isBanned: false,
+        createdAt: Date.now() - 86400000 * 7,
+      },
+      {
+        uid: 'demo-user-2',
+        displayName: 'Usuario Suspendido',
+        email: 'suspended@carxy.demo',
+        photoURL: null,
+        bio: 'Cuenta suspendida por violar reglas',
+        role: 'user',
+        isBanned: true,
+        createdAt: Date.now() - 86400000 * 3,
+      },
+    ];
+  }
 
   async publish(
     title: string,
@@ -408,7 +521,38 @@ export class SocialService {
         query(collection(this.firestore, SOCIAL_COLLECTIONS.reports), orderBy('createdAt', 'desc'), limit(100)),
         { idField: 'id' },
       ).pipe(map((items) => items.map((item) => this.normalizeReport(item as Record<string, unknown>))))
-    : this.localReports.asObservable();
+    : this.demoReports();
+
+  private demoReports(): Observable<ContentReport[]> {
+    const stored = this.localReports.value;
+    if (stored.length > 0) return this.localReports.asObservable();
+    const items: ContentReport[] = [
+      {
+        id: 'demo-report-1',
+        postId: 'demo-post-1',
+        postTitle: 'Mi primera escena 3D',
+        reporterId: 'demo-user-2',
+        reporterName: 'Usuario Suspendido',
+        reason: 'inappropriate',
+        details: 'El modelo contiene contenido inapropiado.',
+        status: 'open',
+        createdAt: Date.now() - 86400000 * 1,
+      },
+      {
+        id: 'demo-report-2',
+        postId: 'demo-post-2',
+        postTitle: 'Concepto de vehículo eléctrico',
+        reporterId: 'demo-user-1',
+        reporterName: 'Creador Demo',
+        reason: 'spam',
+        details: 'Este modelo parece ser spam.',
+        status: 'resolved',
+        createdAt: Date.now() - 86400000 * 4,
+        resolvedAt: Date.now() - 86400000 * 3,
+      },
+    ];
+    return of(items);
+  }
 
   async reportPost(
     post: Post3D,

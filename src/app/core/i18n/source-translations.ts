@@ -321,6 +321,7 @@ export const SOURCE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Tema {theme} activado.': { en: '{theme} theme enabled.', fr: 'Thème {theme} activé.', pt: 'Tema {theme} ativado.' },
   'oscuro': { en: 'dark', fr: 'sombre', pt: 'escuro' },
   'claro': { en: 'light', fr: 'clair', pt: 'claro' },
+  'sistema': { en: 'system', fr: 'système', pt: 'sistema' },
   'Apariencia actualizada': { en: 'Appearance updated', fr: 'Apparence mise à jour', pt: 'Aparência atualizada' },
   'Enlace copiado al portapapeles.': { en: 'Link copied to clipboard.', fr: 'Lien copié dans le presse-papiers.', pt: 'Link copiado para a área de transferência.' },
 

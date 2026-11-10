@@ -21,6 +21,7 @@ describe('ModelViewer', () => {
           releaseViewport: () => undefined,
           resize: () => undefined,
           hotspotsChanged$: new Subject<void>(),
+          remoteCursor$: new Subject<void>(),
           getHotspots: () => [],
           addHotspotFromPointer: () => false,
           placeCurrentModelOnARSurface: () => false,

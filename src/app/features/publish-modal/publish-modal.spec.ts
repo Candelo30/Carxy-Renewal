@@ -24,7 +24,7 @@ describe('PublishModalComponent', () => {
         { provide: FileHandler, useValue: {} },
         { provide: SocialService, useValue: {} },
         { provide: ThreeEngineService, useValue: engine },
-        { provide: LocalStateService, useValue: {} },
+        { provide: LocalStateService, useValue: { loadPreferences: vi.fn(() => ({ theme: 'dark', accentColor: '#8b5cf6', language: 'es', backgroundColor: '#171a22', lightIntensity: 1.2, gizmoMode: 'translate', notificationPosition: 'top-right' })) } },
         { provide: NotificationService, useValue: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } },
       ],
     }).compileComponents();

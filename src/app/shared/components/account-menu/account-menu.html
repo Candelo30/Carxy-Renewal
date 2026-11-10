@@ -26,6 +26,7 @@
           </span>
         </a>
         <a routerLink="/my-models" (click)="open = false">{{ 'nav.myModels' | translate }}</a>
+        <a routerLink="/projects" (click)="open = false">{{ 'nav.projects' | translate }}</a>
         <a routerLink="/favorites" (click)="open = false">♡ {{ 'nav.myFavorites' | translate }}</a>
         <a routerLink="/getting-started" (click)="open = false">{{ 'nav.gettingStarted' | translate }}</a>
         <a routerLink="/help" (click)="open = false">{{ 'nav.help' | translate }}</a>
@@ -65,6 +66,7 @@
         <label class="theme-choice">
           <span><strong>{{ 'account.theme' | translate }}</strong><small>{{ 'account.themeHint' | translate }}</small></span>
           <select [(ngModel)]="preferences.theme" (ngModelChange)="saveAppearance()">
+            <option value="system">{{ 'account.system' | translate }}</option>
             <option value="dark">{{ 'account.dark' | translate }}</option>
             <option value="light">{{ 'account.light' | translate }}</option>
           </select>

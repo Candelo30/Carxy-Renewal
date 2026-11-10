@@ -16,7 +16,7 @@ import {
   orderBy,
   limit,
 } from '@angular/fire/firestore';
-import { firstValueFrom, BehaviorSubject, Observable, of, switchMap } from 'rxjs';
+import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map } from 'rxjs';
 import { SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { I18nService } from './i18n';
 import { AuthService } from './auth';
@@ -107,15 +107,56 @@ export class CollaborationService {
     return this.authService.user$.pipe(
       switchMap((user) => {
         if (!user) return of([]);
-        const q = query(
-          collection(db, SOCIAL_COLLECTIONS.projects),
-          where('ownerId', '==', user.uid),
-          orderBy('updatedAt', 'desc'),
-          limit(50)
-        );
-        return collectionData(q, { idField: 'id' }) as Observable<Project[]>;
-      })
+        try {
+          const q = query(
+            collection(db, SOCIAL_COLLECTIONS.projects),
+            where('ownerId', '==', user.uid),
+            orderBy('updatedAt', 'desc'),
+            limit(50)
+          );
+          return (collectionData(q, { idField: 'id' }) as Observable<Project[]>).pipe(
+            catchError((err) => {
+              console.warn('Fallback al obtener proyectos de usuario sin orderBy:', err);
+              const fallbackQ = query(
+                collection(db, SOCIAL_COLLECTIONS.projects),
+                where('ownerId', '==', user.uid)
+              );
+              return (collectionData(fallbackQ, { idField: 'id' }) as Observable<Project[]>).pipe(
+                map((projects) => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))),
+                catchError(() => of([] as Project[]))
+              );
+            })
+          );
+        } catch {
+          return of([] as Project[]);
+        }
+      }),
+      catchError(() => of([] as Project[]))
     );
+  }
+
+  /** Obtiene todos los proyectos para administración o moderación. */
+  getAllProjects(): Observable<Project[]> {
+    const db = this.firestore;
+    if (!db) return of([]);
+    try {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projects),
+        orderBy('updatedAt', 'desc'),
+        limit(100)
+      );
+      return (collectionData(q, { idField: 'id' }) as Observable<Project[]>).pipe(
+        catchError((err) => {
+          console.warn('Fallback al obtener todos los proyectos sin orderBy:', err);
+          return (collectionData(collection(db, SOCIAL_COLLECTIONS.projects), { idField: 'id' }) as Observable<Project[]>).pipe(
+            map((projects) => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))),
+            catchError(() => of([] as Project[]))
+          );
+        })
+      );
+    } catch {
+      return of([] as Project[]);
+    }
   }
 
   getProject(projectId: string): Observable<Project | undefined> {

@@ -1,121 +1,146 @@
 <app-shell-header [title]="projectName || ('projects.project' | translate)"></app-shell-header>
 
 <main class="project-detail-page">
-  <section class="project-header" *ngIf="project$ | async as project">
-    <div class="project-info">
-      <h1>{{ project.name }}</h1>
-      <p class="description">{{ project.description || ('projects.noDescription' | translate) }}</p>
-      <div class="project-meta">
-        <span class="badge">{{ project.isPublic ? ('projects.publicLabel' | translate) : ('projects.privateLabel' | translate) }}</span>
-        <span>{{ 'projects.created' | translate }}: {{ project.createdAt | date:'shortDate' }}</span>
-        <span>{{ 'projects.updated' | translate }}: {{ project.updatedAt | date:'shortDate' }}</span>
-      </div>
-    </div>
-    <div class="project-actions">
-      <button class="btn-primary" (click)="openEditor()">
-        {{ 'projects.openEditor' | translate }}
-      </button>
-      <button
-        *ngIf="canWrite"
-        class="btn-danger"
-        (click)="deleteProject()"
-      >
-        {{ 'projects.deleteProject' | translate }}
-      </button>
-    </div>
-  </section>
-
-  <section class="members-section" *ngIf="projectId">
-    <h2>{{ 'projects.members' | translate }}</h2>
-    <div class="members-list" *ngIf="members | async as membersList">
-      <div class="member-row" *ngFor="let member of membersList">
-        <div class="member-info">
-          <span class="member-avatar">{{ member.userName.charAt(0) }}</span>
-          <div>
-            <div class="member-name">{{ member.userName }}</div>
-            <div class="member-role">{{ member.role | translate }}</div>
-          </div>
+  @if (project$ | async; as project) {
+    <section class="project-header">
+      <div class="project-info">
+        <h1>{{ project.name }}</h1>
+        <p class="description">{{ project.description || ('projects.noDescription' | translate) }}</p>
+        <div class="project-meta">
+          <span class="badge">{{ project.isPublic ? ('projects.publicLabel' | translate) : ('projects.privateLabel' | translate) }}</span>
+          <span>{{ 'projects.created' | translate }}: {{ project.createdAt | date:'shortDate' }}</span>
+          <span>{{ 'projects.updated' | translate }}: {{ project.updatedAt | date:'shortDate' }}</span>
         </div>
-        <div class="member-actions">
-          <select
-            *ngIf="canWrite && member.role !== 'owner'"
-            [(ngModel)]="member.role"
-            (ngModelChange)="changeRole(member.id, $event)"
-          >
-            <option value="owner">{{ 'projects.roleOwner' | translate }}</option>
-            <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
-            <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
-          </select>
+      </div>
+      <div class="project-actions">
+        <button class="btn-primary" (click)="openEditor()">
+          {{ 'projects.openEditor' | translate }}
+        </button>
+        @if (canWrite) {
           <button
-            *ngIf="canWrite && member.role !== 'owner'"
-            class="btn-remove"
-            (click)="removeMember(member.id)"
+            class="btn-danger"
+            (click)="deleteProject()"
           >
-            {{ 'projects.remove' | translate }}
+            {{ 'projects.deleteProject' | translate }}
           </button>
-        </div>
+        }
       </div>
-    </div>
-  </section>
+    </section>
+  }
 
-  <section class="invite-section" *ngIf="canWrite">
-    <h2>{{ 'projects.inviteMembers' | translate }}</h2>
-    <form class="invite-form" (ngSubmit)="inviteMember()">
-      <input
-        type="email"
-        [(ngModel)]="newInviteEmail"
-        name="email"
-        [placeholder]="'projects.inviteEmailPlaceholder' | translate"
-        required
-      />
-      <select [(ngModel)]="newInviteRole" name="role">
-        <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
-        <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
-        <option value="owner">{{ 'projects.roleOwner' | translate }}</option>
-      </select>
-      <button type="submit" [disabled]="inviting || !newInviteEmail.trim()">
-        {{ inviting ? ('projects.inviting' | translate) : ('projects.invite' | translate) }}
-      </button>
-    </form>
-  </section>
+  @if (projectId) {
+    <section class="members-section">
+      <h2>{{ 'projects.members' | translate }}</h2>
+      @if (members | async; as membersList) {
+        <div class="members-list">
+          @for (member of membersList; track member.id) {
+            <div class="member-row">
+              <div class="member-info">
+                <span class="member-avatar">{{ member.userName.charAt(0) }}</span>
+                <div>
+                  <div class="member-name">{{ member.userName }}</div>
+                  <div class="member-role">{{ member.role | translate }}</div>
+                </div>
+              </div>
+              <div class="member-actions">
+                @if (canWrite && member.role !== 'owner') {
+                  <select
+                    [ngModel]="member.role"
+                    (ngModelChange)="changeRole(member.id, $event)"
+                  >
+                    <option value="owner">{{ 'projects.roleOwner' | translate }}</option>
+                    <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
+                    <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
+                  </select>
+                  <button
+                    class="btn-remove"
+                    (click)="removeMember(member.id)"
+                  >
+                    {{ 'projects.remove' | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
 
-  <section class="pending-invitations" *ngIf="invitations | async as pendingInvitations">
-    <h2>{{ 'projects.pendingInvitations' | translate }}</h2>
-    <div class="invitations-list">
-      <div class="invitation-row" *ngFor="let inv of pendingInvitations">
-        <div class="invitation-info">
-          <div class="invitation-project">{{ inv.projectName }}</div>
-          <div class="invitation-from">{{ 'projects.invitedBy' | translate: { name: inv.invitedByName } }}</div>
-          <div class="invitation-role">{{ inv.role | translate }}</div>
-        </div>
-        <div class="invitation-actions">
-          <button class="btn-accept" (click)="acceptInvitation(inv.id)">{{ 'projects.accept' | translate }}</button>
-          <button class="btn-reject" (click)="rejectInvitation(inv.id)">{{ 'projects.reject' | translate }}</button>
-        </div>
-      </div>
-      <div class="empty-invitations" *ngIf="!pendingInvitations.length">
-        <p>{{ 'projects.noPendingInvitations' | translate }}</p>
-      </div>
-    </div>
-  </section>
+  @if (canWrite) {
+    <section class="invite-section">
+      <h2>{{ 'projects.inviteMembers' | translate }}</h2>
+      <form class="invite-form" (ngSubmit)="inviteMember()">
+        <input
+          type="email"
+          [(ngModel)]="newInviteEmail"
+          name="email"
+          [placeholder]="'projects.inviteEmailPlaceholder' | translate"
+          required
+        />
+        <select [(ngModel)]="newInviteRole" name="role">
+          <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
+          <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
+          <option value="owner">{{ 'projects.roleOwner' | translate }}</option>
+        </select>
+        <button type="submit" [disabled]="inviting || !newInviteEmail.trim()">
+          {{ inviting ? ('projects.inviting' | translate) : ('projects.invite' | translate) }}
+        </button>
+      </form>
+    </section>
+  }
 
-  <section class="activity-section" *ngIf="projectId">
-    <h2>{{ 'projects.activity' | translate }}</h2>
-    <div class="activity-list" *ngIf="activity | async as activityList">
-      <div class="activity-row" *ngFor="let item of activityList">
-        <div class="activity-avatar">{{ item.actorName.charAt(0) }}</div>
-        <div class="activity-info">
-          <div class="activity-actor">{{ item.actorName }}</div>
-          <div class="activity-action">{{ item.action | translate }}</div>
-          <div class="activity-time">{{ item.createdAt | date:'short' }}</div>
+  @if (invitations | async; as pendingInvitations) {
+    <section class="pending-invitations">
+      <h2>{{ 'projects.pendingInvitations' | translate }}</h2>
+      <div class="invitations-list">
+        @for (inv of pendingInvitations; track inv.id) {
+          <div class="invitation-row">
+            <div class="invitation-info">
+              <div class="invitation-project">{{ inv.projectName }}</div>
+              <div class="invitation-from">{{ 'projects.invitedBy' | translate: { name: inv.invitedByName } }}</div>
+              <div class="invitation-role">{{ inv.role | translate }}</div>
+            </div>
+            <div class="invitation-actions">
+              <button class="btn-accept" (click)="acceptInvitation(inv.id)">{{ 'projects.accept' | translate }}</button>
+              <button class="btn-reject" (click)="rejectInvitation(inv.id)">{{ 'projects.reject' | translate }}</button>
+            </div>
+          </div>
+        }
+        @if (!pendingInvitations.length) {
+          <div class="empty-invitations">
+            <p>{{ 'projects.noPendingInvitations' | translate }}</p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (projectId) {
+    <section class="activity-section">
+      <h2>{{ 'projects.activity' | translate }}</h2>
+      @if (activity | async; as activityList) {
+        <div class="activity-list">
+          @for (item of activityList; track item.id) {
+            <div class="activity-row">
+              <div class="activity-avatar">{{ item.actorName.charAt(0) }}</div>
+              <div class="activity-info">
+                <div class="activity-actor">{{ item.actorName }}</div>
+                <div class="activity-action">{{ item.action | translate }}</div>
+                <div class="activity-time">{{ item.createdAt | date:'short' }}</div>
+              </div>
+              <div class="activity-object">{{ item.objectType }}</div>
+            </div>
+          }
+          @if (!activityList.length) {
+            <div class="empty-activity">
+              <p>{{ 'projects.noActivity' | translate }}</p>
+            </div>
+          }
         </div>
-        <div class="activity-object">{{ item.objectType }}</div>
-      </div>
-      <div class="empty-activity" *ngIf="!activityList.length">
-        <p>{{ 'projects.noActivity' | translate }}</p>
-      </div>
-    </div>
-  </section>
+      }
+    </section>
+  }
 </main>
 
 <app-site-footer></app-site-footer>

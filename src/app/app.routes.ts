@@ -87,12 +87,10 @@ export const routes: Routes = [
   { path: 'contacto', pathMatch: 'full', redirectTo: 'contact' },
   {
     path: 'projects',
-    canActivate: [authGuard],
     loadComponent: () => import('./features/projects/projects-page').then((module) => module.ProjectsPage),
   },
   {
     path: 'projects/:id',
-    canActivate: [authGuard],
     loadComponent: () => import('./features/projects/project-detail-page').then((module) => module.ProjectDetailPage),
   },
   { path: '**', redirectTo: 'editor' },

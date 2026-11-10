@@ -530,7 +530,8 @@ service cloud.firestore {
 
     match /projects/{projectId} {
       allow read: if signedIn()
-        && (resource.data.isPublic == true
+        && (isAdmin()
+          || resource.data.isPublic == true
           || isProjectMember(projectId, request.auth.uid)
           || resource.data.ownerId == request.auth.uid);
 
@@ -543,28 +544,28 @@ service cloud.firestore {
         && request.resource.data.updatedAt is number;
 
       allow update: if signedIn()
-        && (isProjectOwner(projectId) || isProjectWriter(projectId))
+        && (isAdmin() || isProjectOwner(projectId) || isProjectWriter(projectId))
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['name', 'description', 'isPublic', 'updatedAt', 'thumbnailUrl', 'sceneJson']);
 
-      allow delete: if signedIn() && isProjectOwner(projectId);
+      allow delete: if signedIn() && (isAdmin() || isProjectOwner(projectId));
     }
 
     match /projectMembers/{memberId} {
       allow read: if signedIn()
-        && (isProjectMember(resource.data.projectId, request.auth.uid)
-          || resource.data.projectId in get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid);
+        && (isAdmin()
+          || isProjectMember(resource.data.projectId, request.auth.uid)
+          || get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid);
 
       allow create: if signedIn()
-        && request.resource.data.userId == request.auth.uid
-        && isProjectWriter(resource.data.projectId);
+        && (isAdmin() || (request.resource.data.userId == request.auth.uid && isProjectWriter(resource.data.projectId)));
 
       allow update: if signedIn()
-        && isProjectOwner(resource.data.projectId)
+        && (isAdmin() || isProjectOwner(resource.data.projectId))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
 
       allow delete: if signedIn()
-        && (isProjectOwner(resource.data.projectId) || request.auth.uid == resource.data.userId);
+        && (isAdmin() || isProjectOwner(resource.data.projectId) || request.auth.uid == resource.data.userId);
     }
 
     match /projectInvitations/{invitationId} {
@@ -631,6 +632,33 @@ service cloud.firestore {
 
       allow delete: if signedIn()
         && request.resource.data.uid == request.auth.uid;
+    }
+
+    match /helpArticles/{articleId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'id', 'category', 'title', 'subtitle', 'icon', 'keywords',
+          'body', 'steps', 'tip', 'order', 'isPublished', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.category in [
+          'primeros-pasos', 'editor', 'publicacion', 'comunidad', 'colaboracion', 'cuenta'
+        ]
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.subtitle is string
+        && request.resource.data.subtitle.size() > 0
+        && request.resource.data.subtitle.size() <= 200
+        && request.resource.data.icon is string
+        && request.resource.data.keywords is string
+        && request.resource.data.body is list
+        && request.resource.data.createdAt is number
+        && request.resource.data.updatedAt is number;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['category', 'title', 'subtitle', 'icon', 'keywords', 'body', 'steps', 'tip', 'order', 'isPublished', 'updatedAt']);
+      allow delete: if isAdmin();
     }
   }
 }

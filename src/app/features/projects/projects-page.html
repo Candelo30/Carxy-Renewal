@@ -1,4 +1,4 @@
-<app-shell-header title="'nav.projects' | translate"></app-shell-header>
+<app-shell-header [title]="'nav.projects' | translate"></app-shell-header>
 
 <main class="projects-page">
   <section class="hero">
@@ -43,25 +43,30 @@
 
   <section class="projects-list-section">
     <h2>{{ 'projects.myProjects' | translate }}</h2>
+    @let projectList = projects$ | async;
     <div class="projects-grid">
-      <div class="empty-state" *ngIf="!(projects | async)?.length">
-        <p>{{ 'projects.noProjects' | translate }}</p>
-      </div>
-      <a
-        *ngFor="let project of projects | async"
-        class="project-card"
-        [routerLink]="['/projects', project.id]"
-      >
-        <div class="project-card-header">
-          <h3>{{ project.name }}</h3>
-          <span class="badge owner">{{ 'projects.owner' | translate }}</span>
+      @if (!projectList || projectList.length === 0) {
+        <div class="empty-state">
+          <p>{{ 'projects.noProjects' | translate }}</p>
         </div>
-        <p class="project-description">{{ project.description || ('projects.noDescription' | translate) }}</p>
-        <div class="project-meta">
-          <span>{{ 'projects.updated' | translate }}: {{ project.updatedAt | date:'shortDate' }}</span>
-          <span>{{ project.isPublic ? ('projects.publicLabel' | translate) : ('projects.privateLabel' | translate) }}</span>
-        </div>
-      </a>
+      } @else {
+        @for (project of projectList; track project.id) {
+          <a
+            class="project-card"
+            [routerLink]="['/projects', project.id]"
+          >
+            <div class="project-card-header">
+              <h3>{{ project.name }}</h3>
+              <span class="badge owner">{{ 'projects.owner' | translate }}</span>
+            </div>
+            <p class="project-description">{{ project.description || ('projects.noDescription' | translate) }}</p>
+            <div class="project-meta">
+              <span>{{ 'projects.updated' | translate }}: {{ project.updatedAt | date:'shortDate' }}</span>
+              <span>{{ project.isPublic ? ('projects.publicLabel' | translate) : ('projects.privateLabel' | translate) }}</span>
+            </div>
+          </a>
+        }
+      }
     </div>
   </section>
 </main>

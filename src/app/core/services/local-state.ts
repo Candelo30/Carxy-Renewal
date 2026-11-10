@@ -5,7 +5,7 @@ import { isAppLanguage } from '../i18n/languages';
 import { EditorPreferences, NotificationPosition } from '../models/social.models';
 
 const DEFAULT_PREFERENCES: EditorPreferences = {
-  theme: 'dark',
+  theme: 'system',
   accentColor: '#8b5cf6',
   language: 'es',
   backgroundColor: '#171a22',
@@ -13,6 +13,10 @@ const DEFAULT_PREFERENCES: EditorPreferences = {
   gizmoMode: 'translate',
   notificationPosition: 'top-right',
 };
+
+function isTheme(value: unknown): value is 'dark' | 'light' | 'system' {
+  return value === 'dark' || value === 'light' || value === 'system';
+}
 
 function isNotificationPosition(value: unknown): value is NotificationPosition {
   return value === 'top-right'
@@ -41,7 +45,7 @@ export class LocalStateService {
         lightIntensity: Number.isFinite(saved.lightIntensity)
           ? Math.max(0, Math.min(5, saved.lightIntensity!))
           : DEFAULT_PREFERENCES.lightIntensity,
-        theme: saved.theme === 'light' ? 'light' : 'dark',
+        theme: isTheme(saved.theme) ? saved.theme : DEFAULT_PREFERENCES.theme,
         language: isAppLanguage(saved.language) ? saved.language : DEFAULT_PREFERENCES.language,
         gizmoMode: ['translate', 'rotate', 'scale'].includes(saved.gizmoMode ?? '')
           ? saved.gizmoMode!

@@ -149,7 +149,7 @@ export interface Follow {
 }
 
 export interface EditorPreferences {
-  theme: 'dark' | 'light';
+  theme: 'dark' | 'light' | 'system';
   accentColor: string;
   language: AppLanguage;
   backgroundColor: string;
@@ -223,4 +223,22 @@ export interface ProjectPresence {
   cursorX: number;
   cursorY: number;
   lastSeen: number;
+}
+
+export type HelpArticleCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'colaboracion' | 'cuenta';
+
+export interface HelpArticle {
+  id: string;
+  category: HelpArticleCategory;
+  title: string;
+  subtitle: string;
+  icon: string;
+  keywords: string;
+  body: string[];
+  steps?: string[];
+  tip?: string;
+  order: number;
+  isPublished: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
