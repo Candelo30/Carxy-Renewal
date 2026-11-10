@@ -488,4 +488,12 @@ export const DE_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': 'Aktive Mitarbeiter',
+
+  'En línea ahora': 'Jetzt online',
+
+  'projects.editingObject': 'bearbeitet ein Objekt',
+
+  'projects.youJoinedProject': 'Du bist dem Projekt beigetreten',
+
 };

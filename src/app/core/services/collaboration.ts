@@ -25,6 +25,7 @@ import {
   ProjectMember,
   ProjectInvitation,
   ProjectActivity,
+  ProjectPresence,
   ProjectRole,
 } from '../models/social.models';
 
@@ -47,6 +48,7 @@ export class CollaborationService {
   private readonly i18n = inject(I18nService);
 
   private readonly membersStreams = new Map<string, { stream: BehaviorSubject<ProjectMember[]>; unsub: () => void }>();
+  private readonly presencesStreams = new Map<string, { stream: BehaviorSubject<ProjectPresence[]>; unsub: () => void }>();
 
   private get authService(): AuthService {
     if (!this.auth) throw new Error(this.i18n.translate('Firebase no está configurado.'));
@@ -387,6 +389,64 @@ export class CollaborationService {
       objectType,
       snapshot,
       createdAt: Date.now(),
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Presencia en tiempo real                                          */
+  /* ------------------------------------------------------------------ */
+
+  async setPresence(
+    projectId: string,
+    uid: string,
+    displayName: string,
+    photoURL: string | null,
+    isOnline: boolean,
+    currentObjectId: string | null,
+    cursorX: number,
+    cursorY: number
+  ): Promise<void> {
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectPresences}/${projectId}_${uid}`);
+    await setDoc(ref, {
+      uid,
+      projectId,
+      displayName,
+      photoURL,
+      isOnline,
+      currentObjectId,
+      cursorX,
+      cursorY,
+      lastSeen: Date.now(),
+    }, { merge: true });
+  }
+
+  getPresences(projectId: string): Observable<ProjectPresence[]> {
+    const db = this.firestore;
+    if (!db) return of([]);
+    if (!this.presencesStreams.has(projectId)) {
+      const q = query(
+        collection(db, `${SOCIAL_COLLECTIONS.projectPresences}`),
+        where('projectId', '==', projectId),
+        where('isOnline', '==', true)
+      );
+      const stream = new BehaviorSubject<ProjectPresence[]>([]);
+      const subscription = collectionData(q, { idField: 'id' }).subscribe((presences) =>
+        stream.next(presences as ProjectPresence[])
+      );
+      const unsub = () => subscription.unsubscribe();
+      this.presencesStreams.set(projectId, { stream, unsub });
+    }
+    return this.presencesStreams.get(projectId)!.stream as Observable<ProjectPresence[]>;
+  }
+
+  async clearPresence(projectId: string, uid: string): Promise<void> {
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+    await updateDoc(doc(db, `${SOCIAL_COLLECTIONS.projectPresences}/${projectId}_${uid}`), {
+      isOnline: false,
+      lastSeen: Date.now(),
     });
   }
 

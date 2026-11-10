@@ -27,7 +27,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
-import type { NotificationPosition, ProjectActivity } from '../../core/models/social.models';
+import type { NotificationPosition, ProjectActivity, ProjectPresence } from '../../core/models/social.models';
 import type {
   EditableMaterial,
   PrimitiveType,
@@ -120,9 +120,11 @@ export class ModelEditor implements OnInit, OnDestroy {
   public projectId: string | null = null;
   public projectSceneLoaded = false;
   public canWrite = false;
+  public remotePresences: ProjectPresence[] = [];
   private autoSaveSub: Subscription | null = null;
   private projectLockSub: Subscription | null = null;
   private remoteSceneSub: Subscription | null = null;
+  private presenceSub: Subscription | null = null;
   private isApplyingRemote = false;
 
   constructor(
@@ -201,6 +203,24 @@ export class ModelEditor implements OnInit, OnDestroy {
           void this.collaboration.saveProjectScene(this.projectId, json);
         });
 
+      // Suscribirse a presencias remotas en tiempo real
+      this.presenceSub = this.collaboration.getPresences(this.projectId).subscribe((presences) => {
+        this.remotePresences = presences.filter((p) => p.uid !== this.auth.currentUser?.uid);
+        this.cdr.detectChanges();
+      });
+
+      // Registrar presencia propia al unirse
+      (async () => {
+        const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
+        if (user && this.projectId) {
+          await this.registerOwnPresence(user);
+          this.notifications.success(
+            this.i18n.translate('projects.youJoinedProject', { name: this.projectId }),
+            this.i18n.translate('projects.project')
+          );
+        }
+      })();
+
       // Registrar actividad de colaboración en el historial compartido
       const lastAction = { type: '' as string, id: '' as string };
       const logActivityDebounced = (action: ProjectActivity['action'], objectId: string, objectType: string, snapshot?: string) => {
@@ -213,6 +233,7 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.syncValuesFromEngine();
         this.loadMaterialsFromEngine();
         this.measureDimensions();
+        this.updateOwnPresence();
       }));
 
       this.subscriptions.add(this.threeEngine.sceneChanged$.subscribe(() => {
@@ -1029,6 +1050,36 @@ export class ModelEditor implements OnInit, OnDestroy {
     return !this.threeEngine.isObjectLockedByOther(objectId, uid ?? '');
   }
 
+  private async registerOwnPresence(user: { uid: string; displayName: string; photoURL: string | null }): Promise<void> {
+    if (!this.projectId) return;
+    await this.collaboration.setPresence(
+      this.projectId,
+      user.uid,
+      user.displayName,
+      user.photoURL ?? null,
+      true,
+      null,
+      0,
+      0
+    );
+  }
+
+  private async updateOwnPresence(objectId?: string | null): Promise<void> {
+    if (!this.projectId) return;
+    const uid = this.auth.currentUser?.uid;
+    if (!uid) return;
+    await this.collaboration.setPresence(
+      this.projectId,
+      uid,
+      this.auth.currentUser?.displayName ?? '',
+      this.auth.currentUser?.photoURL ?? null,
+      true,
+      objectId ?? this.threeEngine.getSelectedNodeId() ?? null,
+      0,
+      0
+    );
+  }
+
   toggleCollaborationPanel(): void {
     this.collaborationOpen = !this.collaborationOpen;
   }
@@ -1037,6 +1088,10 @@ export class ModelEditor implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       if (this.projectId) {
         void this.collaboration.saveProjectScene(this.projectId, this.threeEngine.serializeScene());
+        const user = this.auth.currentUser?.uid;
+        if (user) {
+          void this.collaboration.clearPresence(this.projectId, user);
+        }
       } else {
         this.localState.saveDraft(this.threeEngine.serializeScene());
       }
@@ -1044,6 +1099,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.autoSaveSub?.unsubscribe();
     this.projectLockSub?.unsubscribe();
     this.remoteSceneSub?.unsubscribe();
+    this.presenceSub?.unsubscribe();
     this.subscriptions.unsubscribe();
     void this.audioReactive.stop();
   }

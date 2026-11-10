@@ -488,4 +488,12 @@ export const RU_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': 'Активные соавторы',
+
+  'En línea ahora': 'Сейчас в сети',
+
+  'projects.editingObject': 'редактирует объект',
+
+  'projects.youJoinedProject': 'Вы присоединились к проекту',
+
 };

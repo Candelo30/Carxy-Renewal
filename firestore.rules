@@ -612,5 +612,25 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
+
+    match /projectPresences/{presenceId} {
+      allow read: if signedIn()
+        && isProjectMember(resource.data.projectId, request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.projectId is string
+        && request.resource.data.displayName is string
+        && request.resource.data.isOnline is bool
+        && request.resource.data.lastSeen is number;
+
+      allow update: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'lastSeen']);
+
+      allow delete: if signedIn()
+        && request.resource.data.uid == request.auth.uid;
+    }
   }
 }

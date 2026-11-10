@@ -212,3 +212,15 @@ export interface ProjectActivity {
   snapshot?: string;         // JSON del objeto afectado (para deshacer/rehacer compartido)
   createdAt: number;
 }
+
+export interface ProjectPresence {
+  uid: string;
+  projectId: string;
+  displayName: string;
+  photoURL: string | null;
+  isOnline: boolean;
+  currentObjectId: string | null;
+  cursorX: number;
+  cursorY: number;
+  lastSeen: number;
+}

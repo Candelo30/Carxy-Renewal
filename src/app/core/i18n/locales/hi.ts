@@ -488,4 +488,12 @@ export const HI_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': 'सक्रिय सहयोगी',
+
+  'En línea ahora': 'अभी ऑनलाइन',
+
+  'projects.editingObject': 'एक ऑब्जेक्ट संपादित कर रहे हैं',
+
+  'projects.youJoinedProject': 'आप प्रोजेक्ट में शामिल हो गए',
+
 };

@@ -488,4 +488,12 @@ export const KO_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': '액티브한 협업자',
+
+  'En línea ahora': '현재 온라인',
+
+  'projects.editingObject': '객체 편집 중',
+
+  'projects.youJoinedProject': '프로젝트에 참여했습니다',
+
 };

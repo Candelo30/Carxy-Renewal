@@ -28,6 +28,7 @@ export const SOCIAL_COLLECTIONS = {
   projectMembers: 'projectMembers',
   projectInvitations: 'projectInvitations',
   projectActivity: 'projectActivity',
+  projectPresences: 'projectPresences',
 } as const;
 
 export const SOCIAL_STORAGE_PATHS = {

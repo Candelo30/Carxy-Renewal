@@ -488,4 +488,12 @@ export const TR_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': 'Etkin işbirlikçiler',
+
+  'En línea ahora': 'Şu anda çevrimiçi',
+
+  'projects.editingObject': 'nesne düzenliyor',
+
+  'projects.youJoinedProject': 'Projeye katıldınız',
+
 };

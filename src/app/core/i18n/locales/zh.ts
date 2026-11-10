@@ -488,4 +488,12 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': '活跃协作者',
+
+  'En línea ahora': '当前在线',
+
+  'projects.editingObject': '正在编辑对象',
+
+  'projects.youJoinedProject': '你加入了项目',
+
 };

@@ -964,3 +964,65 @@ input[type='range'] {
   border-color: var(--accent-color);
   color: var(--accent-color);
 }
+
+/* Presencias en tiempo real */
+.presence-section {
+  margin-top: 20px;
+}
+
+.presence-section .section-heading {
+  margin-bottom: 12px;
+}
+
+.presence-section .eyebrow {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.presence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.presence-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.presence-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.presence-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.presence-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.presence-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-control));
+  color: var(--accent-color);
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}

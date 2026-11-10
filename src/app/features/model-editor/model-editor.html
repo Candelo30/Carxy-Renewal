@@ -258,6 +258,25 @@
           </button>
         </div>
       </div>
+
+      <!-- Presencias remotas en tiempo real -->
+      <section class="presence-section" *ngIf="remotePresences.length">
+        <div class="section-heading compact-heading">
+          <div>
+            <span class="eyebrow">{{ 'En línea ahora' | translate }}</span>
+            <h2>{{ 'Colaboradores activos' | translate }}</h2>
+          </div>
+        </div>
+        <div class="presence-list">
+          <div class="presence-row" *ngFor="let p of remotePresences">
+            <span class="presence-dot online"></span>
+            <span class="presence-name">{{ p.displayName }}</span>
+            <span class="presence-status" *ngIf="p.currentObjectId">
+              {{ 'projects.editingObject' | translate }}
+            </span>
+          </div>
+        </div>
+      </section>
     </section>
   </ng-container>
 

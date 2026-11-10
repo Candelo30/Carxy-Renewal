@@ -488,4 +488,12 @@ export const JA_TRANSLATIONS: Record<string, string> = {
 
   'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
 
+  'Colaboradores activos': 'アクティブなコラボレーター',
+
+  'En línea ahora': 'オンライン',
+
+  'projects.editingObject': 'オブジェクトを編集中',
+
+  'projects.youJoinedProject': 'プロジェクトに参加しました',
+
 };

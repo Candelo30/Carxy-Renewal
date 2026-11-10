@@ -657,4 +657,8 @@ export const MESSAGES: Record<string, MessageTranslations> = {
     fr: "L’historique se met à jour en temps réel à mesure que les collaborateurs modifient la scène.",
     pt: 'O histórico é atualizado em tempo real à medida que os colaboradores fazem alterações na cena.',
   },
+  'projects.youJoinedProject': { en: 'You joined the project', fr: 'Vous avez rejoint le projet', pt: 'Você entrou no projeto' },
+  'projects.editingObject': { en: 'editing an object', fr: 'modifie un objet', pt: 'editando um objeto' },
+  'En línea ahora': { en: 'Online now', fr: 'En ligne maintenant', pt: 'Online agora' },
+  'Colaboradores activos': { en: 'Active collaborators', fr: 'Collaborateurs actifs', pt: 'Colaboradores ativos' },
 };
