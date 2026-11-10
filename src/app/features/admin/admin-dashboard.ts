@@ -133,6 +133,8 @@ export class AdminDashboardComponent {
   reportFilter: 'all' | 'open' | 'resolved' | 'dismissed' = 'all';
 
   articleBodyText = '';
+  articleStepsText = '';
+  articleTipText = '';
   newArticle: Partial<HelpArticle> & { id?: string } = this.emptyArticle();
 
   constructor(private readonly route: ActivatedRoute) {
@@ -141,6 +143,13 @@ export class AdminDashboardComponent {
       this._tab = 'reports';
     }
     this.loadData();
+    // Real-time updates every 10 seconds
+    setInterval(() => {
+      this.loadData();
+      if (this.selectedProjectId) {
+        this.selectProject(this.selectedProjectId);
+      }
+    }, 10000);
   }
 
   private emptyArticle(): Partial<HelpArticle> & { id?: string } {
@@ -301,16 +310,16 @@ export class AdminDashboardComponent {
 
   get pageTitle(): string {
     const titles: Record<AdminTab, string> = {
-      dashboard: 'Dashboard',
-      users: 'Usuarios',
-      content: 'Contenido',
-      reports: 'Reportes',
-      feedback: 'Feedback',
-      help: 'Preguntas comunidad',
-      projects: 'Proyectos',
-      helpArticles: 'Artículos de ayuda',
+      dashboard: this.i18n.translate('admin.dashboard'),
+      users: this.i18n.translate('admin.users'),
+      content: this.i18n.translate('admin.content'),
+      reports: this.i18n.translate('admin.reports'),
+      feedback: this.i18n.translate('admin.feedback'),
+      help: this.i18n.translate('admin.questions'),
+      projects: this.i18n.translate('admin.projects'),
+      helpArticles: this.i18n.translate('admin.help'),
     };
-    return titles[this._tab] ?? 'Panel de administración';
+    return titles[this._tab] ?? this.i18n.translate('admin.panelTitle');
   }
 
   toggleMobileMenu(): void {
@@ -575,12 +584,16 @@ export class AdminDashboardComponent {
   resetNewArticle(): void {
     this.articleToEdit = null;
     this.articleBodyText = '';
+    this.articleStepsText = '';
+    this.articleTipText = '';
     this.newArticle = this.emptyArticle();
   }
 
   editHelpArticle(article: HelpArticle): void {
     this.articleToEdit = article;
-    this.articleBodyText = Array.isArray(article.body) ? article.body.join('\n\n') : article.body || '';
+    this.articleBodyText = Array.isArray(article.body) ? article.body.join('\n\n') : String(article.body || '');
+    this.articleStepsText = Array.isArray(article.steps) ? article.steps.join('\n') : '';
+    this.articleTipText = article.tip || '';
     this.newArticle = {
       id: article.id,
       category: article.category,
@@ -588,9 +601,11 @@ export class AdminDashboardComponent {
       subtitle: article.subtitle,
       icon: article.icon || '📄',
       keywords: article.keywords || '',
-      body: Array.isArray(article.body) ? article.body : [article.body || ''],
+      body: Array.isArray(article.body) ? article.body : [String(article.body || '')],
+      steps: article.steps,
+      tip: article.tip,
       order: article.order ?? 0,
-      isPublished: article.isPublished ?? true,
+      isPublished: article.isPublished !== false,
       createdAt: article.createdAt,
       updatedAt: Date.now(),
     };
@@ -601,18 +616,33 @@ export class AdminDashboardComponent {
       this.notifications.error(this.i18n.translate('El título del artículo es obligatorio.'));
       return;
     }
-    const paragraphs = this.articleBodyText.split('\n').map((p) => p.trim()).filter((p) => p.length > 0);
-    const articleData = {
+    const paragraphs = this.articleBodyText
+      .split(/\n\s*\n|\r?\n/)
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    const steps = this.articleStepsText
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    const tip = this.articleTipText.trim();
+    const articleData: Partial<HelpArticle> & { id?: string } = {
       ...this.newArticle,
       title: this.newArticle.title.trim(),
       subtitle: this.newArticle.subtitle?.trim() || '',
-      icon: this.newArticle.icon || '📄',
-      keywords: this.newArticle.keywords || '',
+      icon: (this.newArticle.icon || '📄').trim() || '📄',
+      keywords: (this.newArticle.keywords || '').trim(),
       body: paragraphs.length > 0 ? paragraphs : [this.newArticle.title.trim()],
+      order: Number(this.newArticle.order ?? 0),
+      isPublished: this.newArticle.isPublished !== false,
       updatedAt: Date.now(),
     };
+    if (steps.length) articleData.steps = steps;
+    else delete (articleData as any).steps;
+    if (tip) articleData.tip = tip;
+    else delete (articleData as any).tip;
+
     try {
-      if (this.newArticle.id) {
+      if (articleData.id) {
         await this.community.updateHelpArticle(articleData as HelpArticle);
         this.notifications.success(this.i18n.translate('Artículo actualizado.'));
       } else {
@@ -656,6 +686,17 @@ export class AdminDashboardComponent {
   }
 
   getCategoryLabel(category: HelpArticleCategory): string {
+    const labels: Record<HelpArticleCategory, string> = {
+      'primeros-pasos': this.i18n.translate('guide.title').includes('Guía') ? 'Primeros pasos' : this.i18n.translate('help.all'),
+      editor: 'Editor 3D',
+      publicacion: this.i18n.translate('nav.publish'),
+      comunidad: this.i18n.translate('nav.community'),
+      colaboracion: this.i18n.translate('colaboracion'),
+      cuenta: this.i18n.translate('nav.accountSecurity'),
+    };
+    // Fallback to stored labels if translation doesn't give good result
+    const translated = labels[category];
+    if (translated && translated !== category) return translated;
     return CATEGORY_LABELS[category] || category;
   }
 
@@ -717,11 +758,33 @@ export class AdminDashboardComponent {
     startWith([] as CommunityQuestion[]),
   );
 
-  readonly filteredArticles$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
-    map(([vm, q]) => {
-      if (!q) return vm.helpArticles;
+  private readonly helpArticleFilter$ = new BehaviorSubject<'all' | 'published' | 'draft'>('all');
+  private readonly helpArticleCategoryFilter$ = new BehaviorSubject<'all' | HelpArticleCategory>('all');
+
+  set helpArticleFilter(value: 'all' | 'published' | 'draft') { this.helpArticleFilter$.next(value); }
+  get helpArticleFilter(): 'all' | 'published' | 'draft' { return this.helpArticleFilter$.value; }
+  set helpArticleCategoryFilter(value: 'all' | HelpArticleCategory) { this.helpArticleCategoryFilter$.next(value); }
+  get helpArticleCategoryFilter(): 'all' | HelpArticleCategory { return this.helpArticleCategoryFilter$.value; }
+
+  readonly filteredArticles$ = combineLatest([
+    this.vm$,
+    this.searchQuery$,
+    this.helpArticleFilter$,
+    this.helpArticleCategoryFilter$,
+  ]).pipe(
+    map(([vm, q, status, category]) => {
+      let list = vm.helpArticles ?? [];
+      if (status === 'published') list = list.filter((a) => a.isPublished);
+      if (status === 'draft') list = list.filter((a) => !a.isPublished);
+      if (category !== 'all') list = list.filter((a) => a.category === category);
+      if (!q) return list;
       const query = q.toLowerCase();
-      return vm.helpArticles.filter((a) => a.title.toLowerCase().includes(query) || a.subtitle.toLowerCase().includes(query) || (CATEGORY_LABELS[a.category] || a.category).toLowerCase().includes(query));
+      return list.filter((a) =>
+        (a.title || '').toLowerCase().includes(query) ||
+        (a.subtitle || '').toLowerCase().includes(query) ||
+        (a.keywords || '').toLowerCase().includes(query) ||
+        (CATEGORY_LABELS[a.category] || a.category).toLowerCase().includes(query)
+      );
     }),
     startWith([] as HelpArticle[]),
   );

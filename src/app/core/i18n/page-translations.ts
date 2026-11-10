@@ -6,6 +6,147 @@ import type { SourceTranslation } from './source-translations';
  */
 export const PAGE_TRANSLATIONS: Record<string, SourceTranslation> = {
   // --- Sobre nosotros ---
+  'ORÍGENES': { en: 'ORIGINS', fr: 'ORIGINES', pt: 'ORIGENS' },
+  'De proyecto de estudio a plataforma 3D': {
+    en: 'From a study project to a 3D platform',
+    fr: "D'un projet d'étude à une plateforme 3D",
+    pt: 'De projeto de estudo a plataforma 3D',
+  },
+  'CARXY nació mucho antes de ser esta comunidad. Todo empezó como un proyecto formativo con una idea muy clara.': {
+    en: 'CARXY was born long before becoming this community. It all started as an educational project with a very clear idea.',
+    fr: 'CARXY est né bien avant de devenir cette communauté. Tout a commencé comme un projet formateur avec une idée très claire.',
+    pt: 'O CARXY nasceu muito antes de ser esta comunidade. Tudo começou como um projeto formativo com uma ideia muito clara.',
+  },
+  'CARXY comenzó como un proyecto de estudio en el SENA, dentro de la Tecnología en Análisis y Desarrollo de Software (ADSO 2673492). Originalmente, la idea fue pensada para el sector de talleres de vehículos: una plataforma para personalizar vehículos en 3D y visualizar las modificaciones antes de llevarlas a cabo.': {
+    en: 'CARXY began as a study project at SENA, within the Technology in Software Analysis and Development program (ADSO 2673492). Originally, the idea was designed for the vehicle workshop sector: a platform to customize vehicles in 3D and visualize modifications before carrying them out.',
+    fr: "CARXY a commencé comme projet d'étude au SENA, dans le cadre du programme Technologie en analyse et développement de logiciels (ADSO 2673492). À l'origine, l'idée était pensée pour le secteur des ateliers automobiles : une plateforme pour personnaliser des véhicules en 3D et visualiser les modifications avant de les réaliser.",
+    pt: 'O CARXY começou como um projeto de estudo no SENA, dentro da Tecnologia em Análise e Desenvolvimento de Software (ADSO 2673492). Originalmente, a ideia foi pensada para o setor de oficinas de veículos: uma plataforma para personalizar veículos em 3D e visualizar as modificações antes de realizá-las.',
+  },
+  'Detrás de esa primera versión hubo un equipo apasionado por el diseño y la lógica del proyecto. Luis Eduardo Candelo Riascos fue el diseñador y creador de la lógica que dio forma a Carxy desde sus cimientos, sentando las bases técnicas y conceptuales sobre las que, con el paso del tiempo, evolucionaría el proyecto.': {
+    en: 'Behind that first version there was a team passionate about the design and logic of the project. Luis Eduardo Candelo Riascos was the designer and creator of the logic that shaped Carxy from its foundations, laying the technical and conceptual groundwork on which, over time, the project would evolve.',
+    fr: "Derrière cette première version, il y avait une équipe passionnée par la conception et la logique du projet. Luis Eduardo Candelo Riascos a été le concepteur et créateur de la logique qui a façonné Carxy depuis ses fondations, posant les bases techniques et conceptuelles sur lesquelles, au fil du temps, le projet évoluerait.",
+    pt: 'Por trás dessa primeira versão houve uma equipe apaixonada pelo design e pela lógica do projeto. Luis Eduardo Candelo Riascos foi o designer e criador da lógica que deu forma ao Carxy desde seus alicerces, estabelecendo as bases técnicas e conceituais sobre as quais, com o passar do tempo, o projeto evoluiria.',
+  },
+  'Lo que empezó como un ejercicio académico para cumplir con la etapa lectiva se transformó, poco a poco, en lo que hoy es CARXY: un editor 3D web abierto, pensado para que cualquier persona pueda crear, aprender, compartir y remixear sin barreras.': {
+    en: 'What began as an academic exercise to complete the training stage gradually transformed into what CARXY is today: an open web 3D editor, designed so that anyone can create, learn, share and remix without barriers.',
+    fr: "Ce qui a commencé comme un exercice académique pour accomplir l'étape de formation s'est transformé, peu à peu, en ce qu'est aujourd'hui CARXY : un éditeur 3D web ouvert, conçu pour que chacun puisse créer, apprendre, partager et remixer sans barrières.",
+    pt: 'O que começou como um exercício acadêmico para cumprir a etapa letiva se transformou, pouco a pouco, no que hoje é o CARXY: um editor 3D web aberto, pensado para que qualquer pessoa possa criar, aprender, compartilhar e remixar sem barreiras.',
+  },
+  'EQUIPO ORIGINARIO': { en: 'ORIGINAL TEAM', fr: "ÉQUIPE D'ORIGINE", pt: 'EQUIPE ORIGINAL' },
+  'SENA · Centro de Comercio y Servicios · ADSO 2673492': {
+    en: 'SENA · Trade and Services Center · ADSO 2673492',
+    fr: 'SENA · Centre de commerce et services · ADSO 2673492',
+    pt: 'SENA · Centro de Comércio e Serviços · ADSO 2673492',
+  },
+  'LA IDEA ORIGINAL': { en: 'THE ORIGINAL IDEA', fr: "L'IDÉE ORIGINALE", pt: 'A IDEIA ORIGINAL' },
+  '¡Bienvenido a nuestra plataforma Carxy. Es una plataforma de venta de autos personalizados con diseño 3D! Aquí hemos combinado la emoción de comprar un automóvil nuevo con la creatividad del diseño 3D para brindarte una experiencia única y totalmente personalizada.': {
+    en: 'Welcome to our Carxy platform. It is a platform for selling customized cars with 3D design! Here we have combined the excitement of buying a new car with the creativity of 3D design to give you a unique and fully personalized experience.',
+    fr: "Bienvenue sur notre plateforme Carxy. C'est une plateforme de vente de voitures personnalisées avec design 3D ! Ici, nous avons combiné l'émotion d'acheter une voiture neuve avec la créativité du design 3D pour vous offrir une expérience unique et entièrement personnalisée.",
+    pt: 'Bem-vindo à nossa plataforma Carxy. É uma plataforma de venda de carros personalizados com design 3D! Aqui combinamos a emoção de comprar um carro novo com a criatividade do design 3D para oferecer uma experiência única e totalmente personalizada.',
+  },
+  'Personaliza tu carro ideal en 3D: color, estilo, características y accesorios a tu medida.': {
+    en: 'Customize your ideal car in 3D: color, style, features and accessories tailored to you.',
+    fr: 'Personnalisez votre voiture idéale en 3D : couleur, style, caractéristiques et accessoires à votre mesure.',
+    pt: 'Personalize seu carro ideal em 3D: cor, estilo, características e acessórios sob medida.',
+  },
+  'Así lucía la idea original: personaliza color, estilo, características y accesorios antes de comprar tu carro.': {
+    en: 'This is what the original idea looked like: customize color, style, features and accessories before buying your car.',
+    fr: "Voici à quoi ressemblait l'idée originale : personnalisez couleur, style, caractéristiques et accessoires avant d'acheter votre voiture.",
+    pt: 'Assim era a ideia original: personalize cor, estilo, características e acessórios antes de comprar seu carro.',
+  },
+  'OBJETIVOS ORIGINALES': { en: 'ORIGINAL OBJECTIVES', fr: 'OBJECTIFS ORIGINAUX', pt: 'OBJETIVOS ORIGINAIS' },
+  'Objetivo general': { en: 'General objective', fr: 'Objectif général', pt: 'Objetivo geral' },
+  'Desarrollar una aplicación web innovadora, Carxy, que permita a los usuarios personalizar vehículos de manera intuitiva y detallada, ofreciendo una experiencia interactiva y visualmente atractiva para diseñar y visualizar automóviles personalizados según sus preferencias estéticas.': {
+    en: 'Develop an innovative web application, Carxy, that allows users to customize vehicles intuitively and in detail, offering an interactive and visually appealing experience to design and visualize customized cars according to their aesthetic preferences.',
+    fr: "Développer une application web innovante, Carxy, permettant aux utilisateurs de personnaliser des véhicules de manière intuitive et détaillée, offrant une expérience interactive et visuellement attrayante pour concevoir et visualiser des voitures personnalisées selon leurs préférences esthétiques.",
+    pt: 'Desenvolver uma aplicação web inovadora, Carxy, que permita aos usuários personalizar veículos de maneira intuitiva e detalhada, oferecendo uma experiência interativa e visualmente atrativa para projetar e visualizar carros personalizados segundo suas preferências estéticas.',
+  },
+  'Objetivo específico': { en: 'Specific objective', fr: 'Objectif spécifique', pt: 'Objetivo específico' },
+  'Implementar una paleta de colores predefinida y personalizada para el exterior e interior del vehículo, con un informe visual detallado de las combinaciones seleccionadas, permitiendo guardar y comparar las configuraciones favoritas.': {
+    en: 'Implement a predefined and customizable color palette for the exterior and interior of the vehicle, with a detailed visual report of the selected combinations, allowing users to save and compare favorite configurations.',
+    fr: "Implémenter une palette de couleurs prédéfinie et personnalisée pour l'extérieur et l'intérieur du véhicule, avec un rapport visuel détaillé des combinaisons sélectionnées, permettant de sauvegarder et de comparer les configurations favorites.",
+    pt: 'Implementar uma paleta de cores predefinida e personalizada para o exterior e o interior do veículo, com um relatório visual detalhado das combinações selecionadas, permitindo salvar e comparar as configurações favoritas.',
+  },
+  'Tecnologías originales': { en: 'Original technologies', fr: 'Technologies originales', pt: 'Tecnologias originais' },
+  'El frontend se construyó con Angular y el backend con Django, conectados en una arquitectura de aplicación web pensada para la personalización de vehículos en 3D.': {
+    en: 'The frontend was built with Angular and the backend with Django, connected in a web application architecture designed for 3D vehicle customization.',
+    fr: "Le frontend a été construit avec Angular et le backend avec Django, connectés dans une architecture d'application web pensée pour la personnalisation de véhicules en 3D.",
+    pt: 'O frontend foi construído com Angular e o backend com Django, conectados em uma arquitetura de aplicação web pensada para a personalização de veículos em 3D.',
+  },
+  'EQUIPO DE LA PRIMERA VERSIÓN': { en: 'FIRST VERSION TEAM', fr: "ÉQUIPE DE LA PREMIÈRE VERSION", pt: 'EQUIPE DA PRIMEIRA VERSÃO' },
+  'CIO · Programador · Documentador': {
+    en: 'CIO · Programmer · Documenter',
+    fr: 'CIO · Programmeur · Documentaliste',
+    pt: 'CIO · Programador · Documentador',
+  },
+  'Programador · Analista · Documentador': {
+    en: 'Programmer · Analyst · Documenter',
+    fr: 'Programmeur · Analyste · Documentaliste',
+    pt: 'Programador · Analista · Documentador',
+  },
+  'Tester · Documentador': {
+    en: 'Tester · Documenter',
+    fr: 'Testeur · Documentaliste',
+    pt: 'Tester · Documentador',
+  },
+  'Tester · Documentador · Analista': {
+    en: 'Tester · Documenter · Analyst',
+    fr: 'Testeur · Documentaliste · Analyste',
+    pt: 'Tester · Documentador · Analista',
+  },
+  'ORGANIGRAMA ORIGINAL': { en: 'ORIGINAL ORG CHART', fr: 'ORGANIGRAMME ORIGINAL', pt: 'ORGANOGRAMA ORIGINAL' },
+  'Buscar conversación…': {
+    en: 'Search conversation…',
+    fr: 'Rechercher une conversation…',
+    pt: 'Buscar conversa…',
+  },
+  'Sin resultados para «{query}»': {
+    en: 'No results for “{query}”',
+    fr: 'Aucun résultat pour « {query} »',
+    pt: 'Sem resultados para «{query}»',
+  },
+  'Mensajes nuevos': { en: 'New messages', fr: 'Nouveaux messages', pt: 'Mensagens novas' },
+  'Copiar UID': { en: 'Copy UID', fr: "Copier l'UID", pt: 'Copiar UID' },
+  'Hoy': { en: 'Today', fr: "Aujourd'hui", pt: 'Hoje' },
+  'Ayer': { en: 'Yesterday', fr: 'Hier', pt: 'Ontem' },
+  'Tú': { en: 'You', fr: 'Vous', pt: 'Você' },
+  'Organigrama original del equipo de la primera versión.': {
+    en: 'Original org chart of the first version team.',
+    fr: "Organigramme original de l'équipe de la première version.",
+    pt: 'Organograma original da equipe da primeira versão.',
+  },
+  'EVOLUCIÓN DE LA MARCA': { en: 'BRAND EVOLUTION', fr: 'ÉVOLUTION DE LA MARQUE', pt: 'EVOLUÇÃO DA MARCA' },
+  'Vista previa del cubo': {
+    en: 'Cube preview',
+    fr: 'Aperçu du cube',
+    pt: 'Prévia do cubo',
+  },
+  'Sólido': { en: 'Solid', fr: 'Solide', pt: 'Sólido' },
+  'Alambre': { en: 'Wireframe', fr: 'Filaire', pt: 'Aramado' },
+  'Explosionado': { en: 'Exploded', fr: 'Éclatée', pt: 'Explodida' },
+  'Rayos X': { en: 'X-ray', fr: 'Rayons X', pt: 'Raios X' },
+  'Trabajo en equipo': { en: 'Team work', fr: 'Travail d’équipe', pt: 'Trabalho em equipe' },
+  'Rotación automática': { en: 'Auto-rotate', fr: 'Rotation automatique', pt: 'Rotação automática' },
+  'Emblema CXY · Primera identidad de Carxy': {
+    en: 'CXY emblem · The first Carxy identity',
+    fr: 'Emblème CXY · La première identité de Carxy',
+    pt: 'Emblema CXY · A primeira identidade do Carxy',
+  },
+  'Logotipo CARXY · La versión moderna': {
+    en: 'CARXY wordmark · The modern version',
+    fr: 'Logotype CARXY · La version moderne',
+    pt: 'Logotipo CARXY · A versão moderna',
+  },
+  'Identidad actual · Estudio 3D en el navegador': {
+    en: 'Current identity · In-browser 3D studio',
+    fr: 'Identité actuelle · Studio 3D dans le navigateur',
+    pt: 'Identidade atual · Estúdio 3D no navegador',
+  },
+  'De la venta de carros personalizados a un estudio 3D abierto: la marca creció con el proyecto.': {
+    en: 'From custom car sales to an open 3D studio: the brand grew with the project.',
+    fr: "De la vente de voitures personnalisées à un studio 3D ouvert : la marque a grandi avec le projet.",
+    pt: 'Da venda de carros personalizados a um estúdio 3D aberto: a marca cresceu com o projeto.',
+  },
   '¿De qué trata CARXY?': {
     en: 'What is CARXY about?',
     fr: 'De quoi parle CARXY ?',

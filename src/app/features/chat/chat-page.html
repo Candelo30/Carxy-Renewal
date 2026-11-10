@@ -7,26 +7,55 @@
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   <section class="chat-layout" [class.has-chat]="!!chatId">
-    <aside class="conversations"><p class="eyebrow">{{ 'CREADORES' | translate }}</p><h1>{{ 'Mensajes' | translate }}</h1><p>{{ 'Inicia una conversación directa usando el UID público del creador.' | translate }}</p>
+    <aside class="conversations" aria-labelledby="messages-title">
+      <p class="eyebrow">{{ 'CREADORES' | translate }}</p>
+      <h1 id="messages-title">{{ 'Mensajes' | translate }}</h1>
+      <p class="conversations-intro">{{ 'Inicia una conversación directa usando el UID público del creador.' | translate }}</p>
+
       @if (user$ | async; as user) {
         <section class="recent-conversations" aria-labelledby="recent-conversations-title">
           <h2 id="recent-conversations-title">{{ 'Recientes' | translate }}</h2>
+
+          <label class="search-box" for="conversation-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <line x1="21" y1="21" x2="16.3" y2="16.3"/>
+            </svg>
+            <span class="visually-hidden">{{ 'Buscar conversación…' | translate }}</span>
+            <input
+              id="conversation-search"
+              name="conversation-search"
+              type="text"
+              [(ngModel)]="search"
+              [placeholder]="'Buscar conversación…' | translate"
+              autocomplete="off"
+            />
+          </label>
+
           @let conversations = conversations$ | async;
-          @if (conversations?.length) {
+          @let visible = visibleConversations(conversations ?? null, user.uid);
+          @if (visible.length) {
             <div class="recent-list">
-              @for (conversation of conversations; track conversation.id) {
+              @for (conversation of visible; track conversation.id) {
                 @let peer = peerId(conversation, user.uid);
                 <button
                   class="recent-chat"
                   type="button"
                   [class.selected]="conversation.id === chatId"
+                  [attr.aria-current]="conversation.id === chatId ? 'true' : null"
                   (click)="selectConversation(conversation, user.uid)"
                 >
-                  <img
-                    [src]="conversation.partner?.photoURL || 'user-avatar.svg'"
-                    alt=""
-                    (error)="useFallbackAvatar($event)"
-                  />
+                  <span class="recent-avatar">
+                    <img
+                      [src]="conversation.partner?.photoURL || 'user-avatar.svg'"
+                      alt=""
+                      loading="lazy"
+                      (error)="useFallbackAvatar($event)"
+                    />
+                    @if (hasUnread(conversation)) {
+                      <span class="unread-dot" [attr.aria-label]="'Mensajes nuevos' | translate"></span>
+                    }
+                  </span>
                   <span class="recent-chat-copy">
                     <strong>{{ conversation.partner?.displayName || peer }}</strong>
                     <small>{{
@@ -40,6 +69,8 @@
                 </button>
               }
             </div>
+          } @else if (search.trim()) {
+            <p class="no-recent-chats">{{ 'Sin resultados para «{query}»' | translate: { query: search } }}</p>
           } @else {
             <p class="no-recent-chats">
               {{ 'Aún no tienes conversaciones. Abre un perfil para enviar un mensaje o inicia un chat por UID.' | translate }}
@@ -49,42 +80,80 @@
       }
       <h2 class="new-conversation-title">{{ 'Nuevo chat' | translate }}</h2>
       <form (ngSubmit)="openConversation()">
-        <label for="peer">{{ 'UID del creador' | translate }}</label
-        ><input
+        <label for="peer">{{ 'UID del creador' | translate }}</label>
+        <input
           id="peer"
           name="peer"
           [(ngModel)]="partnerId"
           [placeholder]="'UID de Firebase o modo local' | translate"
+          autocomplete="off"
           required
-        /><button type="submit">{{ 'Abrir conversación' | translate }}</button>
+        />
+        <button type="submit">{{ 'Abrir conversación' | translate }}</button>
       </form>
       @if (error) {
-        <p class="error">{{ error }}</p>
+        <p class="error" role="alert">{{ error }}</p>
       }
       @if (!auth.isConfigured) {
         <p class="notice">{{ 'Modo local: los mensajes solo se sincronizan en este navegador.' | translate }}</p>
       }
     </aside>
+
     <section class="conversation">
       @if (messages$; as stream) {
+        @let peer = partnerProfile$ | async;
         <div class="conversation-header">
           <button type="button" class="back-button" (click)="deselectChat()" [aria-label]="'Volver' | translate">
-            ←
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
           </button>
-          <div class="avatar">✦</div>
-          <div>
-            <strong>{{ 'Conversación directa' | translate }}</strong><small>{{ partnerId }}</small>
+          <span class="header-avatar">
+            <img
+              [src]="peer?.photoURL || 'user-avatar.svg'"
+              alt=""
+              loading="lazy"
+              (error)="useFallbackAvatar($event)"
+            />
+          </span>
+          <div class="header-copy">
+            <strong>{{ peer?.displayName || 'Conversación directa' | translate }}</strong>
+            <small class="uid-line">
+              <span class="uid-text">{{ partnerId }}</span>
+              <button type="button" class="copy-uid" (click)="copyPartnerId()" [attr.aria-label]="'Copiar UID' | translate">
+                @if (copiedId === 'copied') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                }
+              </button>
+            </small>
           </div>
         </div>
-        <div class="message-list">
-          @if (stream | async; as messages) {
-            @if (messages.length) {
-              @for (message of messages; track message.id) {
-                <article class="message" [class.own]="message.senderId === (user$ | async)?.uid">
-                  <b>{{ message.senderName }}</b>
-                  <p>{{ message.text }}</p>
-                  <time>{{ message.createdAt | date: 'short' }}</time>
-                </article>
+        <div class="message-list" #messageList (scroll)="onMessageListScroll()" aria-live="polite">
+          @if (stream | async; as groups) {
+            @if (groups.length) {
+              @for (group of groups; track group.key) {
+                <div class="day-divider" role="separator"><span>{{ group.label }}</span></div>
+                @for (item of group.messages; track item.message.id) {
+                  @let own = item.message.senderId === (user$ | async)?.uid;
+                  <article class="message" [class.own]="own" [class.run-start]="item.firstOfRun">
+                    @if (!own) {
+                      <span class="message-avatar">
+                        @if (item.firstOfRun) {
+                          <img [src]="peer?.photoURL || 'user-avatar.svg'" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
+                        }
+                      </span>
+                    }
+                    <div class="bubble">
+                      @if (item.firstOfRun) {
+                        <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName) }}</b>
+                      }
+                      <p>{{ item.message.text }}</p>
+                      <time>{{ item.message.createdAt | date: 'shortTime' }}</time>
+                    </div>
+                  </article>
+                }
               }
             } @else {
               <div class="empty">{{ 'Aún no hay mensajes. Saluda para iniciar la conversación.' | translate }}</div>
@@ -94,17 +163,33 @@
           }
         </div>
         <form class="composer" (ngSubmit)="send()">
-          <input
+          <textarea
+            #composer
             name="message"
-            [(ngModel)]="message"
+            rows="1"
             maxlength="2000"
+            [(ngModel)]="message"
+            (keydown)="onComposerKeydown($event)"
+            (input)="autoGrow($event)"
             [placeholder]="'Escribe un mensaje…' | translate"
+            [attr.aria-label]="'Escribe un mensaje…' | translate"
             required
-          /><button type="submit" [disabled]="!message.trim()">{{ 'Enviar' | translate }}</button>
+          ></textarea>
+          <button type="submit" class="send-button" [disabled]="!message.trim()" [attr.aria-label]="'Enviar' | translate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 2L11 13"/>
+              <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+            <span class="send-label">{{ 'Enviar' | translate }}</span>
+          </button>
         </form>
       } @else {
-        <div class="empty">
-          <span>✉</span>
+        <div class="empty empty--hero">
+          <span class="empty-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.7 8.7 0 0 1-3.9-.9L3 20l1.3-5.4a7.9 7.9 0 0 1-1-4A8.4 8.4 0 0 1 11.8 3 8.4 8.4 0 0 1 21 11.5z"/>
+            </svg>
+          </span>
           <h2>{{ 'Tus conversaciones' | translate }}</h2>
           <p>{{ 'Escribe el UID de otro creador para iniciar un chat privado.' | translate }}</p>
         </div>

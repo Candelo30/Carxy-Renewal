@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
+type PreviewMode = 'solid' | 'wireframe' | 'exploded' | 'xray' | 'team';
+
 
 interface AboutFeature {
   icon: string;
@@ -32,6 +34,25 @@ interface RoadmapItem {
 })
 export class AboutPage {
   readonly repositoryUrl = 'https://github.com/Candelo30/Carxy-Renewal';
+
+  protected previewMode: PreviewMode = 'solid';
+  protected autoRotate = true;
+
+  readonly previewModes: { id: PreviewMode; label: string }[] = [
+    { id: 'solid', label: 'Sólido' },
+    { id: 'wireframe', label: 'Alambre' },
+    { id: 'exploded', label: 'Explosionado' },
+    { id: 'xray', label: 'Rayos X' },
+    { id: 'team', label: 'Trabajo en equipo' },
+  ];
+
+  protected setPreviewMode(mode: PreviewMode): void {
+    this.previewMode = mode;
+  }
+
+  protected toggleRotation(): void {
+    this.autoRotate = !this.autoRotate;
+  }
 
   readonly stats = [
     { value: '100%', label: 'en el navegador' },

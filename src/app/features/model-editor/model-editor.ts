@@ -118,13 +118,16 @@ export class ModelEditor implements OnInit, OnDestroy {
   public myCursor = { x: 0.5, y: 0.5 };
 
   public projectId: string | null = null;
+  public projectName = '';
   public projectSceneLoaded = false;
   public canWrite = false;
+  public isProjectOwner = false;
   public remotePresences: ProjectPresence[] = [];
   private autoSaveSub: Subscription | null = null;
   private projectLockSub: Subscription | null = null;
   private remoteSceneSub: Subscription | null = null;
   private presenceSub: Subscription | null = null;
+  private presenceHeartbeat: ReturnType<typeof setInterval> | null = null;
   private isApplyingRemote = false;
 
   constructor(
@@ -175,6 +178,14 @@ export class ModelEditor implements OnInit, OnDestroy {
     const qp = this.route.snapshot.queryParamMap.get('project');
     if (qp) {
       this.projectId = qp;
+
+      this.subscriptions.add(
+        this.collaboration.getProject(this.projectId).subscribe((project) => {
+          this.projectName = project?.name ?? '';
+          this.cdr.detectChanges();
+        })
+      );
+
       this.collaboration.getProjectScene(this.projectId).pipe(take(1)).subscribe((sceneJson) => {
         if (sceneJson) {
           this.threeEngine.loadProjectScene(sceneJson);
@@ -188,12 +199,18 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.applyAppearance();
         this.cdr.detectChanges();
       });
-      // Calcular permiso de escritura para este proyecto
-      this.collaboration.getMembers(this.projectId).pipe(take(1)).subscribe((members) => {
-        const uid = this.auth.currentUser?.uid;
-        const member = members.find((m) => m.userId === uid);
-        this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
-      });
+
+      // Permisos reactivos (miembros/rol pueden cambiar o cargar con retraso)
+      this.subscriptions.add(
+        this.collaboration.getMembers(this.projectId).subscribe((members) => {
+          const uid = this.auth.currentUser?.uid;
+          const member = uid ? members.find((m) => m.userId === uid) : undefined;
+          this.isProjectOwner = member?.role === 'owner';
+          this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
+          this.cdr.detectChanges();
+        })
+      );
+
       // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales
       this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
         .pipe(debounceTime(2000), distinctUntilChanged())
@@ -205,17 +222,23 @@ export class ModelEditor implements OnInit, OnDestroy {
 
       // Suscribirse a presencias remotas en tiempo real
       this.presenceSub = this.collaboration.getPresences(this.projectId).subscribe((presences) => {
-        this.remotePresences = presences.filter((p) => p.uid !== this.auth.currentUser?.uid);
+        const uid = this.auth.currentUser?.uid;
+        this.remotePresences = presences.filter((p) => p.uid !== uid);
         this.cdr.detectChanges();
       });
 
-      // Registrar presencia propia al unirse
+      // Registrar presencia propia al unirse y mantener heartbeat
       (async () => {
         const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
         if (user && this.projectId) {
           await this.registerOwnPresence(user);
+          if (isPlatformBrowser(this.platformId)) {
+            this.presenceHeartbeat = setInterval(() => {
+              void this.updateOwnPresence(this.threeEngine.getSelectedNodeId() ?? null);
+            }, 20000);
+          }
           this.notifications.success(
-            this.i18n.translate('projects.youJoinedProject', { name: this.projectId }),
+            this.i18n.translate('projects.youJoinedProject', { name: this.projectName || this.projectId }),
             this.i18n.translate('projects.project')
           );
         }
@@ -1068,20 +1091,40 @@ export class ModelEditor implements OnInit, OnDestroy {
     if (!this.projectId) return;
     const uid = this.auth.currentUser?.uid;
     if (!uid) return;
-    await this.collaboration.setPresence(
-      this.projectId,
-      uid,
-      this.auth.currentUser?.displayName ?? '',
-      this.auth.currentUser?.photoURL ?? null,
-      true,
-      objectId ?? this.threeEngine.getSelectedNodeId() ?? null,
-      0,
-      0
-    );
+    try {
+      await this.collaboration.setPresence(
+        this.projectId,
+        uid,
+        this.auth.currentUser?.displayName ?? 'Colaborador',
+        this.auth.currentUser?.photoURL ?? null,
+        true,
+        objectId ?? this.threeEngine.getSelectedNodeId() ?? null,
+        0,
+        0
+      );
+    } catch {
+      // presencia best-effort
+    }
   }
 
   toggleCollaborationPanel(): void {
     this.collaborationOpen = !this.collaborationOpen;
+  }
+
+  openProjectDetails(): void {
+    if (!this.projectId) return;
+    void this.router.navigate(['/projects', this.projectId]);
+  }
+
+  async copyProjectLink(): Promise<void> {
+    if (!this.projectId || !isPlatformBrowser(this.platformId)) return;
+    const url = `${window.location.origin}/projects/${encodeURIComponent(this.projectId)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.notifications.success(this.i18n.translate('projects.shareCopied'), this.i18n.translate('projects.shareTitle'));
+    } catch {
+      this.notifications.error(this.i18n.translate('projects.shareError'));
+    }
   }
 
   ngOnDestroy(): void {
@@ -1095,6 +1138,10 @@ export class ModelEditor implements OnInit, OnDestroy {
       } else {
         this.localState.saveDraft(this.threeEngine.serializeScene());
       }
+    }
+    if (this.presenceHeartbeat) {
+      clearInterval(this.presenceHeartbeat);
+      this.presenceHeartbeat = null;
     }
     this.autoSaveSub?.unsubscribe();
     this.projectLockSub?.unsubscribe();

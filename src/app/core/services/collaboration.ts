@@ -16,7 +16,7 @@ import {
   orderBy,
   limit,
 } from '@angular/fire/firestore';
-import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map } from 'rxjs';
+import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map, combineLatest, from } from 'rxjs';
 import { SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { I18nService } from './i18n';
 import { AuthService } from './auth';
@@ -135,6 +135,69 @@ export class CollaborationService {
     );
   }
 
+  /** Proyectos accesibles para el usuario actual: propios y aquellos donde es miembro. */
+  getAccessibleProjects(): Observable<Project[]> {
+    const db = this.firestore;
+    if (!db) return of([]);
+    return this.authService.user$.pipe(
+      switchMap((user) => {
+        if (!user) return of([]);
+
+        const ownedQ = query(
+          collection(db, SOCIAL_COLLECTIONS.projects),
+          where('ownerId', '==', user.uid)
+        );
+        const memberQ = query(
+          collection(db, SOCIAL_COLLECTIONS.projectMembers),
+          where('userId', '==', user.uid)
+        );
+
+        const owned$ = (collectionData(ownedQ, { idField: 'id' }) as Observable<Project[]>).pipe(
+          catchError(() => of([] as Project[]))
+        );
+        const memberships$ = (collectionData(memberQ, { idField: 'id' }) as Observable<ProjectMember[]>).pipe(
+          catchError(() => of([] as ProjectMember[]))
+        );
+
+        return combineLatest([owned$, memberships$]).pipe(
+          switchMap(([owned, memberships]) => {
+            const mapById = new Map<string, Project>();
+            for (const project of owned) mapById.set(project.id, project);
+
+            const missingIds = memberships
+              .map((member) => member.projectId)
+              .filter((id) => id && !mapById.has(id));
+            const uniqueMissing = [...new Set(missingIds)];
+            if (!uniqueMissing.length) {
+              return of([...mapById.values()].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
+            }
+
+            const fetches = uniqueMissing.map(async (id) => {
+              try {
+                const snap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${id}`));
+                if (!snap.exists()) return null;
+                return { ...(snap.data() as Project), id: snap.id } as Project;
+              } catch {
+                return null;
+              }
+            });
+
+            return from(Promise.all(fetches)).pipe(
+              map((shared) => {
+                for (const project of shared) {
+                  if (project) mapById.set(project.id, project);
+                }
+                return [...mapById.values()].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+              })
+            );
+          }),
+          catchError(() => of([] as Project[]))
+        );
+      }),
+      catchError(() => of([] as Project[]))
+    );
+  }
+
   /** Obtiene todos los proyectos para administración o moderación. */
   getAllProjects(): Observable<Project[]> {
     const db = this.firestore;
@@ -161,8 +224,13 @@ export class CollaborationService {
 
   getProject(projectId: string): Observable<Project | undefined> {
     const db = this.firestore;
-    if (!db) return of(undefined);
-    return docData(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`), { idField: 'id' }) as Observable<Project | undefined>;
+    if (!db || !projectId) return of(undefined);
+    return (docData(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`), { idField: 'id' }) as Observable<Project | undefined>).pipe(
+      catchError((err) => {
+        console.warn('No se pudo cargar el proyecto.', err);
+        return of(undefined);
+      })
+    );
   }
 
   async updateProject(projectId: string, patch: Partial<Pick<Project, 'name' | 'description' | 'isPublic'>>): Promise<void> {
@@ -200,14 +268,31 @@ export class CollaborationService {
   /** Historial de actividad de un proyecto (quién hizo qué y cuándo). */
   getProjectActivity(projectId: string): Observable<ProjectActivity[]> {
     const db = this.firestore;
-    if (!db) return of([]);
-    const q = query(
-      collection(db, `${SOCIAL_COLLECTIONS.projectActivity}`),
-      where('projectId', '==', projectId),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-    return collectionData(q, { idField: 'id' }) as Observable<ProjectActivity[]>;
+    if (!db || !projectId) return of([]);
+    try {
+      const q = query(
+        collection(db, `${SOCIAL_COLLECTIONS.projectActivity}`),
+        where('projectId', '==', projectId),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
+      return (collectionData(q, { idField: 'id' }) as Observable<ProjectActivity[]>).pipe(
+        catchError((err) => {
+          console.warn('Fallback al obtener actividad sin orderBy:', err);
+          const fallbackQ = query(
+            collection(db, `${SOCIAL_COLLECTIONS.projectActivity}`),
+            where('projectId', '==', projectId),
+            limit(50)
+          );
+          return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectActivity[]>).pipe(
+            map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
+            catchError(() => of([] as ProjectActivity[]))
+          );
+        })
+      );
+    } catch {
+      return of([] as ProjectActivity[]);
+    }
   }
 
   async saveProjectScene(projectId: string, sceneJson: string): Promise<void> {
@@ -251,17 +336,30 @@ export class CollaborationService {
 
   getMembers(projectId: string): Observable<ProjectMember[]> {
     const db = this.firestore;
-    if (!db) return of([]);
+    if (!db || !projectId) return of([]);
     if (!this.membersStreams.has(projectId)) {
+      const stream = new BehaviorSubject<ProjectMember[]>([]);
       const q = query(
         collection(db, SOCIAL_COLLECTIONS.projectMembers),
         where('projectId', '==', projectId),
         orderBy('role', 'asc')
       );
-      const stream = new BehaviorSubject<ProjectMember[]>([]);
-      const subscription = collectionData(q, { idField: 'id' }).subscribe((members) =>
-        stream.next(members as ProjectMember[])
+      const fallbackQ = query(
+        collection(db, SOCIAL_COLLECTIONS.projectMembers),
+        where('projectId', '==', projectId)
       );
+
+      const subscription = (collectionData(q, { idField: 'id' }) as Observable<ProjectMember[]>)
+        .pipe(
+          catchError((err) => {
+            console.warn('Fallback al obtener miembros sin orderBy:', err);
+            return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectMember[]>).pipe(
+              catchError(() => of([] as ProjectMember[]))
+            );
+          })
+        )
+        .subscribe((members) => stream.next(members as ProjectMember[]));
+
       this.membersStreams.set(projectId, { stream, unsub: () => subscription.unsubscribe() });
     }
     return this.membersStreams.get(projectId)!.stream as Observable<ProjectMember[]>;
@@ -393,14 +491,32 @@ export class CollaborationService {
     return this.authService.user$.pipe(
       switchMap((user) => {
         if (!user?.email) return of([]);
-        const q = query(
-          collection(db, SOCIAL_COLLECTIONS.projectInvitations),
-          where('invitedEmail', '==', user.email),
-          where('status', '==', 'pending'),
-          orderBy('createdAt', 'desc')
-        );
-        return collectionData(q, { idField: 'id' }) as Observable<ProjectInvitation[]>;
-      })
+        try {
+          const q = query(
+            collection(db, SOCIAL_COLLECTIONS.projectInvitations),
+            where('invitedEmail', '==', user.email),
+            where('status', '==', 'pending'),
+            orderBy('createdAt', 'desc')
+          );
+          return (collectionData(q, { idField: 'id' }) as Observable<ProjectInvitation[]>).pipe(
+            catchError((err) => {
+              console.warn('Fallback al obtener invitaciones sin orderBy:', err);
+              const fallbackQ = query(
+                collection(db, SOCIAL_COLLECTIONS.projectInvitations),
+                where('invitedEmail', '==', user.email),
+                where('status', '==', 'pending')
+              );
+              return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectInvitation[]>).pipe(
+                map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
+                catchError(() => of([] as ProjectInvitation[]))
+              );
+            })
+          );
+        } catch {
+          return of([] as ProjectInvitation[]);
+        }
+      }),
+      catchError(() => of([] as ProjectInvitation[]))
     );
   }
 

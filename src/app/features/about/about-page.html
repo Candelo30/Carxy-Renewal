@@ -24,17 +24,93 @@
       </div>
     </div>
 
-    <div class="hero-visual" aria-hidden="true">
-      <div class="cube-stage">
-        <div class="cube">
-          <span class="face front"></span>
-          <span class="face back"></span>
-          <span class="face right"></span>
-          <span class="face left"></span>
-          <span class="face top"></span>
-          <span class="face bottom"></span>
+    <div class="hero-visual">
+      <div class="cube-stage preview-{{ previewMode }}" [class.is-paused]="!autoRotate">
+        <div class="cube-halo" aria-hidden="true"></div>
+        <div class="orbit orbit-a" aria-hidden="true"><span class="satellite-orbit"><span class="satellite"></span></span></div>
+        <div class="orbit orbit-b" aria-hidden="true"><span class="satellite-orbit satellite-orbit--reverse"><span class="satellite satellite--cyan"></span></span></div>
+        <div class="cube-bob" aria-hidden="true">
+          <div class="cube">
+            <span class="face front"></span>
+            <span class="face back"></span>
+            <span class="face right"></span>
+            <span class="face left"></span>
+            <span class="face top"></span>
+            <span class="face bottom"></span>
+          </div>
         </div>
-        <div class="cube-shadow"></div>
+        <div class="orbit-dotted orbit-c" aria-hidden="true"></div>
+
+        <div class="team-orbiters" aria-hidden="true">
+          <span class="orbiter orbiter-a">
+            <span class="orbiter-dot orbiter-dot--se">SE</span>
+            <span class="orbiter-tag">Santiago</span>
+          </span>
+          <span class="orbiter orbiter-b">
+            <span class="orbiter-dot orbiter-dot--lc">LC</span>
+            <span class="orbiter-tag">Luis</span>
+          </span>
+          <span class="orbiter orbiter-c">
+            <span class="orbiter-dot orbiter-dot--sg">SG</span>
+            <span class="orbiter-tag">Sara</span>
+          </span>
+        </div>
+
+        <div class="cube-shadow" aria-hidden="true"></div>
+        <span class="particle p1" aria-hidden="true"></span>
+        <span class="particle p2" aria-hidden="true"></span>
+        <span class="particle p3" aria-hidden="true"></span>
+        <span class="particle p4" aria-hidden="true"></span>
+        <span class="particle p5" aria-hidden="true"></span>
+        <span class="particle p6" aria-hidden="true"></span>
+        <span class="spark s1" aria-hidden="true"></span>
+        <span class="spark s2" aria-hidden="true"></span>
+        <span class="spark s3" aria-hidden="true"></span>
+      </div>
+
+      <div class="preview-switch" role="group" [attr.aria-label]="'Vista previa del cubo' | translate">
+        @for (mode of previewModes; track mode.id) {
+          <button
+            type="button"
+            class="preview-toggle"
+            [class.is-active]="previewMode === mode.id"
+            [attr.aria-pressed]="previewMode === mode.id"
+            (click)="setPreviewMode(mode.id)"
+          >
+            @switch (mode.id) {
+              @case ('solid') {
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" opacity=".92"/><path d="M12 2L3 7v10l9 5V2z" fill="#000" opacity=".25"/></svg>
+              }
+              @case ('wireframe') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" stroke-dasharray="3 2.4"/><path d="M3 7l9 5 9-5M12 22V12"/></svg>
+              }
+              @case ('exploded') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L4 9M15 4l5 5M9 20l-5-5M15 20l5-5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg>
+              }
+              @case ('xray') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.2"/></svg>
+              }
+              @case ('team') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="9" r="3.2"/><path d="M2.8 19c.7-2.9 2.8-4.4 5.2-4.4s4.5 1.5 5.2 4.4"/><circle cx="17" cy="10" r="2.6"/><path d="M15.5 14.7c2.3.2 4 1.6 4.6 4.3"/></svg>
+              }
+            }
+            <span>{{ mode.label | translate }}</span>
+          </button>
+        }
+        <button
+          type="button"
+          class="preview-toggle preview-toggle--rotate"
+          [class.is-active]="autoRotate"
+          [attr.aria-pressed]="autoRotate"
+          (click)="toggleRotation()"
+        >
+          @if (autoRotate) {
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13c0 1.2 1.3 1.9 2.3 1.3l10-6.5c1-.6 1-2 0-2.6l-10-6.5C9.3 3.6 8 4.3 8 5.5z"/></svg>
+          }
+          <span>{{ 'Rotación automática' | translate }}</span>
+        </button>
       </div>
     </div>
   </section>
@@ -79,10 +155,334 @@
           {{ '«Que cualquier persona pueda pasar de una idea a un modelo 3D compartido sin fricción, sin instalar nada y sin sentirse sola en el proceso.»' | translate }}
         </blockquote>
         <div class="story-card-footer">
-          <span class="mission-mark" aria-hidden="true">✦</span>
+          <span class="mission-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.1 5.9L20 11l-5.9 2.1L12 19l-2.1-5.9L4 11l5.9-2.1L12 3z" fill="currentColor" stroke="none"/></svg></span>
           <span>{{ 'Diseño, código y comunidad en un mismo lugar.' | translate }}</span>
         </div>
       </aside>
+    </div>
+  </section>
+
+  <!-- Nuestros inicios -->
+  <section class="about-section">
+    <div class="section-head">
+      <p class="eyebrow">{{ 'ORÍGENES' | translate }}</p>
+      <h2>{{ 'De proyecto de estudio a plataforma 3D' | translate }}</h2>
+      <p>{{ 'CARXY nació mucho antes de ser esta comunidad. Todo empezó como un proyecto formativo con una idea muy clara.' | translate }}</p>
+    </div>
+
+    <div class="story-grid">
+      <div class="story-copy">
+        <p>
+          {{ 'CARXY comenzó como un proyecto de estudio en el SENA, dentro de la Tecnología en Análisis y Desarrollo de Software (ADSO 2673492). Originalmente, la idea fue pensada para el sector de talleres de vehículos: una plataforma para personalizar vehículos en 3D y visualizar las modificaciones antes de llevarlas a cabo.' | translate }}
+        </p>
+        <p>
+          {{ 'Detrás de esa primera versión hubo un equipo apasionado por el diseño y la lógica del proyecto. Luis Eduardo Candelo Riascos fue el diseñador y creador de la lógica que dio forma a Carxy desde sus cimientos, sentando las bases técnicas y conceptuales sobre las que, con el paso del tiempo, evolucionaría el proyecto.' | translate }}
+        </p>
+        <p>
+          {{ 'Lo que empezó como un ejercicio académico para cumplir con la etapa lectiva se transformó, poco a poco, en lo que hoy es CARXY: un editor 3D web abierto, pensado para que cualquier persona pueda crear, aprender, compartir y remixear sin barreras.' | translate }}
+        </p>
+      </div>
+
+      <aside class="story-card">
+        <p class="eyebrow">{{ 'LA IDEA ORIGINAL' | translate }}</p>
+        <blockquote>
+          {{ '¡Bienvenido a nuestra plataforma Carxy. Es una plataforma de venta de autos personalizados con diseño 3D! Aquí hemos combinado la emoción de comprar un automóvil nuevo con la creatividad del diseño 3D para brindarte una experiencia única y totalmente personalizada.' | translate }}
+        </blockquote>
+        <div class="story-card-footer">
+          <span class="mission-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.1 5.9L20 11l-5.9 2.1L12 19l-2.1-5.9L4 11l5.9-2.1L12 3z" fill="currentColor" stroke="none"/></svg></span>
+          <span>{{ 'Personaliza tu carro ideal en 3D: color, estilo, características y accesorios a tu medida.' | translate }}</span>
+        </div>
+      </aside>
+    </div>
+
+    <figure class="origin-mockup">
+      <div class="mockup-frame" aria-hidden="true">
+        <svg viewBox="0 0 920 400" xmlns="http://www.w3.org/2000/svg" role="presentation">
+          <defs>
+            <linearGradient id="originWindow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1a2138"/>
+              <stop offset="1" stop-color="#232c4e"/>
+            </linearGradient>
+            <linearGradient id="originCarpaint" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="var(--accent-color)"/>
+              <stop offset="0.55" stop-color="#4f6df5"/>
+              <stop offset="1" stop-color="#8b5cf6"/>
+            </linearGradient>
+            <linearGradient id="originStage" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#141b30"/>
+              <stop offset="1" stop-color="#1d2742"/>
+            </linearGradient>
+            <linearGradient id="originGlass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#7dd3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#1e3a5f" stop-opacity="0.95"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Window -->
+          <rect x="8" y="8" width="904" height="384" rx="16" fill="var(--surface-panel)" stroke="var(--border-color)"/>
+          <rect x="8" y="8" width="904" height="36" rx="16" fill="var(--surface-raised)"/>
+          <rect x="8" y="30" width="904" height="14" fill="var(--surface-raised)"/>
+          <circle cx="32" cy="26" r="5" fill="#f87171"/>
+          <circle cx="48" cy="26" r="5" fill="#fbbf24"/>
+          <circle cx="64" cy="26" r="5" fill="#34d399"/>
+          <rect x="110" y="17" width="420" height="18" rx="9" fill="var(--surface-panel)" stroke="var(--border-color)" stroke-opacity="0.7"/>
+          <text x="320" y="30" text-anchor="middle" font-size="10.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">carxy.app — Personaliza tu carro ideal en 3D</text>
+
+          <!-- Stage -->
+          <rect x="24" y="58" width="556" height="318" rx="12" fill="url(#originStage)" stroke="#ffffff" stroke-opacity="0.05"/>
+          <line x1="60" y1="322" x2="544" y2="322" stroke="#ffffff" stroke-opacity="0.08" stroke-width="2"/>
+          <line x1="110" y1="338" x2="494" y2="338" stroke="#ffffff" stroke-opacity="0.05"/>
+          <text x="46" y="92" font-size="17" font-weight="800" fill="#f8fafc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" letter-spacing="4">CARXY</text>
+          <text x="46" y="108" font-size="8" fill="#94a3b8" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" letter-spacing="5">3D STUDIO</text>
+
+          <!-- Car body -->
+          <ellipse cx="302" cy="308" rx="176" ry="11" fill="#000000" opacity="0.4"/>
+          <path d="M 150 246 C 155 223 190 215 226 213 C 252 183 316 173 372 175 C 424 177 452 195 462 211 C 500 213 522 223 524 241 C 524 251 518 256 505 256 L 152 256 C 144 254 144 251 150 246 Z" fill="url(#originCarpaint)"/>
+          <path d="M 160 240 C 260 232 420 232 518 240" stroke="#ffffff" stroke-opacity="0.22" stroke-width="3" fill="none"/>
+          <path d="M 244 211 C 266 185 322 177 368 179 C 408 181 434 196 446 208 L 244 211 Z" fill="url(#originGlass)"/>
+          <line x1="332" y1="213" x2="332" y2="253" stroke="#0b1020" stroke-opacity="0.55" stroke-width="2"/>
+          <rect x="286" y="226" width="14" height="4" rx="2" fill="#0b1020" opacity="0.5"/>
+          <rect x="366" y="226" width="14" height="4" rx="2" fill="#0b1020" opacity="0.5"/>
+          <ellipse cx="505" cy="233" rx="9" ry="4.5" fill="#fde68a"/>
+          <ellipse cx="158" cy="234" rx="6" ry="4" fill="#f87171"/>
+          <circle cx="224" cy="254" r="23" fill="#0b1020" stroke="#334155" stroke-width="3"/>
+          <circle cx="224" cy="254" r="11" fill="none" stroke="#7dd3fc" stroke-opacity="0.85" stroke-width="3"/>
+          <circle cx="224" cy="254" r="3.4" fill="#e2e8f0"/>
+          <circle cx="432" cy="254" r="23" fill="#0b1020" stroke="#334155" stroke-width="3"/>
+          <circle cx="432" cy="254" r="11" fill="none" stroke="#7dd3fc" stroke-opacity="0.85" stroke-width="3"/>
+          <circle cx="432" cy="254" r="3.4" fill="#e2e8f0"/>
+
+          <!-- Color chip -->
+          <rect x="46" y="128" width="212" height="30" rx="15" fill="#000000" opacity="0.45"/>
+          <circle cx="66" cy="143" r="8" fill="#2563eb" stroke="#ffffff" stroke-opacity="0.5"/>
+          <text x="82" y="147" font-size="10.5" fill="#e2e8f0" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Midnight Azure · Metalizado</text>
+
+          <!-- Customizer panel -->
+          <rect x="600" y="58" width="296" height="318" rx="12" fill="var(--surface-panel)" stroke="var(--border-color)"/>
+          <text x="620" y="86" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">EXTERIOR</text>
+          <circle cx="632" cy="112" r="12" fill="#e5e7eb"/>
+          <circle cx="672" cy="112" r="12" fill="#111827"/>
+          <circle cx="712" cy="112" r="12" fill="#dc2626"/>
+          <circle cx="752" cy="112" r="12" fill="#2563eb" stroke="var(--accent-color)" stroke-width="3"/>
+          <circle cx="792" cy="112" r="12" fill="#f59e0b"/>
+          <circle cx="832" cy="112" r="12" fill="#10b981"/>
+          <text x="620" y="142" font-size="12.5" font-weight="700" fill="var(--text-primary)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Midnight Azure</text>
+          <text x="620" y="158" font-size="9.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Acabado metalizado</text>
+
+          <text x="620" y="192" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">INTERIOR</text>
+          <rect x="620" y="204" width="124" height="44" rx="8" fill="#7c4a21"/>
+          <rect x="760" y="204" width="112" height="44" rx="8" fill="#111827"/>
+          <text x="682" y="265" text-anchor="middle" font-size="8.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Cuero coñac</text>
+          <text x="816" y="265" text-anchor="middle" font-size="8.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Negro</text>
+
+          <rect x="620" y="292" width="252" height="40" rx="10" fill="var(--accent-color)"/>
+          <path d="M 652 312 l 5 5 l 9 -11" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+          <text x="752" y="317" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Guardar configuración</text>
+        </svg>
+      </div>
+      <figcaption class="mockup-caption">
+        {{ 'Así lucía la idea original: personaliza color, estilo, características y accesorios antes de comprar tu carro.' | translate }}
+      </figcaption>
+    </figure>
+
+    <div class="origin-block">
+      <p class="eyebrow">{{ 'OBJETIVOS ORIGINALES' | translate }}</p>
+      <div class="feature-grid origin-grid">
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span>
+          <h3>{{ 'Objetivo general' | translate }}</h3>
+          <p>{{ 'Desarrollar una aplicación web innovadora, Carxy, que permita a los usuarios personalizar vehículos de manera intuitiva y detallada, ofreciendo una experiencia interactiva y visualmente atractiva para diseñar y visualizar automóviles personalizados según sus preferencias estéticas.' | translate }}</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.4-.5-.9-.3-1.5.3-.8 1.3-1.3 2.2-1.3h1.5A3.6 3.6 0 0 0 20.2 12 9.3 9.3 0 0 0 12 3Z"/><circle cx="8.3" cy="10.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="7.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.7" cy="10.6" r="1.15" fill="currentColor" stroke="none"/></svg></span>
+          <h3>{{ 'Objetivo específico' | translate }}</h3>
+          <p>{{ 'Implementar una paleta de colores predefinida y personalizada para el exterior e interior del vehículo, con un informe visual detallado de las combinaciones seleccionadas, permitiendo guardar y comparar las configuraciones favoritas.' | translate }}</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="8.5 8.5 5 12 8.5 15.5"/><polyline points="15.5 8.5 19 12 15.5 15.5"/><line x1="13.4" y1="6" x2="10.6" y2="18"/></svg></span>
+          <h3>{{ 'Tecnologías originales' | translate }}</h3>
+          <p>{{ 'El frontend se construyó con Angular y el backend con Django, conectados en una arquitectura de aplicación web pensada para la personalización de vehículos en 3D.' | translate }}</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="origin-block">
+      <p class="eyebrow">{{ 'EQUIPO DE LA PRIMERA VERSIÓN' | translate }}</p>
+      <ul class="team-grid">
+        <li class="team-card">
+          <svg class="team-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="avatar-lc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f97316"/><stop offset="1" stop-color="#dc2626"/></linearGradient></defs>
+            <rect width="48" height="48" rx="14" fill="url(#avatar-lc)"/>
+            <text x="24" y="30" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">LC</text>
+          </svg>
+          <div class="team-info">
+            <strong>Luis Candelo</strong>
+            <span class="team-role">{{ 'Programador · Analista · Documentador' | translate }}</span>
+          </div>
+        </li>
+        <li class="team-card">
+          <svg class="team-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="avatar-se" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+            <rect width="48" height="48" rx="14" fill="url(#avatar-se)"/>
+            <text x="24" y="30" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">SE</text>
+          </svg>
+          <div class="team-info">
+            <strong>Santiago Erazo</strong>
+            <span class="team-role">{{ 'CIO · Programador · Documentador' | translate }}</span>
+          </div>
+        </li>
+        <li class="team-card">
+          <svg class="team-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="avatar-sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#9333ea"/></linearGradient></defs>
+            <rect width="48" height="48" rx="14" fill="url(#avatar-sg)"/>
+            <text x="24" y="30" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">SG</text>
+          </svg>
+          <div class="team-info">
+            <strong>Sara Guerrero</strong>
+            <span class="team-role">{{ 'Programador · Analista · Documentador' | translate }}</span>
+          </div>
+        </li>
+        <li class="team-card">
+          <svg class="team-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="avatar-ar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#059669"/></linearGradient></defs>
+            <rect width="48" height="48" rx="14" fill="url(#avatar-ar)"/>
+            <text x="24" y="30" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">AR</text>
+          </svg>
+          <div class="team-info">
+            <strong>Andrea Rodríguez</strong>
+            <span class="team-role">{{ 'Tester · Documentador' | translate }}</span>
+          </div>
+        </li>
+        <li class="team-card">
+          <svg class="team-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="avatar-ap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#d97706"/></linearGradient></defs>
+            <rect width="48" height="48" rx="14" fill="url(#avatar-ap)"/>
+            <text x="24" y="30" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">AP</text>
+          </svg>
+          <div class="team-info">
+            <strong>Alan Palechor</strong>
+            <span class="team-role">{{ 'Tester · Documentador · Analista' | translate }}</span>
+          </div>
+        </li>
+        <li class="team-card">
+          <svg class="team-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <defs><linearGradient id="avatar-hp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs>
+            <rect width="48" height="48" rx="14" fill="url(#avatar-hp)"/>
+            <text x="24" y="30" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">HP</text>
+          </svg>
+          <div class="team-info">
+            <strong>Harold Paz Córdoba</strong>
+            <span class="team-role">{{ 'Tester · Documentador' | translate }}</span>
+          </div>
+        </li>
+      </ul>
+      <div class="story-card-footer origin-footer">
+        <span class="sena-mark" aria-hidden="true">
+          <img src="assets/brand/sena-logo.png" alt="" width="56" height="56" loading="lazy" />
+        </span>
+        <span>{{ 'SENA · Centro de Comercio y Servicios · ADSO 2673492' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="origin-block">
+      <p class="eyebrow">{{ 'ORGANIGRAMA ORIGINAL' | translate }}</p>
+      <figure class="org-chart" aria-hidden="true">
+        <svg viewBox="0 0 720 648" xmlns="http://www.w3.org/2000/svg" role="presentation">
+          <!-- Root: CISO -->
+          <rect x="258" y="14" width="204" height="92" rx="46" fill="#b45ce8"/>
+          <text x="360" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">CISO</text>
+          <text x="360" y="61" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">HECTOR</text>
+          <text x="360" y="80" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">SANCHEZ</text>
+
+          <line x1="360" y1="106" x2="360" y2="142" stroke="#9ca3af" stroke-width="2"/>
+          <circle cx="360" cy="122" r="4" fill="#9ca3af"/>
+
+          <!-- CIO: Santiago Erazo -->
+          <rect x="254" y="142" width="212" height="84" rx="42" fill="#d4d4d4" stroke="#bdbdbd"/>
+          <text x="360" y="168" text-anchor="middle" font-size="14" font-weight="800" fill="#1f2937" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">CIO</text>
+          <text x="360" y="188" text-anchor="middle" font-size="13" font-weight="800" fill="#1f2937" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">SANTIAGO ERAZO</text>
+          <text x="360" y="207" text-anchor="middle" font-size="8.5" fill="#374151" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">PROGRAMADOR,DOCUMENTADOR</text>
+
+          <line x1="360" y1="226" x2="360" y2="264" stroke="#9ca3af" stroke-width="2"/>
+          <line x1="150" y1="264" x2="570" y2="264" stroke="#9ca3af" stroke-width="2"/>
+          <line x1="150" y1="264" x2="150" y2="294" stroke="#9ca3af" stroke-width="2"/>
+          <line x1="570" y1="264" x2="570" y2="294" stroke="#9ca3af" stroke-width="2"/>
+          <circle cx="150" cy="268" r="4" fill="#9ca3af"/>
+          <circle cx="570" cy="268" r="4" fill="#9ca3af"/>
+
+          <!-- Left column -->
+          <rect x="40" y="294" width="220" height="66" rx="33" fill="#a3a3a3"/>
+          <text x="150" y="322" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Andrea Rodríguez</text>
+          <text x="150" y="343" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tester,Documentador</text>
+
+          <line x1="150" y1="360" x2="150" y2="424" stroke="#9ca3af" stroke-width="2"/>
+          <circle cx="150" cy="392" r="4" fill="#9ca3af"/>
+
+          <rect x="40" y="424" width="220" height="66" rx="33" fill="#a3a3a3"/>
+          <text x="150" y="452" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Harold Paz</text>
+          <text x="150" y="473" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tester,Documentador</text>
+
+          <line x1="150" y1="490" x2="150" y2="554" stroke="#9ca3af" stroke-width="2"/>
+          <circle cx="150" cy="522" r="4" fill="#9ca3af"/>
+
+          <rect x="40" y="554" width="220" height="66" rx="33" fill="#a3a3a3"/>
+          <text x="150" y="582" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Alan Danilo Palechor</text>
+          <text x="150" y="603" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tester,Documentador,Analista</text>
+
+          <!-- Right column -->
+          <rect x="460" y="294" width="220" height="66" rx="33" fill="#a3a3a3"/>
+          <text x="570" y="322" text-anchor="middle" font-size="13.5" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Luis Eduardo Candelo</text>
+          <text x="570" y="343" text-anchor="middle" font-size="9" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Programador,Analista,Documentador</text>
+
+          <line x1="570" y1="360" x2="570" y2="424" stroke="#9ca3af" stroke-width="2"/>
+          <circle cx="570" cy="392" r="4" fill="#9ca3af"/>
+
+          <rect x="460" y="424" width="220" height="66" rx="33" fill="#a3a3a3"/>
+          <text x="570" y="452" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Sara Guerrero</text>
+          <text x="570" y="473" text-anchor="middle" font-size="9" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Programador,Analista,Documentador</text>
+        </svg>
+      </figure>
+      <p class="mockup-caption">{{ 'Organigrama original del equipo de la primera versión.' | translate }}</p>
+    </div>
+
+    <div class="origin-block">
+      <p class="eyebrow">{{ 'EVOLUCIÓN DE LA MARCA' | translate }}</p>
+      <div class="brand-grid">
+        <figure class="brand-card">
+          <div class="brand-media brand-media--dark">
+            <img src="assets/brand/cxy-emblema.png" alt="" width="108" height="108" loading="lazy" />
+          </div>
+          <figcaption>
+            <strong>CXY</strong>
+            <span>{{ 'Emblema CXY · Primera identidad de Carxy' | translate }}</span>
+          </figcaption>
+        </figure>
+        <figure class="brand-card">
+          <div class="brand-media brand-media--light">
+            <img src="assets/brand/carxy-logo.png" alt="" width="150" height="68" loading="lazy" />
+          </div>
+          <figcaption>
+            <strong>CARXY</strong>
+            <span>{{ 'Logotipo CARXY · La versión moderna' | translate }}</span>
+          </figcaption>
+        </figure>
+        <figure class="brand-card">
+          <div class="brand-media brand-media--surface">
+            <span class="brand-mark-current" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor">
+                <path d="M12 2L1 21h22L12 2zm0 2.5L3 15.5l4.5 4.5L12 10l4.5 4.5L21 15.5z" />
+                <path d="M12 10l-4.5 4.5L21 15.5L12 2z" fill="currentColor" opacity=".12" />
+              </svg>
+            </span>
+            <span class="brand-wordmark">CARXY<small>3D STUDIO</small></span>
+          </div>
+          <figcaption>
+            <strong>CARXY 3D STUDIO</strong>
+            <span>{{ 'Identidad actual · Estudio 3D en el navegador' | translate }}</span>
+          </figcaption>
+        </figure>
+      </div>
+      <p class="mockup-caption">{{ 'De la venta de carros personalizados a un estudio 3D abierto: la marca creció con el proyecto.' | translate }}</p>
     </div>
   </section>
 

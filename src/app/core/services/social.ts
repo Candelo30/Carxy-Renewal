@@ -979,6 +979,15 @@ export class SocialService {
       }
       this.writeLocal(LOCAL_KEYS.chats, chats);
       await Promise.all(ownedPosts.map((post) => this.deleteLocalBlob(post.id)));
+      try {
+        const accounts = this.readLocal<any[]>(LOCAL_KEYS.accounts, []);
+        if (Array.isArray(accounts)) {
+          const filtered = accounts.filter((u) => u?.uid !== uid);
+          this.writeLocal(LOCAL_KEYS.accounts, filtered);
+        }
+      } catch {
+        // ignore
+      }
       this.localChatChanges.next();
       return;
     }

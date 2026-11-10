@@ -1,7 +1,18 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--surface-main);
+  color: var(--text-primary);
+}
+
+.project-detail-shell {
+  min-height: 100dvh;
+}
+
 .project-detail-page {
   max-width: 960px;
   margin: 0 auto;
-  padding: 24px clamp(16px, 4vw, 32px);
+  padding: 24px clamp(16px, 4vw, 32px) 48px;
 }
 
 .project-header {
@@ -14,6 +25,19 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--accent-color);
 }
 
 .project-info h1 {
@@ -34,6 +58,65 @@
   flex-wrap: wrap;
 }
 
+.share-hint {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 520px;
+}
+
+.edit-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-form .field span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.edit-form input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.edit-form .checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.edit-form .checkbox-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-color);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .badge {
   font-size: 0.7rem;
   font-weight: 800;
@@ -47,20 +130,82 @@
 
 .project-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.btn-primary {
-  padding: 10px 20px;
+.btn-primary,
+.btn-secondary,
+.link-btn {
+  padding: 10px 16px;
   border: none;
   border-radius: 10px;
-  background: var(--accent-color);
-  color: #ffffff;
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary,
+.link-btn {
+  background: var(--accent-color);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: var(--surface-control);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.state-card {
+  margin-bottom: 24px;
+  padding: 36px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--surface-panel);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.state-card h2 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+}
+
+.state-card p {
+  margin: 0 0 14px;
+}
+
+.state-card.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.state-card.error {
+  border-color: color-mix(in srgb, var(--color-danger, #ef4444) 30%, var(--border-color));
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
+  border-top-color: var(--accent-color);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .btn-danger {

@@ -1,74 +1,229 @@
-<app-shell-header [title]="'nav.projects' | translate"></app-shell-header>
+<main class="projects-shell page-with-header">
+  <app-shell-header [showSearch]="false" [showNav]="true"></app-shell-header>
 
-<main class="projects-page">
-  <section class="hero">
-    <div class="hero-content">
+  <section class="projects-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-copy">
+      <p class="eyebrow">{{ 'projects.eyebrow' | translate }}</p>
       <h1>{{ 'projects.title' | translate }}</h1>
-      <p>{{ 'projects.subtitle' | translate }}</p>
+      <p class="hero-text">{{ 'projects.subtitle' | translate }}</p>
+      <div class="hero-meta">
+        <span>{{ projects().length }} {{ 'projects.statsProjects' | translate }}</span>
+        <span>{{ ownedCount() }} {{ 'projects.owner' | translate }}</span>
+        <span>{{ sharedCount() }} {{ 'projects.member' | translate }}</span>
+      </div>
+    </div>
+
+    <aside class="hero-panel" [attr.aria-label]="'projects.title' | translate">
+      <div class="hero-panel-head">
+        <span class="panel-icon" aria-hidden="true">📁</span>
+        <div>
+          <strong>{{ 'projects.myProjects' | translate }}</strong>
+          <p>{{ 'projects.createHint' | translate }}</p>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <strong>{{ projects().length }}</strong>
+          <span>{{ 'projects.statsProjects' | translate }}</span>
+        </div>
+        <div class="stat" [class.highlight]="invitations().length > 0">
+          <strong>{{ invitations().length }}</strong>
+          <span>{{ 'projects.statsInvitations' | translate }}</span>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  @if (invitations().length) {
+    <section class="projects-section" aria-labelledby="pending-invitations-title">
+      <div class="section-head row">
+        <div>
+          <p class="eyebrow">{{ 'projects.pendingInvitations' | translate }}</p>
+          <h2 id="pending-invitations-title">{{ 'projects.pendingInvitations' | translate }}</h2>
+        </div>
+        <span class="count-badge">{{ invitations().length }}</span>
+      </div>
+      <div class="invitations-list">
+        @for (inv of invitations(); track inv.id) {
+          <article class="invitation-card">
+            <div class="invitation-info">
+              <h3>{{ inv.projectName || ('projects.project' | translate) }}</h3>
+              <p>{{ 'projects.invitedBy' | translate: { name: inv.invitedByName || ('projects.unknownUser' | translate) } }}</p>
+              <span class="role-chip">{{ ('projects.role' + (inv.role.charAt(0).toUpperCase() + inv.role.slice(1))) | translate }}</span>
+            </div>
+            <div class="invitation-actions">
+              <button type="button" class="btn-secondary" [disabled]="busyInvitationId() === inv.id" (click)="rejectInvitation(inv)">
+                {{ 'projects.reject' | translate }}
+              </button>
+              <button type="button" class="btn-primary" [disabled]="busyInvitationId() === inv.id" (click)="acceptInvitation(inv)">
+                {{ busyInvitationId() === inv.id ? ('common.loading' | translate) : ('projects.accept' | translate) }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="projects-section" aria-labelledby="create-project-title">
+    <div class="section-head">
+      <p class="eyebrow">{{ 'projects.createNew' | translate }}</p>
+      <h2 id="create-project-title">{{ 'projects.createNew' | translate }}</h2>
+      <p>{{ 'projects.createHint' | translate }}</p>
+    </div>
+
+    <div class="panel create-panel">
+      <form class="create-form" (ngSubmit)="createProject()">
+        <div class="field-grid">
+          <label class="field">
+            <span>{{ 'projects.nameLabel' | translate }}</span>
+            <input
+              type="text"
+              [(ngModel)]="newProjectName"
+              name="name"
+              [placeholder]="'projects.namePlaceholder' | translate"
+              [disabled]="creating"
+              maxlength="80"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>{{ 'projects.descriptionLabel' | translate }}</span>
+            <input
+              type="text"
+              [(ngModel)]="newProjectDescription"
+              name="description"
+              [placeholder]="'projects.descriptionPlaceholder' | translate"
+              [disabled]="creating"
+              maxlength="160"
+            />
+          </label>
+        </div>
+
+        <div class="form-footer">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="newProjectPublic" name="isPublic" [disabled]="creating" />
+            <span>{{ 'projects.public' | translate }}</span>
+          </label>
+          <button type="submit" class="btn-primary" [disabled]="creating || !newProjectName.trim()">
+            {{ creating ? ('projects.creating' | translate) : ('projects.create' | translate) }}
+          </button>
+        </div>
+
+        @if (createError) {
+          <p class="form-error" role="alert">{{ createError }}</p>
+        }
+      </form>
     </div>
   </section>
 
-  <section class="create-section">
-    <h2>{{ 'projects.createNew' | translate }}</h2>
-    <form class="create-form" (ngSubmit)="createProject()">
-      <input
-        type="text"
-        [(ngModel)]="newProjectName"
-        name="name"
-        [placeholder]="'projects.namePlaceholder' | translate"
-        [disabled]="creating"
-        required
-      />
-      <input
-        type="text"
-        [(ngModel)]="newProjectDescription"
-        name="description"
-        [placeholder]="'projects.descriptionPlaceholder' | translate"
-        [disabled]="creating"
-      />
-      <label class="checkbox-label">
-        <input
-          type="checkbox"
-          [(ngModel)]="newProjectPublic"
-          name="isPublic"
-          [disabled]="creating"
-        />
-        {{ 'projects.public' | translate }}
-      </label>
-      <button type="submit" [disabled]="creating || !newProjectName.trim()">
-        {{ creating ? ('projects.creating' | translate) : ('projects.create' | translate) }}
-      </button>
-    </form>
-  </section>
+  <section class="projects-section" aria-labelledby="my-projects-title">
+    <div class="section-head row">
+      <div>
+        <p class="eyebrow">{{ 'projects.myProjects' | translate }}</p>
+        <h2 id="my-projects-title">{{ 'projects.myProjects' | translate }}</h2>
+      </div>
+      <span class="count-badge">{{ filteredProjects().length }} / {{ projects().length }}</span>
+    </div>
 
-  <section class="projects-list-section">
-    <h2>{{ 'projects.myProjects' | translate }}</h2>
-    @let projectList = projects$ | async;
-    <div class="projects-grid">
-      @if (!projectList || projectList.length === 0) {
-        <div class="empty-state">
-          <p>{{ 'projects.noProjects' | translate }}</p>
-        </div>
-      } @else {
-        @for (project of projectList; track project.id) {
-          <a
-            class="project-card"
-            [routerLink]="['/projects', project.id]"
-          >
-            <div class="project-card-header">
-              <h3>{{ project.name }}</h3>
-              <span class="badge owner">{{ 'projects.owner' | translate }}</span>
+    @if (projects().length > 0) {
+      <div class="toolbar" role="search">
+        <label class="search-field">
+          <span class="sr-only">{{ 'projects.search' | translate }}</span>
+          <input
+            type="search"
+            [ngModel]="searchQuery"
+            (ngModelChange)="setSearch($event)"
+            name="projectSearch"
+            [placeholder]="'projects.searchPlaceholder' | translate"
+            autocomplete="off"
+          />
+        </label>
+        <label class="select-field">
+          <span>{{ 'projects.filter' | translate }}</span>
+          <select [ngModel]="filter" (ngModelChange)="setFilter($event)" name="projectFilter">
+            <option value="all">{{ 'projects.filterAll' | translate }}</option>
+            <option value="owned">{{ 'projects.filterOwned' | translate }}</option>
+            <option value="shared">{{ 'projects.filterShared' | translate }}</option>
+            <option value="public">{{ 'projects.filterPublic' | translate }}</option>
+            <option value="private">{{ 'projects.filterPrivate' | translate }}</option>
+          </select>
+        </label>
+        <label class="select-field">
+          <span>{{ 'projects.sort' | translate }}</span>
+          <select [ngModel]="sort" (ngModelChange)="setSort($event)" name="projectSort">
+            <option value="updated">{{ 'projects.sortUpdated' | translate }}</option>
+            <option value="created">{{ 'projects.sortCreated' | translate }}</option>
+            <option value="name">{{ 'projects.sortName' | translate }}</option>
+          </select>
+        </label>
+        @if (searchQuery || filter !== 'all' || sort !== 'updated') {
+          <button type="button" class="btn-secondary clear-btn" (click)="clearFilters()">{{ 'projects.clearFilters' | translate }}</button>
+        }
+      </div>
+    }
+
+    @if (projectsLoading()) {
+      <div class="state-card loading" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>{{ 'projects.loading' | translate }}</p>
+      </div>
+    } @else if (projectsError()) {
+      <div class="state-card error" role="alert">
+        <p>{{ projectsError() }}</p>
+      </div>
+    } @else if (projects().length === 0) {
+      <div class="state-card empty">
+        <span class="empty-icon" aria-hidden="true">🗂️</span>
+        <h3>{{ 'projects.emptyTitle' | translate }}</h3>
+        <p>{{ 'projects.noProjects' | translate }}</p>
+      </div>
+    } @else if (filteredProjects().length === 0) {
+      <div class="state-card empty">
+        <span class="empty-icon" aria-hidden="true">🔎</span>
+        <h3>{{ 'projects.noResultsTitle' | translate }}</h3>
+        <p>{{ 'projects.noResultsText' | translate }}</p>
+        <button type="button" class="btn-secondary" (click)="clearFilters()">{{ 'projects.clearFilters' | translate }}</button>
+      </div>
+    } @else {
+      <div class="projects-grid">
+        @for (project of filteredProjects(); track trackById($index, project)) {
+          <article class="project-card" (click)="openProject(project.id)" tabindex="0" (keydown.enter)="openProject(project.id)">
+            <div class="project-card-top">
+              <div class="title-wrap">
+                <h3>{{ project.name }}</h3>
+                <p class="project-description">{{ project.description || ('projects.noDescription' | translate) }}</p>
+              </div>
+              <span class="badge" [class.owner]="isOwner(project)" [class.member]="!isOwner(project)">
+                {{ isOwner(project) ? ('projects.owner' | translate) : ('projects.member' | translate) }}
+              </span>
             </div>
-            <p class="project-description">{{ project.description || ('projects.noDescription' | translate) }}</p>
+
             <div class="project-meta">
               <span>{{ 'projects.updated' | translate }}: {{ project.updatedAt | date:'shortDate' }}</span>
+              <span>{{ 'projects.created' | translate }}: {{ project.createdAt | date:'shortDate' }}</span>
               <span>{{ project.isPublic ? ('projects.publicLabel' | translate) : ('projects.privateLabel' | translate) }}</span>
             </div>
-          </a>
-        }
-      }
-    </div>
-  </section>
-</main>
 
-<app-site-footer></app-site-footer>
+            <div class="card-actions">
+              <button type="button" class="btn-secondary" (click)="openProject(project.id); $event.stopPropagation()">
+                {{ 'projects.viewDetails' | translate }}
+              </button>
+              <button type="button" class="btn-primary" (click)="openInEditor(project.id, $event)">
+                {{ 'projects.openEditor' | translate }}
+              </button>
+              @if (isOwner(project)) {
+                <button type="button" class="btn-danger" [disabled]="busyProjectId() === project.id" (click)="deleteProject(project, $event)">
+                  {{ busyProjectId() === project.id ? ('common.loading' | translate) : ('projects.deleteProject' | translate) }}
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <app-site-footer />
+</main>

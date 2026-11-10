@@ -2,8 +2,8 @@
   <app-shell-header
     [showSearch]="false"
     [showNav]="true"
-    [title]="'Panel de administración' | translate"
-    [subtitle]="'Control, supervisión y gestión de la plataforma' | translate"
+    [title]="'admin.panelTitle' | translate"
+    [subtitle]="'admin.panelSubtitle' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
 
@@ -15,61 +15,61 @@
         <span class="sidebar-brand-icon">🛡</span>
         <span class="sidebar-brand-name">CARXY Admin</span>
       </div>
-      <button class="sidebar-close" type="button" (click)="closeMobileMenu()" aria-label="Cerrar menú">✕</button>
+      <button class="sidebar-close" type="button" (click)="closeMobileMenu()" [attr.aria-label]="'admin.closeMenu' | translate">✕</button>
     </div>
     <nav class="sidebar-nav" *ngIf="vm$ | async as vm">
       <button class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
-        <span class="sidebar-icon">📊</span><span class="sidebar-label">Dashboard</span>
+        <span class="sidebar-icon">📊</span><span class="sidebar-label">{{ 'admin.dashboard' | translate }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')" [disabled]="moderationOnly">
-        <span class="sidebar-icon">👥</span><span class="sidebar-label">Usuarios</span>
+        <span class="sidebar-icon">👥</span><span class="sidebar-label">{{ 'admin.users' | translate }}</span>
         <span class="sidebar-badge">{{ vm.users.length }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
-        <span class="sidebar-icon">📦</span><span class="sidebar-label">Contenido</span>
+        <span class="sidebar-icon">📦</span><span class="sidebar-label">{{ 'admin.content' | translate }}</span>
         <span class="sidebar-badge">{{ vm.posts.length }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isReports" (click)="setTab('reports')">
-        <span class="sidebar-icon">🚩</span><span class="sidebar-label">Reportes</span>
+        <span class="sidebar-icon">🚩</span><span class="sidebar-label">{{ 'admin.reports' | translate }}</span>
         <span class="sidebar-badge warn" *ngIf="(stats$ | async)?.openReports">{{ (stats$ | async)?.openReports }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
-        <span class="sidebar-icon">💬</span><span class="sidebar-label">Feedback</span>
+        <span class="sidebar-icon">💬</span><span class="sidebar-label">{{ 'admin.feedback' | translate }}</span>
         <span class="sidebar-badge">{{ vm.feedback.length }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
-        <span class="sidebar-icon">❓</span><span class="sidebar-label">Preguntas</span>
+        <span class="sidebar-icon">❓</span><span class="sidebar-label">{{ 'admin.questions' | translate }}</span>
         <span class="sidebar-badge">{{ vm.questions.length }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isProjects" (click)="setTab('projects')" [disabled]="moderationOnly">
-        <span class="sidebar-icon">🗂</span><span class="sidebar-label">Proyectos</span>
+        <span class="sidebar-icon">🗂</span><span class="sidebar-label">{{ 'admin.projects' | translate }}</span>
         <span class="sidebar-badge">{{ vm.projects.length }}</span>
       </button>
       <button class="sidebar-item" [class.active]="isHelpArticles" (click)="setTab('helpArticles')" [disabled]="moderationOnly">
-        <span class="sidebar-icon">📚</span><span class="sidebar-label">Ayuda</span>
+        <span class="sidebar-icon">📚</span><span class="sidebar-label">{{ 'admin.help' | translate }}</span>
         <span class="sidebar-badge">{{ vm.helpArticles.length }}</span>
       </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="sidebar-logout" type="button" (click)="auth.logout()">Cerrar sesión</button>
+      <button class="sidebar-logout" type="button" (click)="auth.logout()">{{ 'admin.logout' | translate }}</button>
     </div>
   </aside>
 
   <div class="admin-content">
     <header class="admin-header">
       <div class="admin-header-left">
-        <button class="mobile-menu-toggle" type="button" (click)="toggleMobileMenu()" aria-label="Abrir menú">☰</button>
+        <button class="mobile-menu-toggle" type="button" (click)="toggleMobileMenu()" [attr.aria-label]="'admin.openMenu' | translate">☰</button>
         <div>
           <h1 class="admin-page-title">{{ pageTitle }}</h1>
-          <p class="admin-page-subtitle" *ngIf="moderationOnly">Modo moderación</p>
+          <p class="admin-page-subtitle" *ngIf="moderationOnly">{{ 'admin.moderationMode' | translate }}</p>
         </div>
       </div>
       <div class="admin-header-right">
         <div class="admin-search">
-          <input type="search" class="search-input" [(ngModel)]="searchQuery" placeholder="Buscar en la sección…" />
+          <input type="search" class="search-input" [(ngModel)]="searchQuery" [placeholder]="'admin.searchPlaceholder' | translate" />
         </div>
-        <button class="btn-refresh" type="button" (click)="refresh()" title="Actualizar">↻</button>
-        <button class="btn-user" type="button" title="Usuario actual">{{ (vm$ | async)?.user?.displayName?.charAt(0) || 'A' }}</button>
+        <button class="btn-refresh" type="button" (click)="refresh()" [title]="'admin.refresh' | translate">↻</button>
+        <button class="btn-user" type="button" [title]="'admin.currentUser' | translate">{{ (vm$ | async)?.user?.displayName?.charAt(0) || 'A' }}</button>
       </div>
     </header>
 
@@ -80,19 +80,19 @@
         <ng-container *ngIf="isDashboard">
           <ng-container *ngIf="stats$ | async as stats">
             <div class="stats-grid">
-              <article class="stat-card accent-blue"><span class="stat-icon">👥</span><div><small>Usuarios</small><strong>{{ stats.totalUsers }}</strong></div><em>{{ stats.activeUsers }} activos</em></article>
-              <article class="stat-card accent-red"><span class="stat-icon">⛔</span><div><small>Suspendidos</small><strong>{{ stats.suspendedUsers }}</strong></div><em>{{ stats.moderatorUsers }} mods · {{ stats.adminUsers }} admins</em></article>
-              <article class="stat-card accent-green"><span class="stat-icon">📦</span><div><small>Publicaciones</small><strong>{{ stats.totalPosts }}</strong></div><em>{{ stats.publicPosts }} públicas · {{ stats.privatePosts }} privadas</em></article>
-              <article class="stat-card accent-amber"><span class="stat-icon">🚩</span><div><small>Reportes abiertos</small><strong>{{ stats.openReports }}</strong></div><em>{{ stats.resolvedReports }} resueltos</em></article>
-              <article class="stat-card accent-violet"><span class="stat-icon">💬</span><div><small>Feedback</small><strong>{{ stats.totalFeedback }}</strong></div><em>{{ stats.newFeedback }} nuevos</em></article>
-              <article class="stat-card accent-cyan"><span class="stat-icon">❓</span><div><small>Preguntas</small><strong>{{ stats.totalQuestions }}</strong></div><em>{{ stats.openQuestions }} abiertas</em></article>
-              <article class="stat-card"><span class="stat-icon">🗂</span><div><small>Proyectos</small><strong>{{ stats.totalProjects }}</strong></div><em>Colaboración</em></article>
-              <article class="stat-card"><span class="stat-icon">❤</span><div><small>Engagement</small><strong>{{ stats.totalLikes }}</strong></div><em>{{ stats.totalViews }} vistas · {{ stats.totalRemixes }} remixes</em></article>
+              <article class="stat-card accent-blue"><span class="stat-icon">👥</span><div><small>{{ 'admin.stats.users' | translate }}</small><strong>{{ stats.totalUsers }}</strong></div><em>{{ stats.activeUsers }} {{ 'admin.stats.active' | translate }}</em></article>
+              <article class="stat-card accent-red"><span class="stat-icon">⛔</span><div><small>{{ 'admin.stats.suspended' | translate }}</small><strong>{{ stats.suspendedUsers }}</strong></div><em>{{ stats.moderatorUsers }} {{ 'admin.stats.moderators' | translate }} · {{ stats.adminUsers }} {{ 'admin.stats.admins' | translate }}</em></article>
+              <article class="stat-card accent-green"><span class="stat-icon">📦</span><div><small>{{ 'admin.stats.publications' | translate }}</small><strong>{{ stats.totalPosts }}</strong></div><em>{{ stats.publicPosts }} {{ 'admin.stats.public' | translate }} · {{ stats.privatePosts }} {{ 'admin.stats.private' | translate }}</em></article>
+              <article class="stat-card accent-amber"><span class="stat-icon">🚩</span><div><small>{{ 'admin.stats.openReports' | translate }}</small><strong>{{ stats.openReports }}</strong></div><em>{{ stats.resolvedReports }} {{ 'admin.stats.resolved' | translate }}</em></article>
+              <article class="stat-card accent-violet"><span class="stat-icon">💬</span><div><small>{{ 'admin.feedback' | translate }}</small><strong>{{ stats.totalFeedback }}</strong></div><em>{{ stats.newFeedback }} {{ 'admin.stats.new' | translate }}</em></article>
+              <article class="stat-card accent-cyan"><span class="stat-icon">❓</span><div><small>{{ 'admin.questions' | translate }}</small><strong>{{ stats.totalQuestions }}</strong></div><em>{{ stats.openQuestions }} {{ 'admin.stats.open' | translate }}</em></article>
+              <article class="stat-card"><span class="stat-icon">🗂</span><div><small>{{ 'admin.projects' | translate }}</small><strong>{{ stats.totalProjects }}</strong></div><em>{{ 'admin.stats.collaboration' | translate }}</em></article>
+              <article class="stat-card"><span class="stat-icon">❤</span><div><small>{{ 'admin.stats.engagement' | translate }}</small><strong>{{ stats.totalLikes }}</strong></div><em>{{ stats.totalViews }} {{ 'admin.stats.views' | translate }} · {{ stats.totalRemixes }} {{ 'admin.stats.remixes' | translate }}</em></article>
             </div>
 
             <div class="charts-grid">
               <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>Usuarios por rol</h2></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.usersByRole' | translate }}</h2></div></div>
                 <div class="chart-bars" *ngIf="chartUsersByRole$ | async as bars">
                   <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
                     <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
@@ -101,7 +101,7 @@
                 </div>
               </section>
               <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>Visibilidad de contenido</h2></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.contentVisibility' | translate }}</h2></div></div>
                 <div class="chart-bars" *ngIf="chartPostsVisibility$ | async as bars">
                   <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
                     <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
@@ -110,7 +110,7 @@
                 </div>
               </section>
               <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>Estado de reportes</h2></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.reportsStatus' | translate }}</h2></div></div>
                 <div class="chart-bars" *ngIf="chartReports$ | async as bars">
                   <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
                     <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
@@ -119,7 +119,7 @@
                 </div>
               </section>
               <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>Estado de feedback</h2></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.feedbackStatus' | translate }}</h2></div></div>
                 <div class="chart-bars" *ngIf="chartFeedback$ | async as bars">
                   <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
                     <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
@@ -131,24 +131,24 @@
 
             <div class="admin-grid">
               <section class="admin-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>Publicaciones recientes</h2></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.recentPosts' | translate }}</h2></div></div>
                 <div class="moderation-grid">
                   <article class="content-card" *ngFor="let post of vm.posts.slice(0, 6); trackBy: trackPost">
                     <img [src]="post.thumbnailUrl" [alt]="post.title" />
                     <div>
-                      <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
-                      <small>{{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }} · {{ post.viewsCount || 0 }} vistas</small>
+                      <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? ('admin.stats.private' | translate) : ('admin.stats.public' | translate) }}</span></div>
+                      <small>{{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }} · {{ post.viewsCount || 0 }} {{ 'admin.views' | translate }}</small>
                     </div>
                   </article>
-                  <div class="empty-inline" *ngIf="!vm.posts.length">Sin publicaciones aún.</div>
+                  <div class="empty-inline" *ngIf="!vm.posts.length">{{ 'admin.noPostsYet' | translate }}</div>
                 </div>
               </section>
               <section class="admin-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>Actividad reciente</h2></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.recentActivity' | translate }}</h2></div></div>
                 <ul class="activity-list">
-                  <li *ngFor="let r of vm.reports.slice(0,5); trackBy: trackReport">🚩 Reporte: <strong>{{ r.postTitle }}</strong> · {{ reportStatusLabel(r) | translate }}</li>
-                  <li *ngFor="let f of vm.feedback.slice(0,5); trackBy: trackFeedback">💬 Feedback: <strong>{{ f.subject }}</strong> · {{ f.status }}</li>
-                  <li *ngIf="!vm.reports.length && !vm.feedback.length" class="muted">Sin actividad reciente.</li>
+                  <li *ngFor="let r of vm.reports.slice(0,5); trackBy: trackReport">🚩 {{ 'admin.report' | translate }}: <strong>{{ r.postTitle }}</strong> · {{ reportStatusLabel(r) | translate }}</li>
+                  <li *ngFor="let f of vm.feedback.slice(0,5); trackBy: trackFeedback">💬 {{ 'admin.feedback' | translate }}: <strong>{{ f.subject }}</strong> · {{ f.status }}</li>
+                  <li *ngIf="!vm.reports.length && !vm.feedback.length" class="muted">{{ 'admin.noRecentActivity' | translate }}</li>
                 </ul>
               </section>
             </div>
@@ -361,10 +361,29 @@
         <!-- HELP ARTICLES -->
         <ng-container *ngIf="isHelpArticles">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Artículos del centro de ayuda</h2><span>{{ (filteredArticles$ | async)?.length || 0 }} artículos</span></div></div>
+            <div class="panel-header">
+              <div class="panel-title-row">
+                <h2>Artículos del centro de ayuda</h2>
+                <span>{{ (filteredArticles$ | async)?.length || 0 }} artículos</span>
+              </div>
+              <div class="panel-actions">
+                <select [(ngModel)]="helpArticleFilter">
+                  <option value="all">Todos</option>
+                  <option value="published">Publicados</option>
+                  <option value="draft">Borradores</option>
+                </select>
+                <select [(ngModel)]="helpArticleCategoryFilter">
+                  <option value="all">Todas las categorías</option>
+                  <option *ngFor="let c of helpCategories" [value]="c">{{ getCategoryLabel(c) }}</option>
+                </select>
+              </div>
+            </div>
             <div class="help-layout">
               <div class="help-editor">
-                <h3>{{ articleToEdit ? 'Editar artículo' : 'Nuevo artículo' }}</h3>
+                <div class="help-editor-header">
+                  <h3>{{ articleToEdit ? 'Editar artículo' : 'Nuevo artículo' }}</h3>
+                  <span class="editor-badge" *ngIf="articleToEdit">Editando</span>
+                </div>
                 <div class="article-form">
                   <div class="form-row">
                     <div class="form-group"><label>Categoría</label>
@@ -372,36 +391,53 @@
                         <option *ngFor="let c of helpCategories" [value]="c">{{ getCategoryLabel(c) }}</option>
                       </select>
                     </div>
-                    <div class="form-group"><label>Icono</label><input [(ngModel)]="newArticle.icon" /></div>
-                    <div class="form-group"><label>Orden</label><input type="number" [(ngModel)]="newArticle.order" /></div>
+                    <div class="form-group"><label>Icono</label><input [(ngModel)]="newArticle.icon" placeholder="📄" /></div>
+                    <div class="form-group"><label>Orden</label><input type="number" [(ngModel)]="newArticle.order" placeholder="0" /></div>
                   </div>
-                  <div class="form-group"><label>Título</label><input [(ngModel)]="newArticle.title" placeholder="Título del artículo" /></div>
-                  <div class="form-group"><label>Subtítulo</label><input [(ngModel)]="newArticle.subtitle" placeholder="Resumen corto" /></div>
+                  <div class="form-group"><label>Título *</label><input [(ngModel)]="newArticle.title" placeholder="Título del artículo" /></div>
+                  <div class="form-group"><label>Subtítulo</label><input [(ngModel)]="newArticle.subtitle" placeholder="Resumen corto para el listado" /></div>
                   <div class="form-group"><label>Palabras clave</label><input [(ngModel)]="newArticle.keywords" placeholder="editor, gizmo, exportar…" /></div>
-                  <div class="form-group"><label>Contenido (un párrafo por línea)</label><textarea rows="8" [(ngModel)]="articleBodyText"></textarea></div>
-                  <label class="check-row"><input type="checkbox" [(ngModel)]="newArticle.isPublished" /> Publicado</label>
+                  <div class="form-group"><label>Contenido *</label><textarea rows="7" [(ngModel)]="articleBodyText" placeholder="Escribe cada párrafo. Puedes separar por línea en blanco o por salto de línea."></textarea></div>
+                  <div class="form-group"><label>Pasos (opcional, uno por línea)</label><textarea rows="5" [(ngModel)]="articleStepsText" placeholder="Paso 1&#10;Paso 2&#10;Paso 3"></textarea></div>
+                  <div class="form-group"><label>Consejo (opcional)</label><textarea rows="2" [(ngModel)]="articleTipText" placeholder="Tip breve para el lector"></textarea></div>
+                  <label class="check-row"><input type="checkbox" [(ngModel)]="newArticle.isPublished" /> Publicado (visible en el centro de ayuda)</label>
                   <div class="form-actions">
                     <button class="small-button primary" (click)="saveHelpArticle()">{{ articleToEdit ? 'Guardar cambios' : 'Crear artículo' }}</button>
-                    <button class="small-button" (click)="resetNewArticle()">Limpiar</button>
+                    <button class="small-button" (click)="resetNewArticle()">{{ articleToEdit ? 'Cancelar edición' : 'Limpiar' }}</button>
                   </div>
                 </div>
               </div>
-              <div class="help-list" *ngIf="filteredArticles$ | async as articles">
-                <article class="help-item" *ngFor="let a of articles; trackBy: trackArticle">
-                  <div class="help-item-main">
-                    <span class="help-icon">{{ a.icon || getCategoryIcon(a.category) }}</span>
-                    <div>
-                      <strong>{{ a.title }}</strong>
-                      <small>{{ getCategoryLabel(a.category) }} · {{ a.isPublished ? 'Publicado' : 'Borrador' }}</small>
+              <div class="help-list-panel">
+                <div class="help-list-header">
+                  <h4>Lista de artículos</h4>
+                  <span class="muted">{{ (filteredArticles$ | async)?.length || 0 }} resultados</span>
+                </div>
+                <div class="help-list" *ngIf="filteredArticles$ | async as articles">
+                  <article class="help-item" *ngFor="let a of articles; trackBy: trackArticle" [class.editing]="articleToEdit?.id === a.id">
+                    <div class="help-item-main">
+                      <span class="help-icon">{{ a.icon || getCategoryIcon(a.category) }}</span>
+                      <div class="help-item-info">
+                        <div class="help-item-title-row">
+                          <strong>{{ a.title }}</strong>
+                          <span class="status-pill" [class.published]="a.isPublished">{{ a.isPublished ? 'Publicado' : 'Borrador' }}</span>
+                        </div>
+                        <small>{{ getCategoryLabel(a.category) }} · Orden: {{ a.order }} · {{ a.subtitle || 'Sin subtítulo' }}</small>
+                        <small class="muted" *ngIf="a.keywords">Palabras clave: {{ a.keywords }}</small>
+                      </div>
                     </div>
+                    <div class="row-actions wrap">
+                      <button class="small-button" (click)="editHelpArticle(a)">Editar</button>
+                      <button class="small-button" (click)="toggleArticlePublish(a)">{{ a.isPublished ? 'Despublicar' : 'Publicar' }}</button>
+                      <button class="small-button danger" (click)="deleteHelpArticle(a.id)">Eliminar</button>
+                    </div>
+                  </article>
+                  <div class="help-empty" *ngIf="!articles.length">
+                    <div class="empty-illustration">📚</div>
+                    <strong>No hay artículos para mostrar</strong>
+                    <p>Crea tu primer artículo con el formulario de la izquierda o ajusta los filtros de búsqueda/categoría/estado.</p>
+                    <button class="small-button primary" (click)="resetNewArticle()">Crear nuevo artículo</button>
                   </div>
-                  <div class="row-actions wrap">
-                    <button class="small-button" (click)="editHelpArticle(a)">Editar</button>
-                    <button class="small-button" (click)="toggleArticlePublish(a)">{{ a.isPublished ? 'Despublicar' : 'Publicar' }}</button>
-                    <button class="small-button danger" (click)="deleteHelpArticle(a.id)">Eliminar</button>
-                  </div>
-                </article>
-                <div class="empty-inline" *ngIf="!articles.length">No hay artículos para mostrar.</div>
+                </div>
               </div>
             </div>
           </section>
@@ -409,7 +445,7 @@
 
       </ng-container>
       <ng-template #loadingState>
-        <app-loading-spinner [label]="'Cargando panel…' | translate"></app-loading-spinner>
+        <app-loading-spinner [label]="'admin.loadingPanel' | translate"></app-loading-spinner>
       </ng-template>
     </section>
   </div>
@@ -417,11 +453,11 @@
   <!-- Confirm delete modal -->
   <div class="modal-backdrop" *ngIf="postToDelete" (click)="cancelDelete()"></div>
   <div class="confirm-dialog modal" *ngIf="postToDelete">
-    <h2>Eliminar publicación</h2>
-    <p>¿Seguro que deseas eliminar <strong>“{{ postToDelete.title }}”</strong> y sus archivos asociados? Esta acción no se puede deshacer.</p>
+    <h2>{{ 'admin.deletePublication' | translate }}</h2>
+    <p>{{ 'admin.deletePublicationConfirm' | translate }} <strong>“{{ postToDelete.title }}”</strong> {{ 'admin.deletePublicationFiles' | translate }}</p>
     <footer>
-      <button class="cancel" type="button" (click)="cancelDelete()">Cancelar</button>
-      <button class="danger" type="button" (click)="confirmDelete()">Eliminar definitivamente</button>
+      <button class="cancel" type="button" (click)="cancelDelete()">{{ 'admin.cancel' | translate }}</button>
+      <button class="danger" type="button" (click)="confirmDelete()">{{ 'admin.deletePermanently' | translate }}</button>
     </footer>
   </div>
 </main>

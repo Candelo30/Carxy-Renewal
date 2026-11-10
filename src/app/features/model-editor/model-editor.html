@@ -234,49 +234,64 @@
       <div class="section-heading compact-heading">
         <div>
           <span class="eyebrow">{{ 'COLABORACIÓN' | translate }}</span>
-          <h2>{{ 'Edición en tiempo real' | translate }}</h2>
+          <h2>{{ projectId ? (projectName || ('projects.project' | translate)) : ('Edición en tiempo real' | translate) }}</h2>
         </div>
         <button class="icon-action" (click)="toggleCollaborationPanel()" [title]="'Panel de colaboradores' | translate">👥</button>
       </div>
+
+      @if (projectId) {
+        <div class="project-collab-card">
+          <p class="project-collab-meta">
+            <span class="status-dot" [class.online]="canWrite"></span>
+            {{ canWrite ? ('projects.roleEditor' | translate) : ('projects.roleViewer' | translate) }}
+            @if (isProjectOwner) { · {{ 'projects.owner' | translate }} }
+            · {{ remotePresences.length }} {{ 'Colaboradores activos' | translate }}
+          </p>
+          <div class="collaborator-actions project-collab-actions">
+            <button class="small-button" type="button" (click)="openProjectDetails()">{{ 'projects.viewDetails' | translate }}</button>
+            <button class="small-button" type="button" (click)="copyProjectLink()">{{ 'projects.share' | translate }}</button>
+          </div>
+        </div>
+      }
+
       <div class="collaborator-list" [class.hidden]="!collaborationOpen">
-        @if (collaborators.length) {
-          @for (c of collaborators; track c.uid) {
-            <div class="collaborator-row">
-              <span class="collaborator-dot" [style.background]="c.color"></span>
-              <span class="collaborator-name">{{ c.displayName }}</span>
-              @if (c.objectId) {
-                <span class="collaborator-status">{{ 'Editando objeto' | translate }}</span>
+        @if (projectId) {
+          @if (remotePresences.length) {
+            <div class="presence-list">
+              @for (p of remotePresences; track p.uid) {
+                <div class="presence-row">
+                  <span class="presence-dot online"></span>
+                  <span class="presence-name">{{ p.displayName }}</span>
+                  @if (p.currentObjectId) {
+                    <span class="presence-status">{{ 'projects.editingObject' | translate }}</span>
+                  }
+                </div>
               }
             </div>
+          } @else {
+            <p class="empty-state">{{ 'No hay otros colaboradores en línea.' | translate }}</p>
           }
         } @else {
-          <p class="empty-state">{{ 'Solas en esta escena' | translate }}</p>
+          @if (collaborators.length) {
+            @for (c of collaborators; track c.uid) {
+              <div class="collaborator-row">
+                <span class="collaborator-dot" [style.background]="c.color"></span>
+                <span class="collaborator-name">{{ c.displayName }}</span>
+                @if (c.objectId) {
+                  <span class="collaborator-status">{{ 'projects.editingObject' | translate }}</span>
+                }
+              </div>
+            }
+          } @else {
+            <p class="empty-state">{{ 'Solas en esta escena' | translate }}</p>
+          }
         }
         <div class="collaborator-actions">
-          <button class="small-button" (click)="toggleCollaborationPanel()">
+          <button class="small-button" type="button" (click)="toggleCollaborationPanel()">
             {{ collaborationOpen ? ('Ocultar panel' | translate) : ('Mostrar colaboradores' | translate) }}
           </button>
         </div>
       </div>
-
-      <!-- Presencias remotas en tiempo real -->
-      <section class="presence-section" *ngIf="remotePresences.length">
-        <div class="section-heading compact-heading">
-          <div>
-            <span class="eyebrow">{{ 'En línea ahora' | translate }}</span>
-            <h2>{{ 'Colaboradores activos' | translate }}</h2>
-          </div>
-        </div>
-        <div class="presence-list">
-          <div class="presence-row" *ngFor="let p of remotePresences">
-            <span class="presence-dot online"></span>
-            <span class="presence-name">{{ p.displayName }}</span>
-            <span class="presence-status" *ngIf="p.currentObjectId">
-              {{ 'projects.editingObject' | translate }}
-            </span>
-          </div>
-        </div>
-      </section>
     </section>
   </ng-container>
 

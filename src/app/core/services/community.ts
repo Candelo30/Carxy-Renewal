@@ -578,14 +578,15 @@ export class CommunityService {
           orderBy('order', 'asc'),
           orderBy('createdAt', 'desc'),
         );
-        return (collectionData(q, { idField: 'id' }) as Observable<HelpArticle[]>).pipe(
+        return (collectionData(q, { idField: 'id' }) as Observable<Record<string, unknown>[]>).pipe(
+          map((items) => items.map((item) => this.normalizeHelpArticle(item))),
           catchError((err) => {
             console.warn('Fallback al obtener artículos de ayuda sin doble orderBy:', err);
-            return (collectionData(collection(this.firestore!, SOCIAL_COLLECTIONS.helpArticles), { idField: 'id' }) as Observable<HelpArticle[]>).pipe(
-              map((articles) =>
-                [...articles].sort(
-                  (a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.createdAt ?? 0) - (a.createdAt ?? 0)
-                )
+            return (collectionData(collection(this.firestore!, SOCIAL_COLLECTIONS.helpArticles), { idField: 'id' }) as Observable<Record<string, unknown>[]>).pipe(
+              map((items) =>
+                items
+                  .map((item) => this.normalizeHelpArticle(item))
+                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.createdAt ?? 0) - (a.createdAt ?? 0))
               ),
               catchError(() => of([] as HelpArticle[]))
             );
@@ -634,6 +635,14 @@ export class CommunityService {
   }
 
   private normalizeHelpArticle(data: Record<string, unknown>): HelpArticle {
+    const rawBody = data['body'];
+    const body = Array.isArray(rawBody)
+      ? rawBody.map((p) => String(p)).filter((p) => p.trim().length > 0)
+      : String(rawBody ?? '').split('\n').map((p) => p.trim()).filter((p) => p.length > 0);
+    const rawSteps = data['steps'];
+    const steps = Array.isArray(rawSteps)
+      ? rawSteps.map((s) => String(s)).filter((s) => s.trim().length > 0)
+      : undefined;
     return {
       id: String(data['id'] ?? ''),
       category:
@@ -649,11 +658,11 @@ export class CommunityService {
       subtitle: String(data['subtitle'] ?? ''),
       icon: String(data['icon'] ?? '📄'),
       keywords: String(data['keywords'] ?? ''),
-      body: Array.isArray(data['body']) ? data['body'] : [String(data['body'] ?? '')],
-      steps: Array.isArray(data['steps']) ? data['steps'] : undefined,
-      tip: typeof data['tip'] === 'string' ? data['tip'] : undefined,
+      body: body.length ? body : [],
+      steps: steps && steps.length ? steps : undefined,
+      tip: typeof data['tip'] === 'string' && data['tip'].trim() ? data['tip'] : undefined,
       order: Number(data['order'] ?? 0),
-      isPublished: data['isPublished'] === true,
+      isPublished: data['isPublished'] !== false,
       createdAt: this.normalizeTimestamp(data['createdAt']),
       updatedAt: this.normalizeTimestamp(data['updatedAt']),
     };
