@@ -515,17 +515,23 @@ service cloud.firestore {
 
     function isProjectMember(projectId, uid) {
       return signedIn()
-        && get(/databases/$(database)/documents/projectMembers/$(projectId)_$(uid)).exists;
+        && exists(/databases/$(database)/documents/projectMembers/$(projectId + '_' + uid));
+    }
+
+    function projectMemberData(projectId, uid) {
+      return get(/databases/$(database)/documents/projectMembers/$(projectId + '_' + uid)).data;
     }
 
     function isProjectWriter(projectId) {
       return signedIn()
-        && get(/databases/$(database)/documents/projectMembers/$(projectId)_$(request.auth.uid)).data.role in ['owner', 'editor'];
+        && isProjectMember(projectId, request.auth.uid)
+        && projectMemberData(projectId, request.auth.uid).role in ['owner', 'editor'];
     }
 
     function isProjectOwner(projectId) {
       return signedIn()
-        && get(/databases/$(database)/documents/projectMembers/$(projectId)_$(request.auth.uid)).data.role == 'owner';
+        && isProjectMember(projectId, request.auth.uid)
+        && projectMemberData(projectId, request.auth.uid).role == 'owner';
     }
 
     match /projects/{projectId} {
@@ -554,15 +560,53 @@ service cloud.firestore {
     match /projectMembers/{memberId} {
       allow read: if signedIn()
         && (isAdmin()
-          || isProjectMember(resource.data.projectId, request.auth.uid)
-          || get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid);
+          || (resource.data.projectId is string && isProjectMember(resource.data.projectId, request.auth.uid))
+          || (resource.data.projectId is string
+            && get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid));
 
       allow create: if signedIn()
-        && (isAdmin() || (request.resource.data.userId == request.auth.uid && isProjectWriter(resource.data.projectId)));
+        && request.resource.data.projectId is string
+        && request.resource.data.userId is string
+        && request.resource.data.userName is string
+        && request.resource.data.userName.size() > 0
+        && request.resource.data.userName.size() <= 120
+        && request.resource.data.role in ['owner', 'editor', 'viewer']
+        && request.resource.data.joinedAt is number
+        && memberId == request.resource.data.projectId + '_' + request.resource.data.userId
+        && request.resource.data.keys().hasOnly([
+          'id', 'projectId', 'userId', 'userName', 'userPhotoURL', 'role', 'joinedAt'
+        ])
+        && request.resource.data.id == memberId
+        && (request.resource.data.userPhotoURL == null || request.resource.data.userPhotoURL is string)
+        && (
+          isAdmin()
+          || (request.resource.data.userId == request.auth.uid
+            && request.resource.data.role == 'owner'
+            && get(/databases/$(database)/documents/projects/$(request.resource.data.projectId)).data.ownerId == request.auth.uid)
+          || (isProjectWriter(request.resource.data.projectId) && request.resource.data.role in ['editor', 'viewer'])
+          || (request.resource.data.userId == request.auth.uid
+            && request.resource.data.role in ['viewer', 'editor']
+            && request.resource.data.joinedAt >= request.time.toMillis() - 300000
+            && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
+        );
 
       allow update: if signedIn()
-        && (isAdmin() || isProjectOwner(resource.data.projectId))
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
+        && memberId == resource.data.projectId + '_' + resource.data.userId
+        && (
+          (
+            isAdmin() || isProjectOwner(resource.data.projectId)
+          ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+            && request.resource.data.role in ['owner', 'editor', 'viewer']
+          || (
+            request.auth.uid == resource.data.userId
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['userName', 'userPhotoURL'])
+            && request.resource.data.userName is string
+            && request.resource.data.userName.size() > 0
+            && request.resource.data.userName.size() <= 120
+            && (request.resource.data.userPhotoURL == null || request.resource.data.userPhotoURL is string)
+          )
+        );
 
       allow delete: if signedIn()
         && (isAdmin() || isProjectOwner(resource.data.projectId) || request.auth.uid == resource.data.userId);
@@ -571,7 +615,7 @@ service cloud.firestore {
     match /projectInvitations/{invitationId} {
       allow read: if signedIn()
         && (resource.data.invitedBy == request.auth.uid
-          || resource.data.invitedEmail == request.auth.token.email
+          || (request.auth.token.email is string && resource.data.invitedEmail == request.auth.token.email)
           || isProjectWriter(resource.data.projectId));
 
       allow create: if signedIn()
@@ -586,10 +630,31 @@ service cloud.firestore {
         && request.resource.data.expiresAt is number;
 
       allow update: if signedIn()
-        && (resource.data.invitedBy == request.auth.uid
-          || resource.data.invitedEmail == request.auth.token.email)
+        && (
+          resource.data.invitedBy == request.auth.uid
+          || (request.auth.token.email is string && resource.data.invitedEmail == request.auth.token.email)
+        )
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'respondedAt', 'invitedUid']);
+          .hasOnly(['status', 'respondedAt', 'invitedUid'])
+        && request.resource.data.status in ['pending', 'accepted', 'rejected', 'revoked', 'expired']
+        && (
+          request.resource.data.status == resource.data.status
+          || (
+            resource.data.status == 'pending'
+            && request.resource.data.respondedAt is number
+            && (
+              (
+                request.auth.token.email is string
+                && resource.data.invitedEmail == request.auth.token.email
+                && request.resource.data.status in ['accepted', 'rejected']
+                && request.resource.data.invitedUid == request.auth.uid
+              ) || (
+                resource.data.invitedBy == request.auth.uid
+                && request.resource.data.status in ['revoked', 'expired', 'pending']
+              )
+            )
+          )
+        );
 
       allow delete: if signedIn()
         && (resource.data.invitedBy == request.auth.uid || isProjectOwner(resource.data.projectId));

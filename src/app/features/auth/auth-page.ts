@@ -121,7 +121,20 @@ export class AuthPage implements OnInit, OnDestroy {
   private async finishLogin(): Promise<void> {
     const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    await this.router.navigateByUrl(returnUrl?.startsWith('/') ? returnUrl : user ? '/feed' : '/editor');
+    await this.router.navigateByUrl(this.resolveSafeReturnUrl(returnUrl, user ? '/feed' : '/editor'));
+  }
+
+  private resolveSafeReturnUrl(returnUrl: string | null, fallback: string): string {
+    if (!returnUrl) return fallback;
+    const value = returnUrl.trim();
+    // Solo se permiten rutas internas relativas (evita URLs absolutas, esquemas y rutas protocol-relative).
+    if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+      return fallback;
+    }
+    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(value)) {
+      return fallback;
+    }
+    return value;
   }
 
   async logout(): Promise<void> {

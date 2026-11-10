@@ -47,6 +47,18 @@ export function isPasswordStrongEnough(password: string): boolean {
     && /\d/.test(password);
 }
 
+/**
+ * Servicio de autenticación y perfil de usuario.
+ *
+ * Modos de operación:
+ * - Firebase (Auth + Firestore): fuente canónica para sesión/perfil y datos privados.
+ * - Solo Auth (sin Firestore): sesión remota con perfil mínimo derivado de Auth.
+ * - Local/demo (sin Firebase): cuentas/sesión en `localStorage` del navegador.
+ *
+ * El modo local/demo es útil para desarrollo y pruebas manuales, pero no reemplaza
+ * controles de seguridad del servidor, no sincroniza entre dispositivos y no debe
+ * usarse para cuentas o datos reales en producción.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly i18n = inject(I18nService);
@@ -67,24 +79,13 @@ export class AuthService {
           const privateProfileRef = doc(this.firestore!, SOCIAL_COLLECTIONS.privateUsers, firebaseUser.uid);
           return combineLatest([docData(publicProfileRef), docData(privateProfileRef)]).pipe(
             tap(([profile, privateProfile]) => {
-              const writes: Promise<void>[] = [];
-              const createdAt = Date.now();
-              if (profile === undefined) {
-                writes.push(setDoc(publicProfileRef, {
-                    uid: firebaseUser.uid,
-                    displayName: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'Creador',
-                    photoURL: firebaseUser.photoURL,
-                    bio: '',
-                    role: DEFAULT_ROLE,
-                    isBanned: false,
-                    createdAt,
-                  }));
-              }
-              if (privateProfile === undefined) {
-                writes.push(setDoc(privateProfileRef, { email: firebaseUser.email ?? '', createdAt }));
-              }
-              if (writes.length) void Promise.all(writes)
-                .catch((error: unknown) => console.error('No se pudo inicializar el perfil de usuario.', error));
+              this.ensureFirebaseProfileInitialized(
+                firebaseUser,
+                profile as Record<string, unknown> | undefined,
+                privateProfile as Record<string, unknown> | undefined,
+                publicProfileRef,
+                privateProfileRef,
+              );
             }),
             map(([profile]) => this.firebaseProfile(firebaseUser, profile)),
           );
@@ -386,6 +387,35 @@ export class AuthService {
 
   private writeAccounts(accounts: UserProfile[]): void {
     localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(accounts));
+  }
+
+  private ensureFirebaseProfileInitialized(
+    firebaseUser: FirebaseAuthUser,
+    profile: Record<string, unknown> | undefined,
+    privateProfile: Record<string, unknown> | undefined,
+    publicProfileRef: ReturnType<typeof doc>,
+    privateProfileRef: ReturnType<typeof doc>,
+  ): void {
+    const writes: Promise<void>[] = [];
+    const createdAt = Date.now();
+    if (profile === undefined) {
+      writes.push(setDoc(publicProfileRef, {
+        uid: firebaseUser.uid,
+        displayName: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'Creador',
+        photoURL: firebaseUser.photoURL,
+        bio: '',
+        role: DEFAULT_ROLE,
+        isBanned: false,
+        createdAt,
+      }));
+    }
+    if (privateProfile === undefined) {
+      writes.push(setDoc(privateProfileRef, { email: firebaseUser.email ?? '', createdAt }));
+    }
+    if (!writes.length) return;
+    void Promise.all(writes).catch((error: unknown) =>
+      console.error('No se pudo inicializar el perfil de usuario.', error),
+    );
   }
 
   private firebaseProfile(

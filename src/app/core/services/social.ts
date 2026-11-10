@@ -65,6 +65,17 @@ export function formatStorageError(error: unknown): string {
   return error instanceof Error ? error.message : 'No se pudo subir el modelo o la miniatura a Firebase Storage.';
 }
 
+/**
+ * Servicio social y de contenido (posts, likes, comentarios, chat, reportes, etc.).
+ *
+ * Modos de operación:
+ * - Firebase (Firestore + Storage): datos compartidos y persistencia remota.
+ * - Local/demo (sin Firebase): datos en `localStorage`/IndexedDB y contenido demo.
+ *
+ * El modo local/demo no comparte datos entre dispositivos, no aplica reglas de
+ * Firestore/Storage y puede diferir funcionalmente del comportamiento en Firebase.
+ * No debe considerarse una fuente fiable para datos reales de usuarios.
+ */
 @Injectable({ providedIn: 'root' })
 export class SocialService {
   private readonly firestore = inject(Firestore, { optional: true });

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -42,13 +42,17 @@ export function hasPermission(role: ProjectRole, permission: ProjectPermission):
 }
 
 @Injectable({ providedIn: 'root' })
-export class CollaborationService {
+export class CollaborationService implements OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly auth = inject(AuthService, { optional: true });
   private readonly i18n = inject(I18nService);
 
   private readonly membersStreams = new Map<string, { stream: BehaviorSubject<ProjectMember[]>; unsub: () => void }>();
   private readonly presencesStreams = new Map<string, { stream: BehaviorSubject<ProjectPresence[]>; unsub: () => void }>();
+
+  ngOnDestroy(): void {
+    this.releaseAll();
+  }
 
   private get authService(): AuthService {
     if (!this.auth) throw new Error(this.i18n.translate('Firebase no está configurado.'));
@@ -339,30 +343,35 @@ export class CollaborationService {
     if (!db || !projectId) return of([]);
     if (!this.membersStreams.has(projectId)) {
       const stream = new BehaviorSubject<ProjectMember[]>([]);
-      const q = query(
-        collection(db, SOCIAL_COLLECTIONS.projectMembers),
-        where('projectId', '==', projectId),
-        orderBy('role', 'asc')
-      );
-      const fallbackQ = query(
+      const membersQuery = query(
         collection(db, SOCIAL_COLLECTIONS.projectMembers),
         where('projectId', '==', projectId)
       );
 
-      const subscription = (collectionData(q, { idField: 'id' }) as Observable<ProjectMember[]>)
+      const subscription = (collectionData(membersQuery, { idField: 'id' }) as Observable<ProjectMember[]>)
         .pipe(
+          map((members) => this.sortMembersByRole(members as ProjectMember[])),
           catchError((err) => {
-            console.warn('Fallback al obtener miembros sin orderBy:', err);
-            return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectMember[]>).pipe(
-              catchError(() => of([] as ProjectMember[]))
-            );
+            console.warn('No se pudieron cargar los miembros del proyecto.', err);
+            return of([] as ProjectMember[]);
           })
         )
-        .subscribe((members) => stream.next(members as ProjectMember[]));
+        .subscribe((members) => stream.next(members));
 
       this.membersStreams.set(projectId, { stream, unsub: () => subscription.unsubscribe() });
     }
     return this.membersStreams.get(projectId)!.stream as Observable<ProjectMember[]>;
+  }
+
+  private sortMembersByRole(members: ProjectMember[]): ProjectMember[] {
+    const priority: Record<ProjectRole, number> = { owner: 0, editor: 1, viewer: 2 };
+    return [...members].sort((a, b) => {
+      const roleDiff = (priority[a.role] ?? 99) - (priority[b.role] ?? 99);
+      if (roleDiff !== 0) return roleDiff;
+      const nameDiff = (a.userName || '').localeCompare(b.userName || '', undefined, { sensitivity: 'base' });
+      if (nameDiff !== 0) return nameDiff;
+      return (a.joinedAt || 0) - (b.joinedAt || 0);
+    });
   }
 
   private async addMember(
@@ -375,17 +384,21 @@ export class CollaborationService {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
     const now = Date.now();
-    const ref = doc(collection(db, SOCIAL_COLLECTIONS.projectMembers));
+    const memberId = `${projectId}_${userId}`;
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
+    const existing = await getDoc(ref);
     const member: ProjectMember = {
-      id: ref.id,
+      id: memberId,
       projectId,
       userId,
       userName,
       userPhotoURL,
       role,
-      joinedAt: now,
+      joinedAt: existing.exists()
+        ? (Number((existing.data() as Partial<ProjectMember>).joinedAt) || now)
+        : now,
     };
-    await setDoc(ref, member);
+    await setDoc(ref, member, { merge: true });
     return ref.id;
   }
 
@@ -434,20 +447,20 @@ export class CollaborationService {
     if (inv.status !== 'pending') throw new Error(this.i18n.translate('La invitación ya no está pendiente.'));
     if (inv.expiresAt < Date.now()) throw new Error(this.i18n.translate('La invitación ha expirado.'));
 
+    const memberId = `${inv.projectId}_${user.uid}`;
     await runTransaction(db, async (tx) => {
       const invRef = doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`);
+      const memberRef = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
       tx.update(invRef, { status: 'accepted', respondedAt: Date.now(), invitedUid: user.uid });
-
-      const memberRef = doc(collection(db, SOCIAL_COLLECTIONS.projectMembers));
       tx.set(memberRef, {
-        id: memberRef.id,
+        id: memberId,
         projectId: inv.projectId,
         userId: user.uid,
         userName: user.displayName,
         userPhotoURL: user.photoURL,
         role: inv.role,
         joinedAt: Date.now(),
-      });
+      }, { merge: true });
     });
   }
 
@@ -605,6 +618,35 @@ export class CollaborationService {
       isOnline: false,
       lastSeen: Date.now(),
     });
+  }
+
+  releaseProject(projectId: string): void {
+    if (!projectId) return;
+    this.releaseCachedStream(this.membersStreams, projectId);
+    this.releaseCachedStream(this.presencesStreams, projectId);
+  }
+
+  releaseAll(): void {
+    for (const projectId of [...this.membersStreams.keys()]) {
+      this.releaseCachedStream(this.membersStreams, projectId);
+    }
+    for (const projectId of [...this.presencesStreams.keys()]) {
+      this.releaseCachedStream(this.presencesStreams, projectId);
+    }
+  }
+
+  private releaseCachedStream<T>(
+    cache: Map<string, { stream: BehaviorSubject<T[]>; unsub: () => void }>,
+    projectId: string,
+  ): void {
+    const entry = cache.get(projectId);
+    if (!entry) return;
+    try {
+      entry.unsub();
+    } finally {
+      entry.stream.complete();
+      cache.delete(projectId);
+    }
   }
 
   /* ------------------------------------------------------------------ */
