@@ -302,4 +302,6 @@ export const RU_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ Миниатюра: PNG',
   '＋ Crear modelo': '＋ Создать модель',
   '＋ Crear un modelo': '＋ Создать новую модель',
+  'chat.connecting': 'Подключение к беседе…',
+
 };

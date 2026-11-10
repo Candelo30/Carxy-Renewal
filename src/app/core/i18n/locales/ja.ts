@@ -302,4 +302,6 @@ export const JA_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ サムネイル: PNG',
   '＋ Crear modelo': '＋ モデルを作成',
   '＋ Crear un modelo': '＋ モデルを作成する',
+  'chat.connecting': '会話に接続中です…',
+
 };

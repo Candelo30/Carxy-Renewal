@@ -90,7 +90,7 @@
               <div class="empty">{{ 'Aún no hay mensajes. Saluda para iniciar la conversación.' | translate }}</div>
             }
           } @else {
-            <app-loading-spinner variant="inline" label="Conectando conversación…" />
+            <app-loading-spinner variant="inline" [label]="'chat.connecting' | translate" />
           }
         </div>
         <form class="composer" (ngSubmit)="send()">

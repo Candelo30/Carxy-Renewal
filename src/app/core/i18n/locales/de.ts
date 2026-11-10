@@ -302,4 +302,6 @@ export const DE_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ Vorschaubild: PNG',
   '＋ Crear modelo': '＋ Modell erstellen',
   '＋ Crear un modelo': '＋ Ein Modell erstellen',
+  'chat.connecting': 'Unterhaltung wird verbunden…',
+
 };

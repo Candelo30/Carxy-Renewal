@@ -432,6 +432,7 @@ export class I18nService {
       'auth.backToLogin': 'Volver al inicio de sesión',
       'auth.backToEditor': 'Volver al editor',
       'auth.localMode': 'Modo local de demostración. Los datos quedan en este navegador; configura Firebase para cuentas reales y sincronización en la nube.',
+      'chat.connecting': 'Conectando conversación…',
       'auth.activeSession': 'SESIÓN ACTIVA',
       'auth.hello': 'Hola, {name}',
       'auth.workspaceReady': 'Tu espacio de creación está listo.',

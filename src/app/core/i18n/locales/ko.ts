@@ -302,4 +302,6 @@ export const KO_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ 썸네일: PNG',
   '＋ Crear modelo': '＋ 모델 만들기',
   '＋ Crear un modelo': '＋ 새 모델 만들기',
+  'chat.connecting': '대화 연결 중입니다…',
+
 };

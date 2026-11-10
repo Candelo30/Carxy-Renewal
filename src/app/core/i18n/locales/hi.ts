@@ -302,4 +302,6 @@ export const HI_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ थंबनेल: PNG',
   '＋ Crear modelo': '＋ मॉडल बनाएँ',
   '＋ Crear un modelo': '＋ एक मॉडल बनाएँ',
+  'chat.connecting': 'बातचीत कनेक्ट हो रही है…',
+
 };

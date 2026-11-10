@@ -302,4 +302,6 @@ export const TR_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ Küçük resim: PNG',
   '＋ Crear modelo': '＋ Model oluştur',
   '＋ Crear un modelo': '＋ Bir model oluştur',
+  'chat.connecting': 'Sohbet bağlanıyor…',
+
 };

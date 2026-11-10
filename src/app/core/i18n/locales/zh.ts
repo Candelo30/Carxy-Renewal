@@ -302,4 +302,6 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
   '🖼️ Miniatura: PNG': '🖼️ 缩略图：PNG',
   '＋ Crear modelo': '＋ 创建模型',
   '＋ Crear un modelo': '＋ 创建一个模型',
+  'chat.connecting': '正在连接对话…',
+
 };

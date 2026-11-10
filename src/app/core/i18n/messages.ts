@@ -358,6 +358,7 @@ export const MESSAGES: Record<string, MessageTranslations> = {
   'chat.yourConversations': { en: 'Your conversations', fr: 'Vos conversations', pt: 'Suas conversas' },
   'chat.emptyHint': { en: 'Enter another creator’s UID to start a private chat.', fr: 'Saisissez l’UID d’un autre créateur pour démarrer une discussion privée.', pt: 'Digite o UID de outro criador para iniciar uma conversa privada.' },
   'chat.localMode': { en: 'Local mode: messages only sync in this browser.', fr: 'Mode local : les messages ne se synchronisent que dans ce navigateur.', pt: 'Modo local: as mensagens só sincronizam neste navegador.' },
+  'chat.connecting': { en: 'Connecting conversation…', fr: 'Connexion à la conversation…', pt: 'Conectando conversa…' },
 
   'auth.welcomeBack': { en: 'Welcome back', fr: 'Bon retour', pt: 'Bem-vindo de volta' },
   'auth.createAccount': { en: 'Create your account', fr: 'Créez votre compte', pt: 'Crie sua conta' },
