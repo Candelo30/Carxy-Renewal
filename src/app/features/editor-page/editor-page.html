@@ -7,11 +7,9 @@
   <app-shell-header
     [language]="language"
     [showSearch]="false"
-    [showNav]="true"
+    [showNav]="false"
     [showPublish]="true"
     [showPresentation]="true"
-    title="{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}"
-    subtitle="{{ language === 'es' ? 'Crea, modela y diseña escenas en tres dimensiones.' : 'Create, model and design 3D scenes.' }}"
     (languageChange)="language = $event"
     (menuToggle)="toggleMobileMenu()"
     (publishClick)="onPublishClick()"
