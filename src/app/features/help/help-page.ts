@@ -8,7 +8,7 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
 import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 
-type HelpCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'cuenta';
+type HelpCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'colaboracion' | 'cuenta';
 type HelpCategoryFilter = HelpCategory | 'todas';
 
 interface HelpCategoryInfo {
@@ -36,6 +36,7 @@ const CATEGORIES: HelpCategoryInfo[] = [
   { id: 'editor', label: 'Editor 3D', icon: '🧊' },
   { id: 'publicacion', label: 'Publicar', icon: '📤' },
   { id: 'comunidad', label: 'Comunidad', icon: '🌐' },
+  { id: 'colaboracion', label: 'Colaboración', icon: '🤝' },
   { id: 'cuenta', label: 'Cuenta y seguridad', icon: '🛡' },
 ];
 
@@ -395,6 +396,106 @@ const ARTICLES: HelpArticle[] = [
     ],
     tip: 'Nunca pegues claves de cuenta de servicio en el cliente. La configuración web de Firebase son identificadores públicos.',
     action: { label: 'Ver el proyecto en GitHub', external: 'https://github.com/Candelo30/Carxy-Renewal' },
+  },
+  {
+    id: 'proyectos-colaborativos',
+    category: 'colaboracion',
+    title: 'Crear y gestionar proyectos 3D en equipo',
+    summary: 'Trabaja con otros creadores en escenas compartidas.',
+    icon: '🤝',
+    keywords: 'proyecto colaborativo equipo equipo escena compartir crear',
+    body: [
+      'Los proyectos te permiten trabajar con otros creadores en la misma escena 3D. Cada proyecto tiene su propia escena, miembros y configuración de privacidad.',
+      'Crea un proyecto desde la página de Proyectos y ábrelo desde el editor para comenzar a crear en equipo.',
+    ],
+    steps: [
+      'Ve a la página de Proyectos y pulsa «Crear un proyecto».',
+      'Escribe un nombre y una descripción opcional, y elige si será público o privado.',
+      'Una vez creado, pulsa «Abrir en editor» para cargar la escena del proyecto.',
+      'Los cambios se guardan automáticamente en la nube cada pocos segundos.',
+    ],
+    tip: 'Si trabajas sin un proyecto, tus cambios se guardan solo como borrador local en este navegador.',
+    action: { label: 'Ir a Proyectos', route: '/projects' },
+  },
+  {
+    id: 'invitaciones-miembros',
+    category: 'colaboracion',
+    title: 'Invitar y gestionar miembros de un proyecto',
+    summary: 'Añade colaboradores a tu proyecto con un rol específico.',
+    icon: '📨',
+    keywords: 'invitar miembro colaborador email rol dueño editor visor',
+    body: [
+      'Solo el dueño y los editores de un proyecto pueden invitar a nuevas personas.',
+      'Las invitaciones expiran a los 7 días si no se aceptan.',
+      'Puedes cambiar el rol de cualquier miembro o eliminarlo del proyecto en cualquier momento.',
+    ],
+    steps: [
+      'Abre el detalle de tu proyecto desde la página de Proyectos.',
+      'En la sección «Invitar miembros», escribe el correo y elige un rol (Editor o Visor).',
+      'La persona recibirá la invitación en sus invitaciones pendientes.',
+      'Para cambiar un rol o eliminar a un miembro, usa las opciones de la lista de miembros.',
+    ],
+    tip: 'El dueño del proyecto no puede ser eliminado ni cambiar su propio rol.',
+    action: { label: 'Ir a Proyectos', route: '/projects' },
+  },
+  {
+    id: 'roles-permisos',
+    category: 'colaboracion',
+    title: 'Roles y permisos: dueño, editor y visor',
+    summary: 'Entiende qué puede hacer cada rol en un proyecto compartido.',
+    icon: '🛡',
+    keywords: 'rol permiso dueño owner editor editor visor viewer lectura escritura',
+    body: [
+      'Cada miembro de un proyecto tiene un rol que define qué puede hacer:',
+      '- **Dueño (owner)**: puede hacer todo: editar, invitar, cambiar roles, eliminar miembros y borrar el proyecto.',
+      '- **Editor (editor)**: puede editar la escena e invitar miembros, pero no borrar el proyecto ni cambiar roles de otros.',
+      '- **Visor (viewer)**: solo puede ver la escena, no puede editar ni invitar.',
+    ],
+    steps: [
+      'Abre el detalle del proyecto y ve a la sección Miembros.',
+      'Cada miembro muestra su rol actual junto a su nombre.',
+      'Si eres dueño, usa el selector de rol para cambiar el rol de cualquier miembro (excepto tú mismo).',
+    ],
+    tip: 'Solo el dueño puede eliminar el proyecto o cambiar el rol de otros miembros.',
+  },
+  {
+    id: 'bloqueo-objetos',
+    category: 'colaboracion',
+    title: 'Bloquear objetos mientras otros editan',
+    summary: 'Evita que dos personas editen el mismo objeto al mismo tiempo.',
+    icon: '🔒',
+    keywords: 'bloquear objeto editar simultaneo conflicto candado',
+    body: [
+      'Cuando trabajas en un proyecto con otros, puedes bloquear un objeto para que nadie más lo modifique mientras tú lo editas.',
+      'Los objetos bloqueados aparecen con un candado 🔒 en el panel de objetos.',
+      'Solo quien bloqueó el objeto (o el dueño del proyecto) puede desbloquearlo.',
+    ],
+    steps: [
+      'En el panel de objetos del editor, pulsa el botón 🔓 junto al objeto para bloquearlo.',
+      'El objeto aparecerá con 🔒 para los demás colaboradores.',
+      'Cuando termines, pulsa 🔒 para liberarlo y que otros puedan editarlo de nuevo.',
+    ],
+    tip: 'Si intentas editar un objeto bloqueado por otro colaborador, verás una notificación avisándote.',
+  },
+  {
+    id: 'historial-actividad',
+    category: 'colaboracion',
+    title: 'Historial compartido de actividad',
+    summary: 'Consulta quién creó, modificó o eliminó cada objeto y cuándo.',
+    icon: '📜',
+    keywords: 'historial actividad quien hizo que cuando actividad compartida',
+    body: [
+      'Cada acción en un proyecto compartido se registra automáticamente: quién creó un objeto, quién lo modificó, quién lo eliminó y cuándo.',
+      'El historial se muestra en el detalle del proyecto, en la sección Actividad.',
+      'Así puedes saber exactamente qué cambios hizo cada miembro del equipo.',
+    ],
+    steps: [
+      'Abre el detalle de tu proyecto desde la página de Proyectos.',
+      'Desplázate hasta la sección «Actividad».',
+      'Verás una lista con el avatar del colaborador, la acción realizada, el objeto afectado y la hora.',
+    ],
+    tip: 'El historial se actualiza en tiempo real a medida que los colaboradores hacen cambios en la escena.',
+    action: { label: 'Ir a Proyectos', route: '/projects' },
   },
 ];
 

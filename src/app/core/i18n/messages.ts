@@ -445,4 +445,216 @@ export const MESSAGES: Record<string, MessageTranslations> = {
   'projects.activity.layer_changed': { en: 'changed layer', fr: 'a modifié le calque', pt: 'alterou camada' },
   'projects.activity': { en: 'Activity', fr: 'Activité', pt: 'Atividade' },
   'projects.noActivity': { en: 'No activity yet.', fr: 'Aucune activité pour le moment.', pt: 'Nenhuma atividade ainda.' },
+  'colaboracion': { en: 'Collaboration', fr: 'Collaboration', pt: 'Colaboração' },
+  'Crear y gestionar proyectos 3D en equipo': {
+    en: 'Create and manage 3D projects as a team',
+    fr: 'Créer et gérer des projets 3D en équipe',
+    pt: 'Criar e gerenciar projetos 3D em equipe',
+  },
+  'Trabaja con otros creadores en escenas compartidas.': {
+    en: 'Work with other creators on shared 3D scenes.',
+    fr: 'Travaillez avec d\'autres créateurs sur des scènes 3D partagées.',
+    pt: 'Trabalhe com outros criadores em cenas 3D compartilhadas.',
+  },
+  'Crear un proyecto desde la página de Proyectos y pulsa «Crear un proyecto».': {
+    en: 'Create a project from the Projects page and click "Create a project".',
+    fr: 'Créez un projet depuis la page Projets et cliquez sur "Créer un projet".',
+    pt: 'Crie um projeto na página Projetos e clique em "Criar um projeto".',
+  },
+  'Escribe un nombre y una descripción opcional, y elige si será público o privado.': {
+    en: 'Write a name and an optional description, and choose whether it will be public or private.',
+    fr: 'Écrivez un nom et une description facultative, et choisissez s\'il sera public ou privé.',
+    pt: 'Escreva um nome e uma descrição opcional, e escolha se será público ou privado.',
+  },
+  'Una vez creado, pulsa «Abrir en editor» para cargar la escena del proyecto.': {
+    en: 'Once created, click "Open in editor" to load the project scene.',
+    fr: 'Une fois créé, cliquez sur "Ouvrir dans l’éditeur" pour charger la scène du projet.',
+    pt: 'Uma vez criado, clique em "Abrir no editor" para carregar a cena do projeto.',
+  },
+  'Los cambios se guardan automáticamente en la nube cada pocos segundos.': {
+    en: 'Changes are automatically saved to the cloud every few seconds.',
+    fr: 'Les modifications sont automatiquement enregistrées dans le cloud toutes les quelques secondes.',
+    pt: 'As alterações são salvas automaticamente na nuvem a cada poucos segundos.',
+  },
+  'Si trabajas sin un proyecto, tus cambios se guardan solo como borrador local en este navegador.': {
+    en: 'If you work without a project, your changes are only saved as a local draft in this browser.',
+    fr: 'Si vous travaillez sans projet, vos modifications ne sont enregistrées que comme brouillon local dans ce navigateur.',
+    pt: 'Se você trabalhar sem um projeto, suas alterações são salvas apenas como rascunho local neste navegador.',
+  },
+  'Ir a Proyectos': { en: 'Go to Projects', fr: 'Aller aux projets', pt: 'Ir para Projetos' },
+  'Invitar y gestionar miembros de un proyecto': {
+    en: 'Invite and manage project members',
+    fr: 'Inviter et gérer les membres d’un projet',
+    pt: 'Convidar e gerenciar membros de um projeto',
+  },
+  'Añade colaboradores a tu proyecto con un rol específico.': {
+    en: 'Add collaborators to your project with a specific role.',
+    fr: 'Ajoutez des collaborateurs à votre projet avec un rôle spécifique.',
+    pt: 'Adicione colaboradores ao seu projeto com uma função específica.',
+  },
+  'Solo el dueño y los editores de un proyecto pueden invitar a nuevas personas.': {
+    en: 'Only the owner and editors of a project can invite new people.',
+    fr: 'Seul le propriétaire et les éditeurs d’un projet peuvent inviter de nouvelles personnes.',
+    pt: 'Apenas o dono e os editores de um projeto podem convidar novas pessoas.',
+  },
+  'Las invitaciones expiran a los 7 días si no se aceptan.': {
+    en: 'Invitations expire after 7 days if not accepted.',
+    fr: 'Les invitations expirent après 7 jours si elles ne sont pas acceptées.',
+    pt: 'Os convites expiram após 7 dias se não forem aceitos.',
+  },
+  'Puedes cambiar el rol de cualquier miembro o eliminarlo del proyecto en cualquier momento.': {
+    en: 'You can change the role of any member or remove them from the project at any time.',
+    fr: 'Vous pouvez modifier le rôle de n\'importe quel membre ou le supprimer du projet à tout moment.',
+    pt: 'Você pode alterar a função de qualquer membro ou removê-lo do projeto a qualquer momento.',
+  },
+  'Abre el detalle de tu proyecto desde la página de Proyectos.': {
+    en: 'Open your project details from the Projects page.',
+    fr: 'Ouvrez les détails de votre projet depuis la page Projets.',
+    pt: 'Abra os detalhes do seu projeto na página Projetos.',
+  },
+  'En la sección «Invitar miembros», escribe el correo y elige un rol (Editor o Visor).': {
+    en: 'In the "Invite members" section, write the email and choose a role (Editor or Viewer).',
+    fr: 'Dans la section "Inviter des membres", écrivez l\'e-mail et choisissez un rôle (Éditeur ou Lecteur).',
+    pt: 'Na seção "Convidar membros", escreva o e-mail e escolha uma função (Editor ou Visualizador).',
+  },
+  'La persona recibirá la invitación en sus invitaciones pendientes.': {
+    en: 'The person will receive the invitation in their pending invitations.',
+    fr: 'La personne recevra l\'invitation dans ses invitations en attente.',
+    pt: 'A pessoa receberá o convite em seus convites pendentes.',
+  },
+  'Para cambiar un rol o eliminar a un miembro, usa las opciones de la lista de miembros.': {
+    en: 'To change a role or remove a member, use the options in the members list.',
+    fr: 'Pour modifier un rôle ou supprimer un membre, utilisez les options de la liste des membres.',
+    pt: 'Para alterar uma função ou remover um membro, use as opções na lista de membros.',
+  },
+  'El dueño del proyecto no puede ser eliminado ni cambiar su propio rol.': {
+    en: 'The project owner cannot be removed or change their own role.',
+    fr: 'Le propriétaire du projet ne peut pas être supprimé ni modifier son propre rôle.',
+    pt: 'O dono do projeto não pode ser removido nem alterar sua própria função.',
+  },
+  'Roles y permisos: dueño, editor y visor': {
+    en: 'Roles and permissions: owner, editor and viewer',
+    fr: 'Rôles et permissions : propriétaire, éditeur et lecteur',
+    pt: 'Funções e permissões: dono, editor e visualizador',
+  },
+  'Entiende qué puede hacer cada rol en un proyecto compartido.': {
+    en: 'Understand what each role can do in a shared project.',
+    fr: 'Comprenez ce que chaque rôle peut faire dans un projet partagé.',
+    pt: 'Entenda o que cada função pode fazer em um projeto compartido.',
+  },
+  'Cada miembro de un proyecto tiene un rol que define qué puede hacer:': {
+    en: 'Each member of a project has a role that defines what they can do:',
+    fr: 'Chaque membre d’un projet a un rôle qui définit ce qu’il peut faire :',
+    pt: 'Cada membro de um projeto tem uma função que define o que ele pode fazer:',
+  },
+  '- **Dueño (owner)**: puede hacer todo: editar, invitar, cambiar roles, eliminar miembros y borrar el proyecto.': {
+    en: '- **Owner (owner)**: can do everything: edit, invite, change roles, remove members and delete the project.',
+    fr: '- **Propriétaire (owner)**: peut tout faire : modifier, inviter, changer les rôles, supprimer des membres et supprimer le projet.',
+    pt: '- **Dono (owner)**: pode fazer tudo: editar, convidar, alterar funções, remover membros e excluir o projeto.',
+  },
+  '- **Editor (editor)**: puede editar la escena e invitar miembros, pero no borrar el proyecto ni cambiar roles de otros.': {
+    en: '- **Editor (editor)**: can edit the scene and invite members, but cannot delete the project or change roles of others.',
+    fr: '- **Éditeur (editor)**: peut modifier la scène et inviter des membres, mais ne peut pas supprimer le projet ni changer les rôles des autres.',
+    pt: '- **Editor (editor)**: pode editar a cena e convidar membros, mas não pode excluir o projeto nem alterar as funções de outros.',
+  },
+  '- **Visor (viewer)**: solo puede ver la escena, no puede editar ni invitar.': {
+    en: '- **Viewer (viewer)**: can only view the scene, cannot edit or invite.',
+    fr: '- **Lecteur (viewer)**: ne peut que voir la scène, ne peut ni modifier ni inviter.',
+    pt: '- **Visualizador (viewer)**: só pode ver a cena, não pode editar nem convidar.',
+  },
+  'Si eres dueño, usa el selector de rol para cambiar el rol de cualquier miembro (excepto tú mismo).': {
+    en: 'If you are the owner, use the role selector to change the role of any member (except yourself).',
+    fr: 'Si vous êtes le propriétaire, utilisez le sélecteur de rôle pour modifier le rôle de n\'importe quel membre (sauf vous-même).',
+    pt: 'Se você for o dono, use o seletor de função para alterar a função de qualquer membro (exceto você mesmo).',
+  },
+  'Solo el dueño puede eliminar el proyecto o cambiar el rol de otros miembros.': {
+    en: 'Only the owner can delete the project or change the role of other members.',
+    fr: 'Seul le propriétaire peut supprimer le projet ou changer le rôle des autres membres.',
+    pt: 'Apenas o dono pode excluir o projeto ou alterar a função de outros membros.',
+  },
+  'Bloquear objetos mientras otros editan': {
+    en: 'Lock objects while others edit',
+    fr: 'Verrouiller les objets pendant que d\'autres modifient',
+    pt: 'Bloquear objetos enquanto outros editam',
+  },
+  'Evita que dos personas editen el mismo objeto al mismo tiempo.': {
+    en: 'Prevent two people from editing the same object at the same time.',
+    fr: 'Empêchez deux personnes de modifier le même objet en même temps.',
+    pt: 'Impedir que duas pessoas editem o mesmo objeto ao mesmo tempo.',
+  },
+  'Cuando trabajas en un proyecto con otros, puedes bloquear un objeto para que nadie más lo modifique mientras tú lo editas.': {
+    en: 'When working on a project with others, you can lock an object so that no one else modifies it while you edit it.',
+    fr: 'Lorsque vous travaillez sur un projet avec d’autres, vous pouvez verrouiller un objet afin que personne d\'autre ne le modifie pendant que vous le modifiez.',
+    pt: 'Ao trabalhar em um projeto com outras pessoas, você pode bloquear um objeto para que ninguém mais o modifique enquanto você o edita.',
+  },
+  'Los objetos bloqueados aparecen con un candado 🔒 en el panel de objetos.': {
+    en: 'Locked objects appear with a lock 🔒 in the objects panel.',
+    fr: 'Les objets verrouillés apparaissent avec un cadenas 🔒 dans le panneau des objets.',
+    pt: 'Objetos bloqueados aparecem com um cadeado 🔒 no painel de objetos.',
+  },
+  'Solo quien bloqueó el objeto (o el dueño del proyecto) puede desbloquearlo.': {
+    en: 'Only the person who locked the object (or the project owner) can unlock it.',
+    fr: 'Seule la personne qui a verrouillé l’objet (ou le propriétaire du projet) peut le déverrouiller.',
+    pt: 'Apenas quem bloqueou o objeto (ou o dono do projeto) pode desbloqueá-lo.',
+  },
+  'En el panel de objetos del editor, pulsa el botón 🔓 junto al objeto para bloquearlo.': {
+    en: 'In the editor objects panel, click the 🔓 button next to the object to lock it.',
+    fr: 'Dans le panneau d’objets de l’éditeur, cliquez sur le bouton 🔓 à côté de l’objet pour le verrouiller.',
+    pt: 'No painel de objetos do editor, clique no botão 🔓 ao lado do objeto para bloqueá-lo.',
+  },
+  'El objeto aparecerá con 🔒 para los demás colaboradores.': {
+    en: 'The object will appear with 🔒 for other collaborators.',
+    fr: "L’objet apparaîtra avec 🔒 pour les autres collaborateurs.",
+    pt: 'O objeto aparecerá com 🔒 para os outros colaboradores.',
+  },
+  'Cuando termines, pulsa 🔒 para liberarlo y que otros puedan editarlo de nuevo.': {
+    en: 'When you are done, click 🔒 to unlock it and allow others to edit it again.',
+    fr: 'Lorsque vous avez terminé, cliquez sur 🔒 pour le déverrouiller et permettre à d\'autres de le modifier à nouveau.',
+    pt: 'Quando terminar, clique em 🔒 para desbloqueá-lo e permitir que outros editem novamente.',
+  },
+  'Si intentas editar un objeto bloqueado por otro colaborador, verás una notificación avisándote.': {
+    en: 'If you try to edit an object locked by another collaborator, you will see a notification warning you.',
+    fr: 'Si vous essayez de modifier un objet verrouillé par un autre collaborateur, vous verrez une notification vous avertissant.',
+    pt: 'Se você tentar editar um objeto bloqueado por outro colaborador, verá uma notificação avisando.',
+  },
+  'Historial compartido de actividad': {
+    en: 'Shared activity history',
+    fr: 'Historique d’activité partagé',
+    pt: 'Histórico de atividade compartido',
+  },
+  'Consulta quién creó, modificó o eliminó cada objeto y cuándo.': {
+    en: 'Check who created, modified or deleted each object and when.',
+    fr: 'Consultez qui a créé, modifié ou supprimé chaque objet et quand.',
+    pt: 'Consulte quem criou, modificou ou excluiu cada objeto e quando.',
+  },
+  'Cada acción en un proyecto compartido se registra automáticamente: quién creó un objeto, quién lo modificó, quién lo eliminó y cuándo.': {
+    en: 'Every action in a shared project is automatically recorded: who created an object, who modified it, who deleted it and when.',
+    fr: 'Chaque action dans un projet partagé est automatiquement enregistrée : qui a créé un objet, qui l’a modifié, qui l’a supprimé et quand.',
+    pt: 'Toda ação em um projeto compartido é registrada automaticamente: quem criou um objeto, quem o modificou, quem o excluiu e quando.',
+  },
+  'El historial se muestra en el detalle del proyecto, en la sección Actividad.': {
+    en: 'The history is shown in the project details, in the Activity section.',
+    fr: 'L’historique est affiché dans les détails du projet, dans la section Activité.',
+    pt: 'O histórico é exibido nos detalhes do projeto, na seção Atividade.',
+  },
+  'Así puedes saber exactamente qué cambios hizo cada miembro del equipo.': {
+    en: 'That way you can know exactly what changes each team member made.',
+    fr: 'Ainsi vous savez exactement quels changements chaque membre de l’équipe a effectués.',
+    pt: 'Assim você pode saber exatamente quais alterações cada membro da equipe fez.',
+  },
+  'Desplázate hasta la sección «Actividad».': {
+    en: 'Scroll down to the "Activity" section.',
+    fr: 'Faites défiler jusqu\'à la section "Activité".',
+    pt: 'Role até a seção "Atividade".',
+  },
+  'Verás una lista con el avatar del colaborador, la acción realizada, el objeto afectado y la hora.': {
+    en: 'You will see a list with the collaborator\'s avatar, the action performed, the affected object and the time.',
+    fr: 'Vous verrez une liste avec l’avatar du collaborateur, l’action effectuée, l’objet affecté et l’heure.',
+    pt: 'Você verá uma lista com o avatar do colaborador, a ação realizada, o objeto afetado e a hora.',
+  },
+  'El historial se actualiza en tiempo real a medida que los colaboradores hacen cambios en la escena.': {
+    en: 'The history updates in real time as collaborators make changes to the scene.',
+    fr: "L’historique se met à jour en temps réel à mesure que les collaborateurs modifient la scène.",
+    pt: 'O histórico é atualizado em tempo real à medida que os colaboradores fazem alterações na cena.',
+  },
 };

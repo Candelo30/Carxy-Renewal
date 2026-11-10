@@ -400,4 +400,92 @@ export const KO_TRANSLATIONS: Record<string, string> = {
 
   'projects.activity': '활동',
 
+  'Ir a Proyectos': 'Go to Projects',
+
+  'colaboracion': 'Collaboration',
+
+  'El historial se actualiza en tiempo real a medida que los colaboradores hacen cambios en la escena.': 'The history updates in real time as collaborators make changes to the scene.',
+
+  'Verás una lista con el avatar del colaborador, la acción realizada, el objeto afectado y la hora.': 'You will see a list with the collaborator\'s avatar, the action performed, the affected object and the time.',
+
+  'Desplázate hasta la sección «Actividad».': 'Scroll down to the "Activity" section.',
+
+  'Así puedes saber exactamente qué cambios hizo cada miembro del equipo.': 'That way you can know exactly what changes each team member made.',
+
+  'El historial se muestra en el detalle del proyecto, en la sección Actividad.': 'The history is shown in the project details, in the Activity section.',
+
+  'Cada acción en un proyecto compartido se registra automáticamente: quién creó un objeto, quién lo modificó, quién lo eliminó y cuándo.': 'Every action in a shared project is automatically recorded: who created an object, who modified it, who deleted it and when.',
+
+  'Consulta quién creó, modificó o eliminó cada objeto y cuándo.': 'Check who created, modified or deleted each object and when.',
+
+  'Historial compartido de actividad': 'Shared activity history',
+
+  'Si intentas editar un objeto bloqueado por otro colaborador, verás una notificación avisándote.': 'If you try to edit an object locked by another collaborator, you will see a notification warning you.',
+
+  'Cuando termines, pulsa 🔒 para liberarlo y que otros puedan editarlo de nuevo.': 'When you are done, click 🔒 to unlock it and allow others to edit it again.',
+
+  'El objeto aparecerá con 🔒 para los demás colaboradores.': 'The object will appear with 🔒 for other collaborators.',
+
+  'En el panel de objetos del editor, pulsa el botón 🔓 junto al objeto para bloquearlo.': 'In the editor objects panel, click the 🔓 button next to the object to lock it.',
+
+  'Solo quien bloqueó el objeto (o el dueño del proyecto) puede desbloquearlo.': 'Only the person who locked the object (or the project owner) can unlock it.',
+
+  'Los objetos bloqueados aparecen con un candado 🔒 en el panel de objetos.': 'Locked objects appear with a lock 🔒 in the objects panel.',
+
+  'Cuando trabajas en un proyecto con otros, puedes bloquear un objeto para que nadie más lo modifique mientras tú lo editas.': 'When working on a project with others, you can lock an object so that no one else modifies it while you edit it.',
+
+  'Evita que dos personas editen el mismo objeto al mismo tiempo.': 'Prevent two people from editing the same object at the same time.',
+
+  'Bloquear objetos mientras otros editan': 'Lock objects while others edit',
+
+  'Solo el dueño puede eliminar el proyecto o cambiar el rol de otros miembros.': 'Only the owner can delete the project or change the role of other members.',
+
+  'Si eres dueño, usa el selector de rol para cambiar el rol de cualquier miembro (excepto tú mismo).': 'If you are the owner, use the role selector to change the role of any member (except yourself).',
+
+  '- **Visor (viewer)**: solo puede ver la escena, no puede editar ni invitar.': '- **Viewer (viewer)**: can only view the scene, cannot edit or invite.',
+
+  '- **Editor (editor)**: puede editar la escena e invitar miembros, pero no borrar el proyecto ni cambiar roles de otros.': '- **Editor (editor)**: can edit the scene and invite members, but cannot delete the project or change roles of others.',
+
+  '- **Dueño (owner)**: puede hacer todo: editar, invitar, cambiar roles, eliminar miembros y borrar el proyecto.': '- **Owner (owner)**: can do everything: edit, invite, change roles, remove members and delete the project.',
+
+  'Cada miembro de un proyecto tiene un rol que define qué puede hacer:': 'Each member of a project has a role that defines what they can do:',
+
+  'Entiende qué puede hacer cada rol en un proyecto compartido.': 'Understand what each role can do in a shared project.',
+
+  'Roles y permisos: dueño, editor y visor': 'Roles and permissions: owner, editor and viewer',
+
+  'El dueño del proyecto no puede ser eliminado ni cambiar su propio rol.': 'The project owner cannot be removed or change their own role.',
+
+  'Para cambiar un rol o eliminar a un miembro, usa las opciones de la lista de miembros.': 'To change a role or remove a member, use the options in the members list.',
+
+  'La persona recibirá la invitación en sus invitaciones pendientes.': 'The person will receive the invitation in their pending invitations.',
+
+  'En la sección «Invitar miembros», escribe el correo y elige un rol (Editor o Visor).': 'In the "Invite members" section, write the email and choose a role (Editor or Viewer).',
+
+  'Abre el detalle de tu proyecto desde la página de Proyectos.': 'Open your project details from the Projects page.',
+
+  'Puedes cambiar el rol de cualquier miembro o eliminarlo del proyecto en cualquier momento.': 'You can change the role of any member or remove them from the project at any time.',
+
+  'Las invitaciones expiran a los 7 días si no se aceptan.': 'Invitations expire after 7 days if not accepted.',
+
+  'Solo el dueño y los editores de un proyecto pueden invitar a nuevas personas.': 'Only the owner and editors of a project can invite new people.',
+
+  'Añade colaboradores a tu proyecto con un rol específico.': 'Add collaborators to your project with a specific role.',
+
+  'Invitar y gestionar miembros de un proyecto': 'Invite and manage project members',
+
+  'Si trabajas sin un proyecto, tus cambios se guardan solo como borrador local en este navegador.': 'If you work without a project, your changes are only saved as a local draft in this browser.',
+
+  'Los cambios se guardan automáticamente en la nube cada pocos segundos.': 'Changes are automatically saved to the cloud every few seconds.',
+
+  'Una vez creado, pulsa «Abrir en editor» para cargar la escena del proyecto.': 'Once created, click "Open in editor" to load the project scene.',
+
+  'Escribe un nombre y una descripción opcional, y elige si será público o privado.': 'Write a name and an optional description, and choose whether it will be public or private.',
+
+  'Crear un proyecto desde la página de Proyectos y pulsa «Crear un proyecto».': 'Create a project from the Projects page and click "Create a project".',
+
+  'Trabaja con otros creadores en escenas compartidas.': 'Work with other creators on shared 3D scenes.',
+
+  'Crear y gestionar proyectos 3D en equipo': 'Create and manage 3D projects as a team',
+
 };
