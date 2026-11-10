@@ -21,8 +21,9 @@ type BodyId = 'coupe' | 'sedan' | 'familiar';
 interface FinishOption {
   id: FinishId;
   label: string;
-  gloss: number;
-  sheen: number;
+  glossOpacity: number;
+  sheenOpacity: number;
+  sheenEnd: string;
 }
 
 interface WheelOption {
@@ -36,9 +37,10 @@ interface WheelOption {
 interface BodyOption {
   id: BodyId;
   label: string;
+  body: string;
   roof: string;
-  rear: string;
-  side: string;
+  glass: string;
+  mirror: string;
 }
 
 interface InteriorOption {
@@ -110,9 +112,9 @@ export class AboutPage {
   ];
 
   readonly finishOptions: FinishOption[] = [
-    { id: 'gloss', label: 'Brillante', gloss: 0.32, sheen: 0.9 },
-    { id: 'metallic', label: 'Metalizado', gloss: 0.22, sheen: 0.7 },
-    { id: 'matte', label: 'Mate', gloss: 0, sheen: 0.15 },
+    { id: 'gloss', label: 'Brillante', glossOpacity: 0.35, sheenOpacity: 0.35, sheenEnd: 'rgba(255,255,255,0.12)' },
+    { id: 'metallic', label: 'Metalizado', glossOpacity: 0.22, sheenOpacity: 0.28, sheenEnd: 'rgba(255,255,255,0.09)' },
+    { id: 'matte', label: 'Mate', glossOpacity: 0, sheenOpacity: 0, sheenEnd: 'rgba(255,255,255,0)' },
   ];
 
   readonly wheelOptions: WheelOption[] = [
@@ -122,9 +124,30 @@ export class AboutPage {
   ];
 
   readonly bodyOptions: BodyOption[] = [
-    { id: 'coupe', label: 'Coupé', roof: 'M 244 211 C 266 185 322 177 368 179 C 408 181 434 196 446 208 L 244 211 Z', rear: 'M 462 211 C 500 213 522 223 524 241 C 524 251 518 256 505 256 L 462 252 Z', side: 'M 160 240 C 260 232 420 232 518 240' },
-    { id: 'sedan', label: 'Sedán', roof: 'M 238 207 C 258 177 318 165 370 167 C 416 169 444 188 452 207 L 238 207 Z', rear: 'M 452 207 C 500 210 524 224 526 241 C 526 251 519 256 503 256 L 452 252 Z', side: 'M 160 240 C 260 230 420 229 520 240' },
-    { id: 'familiar', label: 'Familiar', roof: 'M 236 207 C 254 174 308 158 362 160 C 410 162 444 182 452 207 L 236 207 Z', rear: 'M 452 207 C 500 210 524 224 526 241 C 526 251 519 256 503 256 L 452 252 Z', side: 'M 160 240 C 260 231 420 231 520 240' },
+    {
+      id: 'coupe',
+      label: 'Coupé',
+      body: 'M 152 300 C 160 256 212 246 252 243 C 276 210 338 198 396 199 C 448 201 484 223 500 242 C 532 247 554 258 556 276 C 556 291 548 298 526 298 L 166 298 C 154 296 152 292 152 300 Z',
+      roof: 'M 252 243 C 276 210 338 198 396 199 C 448 201 484 223 500 242',
+      glass: 'M 268 243 C 290 215 342 204 392 205 C 430 206 462 223 478 240 L 268 243 Z',
+      mirror: 'M 490 224 L 520 218',
+    },
+    {
+      id: 'sedan',
+      label: 'Sedán',
+      body: 'M 152 300 C 160 256 208 246 246 244 C 264 204 318 188 370 189 C 422 190 466 214 482 243 C 524 247 550 258 552 276 C 552 291 544 298 522 298 L 166 298 C 156 296 152 292 152 300 Z',
+      roof: 'M 246 244 C 264 204 318 188 370 189 C 422 190 466 214 482 243',
+      glass: 'M 268 244 C 286 213 322 199 370 199 C 414 200 446 220 464 240 L 268 244 Z',
+      mirror: 'M 462 220 L 508 224',
+    },
+    {
+      id: 'familiar',
+      label: 'Familiar',
+      body: 'M 152 300 C 160 252 204 236 242 233 C 258 190 292 172 346 172 C 396 172 440 196 466 233 C 520 238 548 254 552 276 C 552 291 544 298 522 298 L 166 298 C 157 296 152 292 152 300 Z',
+      roof: 'M 242 233 C 258 190 292 172 346 172 C 396 172 440 196 466 233',
+      glass: 'M 262 233 C 276 198 312 181 348 181 C 390 181 424 205 448 232 L 262 233 Z',
+      mirror: 'M 444 220 L 500 222',
+    },
   ];
 
   protected selectedFinishId: FinishId = 'metallic';
@@ -156,14 +179,6 @@ export class AboutPage {
 
   get selectedBody(): BodyOption {
     return this.bodyOptions.find((option) => option.id === this.selectedBodyId) ?? this.bodyOptions[0];
-  }
-
-  get paintGlossOpacity(): number {
-    return this.selectedFinish.gloss;
-  }
-
-  get paintSheenOpacity(): number {
-    return this.selectedFinish.sheen;
   }
 
   get configurationSummary(): string {
