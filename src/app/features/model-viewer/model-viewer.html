@@ -1,5 +1,6 @@
 <div class="viewer-container">
-  <canvas #rendererCanvas class="webgl-canvas" (pointerdown)="onCanvasPointerDown($event)" (mousemove)="onCanvasMouseMove($event)"></canvas>
+  <canvas #rendererCanvas class="webgl-canvas" (pointerdown)="onCanvasPointerDown($event)" (mousemove)="onCanvasMouseMove($event)" (wheel)="onCanvasWheel($event)" (contextmenu)="onCanvasContextMenu($event)"></canvas>
+
   <div class="hotspot-layer">
     @for (hotspot of hotspots; track hotspot.id) {
       @if (hotspot.visible) {
@@ -28,7 +29,7 @@
     }
   </div>
 
-  <!-- Panel de controles 3D -->
+  <!-- Panel de controles 3D - esquina superior izquierda, sobre el canvas -->
   <div class="viewer-controls">
     <div class="control-group">
       <span class="control-label">Vista</span>
