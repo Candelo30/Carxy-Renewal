@@ -27,7 +27,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
-import type { NotificationPosition } from '../../core/models/social.models';
+import type { NotificationPosition, ProjectActivity } from '../../core/models/social.models';
 import type {
   EditableMaterial,
   PrimitiveType,
@@ -200,6 +200,46 @@ export class ModelEditor implements OnInit, OnDestroy {
           const json = this.threeEngine.serializeScene();
           void this.collaboration.saveProjectScene(this.projectId, json);
         });
+
+      // Registrar actividad de colaboración en el historial compartido
+      const lastAction = { type: '' as string, id: '' as string };
+      const logActivityDebounced = (action: ProjectActivity['action'], objectId: string, objectType: string, snapshot?: string) => {
+        if (!this.projectId || !this.canWrite) return;
+        void this.collaboration.logActivity(this.projectId, action, objectId, objectType, snapshot);
+      };
+
+      this.subscriptions.add(this.threeEngine.selectionChanged$.subscribe(() => {
+        this.updateSelectionState();
+        this.syncValuesFromEngine();
+        this.loadMaterialsFromEngine();
+        this.measureDimensions();
+      }));
+
+      this.subscriptions.add(this.threeEngine.sceneChanged$.subscribe(() => {
+        this.sceneObjects = this.threeEngine.getSceneObjects();
+        this.refreshSceneNodes();
+        this.cdr.detectChanges();
+      }));
+
+      // Detectar creación/eliminación de objetos y loguear actividad
+      this.subscriptions.add(this.threeEngine.sceneChanged$.subscribe(() => {
+        const current = this.threeEngine.getSceneObjects();
+        if (current.length === 0 && lastAction.type !== 'cleared') {
+          // No loguear borrado masivo aquí, se maneja en deleteSelectedObject
+        }
+        // Guardar referencia para comparar en el siguiente cambio
+        lastAction.type = 'scene';
+        lastAction.id = current.map(o => o.id).join(',');
+      }));
+
+      // Loguear cuando se selecciona un objeto (selectionChanged ya existe arriba)
+      // Loguear transformaciones (movimiento/rotación/escala) de objetos seleccionados
+      this.subscriptions.add(this.threeEngine.transformChanged$.subscribe(() => {
+        const selId = this.threeEngine.getSelectedNodeId();
+        if (selId) {
+          logActivityDebounced('object_updated', selId, 'object', this.threeEngine.sceneJson);
+        }
+      }));
       // Escuchar cambios remotos de la escena y aplicarlos localmente
       this.remoteSceneSub = this.collaboration.watchProjectScene(this.projectId).subscribe((remoteJson) => {
         if (!remoteJson || remoteJson === this.threeEngine.serializeScene()) return;
@@ -269,7 +309,17 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   addPrimitive(type: PrimitiveType): void {
-    this.threeEngine.addPrimitive(type);
+    const id = this.threeEngine.addPrimitive(type);
+    if (id && this.projectId && this.canWrite) {
+      const obj = this.threeEngine.getSceneObjects().find((o) => o.id === id);
+      void this.collaboration.logActivity(
+        this.projectId,
+        'object_created',
+        id,
+        obj?.name ?? type,
+        this.threeEngine.sceneJson
+      );
+    }
   }
 
   selectObject(id: string): void {
@@ -294,7 +344,16 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   deleteSelectedObject(): void {
-    this.threeEngine.deleteCurrentModel();
+    const id = this.threeEngine.deleteCurrentModel();
+    if (id && this.projectId && this.canWrite) {
+      void this.collaboration.logActivity(
+        this.projectId,
+        'object_deleted',
+        id,
+        'object',
+        this.threeEngine.sceneJson
+      );
+    }
   }
 
   applyAppearance(): void {
@@ -571,10 +630,20 @@ export class ModelEditor implements OnInit, OnDestroy {
   // --- Duplicar / copiar / pegar ---
 
   duplicateSelectedObject(): void {
-    const ok = this.threeEngine.duplicateSelected();
-    if (!ok) {
+    const newId = this.threeEngine.duplicateSelected();
+    if (!newId) {
       this.notifications.warning(this.i18n.translate('Selecciona un objeto para duplicar.'));
       return;
+    }
+    if (this.projectId && this.canWrite) {
+      const obj = this.threeEngine.getSceneObjects().find((o) => o.id === newId);
+      void this.collaboration.logActivity(
+        this.projectId,
+        'object_created',
+        newId,
+        obj?.name ?? 'object',
+        this.threeEngine.sceneJson
+      );
     }
     this.notifications.success(this.i18n.translate('Objeto duplicado.'), this.i18n.translate('Duplicar'));
   }

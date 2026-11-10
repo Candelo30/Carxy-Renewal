@@ -386,4 +386,18 @@ export const JA_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': '共同編集者によってシーンが更新されました',
 
+  'projects.activity.layer_changed': 'レイヤーを変更',
+
+  'projects.activity.material_changed': 'マテリアルを変更',
+
+  'projects.activity.object_deleted': 'オブジェクトを削除',
+
+  'projects.activity.object_updated': 'オブジェクトを変更',
+
+  'projects.activity.object_created': 'オブジェクトを作成',
+
+  'projects.noActivity': 'まだアクティビティはありません。',
+
+  'projects.activity': 'アクティビティ',
+
 };

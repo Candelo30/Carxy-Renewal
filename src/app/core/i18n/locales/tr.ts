@@ -386,4 +386,18 @@ export const TR_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': 'Sahne bir işbirlikçi tarafından güncellendi',
 
+  'projects.activity.layer_changed': 'katmanı değiştirdi',
+
+  'projects.activity.material_changed': 'materyali değiştirdi',
+
+  'projects.activity.object_deleted': 'nesneyi sildi',
+
+  'projects.activity.object_updated': 'nesneyi düzenledi',
+
+  'projects.activity.object_created': 'nesne oluşturdu',
+
+  'projects.noActivity': 'Henüz etkinlik yok.',
+
+  'projects.activity': 'Etkinlik',
+
 };

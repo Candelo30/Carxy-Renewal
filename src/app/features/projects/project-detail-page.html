@@ -98,6 +98,24 @@
       </div>
     </div>
   </section>
+
+  <section class="activity-section" *ngIf="projectId">
+    <h2>{{ 'projects.activity' | translate }}</h2>
+    <div class="activity-list" *ngIf="activity | async as activityList">
+      <div class="activity-row" *ngFor="let item of activityList">
+        <div class="activity-avatar">{{ item.actorName.charAt(0) }}</div>
+        <div class="activity-info">
+          <div class="activity-actor">{{ item.actorName }}</div>
+          <div class="activity-action">{{ item.action | translate }}</div>
+          <div class="activity-time">{{ item.createdAt | date:'short' }}</div>
+        </div>
+        <div class="activity-object">{{ item.objectType }}</div>
+      </div>
+      <div class="empty-activity" *ngIf="!activityList.length">
+        <p>{{ 'projects.noActivity' | translate }}</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <app-site-footer></app-site-footer>

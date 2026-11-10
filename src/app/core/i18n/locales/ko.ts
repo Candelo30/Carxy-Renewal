@@ -386,4 +386,18 @@ export const KO_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': '협업자에 의해 씬이 업데이트되었습니다',
 
+  'projects.activity.layer_changed': '레이어 변경',
+
+  'projects.activity.material_changed': '재료 변경',
+
+  'projects.activity.object_deleted': '개체 삭제',
+
+  'projects.activity.object_updated': '개체 수정',
+
+  'projects.activity.object_created': '개체 생성',
+
+  'projects.noActivity': '아직 활동이 없습니다.',
+
+  'projects.activity': '활동',
+
 };

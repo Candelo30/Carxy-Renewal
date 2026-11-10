@@ -934,10 +934,10 @@ export class ThreeEngineService implements OnDestroy {
     }
   }
 
-  public addPrimitive(type: PrimitiveType): void {
+  public addPrimitive(type: PrimitiveType): string {
     if (!this.scene) {
       this.pendingPrimitives.push(type);
-      return;
+      return '';
     }
     let geometry: THREE.BufferGeometry;
     let name: string;
@@ -990,12 +990,13 @@ export class ThreeEngineService implements OnDestroy {
     group.add(new THREE.Mesh(geometry, material));
     const offset = this.objects.length * 0.45;
     group.position.set(offset, 0.8, offset);
-    this.addObject(group, name);
+    const id = this.addObject(group, name);
     this.resetCamera();
+    return id;
   }
 
-  private addObject(object: THREE.Group, name: string): void {
-    if (!this.scene) return;
+  private addObject(object: THREE.Group, name: string): string {
+    if (!this.scene) return '';
     object.name = name;
     object.traverse((child) => {
       this.initialNodeTransforms.set(child, {
@@ -1020,6 +1021,7 @@ export class ThreeEngineService implements OnDestroy {
     this.scene.add(object);
     this.selectObject(item.id);
     this.sceneChanged$.next();
+    return item.id;
   }
 
   // --- Medición de distancia 3D ---
@@ -1139,9 +1141,11 @@ export class ThreeEngineService implements OnDestroy {
     }
   }
 
-  public deleteCurrentModel(): void {
-    if (!this.scene || !this.currentModel) return;
+  public deleteCurrentModel(): string | null {
+    if (!this.scene || !this.currentModel) return null;
     const removed = this.currentModel;
+    const item = this.objects.find((it) => it.object === removed);
+    const removedId = item?.id ?? null;
     this.transformControls?.detach();
     this.scene.remove(removed);
     this.disposeObject(removed);
@@ -1160,17 +1164,18 @@ export class ThreeEngineService implements OnDestroy {
       this.selectionChanged$.next();
     }
     this.sceneChanged$.next();
+    return removedId;
   }
 
-  public duplicateSelected(): boolean {
-    if (!this.scene || !this.currentModel) return false;
+  public duplicateSelected(): string | null {
+    if (!this.scene || !this.currentModel) return null;
     const source = this.currentModel;
     const clone = source.clone(true) as THREE.Group;
     clone.position.x += 1.2;
     clone.position.z += 0.4;
     const baseName = source.name?.trim() || 'Objeto';
-    this.addObject(clone, `${baseName} copia`);
-    return true;
+    const newId = this.addObject(clone, `${baseName} copia`);
+    return newId;
   }
 
   public copySelectedToClipboard(): string | null {

@@ -154,6 +154,19 @@ export class CollaborationService {
     return this.getProjectScene(projectId);
   }
 
+  /** Historial de actividad de un proyecto (quién hizo qué y cuándo). */
+  getProjectActivity(projectId: string): Observable<ProjectActivity[]> {
+    const db = this.firestore;
+    if (!db) return of([]);
+    const q = query(
+      collection(db, `${SOCIAL_COLLECTIONS.projectActivity}`),
+      where('projectId', '==', projectId),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    return collectionData(q, { idField: 'id' }) as Observable<ProjectActivity[]>;
+  }
+
   async saveProjectScene(projectId: string, sceneJson: string): Promise<void> {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));

@@ -438,4 +438,11 @@ export const MESSAGES: Record<string, MessageTranslations> = {
   'projects.lockObject': { en: 'Lock object', fr: 'Verrouiller l’objet', pt: 'Bloquear objeto' },
   'projects.unlockObject': { en: 'Unlock object', fr: 'Déverrouiller l’objet', pt: 'Desbloquear objeto' },
   'projects.sceneUpdatedRemotely': { en: 'Scene updated by a collaborator', fr: 'Scène mise à jour par un collaborateur', pt: 'Cena atualizada por um colaborador' },
+  'projects.activity.object_created': { en: 'created object', fr: 'a créé un objet', pt: 'criou objeto' },
+  'projects.activity.object_updated': { en: 'modified object', fr: 'a modifié un objet', pt: 'modificou objeto' },
+  'projects.activity.object_deleted': { en: 'deleted object', fr: 'a supprimé un objet', pt: 'excluiu objeto' },
+  'projects.activity.material_changed': { en: 'changed material', fr: 'a modifié le matériau', pt: 'alterou material' },
+  'projects.activity.layer_changed': { en: 'changed layer', fr: 'a modifié le calque', pt: 'alterou camada' },
+  'projects.activity': { en: 'Activity', fr: 'Activité', pt: 'Atividade' },
+  'projects.noActivity': { en: 'No activity yet.', fr: 'Aucune activité pour le moment.', pt: 'Nenhuma atividade ainda.' },
 };

@@ -29,6 +29,7 @@ export class ProjectDetailPage implements OnInit {
   project$ = this.collaboration.getProject('');
   members = this.collaboration.getMembers('');
   invitations = this.collaboration.getMyInvitations();
+  activity = this.collaboration.getProjectActivity('');
 
   newInviteEmail = '';
   newInviteRole: 'owner' | 'editor' | 'viewer' = 'editor';
@@ -47,6 +48,7 @@ export class ProjectDetailPage implements OnInit {
     });
     this.members = this.collaboration.getMembers(this.projectId);
     this.invitations = this.collaboration.getMyInvitations();
+    this.activity = this.collaboration.getProjectActivity(this.projectId);
 
     this.collaboration
       .getMembers(this.projectId)

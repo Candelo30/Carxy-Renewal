@@ -386,4 +386,18 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': '场景已由协作者更新',
 
+  'projects.activity.layer_changed': '更改了图层',
+
+  'projects.activity.material_changed': '更改了材质',
+
+  'projects.activity.object_deleted': '删除了对象',
+
+  'projects.activity.object_updated': '修改了对象',
+
+  'projects.activity.object_created': '创建了对象',
+
+  'projects.noActivity': '暂无活动。',
+
+  'projects.activity': '活动',
+
 };

@@ -386,4 +386,18 @@ export const HI_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': 'सहयोगी द्वारा दृश्य अपडेट किया गया',
 
+  'projects.activity.layer_changed': 'परत बदल दी',
+
+  'projects.activity.material_changed': 'पदार्थ बदल दिया',
+
+  'projects.activity.object_deleted': 'वस्तु हटाई',
+
+  'projects.activity.object_updated': 'वस्तु संशोधित की',
+
+  'projects.activity.object_created': 'वस्तु बनाई',
+
+  'projects.noActivity': 'अभी कोई गतिविधि नहीं है।',
+
+  'projects.activity': 'गतिविधि',
+
 };

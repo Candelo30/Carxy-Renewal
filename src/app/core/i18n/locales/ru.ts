@@ -386,4 +386,18 @@ export const RU_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': 'Сцена обновлена соавтором',
 
+  'projects.activity.layer_changed': 'изменил слой',
+
+  'projects.activity.material_changed': 'изменил материал',
+
+  'projects.activity.object_deleted': 'удалил объект',
+
+  'projects.activity.object_updated': 'изменил объект',
+
+  'projects.activity.object_created': 'создал объект',
+
+  'projects.noActivity': 'Активности пока нет.',
+
+  'projects.activity': 'Активность',
+
 };

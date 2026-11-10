@@ -386,4 +386,18 @@ export const DE_TRANSLATIONS: Record<string, string> = {
 
   'projects.sceneUpdatedRemotely': 'Szene wurde von einem Mitarbeiter aktualisiert',
 
+  'projects.activity.layer_changed': 'hat Calque geändert',
+
+  'projects.activity.material_changed': 'hat Material geändert',
+
+  'projects.activity.object_deleted': 'hat Objekt gelöscht',
+
+  'projects.activity.object_updated': 'hat Objekt geändert',
+
+  'projects.activity.object_created': 'hat Objekt erstellt',
+
+  'projects.noActivity': 'Noch keine Aktivität.',
+
+  'projects.activity': 'Aktivität',
+
 };
