@@ -384,17 +384,21 @@ export class CollaborationService implements OnDestroy {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
     const now = Date.now();
-    const ref = doc(collection(db, SOCIAL_COLLECTIONS.projectMembers));
+    const memberId = `${projectId}_${userId}`;
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
+    const existing = await getDoc(ref);
     const member: ProjectMember = {
-      id: ref.id,
+      id: memberId,
       projectId,
       userId,
       userName,
       userPhotoURL,
       role,
-      joinedAt: now,
+      joinedAt: existing.exists()
+        ? (Number((existing.data() as Partial<ProjectMember>).joinedAt) || now)
+        : now,
     };
-    await setDoc(ref, member);
+    await setDoc(ref, member, { merge: true });
     return ref.id;
   }
 
@@ -443,20 +447,20 @@ export class CollaborationService implements OnDestroy {
     if (inv.status !== 'pending') throw new Error(this.i18n.translate('La invitación ya no está pendiente.'));
     if (inv.expiresAt < Date.now()) throw new Error(this.i18n.translate('La invitación ha expirado.'));
 
+    const memberId = `${inv.projectId}_${user.uid}`;
     await runTransaction(db, async (tx) => {
       const invRef = doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`);
+      const memberRef = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
       tx.update(invRef, { status: 'accepted', respondedAt: Date.now(), invitedUid: user.uid });
-
-      const memberRef = doc(collection(db, SOCIAL_COLLECTIONS.projectMembers));
       tx.set(memberRef, {
-        id: memberRef.id,
+        id: memberId,
         projectId: inv.projectId,
         userId: user.uid,
         userName: user.displayName,
         userPhotoURL: user.photoURL,
         role: inv.role,
         joinedAt: Date.now(),
-      });
+      }, { merge: true });
     });
   }
 
