@@ -20,6 +20,7 @@
   --color-warning: #efc98f;
 }
 
+/* Light mode theme */
 :root[data-theme='light'] {
   color-scheme: light;
   --surface-main: #f0f2f7;
@@ -36,9 +37,24 @@
   --color-warning: #86530a;
 }
 
-*,
-*::before,
-*::after {
+/* Dark mode theme */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-main: #121212;
+  --surface-panel: #1e1e1e;
+  --surface-raised: #252525;
+  --surface-active: #2d2d2d;
+  --surface-control: #3a3a3a;
+  --border-color: #4a4a4a;
+  --text-primary: #fafafa;
+  --text-muted: #b0b0b0;
+  --text-on-accent: #ffffff;
+  --color-danger: #f87171;
+  --color-success: #37c99d;
+  --color-warning: #d97706;
+}
+
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -146,6 +162,12 @@ input[type='range']::-moz-range-thumb {
     background-color 0.2s ease;
 }
 
+/* Dark mode specific */
+html[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+/* 6. Configuración de tema */
 html[data-theme='light'] :is(
   app-auth-page,
   app-feed-page,
@@ -288,22 +310,6 @@ input[type='range']::-moz-range-thumb:hover {
 }
 
 html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard) {
-  color: var(--text-primary);
-}
-
-html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard)
-  :is(.site-header, .topbar) {
-  border-color: var(--border-color);
-  background: color-mix(in srgb, var(--surface-panel) 94%, transparent);
-  color: var(--text-primary);
-}
-
-html[data-theme='light'] :is(app-feed-page, app-profile-page, app-chat-page, app-my-models, app-admin-dashboard)
-  :is(nav a, .author-row a, .profile-link) {
-  color: var(--text-primary);
-}
-
-html[data-theme='light'] app-feed-page {
   color: var(--text-primary);
 }
 

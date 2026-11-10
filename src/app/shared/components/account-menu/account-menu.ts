@@ -76,7 +76,10 @@ export class AccountMenuComponent {
   }
 
   saveAppearance(): void {
-    this.document.documentElement.dataset['theme'] = this.preferences.theme;
+    const theme = this.preferences.theme === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : this.preferences.theme;
+    this.document.documentElement.dataset['theme'] = theme;
     this.document.documentElement.style.setProperty('--accent-color', this.preferences.accentColor);
     this.state.savePreferences(this.preferences);
   }

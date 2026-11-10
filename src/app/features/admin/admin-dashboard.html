@@ -3,9 +3,11 @@
     [showSearch]="false"
     [showNav]="true"
     [title]="'Panel de administración' | translate"
-    [subtitle]="'Gestiona acceso, roles y publicaciones de la comunidad.' | translate"
+    [subtitle]="'Control, supervisión y gestión de la plataforma' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
+
+  <div class="sidebar-backdrop" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
 
   <aside class="admin-sidebar" [class.open]="mobileMenuOpen">
     <div class="sidebar-header">
@@ -13,143 +15,172 @@
         <span class="sidebar-brand-icon">🛡</span>
         <span class="sidebar-brand-name">CARXY Admin</span>
       </div>
-      <button class="sidebar-close" (click)="mobileMenuOpen = false">✕</button>
+      <button class="sidebar-close" type="button" (click)="closeMobileMenu()" aria-label="Cerrar menú">✕</button>
     </div>
-    <nav class="sidebar-nav">
-      <a class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
-        <span class="sidebar-icon">📊</span>
-        <span class="sidebar-label">{{ 'Dashboard' | translate }}</span>
-      </a>
-      <a class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')">
-        <span class="sidebar-icon">👥</span>
-        <span class="sidebar-label">{{ 'Usuarios' | translate }}</span>
-        <span class="sidebar-badge">{{ (vm$ | async)?.users?.length || 0 }}</span>
-      </a>
-      <a class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
-        <span class="sidebar-icon">📦</span>
-        <span class="sidebar-label">{{ 'Contenido' | translate }}</span>
-        <span class="sidebar-badge">{{ (vm$ | async)?.posts?.length || 0 }}</span>
-      </a>
-      <a class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
-        <span class="sidebar-icon">💬</span>
-        <span class="sidebar-label">{{ 'Feedback' | translate }}</span>
-        <span class="sidebar-badge">{{ (vm$ | async)?.feedback?.length || 0 }}</span>
-      </a>
-      <a class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
-        <span class="sidebar-icon">❓</span>
-        <span class="sidebar-label">{{ 'Preguntas' | translate }}</span>
-        <span class="sidebar-badge">{{ (vm$ | async)?.questions?.length || 0 }}</span>
-      </a>
+    <nav class="sidebar-nav" *ngIf="vm$ | async as vm">
+      <button class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
+        <span class="sidebar-icon">📊</span><span class="sidebar-label">Dashboard</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')" [disabled]="moderationOnly">
+        <span class="sidebar-icon">👥</span><span class="sidebar-label">Usuarios</span>
+        <span class="sidebar-badge">{{ vm.users.length }}</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
+        <span class="sidebar-icon">📦</span><span class="sidebar-label">Contenido</span>
+        <span class="sidebar-badge">{{ vm.posts.length }}</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isReports" (click)="setTab('reports')">
+        <span class="sidebar-icon">🚩</span><span class="sidebar-label">Reportes</span>
+        <span class="sidebar-badge warn" *ngIf="(stats$ | async)?.openReports">{{ (stats$ | async)?.openReports }}</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
+        <span class="sidebar-icon">💬</span><span class="sidebar-label">Feedback</span>
+        <span class="sidebar-badge">{{ vm.feedback.length }}</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
+        <span class="sidebar-icon">❓</span><span class="sidebar-label">Preguntas</span>
+        <span class="sidebar-badge">{{ vm.questions.length }}</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isProjects" (click)="setTab('projects')" [disabled]="moderationOnly">
+        <span class="sidebar-icon">🗂</span><span class="sidebar-label">Proyectos</span>
+        <span class="sidebar-badge">{{ vm.projects.length }}</span>
+      </button>
+      <button class="sidebar-item" [class.active]="isHelpArticles" (click)="setTab('helpArticles')" [disabled]="moderationOnly">
+        <span class="sidebar-icon">📚</span><span class="sidebar-label">Ayuda</span>
+        <span class="sidebar-badge">{{ vm.helpArticles.length }}</span>
+      </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="sidebar-logout" (click)="auth.logout()">
-        {{ 'Cerrar sesión' | translate }}
-      </button>
+      <button class="sidebar-logout" type="button" (click)="auth.logout()">Cerrar sesión</button>
     </div>
   </aside>
 
   <div class="admin-content">
     <header class="admin-header">
       <div class="admin-header-left">
-        <button class="mobile-menu-toggle" (click)="mobileMenuOpen = !mobileMenuOpen">☰</button>
-        <h1 class="admin-page-title">{{ 'Panel de control' | translate }}</h1>
+        <button class="mobile-menu-toggle" type="button" (click)="toggleMobileMenu()" aria-label="Abrir menú">☰</button>
+        <div>
+          <h1 class="admin-page-title">{{ pageTitle }}</h1>
+          <p class="admin-page-subtitle" *ngIf="moderationOnly">Modo moderación</p>
+        </div>
       </div>
       <div class="admin-header-right">
         <div class="admin-search">
-          <input
-            type="search"
-            class="search-input"
-            [(ngModel)]="searchQuery"
-            [placeholder]="'Buscar…' | translate"
-          />
+          <input type="search" class="search-input" [(ngModel)]="searchQuery" placeholder="Buscar en la sección…" />
         </div>
-        <button class="btn-refresh" (click)="refresh()">↻</button>
-        <button class="btn-user">{{ (vm$ | async)?.user?.displayName?.charAt(0) || 'A' }}</button>
+        <button class="btn-refresh" type="button" (click)="refresh()" title="Actualizar">↻</button>
+        <button class="btn-user" type="button" title="Usuario actual">{{ (vm$ | async)?.user?.displayName?.charAt(0) || 'A' }}</button>
       </div>
     </header>
 
     <section class="admin-body">
-      <ng-container *ngIf="vm$ | async as vm">
+      <ng-container *ngIf="vm$ | async as vm; else loadingState">
+
         <!-- DASHBOARD -->
         <ng-container *ngIf="isDashboard">
-          <div class="stats-grid">
-            <article class="stat-card">
-              <span class="stat-icon">👥</span>
-              <div>
-                <small>{{ 'Usuarios totales' | translate }}</small
-                ><strong>{{ statsValue?.totalUsers || 0 }}</strong>
-              </div>
-            </article>
-            <article class="stat-card">
-              <span class="stat-icon">📦</span>
-              <div>
-                <small>{{ 'Publicaciones' | translate }}</small
-                ><strong>{{ statsValue?.totalPosts || 0 }}</strong>
-              </div>
-            </article>
-          </div>
-          <div class="admin-grid">
-            <section class="admin-panel">
-              <div class="panel-header">
-                <div class="panel-title-row">
-                  <h2>{{ 'Publicaciones recientes' | translate }}</h2>
-                </div>
-              </div>
-              <div class="moderation-grid">
-                <article class="content-card" *ngFor="let post of vm.posts.slice(0, 6); trackBy: trackPost">
-                  <img [src]="post.thumbnailUrl" [alt]="post.title" />
-                  <div>
-                    <div class="content-title">
-                      <h3>{{ post.title }}</h3>
-                      <span [class.private]="post.isPrivate">{{
-                        (post.isPrivate ? 'Privado' : 'Público') | translate
-                      }}</span>
-                    </div>
-                    <p>{{ post.description || ('Sin descripción' | translate) }}</p>
-                    <small
-                      >{{ 'Por' | translate }} {{ post.author.displayName }} ·
-                      {{ post.createdAt | date: 'mediumDate' }}</small
-                    >
-                    <button class="danger" (click)="requestDelete(post)">
-                      {{ 'Eliminar publicación y archivos' | translate }}
-                    </button>
+          <ng-container *ngIf="stats$ | async as stats">
+            <div class="stats-grid">
+              <article class="stat-card accent-blue"><span class="stat-icon">👥</span><div><small>Usuarios</small><strong>{{ stats.totalUsers }}</strong></div><em>{{ stats.activeUsers }} activos</em></article>
+              <article class="stat-card accent-red"><span class="stat-icon">⛔</span><div><small>Suspendidos</small><strong>{{ stats.suspendedUsers }}</strong></div><em>{{ stats.moderatorUsers }} mods · {{ stats.adminUsers }} admins</em></article>
+              <article class="stat-card accent-green"><span class="stat-icon">📦</span><div><small>Publicaciones</small><strong>{{ stats.totalPosts }}</strong></div><em>{{ stats.publicPosts }} públicas · {{ stats.privatePosts }} privadas</em></article>
+              <article class="stat-card accent-amber"><span class="stat-icon">🚩</span><div><small>Reportes abiertos</small><strong>{{ stats.openReports }}</strong></div><em>{{ stats.resolvedReports }} resueltos</em></article>
+              <article class="stat-card accent-violet"><span class="stat-icon">💬</span><div><small>Feedback</small><strong>{{ stats.totalFeedback }}</strong></div><em>{{ stats.newFeedback }} nuevos</em></article>
+              <article class="stat-card accent-cyan"><span class="stat-icon">❓</span><div><small>Preguntas</small><strong>{{ stats.totalQuestions }}</strong></div><em>{{ stats.openQuestions }} abiertas</em></article>
+              <article class="stat-card"><span class="stat-icon">🗂</span><div><small>Proyectos</small><strong>{{ stats.totalProjects }}</strong></div><em>Colaboración</em></article>
+              <article class="stat-card"><span class="stat-icon">❤</span><div><small>Engagement</small><strong>{{ stats.totalLikes }}</strong></div><em>{{ stats.totalViews }} vistas · {{ stats.totalRemixes }} remixes</em></article>
+            </div>
+
+            <div class="charts-grid">
+              <section class="admin-panel chart-panel">
+                <div class="panel-header"><div class="panel-title-row"><h2>Usuarios por rol</h2></div></div>
+                <div class="chart-bars" *ngIf="chartUsersByRole$ | async as bars">
+                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
                   </div>
-                </article>
-              </div>
-            </section>
-          </div>
+                </div>
+              </section>
+              <section class="admin-panel chart-panel">
+                <div class="panel-header"><div class="panel-title-row"><h2>Visibilidad de contenido</h2></div></div>
+                <div class="chart-bars" *ngIf="chartPostsVisibility$ | async as bars">
+                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                  </div>
+                </div>
+              </section>
+              <section class="admin-panel chart-panel">
+                <div class="panel-header"><div class="panel-title-row"><h2>Estado de reportes</h2></div></div>
+                <div class="chart-bars" *ngIf="chartReports$ | async as bars">
+                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                  </div>
+                </div>
+              </section>
+              <section class="admin-panel chart-panel">
+                <div class="panel-header"><div class="panel-title-row"><h2>Estado de feedback</h2></div></div>
+                <div class="chart-bars" *ngIf="chartFeedback$ | async as bars">
+                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="admin-grid">
+              <section class="admin-panel">
+                <div class="panel-header"><div class="panel-title-row"><h2>Publicaciones recientes</h2></div></div>
+                <div class="moderation-grid">
+                  <article class="content-card" *ngFor="let post of vm.posts.slice(0, 6); trackBy: trackPost">
+                    <img [src]="post.thumbnailUrl" [alt]="post.title" />
+                    <div>
+                      <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
+                      <small>{{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }} · {{ post.viewsCount || 0 }} vistas</small>
+                    </div>
+                  </article>
+                  <div class="empty-inline" *ngIf="!vm.posts.length">Sin publicaciones aún.</div>
+                </div>
+              </section>
+              <section class="admin-panel">
+                <div class="panel-header"><div class="panel-title-row"><h2>Actividad reciente</h2></div></div>
+                <ul class="activity-list">
+                  <li *ngFor="let r of vm.reports.slice(0,5); trackBy: trackReport">🚩 Reporte: <strong>{{ r.postTitle }}</strong> · {{ reportStatusLabel(r) | translate }}</li>
+                  <li *ngFor="let f of vm.feedback.slice(0,5); trackBy: trackFeedback">💬 Feedback: <strong>{{ f.subject }}</strong> · {{ f.status }}</li>
+                  <li *ngIf="!vm.reports.length && !vm.feedback.length" class="muted">Sin actividad reciente.</li>
+                </ul>
+              </section>
+            </div>
+          </ng-container>
         </ng-container>
 
         <!-- USERS -->
         <ng-container *ngIf="isUsers">
           <section class="admin-panel full-width">
-            <div class="panel-header">
-              <div class="panel-title-row">
-                <h2>{{ 'Usuarios registrados' | translate }}</h2>
-                <span>{{ vm.users.length }} {{ 'cuentas' | translate }}</span>
-              </div>
-            </div>
-            <div class="table-wrap">
+            <div class="panel-header"><div class="panel-title-row"><h2>Usuarios registrados</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} cuentas</span></div></div>
+            <div class="table-wrap" *ngIf="filteredUsers$ | async as users">
               <table>
-                <thead>
-                  <tr>
-                    <th>{{ 'Usuario' | translate }}</th>
-                    <th>{{ 'Email' | translate }}</th>
-                    <th>{{ 'ROL' | translate }}</th>
-                    <th>{{ 'ESTADO' | translate }}</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Usuario</th><th>Email</th><th>UID</th><th>Rol</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead>
                 <tbody>
-                  <tr *ngFor="let user of vm.users; trackBy: trackUser">
-                    <td>{{ user.displayName }}</td>
+                  <tr *ngFor="let user of users; trackBy: trackUser">
+                    <td><strong>{{ user.displayName }}</strong></td>
                     <td>{{ user.email || '—' }}</td>
-                    <td>{{ user.role | translate }}</td>
+                    <td><small class="mono">{{ user.uid }}</small></td>
                     <td>
-                      <span class="state" [class.banned]="user.isBanned">{{
-                        (user.isBanned ? 'Suspendida' : 'Activa') | translate
-                      }}</span>
+                      <select [ngModel]="user.role" (change)="changeRole(user, $event, vm.user)" [disabled]="user.uid === vm.user?.uid">
+                        <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                      </select>
+                    </td>
+                    <td><span class="state" [class.banned]="user.isBanned">{{ user.isBanned ? 'Suspendida' : 'Activa' }}</span></td>
+                    <td>{{ user.createdAt | date:'mediumDate' }}</td>
+                    <td>
+                      <button class="small-button" [class.danger]="!user.isBanned" (click)="toggleBan(user, vm.user)" [disabled]="user.uid === vm.user?.uid">
+                        {{ user.isBanned ? 'Restaurar' : 'Suspender' }}
+                      </button>
                     </td>
                   </tr>
+                  <tr *ngIf="!users.length"><td colspan="7" class="muted-cell">No hay usuarios para mostrar.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -159,78 +190,23 @@
         <!-- CONTENT -->
         <ng-container *ngIf="isContent">
           <section class="admin-panel full-width">
-            <div class="panel-header">
-              <div class="panel-title-row">
-                <h2>{{ 'Modelos de la comunidad' | translate }}</h2>
-                <span>{{ vm.posts.length }} {{ 'modelos' | translate }}</span>
-              </div>
-            </div>
-            <div class="moderation-grid">
-              <article class="content-card" *ngFor="let post of vm.posts; trackBy: trackPost">
+            <div class="panel-header"><div class="panel-title-row"><h2>Moderación de contenido</h2><span>{{ (filteredPosts$ | async)?.length || 0 }} modelos</span></div></div>
+            <div class="moderation-grid" *ngIf="filteredPosts$ | async as posts">
+              <article class="content-card" *ngFor="let post of posts; trackBy: trackPost">
                 <img [src]="post.thumbnailUrl" [alt]="post.title" />
                 <div>
-                  <div class="content-title">
-                    <h3>{{ post.title }}</h3>
-                    <span [class.private]="post.isPrivate">{{
-                      (post.isPrivate ? 'Privado' : 'Público') | translate
-                    }}</span>
+                  <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
+                  <p>{{ post.description || 'Sin descripción' }}</p>
+                  <small>Por {{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }}</small>
+                  <small>❤ {{ post.likesCount || 0 }} · 👁 {{ post.viewsCount || 0 }} · ⤴ {{ post.remixCount || 0 }}</small>
+                  <div class="card-actions">
+                    <button class="small-button" (click)="togglePostVisibility(post)">{{ post.isPrivate ? 'Hacer público' : 'Hacer privado' }}</button>
+                    <a class="small-button" [routerLink]="['/profile', post.authorId || post.author.uid]">Autor</a>
+                    <button class="small-button danger" (click)="requestDelete(post)">Eliminar</button>
                   </div>
-                  <p>{{ post.description || ('Sin descripción' | translate) }}</p>
-                  <small
-                    >{{ 'Por' | translate }} {{ post.author.displayName }} ·
-                    {{ post.createdAt | date: 'mediumDate' }}</small
-                  >
-                  <button class="danger" (click)="requestDelete(post)">
-                    {{ 'Eliminar publicación y archivos' | translate }}
-                  </button>
                 </div>
               </article>
-            </div>
-          </section>
-        </ng-container>
-
-        <!-- FEEDBACK -->
-        <ng-container *ngIf="isFeedback">
-          <section class="admin-panel full-width">
-            <div class="panel-header">
-              <div class="panel-title-row">
-                <h2>{{ 'admin.feedbackTitle' | translate }}</h2>
-                <span>{{ vm.feedback.length }} {{ 'mensajes' | translate }}</span>
-              </div>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ 'FECHA' | translate }}</th>
-                    <th>{{ 'TIPO' | translate }}</th>
-                    <th>{{ 'CONTACTO' | translate }}</th>
-                    <th>{{ 'ASUNTO' | translate }}</th>
-                    <th>{{ 'ESTADO' | translate }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of vm.feedback; trackBy: trackFeedback">
-                    <td>{{ item.createdAt | date: 'short' }}</td>
-                    <td>
-                      <span class="badge">{{ 'contact.type.' + item.type | translate }}</span>
-                    </td>
-                    <td>
-                      <strong>{{ item.name }}</strong
-                      ><small class="creator-id">{{ item.email || '—' }}</small>
-                    </td>
-                    <td>
-                      <strong>{{ item.subject }}</strong
-                      ><small class="feedback-message">{{ item.message }}</small>
-                    </td>
-                    <td>
-                      <span class="state" [class.banned]="item.status === 'new'">{{
-                        'admin.status.' + item.status | translate
-                      }}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div class="empty-inline" *ngIf="!posts.length">No hay contenido para mostrar.</div>
             </div>
           </section>
         </ng-container>
@@ -239,120 +215,213 @@
         <ng-container *ngIf="isReports">
           <section class="admin-panel full-width">
             <div class="panel-header">
-              <div class="panel-title-row">
-                <h2>{{ 'Reportes' | translate }}</h2>
-                <span>{{ vm.reports.length }} {{ 'reportes' | translate }}</span>
+              <div class="panel-title-row"><h2>Reportes de contenido</h2><span>{{ (filteredReports$ | async)?.length || 0 }} reportes</span></div>
+              <div class="panel-actions">
+                <select [(ngModel)]="reportFilter">
+                  <option value="all">Todos</option>
+                  <option value="open">Abiertos</option>
+                  <option value="resolved">Resueltos</option>
+                  <option value="dismissed">Descartados</option>
+                </select>
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap" *ngIf="filteredReports$ | async as reports">
               <table>
-                <thead>
-                  <tr>
-                    <th>{{ 'MODELO' | translate }}</th>
-                    <th>{{ 'REPORTADO POR' | translate }}</th>
-                    <th>{{ 'MOTIVO' | translate }}</th>
-                    <th>{{ 'ESTADO' | translate }}</th>
-                    <th>{{ 'FECHA' | translate }}</th>
-                    <th></th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Modelo</th><th>Reportado por</th><th>Motivo</th><th>Detalles</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
                 <tbody>
-                  <tr *ngFor="let report of vm.reports; trackBy: trackReport">
-                    <td>
-                      <strong>{{ report.postTitle }}</strong
-                      ><small class="creator-id">{{ report.postId }}</small>
-                    </td>
+                  <tr *ngFor="let report of reports; trackBy: trackReport">
+                    <td><strong>{{ report.postTitle }}</strong><br /><small class="mono">{{ report.postId }}</small></td>
                     <td>{{ report.reporterName }}</td>
+                    <td><span class="badge">{{ report.reason }}</span></td>
+                    <td>{{ report.details || '—' }}</td>
+                    <td><span class="state" [class.open]="report.status==='open'" [class.resolved]="report.status==='resolved'">{{ reportStatusLabel(report) | translate }}</span></td>
+                    <td>{{ report.createdAt | date:'short' }}</td>
                     <td>
-                      <span class="badge">{{ report.reason | translate }}</span>
+                      <div class="row-actions" *ngIf="report.status === 'open'; else closedReport">
+                        <button class="small-button primary" (click)="resolveReport(report,'resolved')">Resolver</button>
+                        <button class="small-button" (click)="resolveReport(report,'dismissed')">Descartar</button>
+                      </div>
+                      <ng-template #closedReport><span class="muted">Cerrado</span></ng-template>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!reports.length"><td colspan="7" class="muted-cell">No hay reportes para mostrar.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </ng-container>
+
+        <!-- FEEDBACK -->
+        <ng-container *ngIf="isFeedback">
+          <section class="admin-panel full-width">
+            <div class="panel-header"><div class="panel-title-row"><h2>Feedback y contacto</h2><span>{{ (filteredFeedback$ | async)?.length || 0 }} mensajes</span></div></div>
+            <div class="table-wrap" *ngIf="filteredFeedback$ | async as items">
+              <table>
+                <thead><tr><th>Fecha</th><th>Tipo</th><th>Contacto</th><th>Asunto / Mensaje</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let item of items; trackBy: trackFeedback">
+                    <td>{{ item.createdAt | date:'short' }}</td>
+                    <td><span class="badge">{{ item.type }}</span></td>
+                    <td><strong>{{ item.name }}</strong><br /><small>{{ item.email || '—' }}</small></td>
+                    <td><strong>{{ item.subject }}</strong><p class="cell-text">{{ item.message }}</p></td>
+                    <td>
+                      <select [ngModel]="item.status" (ngModelChange)="setFeedbackStatus(item, $event)">
+                        <option *ngFor="let s of feedbackStatuses" [value]="s">{{ s }}</option>
+                      </select>
+                    </td>
+                    <td><button class="small-button danger" (click)="deleteFeedback(item)">Eliminar</button></td>
+                  </tr>
+                  <tr *ngIf="!items.length"><td colspan="6" class="muted-cell">No hay feedback para mostrar.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </ng-container>
+
+        <!-- COMMUNITY HELP -->
+        <ng-container *ngIf="isHelp">
+          <section class="admin-panel full-width">
+            <div class="panel-header"><div class="panel-title-row"><h2>Preguntas de la comunidad</h2><span>{{ (filteredQuestions$ | async)?.length || 0 }} preguntas</span></div></div>
+            <div class="table-wrap" *ngIf="filteredQuestions$ | async as questions">
+              <table>
+                <thead><tr><th>Pregunta</th><th>Autor</th><th>Métricas</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let q of questions; trackBy: trackQuestion">
+                    <td>
+                      <a [routerLink]="['/community-help']" [queryParams]="{ q: q.id }"><strong>{{ q.title }}</strong></a>
+                      <p class="cell-text">{{ q.body }}</p>
+                      <small>{{ q.tags.join(' · ') }}</small>
+                    </td>
+                    <td>{{ q.authorName }}</td>
+                    <td>💬 {{ q.answersCount }} · 👍 {{ q.votes }}</td>
+                    <td>
+                      <div class="chip-row">
+                        <span class="chip" [class.on]="q.resolved">Resuelta</span>
+                        <span class="chip" [class.on]="q.pinned">Fijada</span>
+                        <span class="chip" [class.on]="q.locked">Bloqueada</span>
+                      </div>
                     </td>
                     <td>
-                      <span class="state" [class.banned]="report.status === 'resolved'">{{
-                        reportStatusLabel(report) | translate
-                      }}</span>
-                    </td>
-                    <td>{{ report.createdAt | date: 'shortDate' }}</td>
-                    <td>
-                      <div class="report-actions">
-                        <button
-                          *ngIf="report.status === 'open'"
-                          class="small-button"
-                          (click)="resolveReport(report, 'resolved')"
-                        >
-                          {{ 'Resolver' | translate }}
-                        </button>
-                        <button
-                          *ngIf="report.status === 'open'"
-                          class="small-button"
-                          (click)="resolveReport(report, 'dismissed')"
-                        >
-                          {{ 'Descartar' | translate }}
-                        </button>
-                        <button
-                          *ngIf="report.status !== 'open'"
-                          class="small-button"
-                          [disabled]="true"
-                        >
-                          {{
-                            report.status === 'resolved' ? 'Resuelto' : ('Descartado' | translate)
-                          }}
-                        </button>
+                      <div class="row-actions wrap">
+                        <button class="small-button" (click)="toggleQuestionResolved(q)">{{ q.resolved ? 'Reabrir' : 'Resolver' }}</button>
+                        <button class="small-button" (click)="toggleQuestionPinned(q)">{{ q.pinned ? 'Desfijar' : 'Fijar' }}</button>
+                        <button class="small-button" (click)="toggleQuestionLocked(q)">{{ q.locked ? 'Desbloquear' : 'Bloquear' }}</button>
+                        <button class="small-button danger" (click)="deleteQuestion(q)">Eliminar</button>
                       </div>
                     </td>
                   </tr>
+                  <tr *ngIf="!questions.length"><td colspan="5" class="muted-cell">No hay preguntas para mostrar.</td></tr>
                 </tbody>
               </table>
             </div>
           </section>
         </ng-container>
 
-        <!-- HELP / COMMUNITY QUESTIONS -->
-        <ng-container *ngIf="isHelp">
+        <!-- PROJECTS -->
+        <ng-container *ngIf="isProjects">
           <section class="admin-panel full-width">
-            <div class="panel-header">
-              <div class="panel-title-row">
-                <h2>{{ 'admin.helpTitle' | translate }}</h2>
-                <span>{{ vm.questions.length }} {{ 'preguntas' | translate }}</span>
+            <div class="panel-header"><div class="panel-title-row"><h2>Proyectos colaborativos</h2><span>{{ (filteredProjects$ | async)?.length || 0 }} proyectos</span></div></div>
+            <div class="projects-layout" *ngIf="filteredProjects$ | async as projects">
+              <div class="projects-list">
+                <article class="project-card" *ngFor="let p of projects; trackBy: trackProject" [class.selected]="selectedProjectId === p.id" (click)="selectProject(p.id)">
+                  <div class="project-info">
+                    <div class="project-name">{{ p.name }}</div>
+                    <div class="project-desc">{{ p.description || 'Sin descripción' }}</div>
+                    <div class="project-meta"><span class="badge">{{ p.isPublic ? 'Público' : 'Privado' }}</span><span>Actualizado {{ p.updatedAt | date:'shortDate' }}</span></div>
+                  </div>
+                  <div class="project-actions"><button class="small-button danger" (click)="deleteProject(p.id); $event.stopPropagation()">Eliminar</button></div>
+                </article>
+                <div class="empty-inline" *ngIf="!projects.length">No hay proyectos para mostrar.</div>
+              </div>
+              <div class="members-panel admin-panel" *ngIf="selectedProjectId">
+                <div class="panel-header"><div class="panel-title-row"><h3>Miembros del proyecto</h3><span>{{ projectMembers.length }}</span></div></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Usuario</th><th>Rol</th><th>Ingreso</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                      <tr *ngFor="let m of projectMembers; trackBy: trackMember">
+                        <td><strong>{{ m.userName || m.userId }}</strong><br /><small class="mono">{{ m.userId }}</small></td>
+                        <td>
+                          <select [ngModel]="m.role" (change)="onRoleChange(selectedProjectId, m.id, $event)">
+                            <option *ngFor="let r of projectRoles" [value]="r">{{ r }}</option>
+                          </select>
+                        </td>
+                        <td>{{ m.joinedAt | date:'mediumDate' }}</td>
+                        <td><button class="small-button danger" (click)="removeMember(selectedProjectId, m.id)">Quitar</button></td>
+                      </tr>
+                      <tr *ngIf="!projectMembers.length"><td colspan="4" class="muted-cell">Sin miembros o proyecto sin datos.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ 'PREGUNTA' | translate }}</th>
-                    <th>{{ 'AUTOR' | translate }}</th>
-                    <th>{{ 'RESPUESTAS' | translate }}</th>
-                    <th>{{ 'VOTOS' | translate }}</th>
-                    <th>{{ 'ESTADO' | translate }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let question of vm.questions; trackBy: trackQuestion">
-                    <td>
-                      <a [routerLink]="['/community-help']" [queryParams]="{ q: question.id }"
-                        ><strong>{{ question.title }}</strong></a
-                      >
-                      <br /><small class="creator-id">{{ question.tags.join(' · ') }}</small>
-                    </td>
-                    <td>{{ question.authorName }}</td>
-                    <td>{{ question.answersCount }}</td>
-                    <td>{{ question.votes }}</td>
-                    <td>
-                      <span class="state" [class.banned]="question.resolved">{{
-                        (question.resolved ? 'common.resolved' : 'common.open') | translate
-                      }}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          </section>
+        </ng-container>
+
+        <!-- HELP ARTICLES -->
+        <ng-container *ngIf="isHelpArticles">
+          <section class="admin-panel full-width">
+            <div class="panel-header"><div class="panel-title-row"><h2>Artículos del centro de ayuda</h2><span>{{ (filteredArticles$ | async)?.length || 0 }} artículos</span></div></div>
+            <div class="help-layout">
+              <div class="help-editor">
+                <h3>{{ articleToEdit ? 'Editar artículo' : 'Nuevo artículo' }}</h3>
+                <div class="article-form">
+                  <div class="form-row">
+                    <div class="form-group"><label>Categoría</label>
+                      <select [(ngModel)]="newArticle.category">
+                        <option *ngFor="let c of helpCategories" [value]="c">{{ getCategoryLabel(c) }}</option>
+                      </select>
+                    </div>
+                    <div class="form-group"><label>Icono</label><input [(ngModel)]="newArticle.icon" /></div>
+                    <div class="form-group"><label>Orden</label><input type="number" [(ngModel)]="newArticle.order" /></div>
+                  </div>
+                  <div class="form-group"><label>Título</label><input [(ngModel)]="newArticle.title" placeholder="Título del artículo" /></div>
+                  <div class="form-group"><label>Subtítulo</label><input [(ngModel)]="newArticle.subtitle" placeholder="Resumen corto" /></div>
+                  <div class="form-group"><label>Palabras clave</label><input [(ngModel)]="newArticle.keywords" placeholder="editor, gizmo, exportar…" /></div>
+                  <div class="form-group"><label>Contenido (un párrafo por línea)</label><textarea rows="8" [(ngModel)]="articleBodyText"></textarea></div>
+                  <label class="check-row"><input type="checkbox" [(ngModel)]="newArticle.isPublished" /> Publicado</label>
+                  <div class="form-actions">
+                    <button class="small-button primary" (click)="saveHelpArticle()">{{ articleToEdit ? 'Guardar cambios' : 'Crear artículo' }}</button>
+                    <button class="small-button" (click)="resetNewArticle()">Limpiar</button>
+                  </div>
+                </div>
+              </div>
+              <div class="help-list" *ngIf="filteredArticles$ | async as articles">
+                <article class="help-item" *ngFor="let a of articles; trackBy: trackArticle">
+                  <div class="help-item-main">
+                    <span class="help-icon">{{ a.icon || getCategoryIcon(a.category) }}</span>
+                    <div>
+                      <strong>{{ a.title }}</strong>
+                      <small>{{ getCategoryLabel(a.category) }} · {{ a.isPublished ? 'Publicado' : 'Borrador' }}</small>
+                    </div>
+                  </div>
+                  <div class="row-actions wrap">
+                    <button class="small-button" (click)="editHelpArticle(a)">Editar</button>
+                    <button class="small-button" (click)="toggleArticlePublish(a)">{{ a.isPublished ? 'Despublicar' : 'Publicar' }}</button>
+                    <button class="small-button danger" (click)="deleteHelpArticle(a.id)">Eliminar</button>
+                  </div>
+                </article>
+                <div class="empty-inline" *ngIf="!articles.length">No hay artículos para mostrar.</div>
+              </div>
             </div>
           </section>
         </ng-container>
 
-        <ng-container *ngIf="!(vm$ | async)">
-          <app-loading-spinner [label]="'Cargando…' | translate"></app-loading-spinner>
-        </ng-container>
       </ng-container>
+      <ng-template #loadingState>
+        <app-loading-spinner [label]="'Cargando panel…' | translate"></app-loading-spinner>
+      </ng-template>
     </section>
+  </div>
+
+  <!-- Confirm delete modal -->
+  <div class="modal-backdrop" *ngIf="postToDelete" (click)="cancelDelete()"></div>
+  <div class="confirm-dialog modal" *ngIf="postToDelete">
+    <h2>Eliminar publicación</h2>
+    <p>¿Seguro que deseas eliminar <strong>“{{ postToDelete.title }}”</strong> y sus archivos asociados? Esta acción no se puede deshacer.</p>
+    <footer>
+      <button class="cancel" type="button" (click)="cancelDelete()">Cancelar</button>
+      <button class="danger" type="button" (click)="confirmDelete()">Eliminar definitivamente</button>
+    </footer>
   </div>
 </main>

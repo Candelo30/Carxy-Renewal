@@ -13,6 +13,7 @@ describe('AuthPage', () => {
         code: 'auth/network-request-failed',
         message: 'Firebase request failed',
       }),
+      authErrorMessage: vi.fn(() => 'Firebase Authentication no está listo. En Firebase Console, habilita Email/Password (y Google si lo usas).'),
     };
     await TestBed.configureTestingModule({
       imports: [AuthPage],

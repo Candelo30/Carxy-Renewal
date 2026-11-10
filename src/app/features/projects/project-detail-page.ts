@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
@@ -13,7 +13,7 @@ import { firstValueFrom, map, take } from 'rxjs';
 @Component({
   selector: 'app-project-detail-page',
   standalone: true,
-  imports: [RouterLink, FormsModule, DatePipe, TranslatePipe, ShellHeaderComponent, SiteFooterComponent],
+  imports: [FormsModule, AsyncPipe, DatePipe, TranslatePipe, ShellHeaderComponent, SiteFooterComponent],
   templateUrl: './project-detail-page.html',
   styleUrl: './project-detail-page.css',
 })

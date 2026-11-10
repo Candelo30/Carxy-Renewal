@@ -64,7 +64,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public selectedObjectId = '';
   public selectedNodeId: string | null = null;
   public searchTerm = '';
-  public theme: 'dark' | 'light' = 'dark';
+  public theme: 'dark' | 'light' | 'system' = 'dark';
   public accentColor = '#8b5cf6';
   public language: AppLanguage = 'es';
   get languages() {

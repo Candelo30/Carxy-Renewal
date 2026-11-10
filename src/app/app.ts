@@ -5,12 +5,14 @@ import { Subscription } from 'rxjs';
 import { LocalStateService } from './core/services/local-state';
 import { I18nService } from './core/services/i18n';
 import { NotificationCenterComponent } from './shared/components/notification-center/notification-center';
-import { NotificationService } from './core/services/notifications';import { TranslatePipe } from './shared/pipes/translate.pipe';
+import { NotificationService } from './core/services/notifications';
+import { TranslatePipe } from './shared/pipes/translate.pipe';
 
+type Theme = 'dark' | 'light' | 'system';
 
 @Component({
   imports: [
-    TranslatePipe,RouterOutlet, NotificationCenterComponent],
+    TranslatePipe, RouterOutlet, NotificationCenterComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -24,6 +26,8 @@ export class App implements OnDestroy {
   private readonly router = inject(Router);
   private readonly routerSubscription = new Subscription();
   private navigationTimer: ReturnType<typeof setTimeout> | undefined;
+  private themeMediaQuery: MediaQueryList | null = null;
+  private themeMediaListener: ((event: MediaQueryListEvent) => void) | null = null;
   readonly navigationLoading = signal(false);
 
   constructor() {
@@ -43,17 +47,53 @@ export class App implements OnDestroy {
 
     afterNextRender(() => {
       if (!isPlatformBrowser(this.platformId)) return;
-      const preferences = this.localState.loadPreferences();
-      this.i18n.setLanguage(preferences.language);
-      this.document.documentElement.dataset['theme'] = preferences.theme;
-      this.document.documentElement.style.setProperty('--accent-color', preferences.accentColor);
-      this.notifications.setPosition(preferences.notificationPosition);
+      this.applyTheme();
+      this.i18n.setLanguage(this.localState.loadPreferences().language);
+      this.document.documentElement.style.setProperty('--accent-color', this.localState.loadPreferences().accentColor);
+      this.notifications.setPosition(this.localState.loadPreferences().notificationPosition);
+      this.listenToSystemThemeChanges();
     });
+  }
+
+  private getStoredTheme(): Theme {
+    return this.localState.loadPreferences().theme;
+  }
+
+  private applyTheme(): void {
+    const stored = this.getStoredTheme();
+    let resolved: 'dark' | 'light' = 'dark';
+
+    if (stored === 'system') {
+      resolved = this.matchSystemTheme() ? 'dark' : 'light';
+    } else {
+      resolved = stored;
+    }
+
+    this.document.documentElement.dataset['theme'] = resolved;
+  }
+
+  private matchSystemTheme(): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  private listenToSystemThemeChanges(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.getStoredTheme() !== 'system') return;
+
+    this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    this.themeMediaListener = (event) => {
+      this.document.documentElement.dataset['theme'] = event.matches ? 'dark' : 'light';
+    };
+    this.themeMediaQuery.addEventListener('change', this.themeMediaListener);
   }
 
   ngOnDestroy(): void {
     this.clearNavigationTimer();
     this.routerSubscription.unsubscribe();
+    if (this.themeMediaQuery && this.themeMediaListener) {
+      this.themeMediaQuery.removeEventListener('change', this.themeMediaListener);
+    }
   }
 
   private clearNavigationTimer(): void {

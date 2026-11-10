@@ -48,8 +48,6 @@ const FEED_PAGE_SIZE = 9;
   imports: [
     TranslatePipe,
     ShellHeaderComponent,
-    AccountMenuComponent,
-    ActivityNotificationsComponent,
     AsyncPipe,
     DatePipe,
     FormsModule,

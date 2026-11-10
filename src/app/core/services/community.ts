@@ -15,7 +15,7 @@ import {
   updateDoc,
   writeBatch,
 } from '@angular/fire/firestore';
-import { BehaviorSubject, Observable, map } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS } from '../config/app.constants';
 import {
   CommunityAnswer,
@@ -23,6 +23,8 @@ import {
   FeedbackMessage,
   FeedbackStatus,
   FeedbackType,
+  HelpArticle,
+  HelpArticleCategory,
   User,
 } from '../models/social.models';
 
@@ -63,7 +65,7 @@ export class CommunityService {
         ),
         { idField: 'id' },
       ).pipe(map((items) => items.map((item) => this.normalizeFeedback(item as Record<string, unknown>))))
-    : this.localFeedback.asObservable();
+    : this.demoFeedback();
 
   readonly questions$: Observable<CommunityQuestion[]> = this.firestore
     ? collectionData(
@@ -80,11 +82,91 @@ export class CommunityService {
             .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt - a.createdAt),
         ),
       )
-    : this.localQuestions.asObservable().pipe(
-        map((items) =>
-          [...items].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt - a.createdAt),
-        ),
-      );
+    : this.demoQuestions();
+
+  private demoFeedback(): Observable<FeedbackMessage[]> {
+    const stored = this.localFeedback.value;
+    if (stored.length > 0) return this.localFeedback.asObservable();
+    const items: FeedbackMessage[] = [
+      {
+        id: 'demo-feedback-1',
+        userId: 'demo-user-1',
+        name: 'Creador Demo',
+        email: 'creator@carxy.demo',
+        type: 'bug',
+        subject: 'El gizmo de rotación no funciona en Safari',
+        message: 'Al intentar rotar un objeto en Safari, el gizmo no responde correctamente.',
+        status: 'new',
+        createdAt: Date.now() - 86400000 * 3,
+      },
+      {
+        id: 'demo-feedback-2',
+        userId: 'demo-user-1',
+        name: 'Creador Demo',
+        email: 'creator@carxy.demo',
+        type: 'idea',
+        subject: 'Añadir soporte para modelos OBJ',
+        message: 'Sería útil poder importar archivos .OBJ además de .glb y .gltf.',
+        status: 'reviewing',
+        createdAt: Date.now() - 86400000 * 7,
+      },
+      {
+        id: 'demo-feedback-3',
+        userId: 'demo-user-1',
+        name: 'Creador Demo',
+        email: 'creator@carxy.demo',
+        type: 'account',
+        subject: 'No puedo verificar mi correo',
+        message: 'El enlace de verificación nunca llega a mi bandeja de entrada.',
+        status: 'resolved',
+        createdAt: Date.now() - 86400000 * 10,
+        updatedAt: Date.now() - 86400000 * 9,
+      },
+    ];
+    return of(items);
+  }
+
+  private demoQuestions(): Observable<CommunityQuestion[]> {
+    const stored = this.localQuestions.value;
+    if (stored.length > 0) return this.localQuestions.asObservable();
+    const items: CommunityQuestion[] = [
+      {
+        id: 'demo-question-1',
+        authorId: 'demo-user-1',
+        authorName: 'Creador Demo',
+        authorPhotoURL: null,
+        title: 'Cómo exportar escena con texturas',
+        body: '¿Alguien sabe cómo exportar una escena que incluya texturas personalizadas?',
+        tags: ['exportar', 'texturas'],
+        createdAt: Date.now() - 86400000 * 2,
+        answersCount: 2,
+        votes: 5,
+        voterIds: ['demo-mod-1'],
+        resolved: false,
+        pinned: true,
+        locked: false,
+        acceptedAnswerId: null,
+      },
+      {
+        id: 'demo-question-2',
+        authorId: 'demo-user-2',
+        authorName: 'Usuario Suspendido',
+        authorPhotoURL: null,
+        title: 'Problema con el chat',
+        body: 'No puedo enviar mensajes en el chat directo.',
+        tags: ['chat', 'bug'],
+        createdAt: Date.now() - 86400000 * 5,
+        answersCount: 0,
+        votes: 0,
+        voterIds: [],
+        resolved: false,
+        pinned: false,
+        locked: false,
+        acceptedAnswerId: null,
+      },
+    ];
+    return of(items);
+  }
 
   answers$(questionId: string): Observable<CommunityAnswer[]> {
     const cached = this.answerObservables.get(questionId);
@@ -482,5 +564,98 @@ export class CommunityService {
 
   private writeLocal(key: string, value: unknown): void {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Help Articles (Centro de Ayuda)                                   */
+  /* ------------------------------------------------------------------ */
+
+  getHelpArticles(): Observable<HelpArticle[]> {
+    if (this.firestore) {
+      try {
+        const q = query(
+          collection(this.firestore, SOCIAL_COLLECTIONS.helpArticles),
+          orderBy('order', 'asc'),
+          orderBy('createdAt', 'desc'),
+        );
+        return (collectionData(q, { idField: 'id' }) as Observable<HelpArticle[]>).pipe(
+          catchError((err) => {
+            console.warn('Fallback al obtener artículos de ayuda sin doble orderBy:', err);
+            return (collectionData(collection(this.firestore!, SOCIAL_COLLECTIONS.helpArticles), { idField: 'id' }) as Observable<HelpArticle[]>).pipe(
+              map((articles) =>
+                [...articles].sort(
+                  (a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.createdAt ?? 0) - (a.createdAt ?? 0)
+                )
+              ),
+              catchError(() => of([] as HelpArticle[]))
+            );
+          })
+        );
+      } catch {
+        return of([] as HelpArticle[]);
+      }
+    }
+    return of([] as HelpArticle[]);
+  }
+
+  async createHelpArticle(article: Omit<HelpArticle, 'id'>): Promise<string> {
+    if (this.firestore) {
+      const ref = doc(collection(this.firestore, SOCIAL_COLLECTIONS.helpArticles));
+      const now = Date.now();
+      const full: HelpArticle = {
+        id: ref.id,
+        ...article,
+        order: article.order ?? 0,
+        isPublished: article.isPublished ?? true,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await setDoc(ref, full);
+      return ref.id;
+    }
+    return '';
+  }
+
+  async updateHelpArticle(article: HelpArticle): Promise<void> {
+    if (this.firestore) {
+      await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.helpArticles, article.id), {
+        ...article,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+  }
+
+  async deleteHelpArticle(id: string): Promise<void> {
+    if (this.firestore) {
+      await deleteDoc(doc(this.firestore, SOCIAL_COLLECTIONS.helpArticles, id));
+      return;
+    }
+  }
+
+  private normalizeHelpArticle(data: Record<string, unknown>): HelpArticle {
+    return {
+      id: String(data['id'] ?? ''),
+      category:
+        data['category'] === 'primeros-pasos' ||
+        data['category'] === 'editor' ||
+        data['category'] === 'publicacion' ||
+        data['category'] === 'comunidad' ||
+        data['category'] === 'colaboracion' ||
+        data['category'] === 'cuenta'
+          ? (data['category'] as HelpArticleCategory)
+          : 'primeros-pasos',
+      title: String(data['title'] ?? ''),
+      subtitle: String(data['subtitle'] ?? ''),
+      icon: String(data['icon'] ?? '📄'),
+      keywords: String(data['keywords'] ?? ''),
+      body: Array.isArray(data['body']) ? data['body'] : [String(data['body'] ?? '')],
+      steps: Array.isArray(data['steps']) ? data['steps'] : undefined,
+      tip: typeof data['tip'] === 'string' ? data['tip'] : undefined,
+      order: Number(data['order'] ?? 0),
+      isPublished: data['isPublished'] === true,
+      createdAt: this.normalizeTimestamp(data['createdAt']),
+      updatedAt: this.normalizeTimestamp(data['updatedAt']),
+    };
   }
 }

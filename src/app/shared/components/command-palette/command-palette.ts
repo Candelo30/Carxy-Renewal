@@ -19,6 +19,7 @@ import { copyText } from '../../../core/utils/share';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 type CommandGroup = 'Navegación' | 'Recursos' | 'Acciones';
+type Theme = 'dark' | 'light' | 'system';
 
 interface CommandItem {
   id: string;
@@ -382,15 +383,24 @@ export class CommandPaletteComponent {
 
   private toggleTheme(): void {
     const preferences = this.localState.loadPreferences();
-    const theme = preferences.theme === 'dark' ? 'light' : 'dark';
+    const themeOrder: Theme[] = ['dark', 'light', 'system'];
+    const currentIndex = themeOrder.indexOf(preferences.theme);
+    const theme = themeOrder[(currentIndex + 1) % themeOrder.length];
     this.localState.savePreferences({ ...preferences, theme });
-    this.document.documentElement.dataset['theme'] = theme;
+    this.document.documentElement.dataset['theme'] = theme === 'system'
+      ? (this.matchSystemTheme() ? 'dark' : 'light')
+      : theme;
     this.notifications.success(
       this.i18n.translate('Tema {theme} activado.', {
-        theme: this.i18n.translate(theme === 'dark' ? 'oscuro' : 'claro'),
+        theme: this.i18n.translate(theme === 'dark' ? 'oscuro' : theme === 'light' ? 'claro' : 'sistema'),
       }),
       this.i18n.translate('Apariencia actualizada'),
     );
+  }
+
+  private matchSystemTheme(): boolean {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
   private async copyCurrentLink(): Promise<void> {
