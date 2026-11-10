@@ -157,3 +157,58 @@ export interface EditorPreferences {
   gizmoMode: 'translate' | 'rotate' | 'scale';
   notificationPosition: NotificationPosition;
 }
+
+/* ============================================================================
+   COLABORACIÓN — Proyectos, miembros e invitaciones
+   ============================================================================ */
+
+export type ProjectRole = 'owner' | 'editor' | 'viewer';
+
+export interface Project {
+  id: string;
+  ownerId: string;
+  name: string;
+  description: string;
+  sceneJson?: string;        // Serialización de la escena Three.js
+  thumbnailUrl?: string;
+  isPublic: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  userName: string;
+  userPhotoURL: string | null;
+  role: ProjectRole;
+  joinedAt: number;
+}
+
+export interface ProjectInvitation {
+  id: string;
+  projectId: string;
+  projectName: string;
+  invitedBy: string;
+  invitedByName: string;
+  invitedEmail: string;
+  invitedUid?: string;       // undefined si el invitado aún no tiene cuenta en CARXY
+  role: ProjectRole;
+  status: 'pending' | 'accepted' | 'rejected' | 'revoked' | 'expired';
+  createdAt: number;
+  expiresAt: number;
+  respondedAt?: number;
+}
+
+export interface ProjectActivity {
+  id: string;
+  projectId: string;
+  actorId: string;
+  actorName: string;
+  action: 'object_created' | 'object_updated' | 'object_deleted' | 'material_changed' | 'layer_changed';
+  objectId: string;
+  objectType: string;
+  snapshot?: string;         // JSON del objeto afectado (para deshacer/rehacer compartido)
+  createdAt: number;
+}

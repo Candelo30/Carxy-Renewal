@@ -24,6 +24,10 @@ export const SOCIAL_COLLECTIONS = {
   follows: 'follows',
   feedback: 'feedback',
   communityQuestions: 'communityQuestions',
+  projects: 'projects',
+  projectMembers: 'projectMembers',
+  projectInvitations: 'projectInvitations',
+  projectActivity: 'projectActivity',
 } as const;
 
 export const SOCIAL_STORAGE_PATHS = {

@@ -508,5 +508,109 @@ service cloud.firestore {
         allow delete: if false;
       }
     }
+
+    /* ========================================================================
+       COLABORACIÓN — Proyectos, miembros, invitaciones y actividad
+       ======================================================================== */
+
+    function isProjectMember(projectId, uid) {
+      return signedIn()
+        && get(/databases/$(database)/documents/projectMembers/$(projectId)_$(uid)).exists;
+    }
+
+    function isProjectWriter(projectId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/projectMembers/$(projectId)_$(request.auth.uid)).data.role in ['owner', 'editor'];
+    }
+
+    function isProjectOwner(projectId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/projectMembers/$(projectId)_$(request.auth.uid)).data.role == 'owner';
+    }
+
+    match /projects/{projectId} {
+      allow read: if signedIn()
+        && (resource.data.isPublic == true
+          || isProjectMember(projectId, request.auth.uid)
+          || resource.data.ownerId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.createdAt is number
+        && request.resource.data.updatedAt is number;
+
+      allow update: if signedIn()
+        && (isProjectOwner(projectId) || isProjectWriter(projectId))
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'description', 'isPublic', 'updatedAt', 'thumbnailUrl', 'sceneJson']);
+
+      allow delete: if signedIn() && isProjectOwner(projectId);
+    }
+
+    match /projectMembers/{memberId} {
+      allow read: if signedIn()
+        && (isProjectMember(resource.data.projectId, request.auth.uid)
+          || resource.data.projectId in get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isProjectWriter(resource.data.projectId);
+
+      allow update: if signedIn()
+        && isProjectOwner(resource.data.projectId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
+
+      allow delete: if signedIn()
+        && (isProjectOwner(resource.data.projectId) || request.auth.uid == resource.data.userId);
+    }
+
+    match /projectInvitations/{invitationId} {
+      allow read: if signedIn()
+        && (resource.data.invitedBy == request.auth.uid
+          || resource.data.invitedEmail == request.auth.token.email
+          || isProjectWriter(resource.data.projectId));
+
+      allow create: if signedIn()
+        && isProjectWriter(request.resource.data.projectId)
+        && request.resource.data.invitedBy == request.auth.uid
+        && request.resource.data.invitedEmail is string
+        && request.resource.data.invitedEmail.size() > 0
+        && request.resource.data.invitedEmail.size() <= 120
+        && request.resource.data.role in ['owner', 'editor', 'viewer']
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt is number
+        && request.resource.data.expiresAt is number;
+
+      allow update: if signedIn()
+        && (resource.data.invitedBy == request.auth.uid
+          || resource.data.invitedEmail == request.auth.token.email)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'respondedAt', 'invitedUid']);
+
+      allow delete: if signedIn()
+        && (resource.data.invitedBy == request.auth.uid || isProjectOwner(resource.data.projectId));
+    }
+
+    match /projectActivity/{activityId} {
+      allow read: if signedIn()
+        && isProjectMember(resource.data.projectId, request.auth.uid);
+
+      allow create: if signedIn()
+        && isProjectWriter(resource.data.projectId)
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.action in [
+          'object_created', 'object_updated', 'object_deleted',
+          'material_changed', 'layer_changed'
+        ]
+        && request.resource.data.objectId is string
+        && request.resource.data.objectType is string
+        && request.resource.data.createdAt is number;
+
+      allow update: if false;
+      allow delete: if false;
+    }
   }
 }
