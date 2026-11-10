@@ -30,7 +30,25 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('X-DNS-Prefetch-Control', 'off');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "script-src 'self' 'unsafe-inline' blob:",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data: https:",
+      "connect-src 'self' https: wss: blob:",
+      "worker-src 'self' blob:",
+      "manifest-src 'self'",
+      "media-src 'self' blob: data: https:",
+      "frame-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com",
+      "form-action 'self'",
+    ].join('; '),
+  );
 
   const forwardedProto = req.headers['x-forwarded-proto'];
   const isHttps = req.secure

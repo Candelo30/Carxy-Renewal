@@ -113,7 +113,11 @@ service cloud.firestore {
             && (
               (request.resource.data.kind == 'follow'
                 && existsAfter(/databases/$(database)/documents/users/$(uid)/followers/$(request.auth.uid)))
-              || (request.resource.data.kind in ['like', 'comment']
+              || (request.resource.data.kind == 'like'
+                && request.resource.data.targetId is string
+                && get(/databases/$(database)/documents/posts/$(request.resource.data.targetId)).data.author.uid == uid
+                && exists(/databases/$(database)/documents/posts/$(request.resource.data.targetId)/likes/$(request.auth.uid)))
+              || (request.resource.data.kind == 'comment'
                 && request.resource.data.targetId is string
                 && get(/databases/$(database)/documents/posts/$(request.resource.data.targetId)).data.author.uid == uid)
             );
