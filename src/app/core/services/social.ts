@@ -99,6 +99,8 @@ export class SocialService {
   private readonly likeInFlight = new Set<string>();
   private static readonly LIKE_COOLDOWN_MS = 2000;
   private readonly likeRateLimit = new Map<string, number>();
+  private readonly countedViews = new Set<string>();
+  private readonly countedRemixes = new Set<string>();
 
   readonly posts$: Observable<Post3D[]> = this.firestore
     ? collectionData(
@@ -493,9 +495,11 @@ export class SocialService {
         });
         this.likeRateLimit.set(lockKey, Date.now());
         if (liked && post.author.uid !== actor.uid) {
+          const notificationId = this.notificationId('like', actor.uid, post.id);
           await setDoc(
-            doc(collection(this.firestore, 'users', post.author.uid, 'notifications')),
-            this.notificationData(post.author.uid, actor, 'like', post.id),
+            doc(this.firestore, 'users', post.author.uid, 'notifications', notificationId),
+            { ...this.notificationData(post.author.uid, actor, 'like', post.id), id: notificationId },
+            { merge: true },
           );
         }
         return liked;
@@ -515,7 +519,7 @@ export class SocialService {
         return { ...item, likes: next, likesCount: next };
       }));
       if (!currentlyLiked && post.author.uid !== actor.uid) {
-        this.addLocalActivityNotification(post.author.uid, actor, 'like', post.id);
+        this.addLocalActivityNotification(post.author.uid, actor, 'like', post.id, this.notificationId('like', actor.uid, post.id));
       }
       return !currentlyLiked;
     } finally {
@@ -641,16 +645,19 @@ export class SocialService {
   }
 
   async addComment(postId: string, text: string, author: User, post?: Post3D): Promise<void> {
-    const comment: Comment = { id: crypto.randomUUID(), text: text.trim(), author, createdAt: Date.now() };
+    const commentId = crypto.randomUUID();
+    const comment: Comment = { id: commentId, text: text.trim(), author, createdAt: Date.now() };
     if (this.firestore) {
       const batch = writeBatch(this.firestore);
-      batch.set(doc(collection(this.firestore, 'posts', postId, 'comments')), {
+      const commentRef = doc(this.firestore, 'posts', postId, 'comments', commentId);
+      batch.set(commentRef, {
         ...comment,
         author: this.publicUser(author),
       });
       if (post && post.author.uid !== author.uid) {
-        const notificationRef = doc(collection(this.firestore, 'users', post.author.uid, 'notifications'));
-        batch.set(notificationRef, this.notificationData(post.author.uid, author, 'comment', postId));
+        const notificationId = this.notificationId('comment', author.uid, `${postId}_${commentId}`);
+        const notificationRef = doc(this.firestore, 'users', post.author.uid, 'notifications', notificationId);
+        batch.set(notificationRef, { ...this.notificationData(post.author.uid, author, 'comment', postId), id: notificationId });
       }
       await batch.commit();
       return;
@@ -664,7 +671,13 @@ export class SocialService {
     });
     const localPost = post ?? this.localPosts.value.find((item) => item.id === postId);
     if (localPost && localPost.author.uid !== author.uid) {
-      this.addLocalActivityNotification(localPost.author.uid, author, 'comment', postId);
+      this.addLocalActivityNotification(
+        localPost.author.uid,
+        author,
+        'comment',
+        postId,
+        this.notificationId('comment', author.uid, `${postId}_${commentId}`),
+      );
     }
   }
 
@@ -698,14 +711,15 @@ export class SocialService {
     if (this.firestore) {
       const followerRef = doc(this.firestore, 'users', targetUid, 'followers', actor.uid);
       const followingRef = doc(this.firestore, 'users', actor.uid, 'following', targetUid);
-      const notificationRef = doc(collection(this.firestore, 'users', targetUid, 'notifications'));
+      const notificationId = this.notificationId('follow', actor.uid, targetUid);
+      const notificationRef = doc(this.firestore, 'users', targetUid, 'notifications', notificationId);
       await runTransaction(this.firestore, async (transaction) => {
         const existing = await transaction.get(followerRef);
         if (existing.exists()) return;
         const followData: Follow = { followerId: actor.uid, followingId: targetUid, createdAt: Date.now() };
         transaction.set(followerRef, followData);
         transaction.set(followingRef, followData);
-        transaction.set(notificationRef, this.notificationData(targetUid, actor, 'follow'));
+        transaction.set(notificationRef, { ...this.notificationData(targetUid, actor, 'follow'), id: notificationId });
       });
       return;
     }
@@ -715,7 +729,7 @@ export class SocialService {
     const next = [...this.localFollows.value, { followerId: actor.uid, followingId: targetUid, createdAt: Date.now() }];
     this.localFollows.next(next);
     this.writeLocal(LOCAL_KEYS.follows, next);
-    this.addLocalActivityNotification(targetUid, actor, 'follow');
+    this.addLocalActivityNotification(targetUid, actor, 'follow', undefined, this.notificationId('follow', actor.uid, targetUid));
   }
 
   async unfollowUser(followerId: string, followingId: string): Promise<void> {
@@ -1092,6 +1106,8 @@ export class SocialService {
   }
 
   async incrementViews(post: Post3D): Promise<void> {
+    if (!post?.id || this.countedViews.has(post.id)) return;
+    this.countedViews.add(post.id);
     if (this.firestore) {
       await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), { viewsCount: increment(1) });
       return;
@@ -1102,6 +1118,8 @@ export class SocialService {
   }
 
   async incrementRemixes(post: Post3D): Promise<void> {
+    if (!post?.id || this.countedRemixes.has(post.id)) return;
+    this.countedRemixes.add(post.id);
     if (this.firestore) {
       await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), { remixCount: increment(1) });
       return;
@@ -1129,17 +1147,22 @@ export class SocialService {
     };
   }
 
+  private notificationId(kind: ActivityNotification['kind'], actorId: string, targetId = ''): string {
+    const suffix = targetId ? `_${targetId}` : '';
+    return `${kind}_${actorId}${suffix}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 500);
+  }
+
   private addLocalActivityNotification(
     recipientId: string,
     actor: User,
     kind: ActivityNotification['kind'],
     targetId?: string,
+    id: string = crypto.randomUUID(),
   ): void {
-    const notification: ActivityNotification = {
-      ...this.notificationData(recipientId, actor, kind, targetId),
-      id: crypto.randomUUID(),
-    };
-    const next = [notification, ...this.localActivityNotifications.value];
+    const base = this.notificationData(recipientId, actor, kind, targetId);
+    const notification: ActivityNotification = { ...base, id };
+    const withoutDuplicate = this.localActivityNotifications.value.filter((item) => item.id !== id);
+    const next = [notification, ...withoutDuplicate];
     this.localActivityNotifications.next(next);
     this.writeLocal(LOCAL_KEYS.activityNotifications, next);
   }
