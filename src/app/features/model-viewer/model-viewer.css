@@ -21,10 +21,8 @@
   cursor: crosshair;
 }
 
-/* Bloquear selección de texto en el canvas */
-.webgl-canvas {
-  user-select: none;
-  -webkit-user-select: none;
+.webgl-canvas:hover {
+  cursor: crosshair;
 }
 
 /* Hotspots */
@@ -75,51 +73,61 @@
   position: absolute;
 }
 
-/* Panel de controles 3D - esquina superior izquierda, SOBRE el canvas pero sin bloquearlo */
+/* ==========================================================================
+   PANEL DE CONTROLES 3D - PANEL LATERAL DERECHO
+   ========================================================================== */
+
 .viewer-controls {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 300px;
+  padding: 24px;
+  gap: 16px;
+  z-index: 40;
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  z-index: 30;
-  pointer-events: auto;
+  background: var(--surface-panel);
+  border-left: 1px solid var(--border-color);
 }
 
 .viewer-controls .control-group {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  background: color-mix(in srgb, var(--surface-panel) 85%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  margin-bottom: 4px;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .viewer-controls .control-label {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.08em;
-  margin-right: 6px;
-  white-space: nowrap;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.viewer-controls .view-btn-group,
+.viewer-controls .toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .viewer-controls .view-btn,
 .viewer-controls .toggle-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 36px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface-raised);
   color: var(--text-muted);
   font-size: 1rem;
   cursor: pointer;
-  transition: all 140ms ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,19 +151,20 @@
 .measure-info {
   font-size: 0.72rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
-/* Responsivo para el panel de controles */
+/* Responsivo */
 @media (max-width: 760px) {
   .viewer-controls {
-    padding: 6px;
-    gap: 4px;
+    width: 260px;
+    padding: 12px;
+    gap: 12px;
   }
 
   .viewer-controls .control-group {
-    padding: 5px 7px;
-    gap: 4px;
+    padding: 4px 6px;
+    gap: 5px;
   }
 
   .viewer-controls .control-label {
@@ -168,5 +177,29 @@
     width: 28px;
     height: 28px;
     font-size: 0.9rem;
+  }
+}
+
+/* Smartphone */
+@media (max-width: 460px) {
+  .viewer-controls {
+    width: 240px;
+    padding: 8px;
+  }
+
+  .viewer-controls .control-group {
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .viewer-controls .control-label {
+    font-size: 0.6rem;
+  }
+
+  .viewer-controls .view-btn,
+  .viewer-controls .toggle-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
   }
 }

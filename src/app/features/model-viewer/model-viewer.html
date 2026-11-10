@@ -16,7 +16,7 @@
     }
   </div>
 
-  <!-- Cursores remotos de colaboradores (no mostrar el cursor del propio usuario) -->
+  <!-- Cursores remotos de colaboradores -->
   <div class="remote-cursors-layer">
     @for (cursor of remoteCursors.values(); track cursor.uid) {
       @if (cursor.uid !== ownCursorUid) {
@@ -29,7 +29,7 @@
     }
   </div>
 
-  <!-- Panel de controles 3D - esquina superior izquierda, sobre el canvas -->
+  <!-- Panel de controles 3D - PANEL LATERAL DERECHO para no bloquear la vista -->
   <div class="viewer-controls">
     <div class="control-group">
       <span class="control-label">Vista</span>
@@ -43,6 +43,8 @@
       <button class="toggle-btn" [class.active]="showGrid" (click)="toggleGrid()" title="Cuadrícula">⊗</button>
       <button class="toggle-btn" [class.active]="showShadows" (click)="toggleShadows()" title="Sombras">☀</button>
       <button class="toggle-btn" [class.active]="showAxes" (click)="toggleAxes()" title="Ejes">✦</button>
+    </div>
+    <div class="control-group">
       <button class="toggle-btn" [class.active]="showClipping" (click)="toggleClipping()" title="Plano de corte">✂</button>
       <button class="toggle-btn" [class.active]="showBloom" (click)="toggleBloom()" title="Bloom">✨</button>
       <button class="toggle-btn" [class.active]="showExploded" (click)="toggleExploded()" title="Explosión">☄</button>
@@ -57,6 +59,4 @@
       </div>
     </div>
   </div>
-
-  <!-- Cursor del propio usuario oculto (usa el cursor nativo del navegador) -->
 </div>

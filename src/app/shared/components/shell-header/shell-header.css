@@ -21,6 +21,19 @@
   box-shadow: 0 8px 32px color-mix(in srgb, #000 35%, transparent);
 }
 
+/* Asegurar que el contenido no quede detrás del header fijo */
+.shell-header + *,
+main > *:first-child,
+main.page-with-header,
+.editor-layout,
+.editor-page-main {
+  margin-top: 64px;
+}
+
+.shell-header.elevated {
+  box-shadow: 0 8px 32px color-mix(in srgb, #000 35%, transparent);
+}
+
 .header-bar {
   display: flex;
   align-items: center;
