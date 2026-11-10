@@ -304,4 +304,74 @@ export const KO_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ 새 모델 만들기',
   'chat.connecting': '대화 연결 중입니다…',
 
+  'projects.project': '프로젝트',
+
+  'projects.invitedBy': '{name} 님이 초대함',
+
+  'projects.confirmDeleteProject': '이 프로젝트를 삭제해도 되겠습니까? 돌이킬 수 없습니다.',
+
+  'projects.confirmRemoveMember': '이 회원을 제거해도 되겠습니까?',
+
+  'projects.remove': '제거',
+
+  'projects.roleViewer': '열람자',
+
+  'projects.roleEditor': '편집자',
+
+  'projects.roleOwner': '소유자',
+
+  'projects.noPendingInvitations': '대기 중인 초대가 없습니다.',
+
+  'projects.reject': '거절',
+
+  'projects.accept': '수락',
+
+  'projects.pendingInvitations': '초대 대기 중',
+
+  'projects.inviting': '초대 중…',
+
+  'projects.invite': '초대',
+
+  'projects.inviteEmailPlaceholder': '이메일 주소',
+
+  'projects.inviteMembers': '회원 초대',
+
+  'projects.members': '회원',
+
+  'projects.deleteProject': '프로젝트 삭제',
+
+  'projects.openEditor': '편집기에서 열기',
+
+  'projects.created': '생성됨',
+
+  'projects.owner': '소유자',
+
+  'projects.privateLabel': '비공개',
+
+  'projects.publicLabel': '공개',
+
+  'projects.updated': '업데이트됨',
+
+  'projects.noDescription': '설명 없음',
+
+  'projects.noProjects': '아직 프로젝트가 없습니다. 첫 번째를 만드세요.',
+
+  'projects.myProjects': '내 프로젝트',
+
+  'projects.creating': '만드는 중…',
+
+  'projects.create': '프로젝트 만들기',
+
+  'projects.public': '공개 프로젝트',
+
+  'projects.descriptionPlaceholder': '설명 (선택사항)',
+
+  'projects.namePlaceholder': '프로젝트 이름',
+
+  'projects.createNew': '새 프로젝트 만들기',
+
+  'projects.subtitle': '협업자와 함께 3D 씬을 만들고 관리하세요.',
+
+  'projects.title': '내 프로젝트',
+
 };

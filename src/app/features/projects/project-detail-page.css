@@ -1,0 +1,315 @@
+.project-detail-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 32px);
+}
+
+.project-header {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.project-info h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 3vw, 1.75rem);
+}
+
+.project-info .description {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+}
+
+.project-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-color) 15%, var(--surface-control));
+  color: var(--accent-color);
+}
+
+.project-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent-color);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-danger, #ef4444) 15%, var(--surface-control));
+  color: var(--color-danger, #ef4444);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.members-section,
+.invite-section,
+.pending-invitations {
+  margin-bottom: 32px;
+}
+
+.members-section h2,
+.invite-section h2,
+.pending-invitations h2 {
+  font-size: 1.125rem;
+  margin: 0 0 16px;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.member-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.member-role {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-actions select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.btn-remove {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-danger, #ef4444) 12%, var(--surface-control));
+  color: var(--color-danger, #ef4444);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.invite-form input,
+.invite-form select {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.invite-form button {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent-color);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.invite-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invitations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invitation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.invitation-info {
+  flex: 1;
+}
+
+.invitation-project {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.invitation-from {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.invitation-role {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.invitation-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-accept {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, #10b981 15%, var(--surface-control));
+  color: #10b981;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-reject {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-danger, #ef4444) 12%, var(--surface-control));
+  color: var(--color-danger, #ef4444);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.empty-invitations {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+}
+
+.empty-invitations p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .project-detail-page {
+    padding: 16px;
+  }
+
+  .project-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .project-actions {
+    justify-content: stretch;
+  }
+
+  .project-actions button {
+    flex: 1;
+  }
+
+  .member-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .member-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .invitation-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .invitation-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+}

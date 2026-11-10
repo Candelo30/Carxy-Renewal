@@ -304,4 +304,74 @@ export const IT_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ Crea un modello',
   'chat.connecting': 'Connessione alla conversazione…',
 
+  'projects.project': 'Progetto',
+
+  'projects.invitedBy': 'Invitato da {name}',
+
+  'projects.confirmDeleteProject': 'Sei sicuro di voler eliminare questo progetto? Questa azione non è reversibile.',
+
+  'projects.confirmRemoveMember': 'Sei sicuro di voler rimuovere questo membro?',
+
+  'projects.remove': 'Rimuovi',
+
+  'projects.roleViewer': 'Visualizzatore',
+
+  'projects.roleEditor': 'Editore',
+
+  'projects.roleOwner': 'Proprietario',
+
+  'projects.noPendingInvitations': 'Nessun invito in sospeso.',
+
+  'projects.reject': 'Rifiuta',
+
+  'projects.accept': 'Accetta',
+
+  'projects.pendingInvitations': 'Inviti in sospeso',
+
+  'projects.inviting': 'Invito…',
+
+  'projects.invite': 'Invita',
+
+  'projects.inviteEmailPlaceholder': 'Indirizzo e-mail',
+
+  'projects.inviteMembers': 'Invita membri',
+
+  'projects.members': 'Membri',
+
+  'projects.deleteProject': 'Elimina progetto',
+
+  'projects.openEditor': 'Apri nell’editor',
+
+  'projects.created': 'Creato',
+
+  'projects.owner': 'Proprietario',
+
+  'projects.privateLabel': 'Privato',
+
+  'projects.publicLabel': 'Pubblico',
+
+  'projects.updated': 'Aggiornato',
+
+  'projects.noDescription': 'Nessuna descrizione',
+
+  'projects.noProjects': 'Non hai ancora progetti. Creane uno.',
+
+  'projects.myProjects': 'I miei progetti',
+
+  'projects.creating': 'Creazione…',
+
+  'projects.create': 'Crea progetto',
+
+  'projects.public': 'Progetto pubblico',
+
+  'projects.descriptionPlaceholder': 'Descrizione (opzionale)',
+
+  'projects.namePlaceholder': 'Nome progetto',
+
+  'projects.createNew': 'Crea un nuovo progetto',
+
+  'projects.subtitle': 'Crea e gestisci le tue scene 3D con collaboratori.',
+
+  'projects.title': 'I miei progetti',
+
 };

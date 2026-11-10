@@ -304,4 +304,74 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ 创建一个模型',
   'chat.connecting': '正在连接对话…',
 
+  'projects.project': '项目',
+
+  'projects.invitedBy': '{name} 邀请',
+
+  'projects.confirmDeleteProject': '您确定要删除此项目吗？此操作无法撤销。',
+
+  'projects.confirmRemoveMember': '您确定要移除此成员吗？',
+
+  'projects.remove': '移除',
+
+  'projects.roleViewer': '查看者',
+
+  'projects.roleEditor': '编辑者',
+
+  'projects.roleOwner': '所有者',
+
+  'projects.noPendingInvitations': '没有待处理的邀请。',
+
+  'projects.reject': '拒绝',
+
+  'projects.accept': '接受',
+
+  'projects.pendingInvitations': '待处理邀请',
+
+  'projects.inviting': '邀请中…',
+
+  'projects.invite': '邀请',
+
+  'projects.inviteEmailPlaceholder': '电子邮件地址',
+
+  'projects.inviteMembers': '邀请成员',
+
+  'projects.members': '成员',
+
+  'projects.deleteProject': '删除项目',
+
+  'projects.openEditor': '在编辑器中打开',
+
+  'projects.created': '已创建',
+
+  'projects.owner': '所有者',
+
+  'projects.privateLabel': '私有',
+
+  'projects.publicLabel': '公开',
+
+  'projects.updated': '已更新',
+
+  'projects.noDescription': '无描述',
+
+  'projects.noProjects': '您目前没有项目。创建第一个项目。',
+
+  'projects.myProjects': '我的项目',
+
+  'projects.creating': '创建中…',
+
+  'projects.create': '创建项目',
+
+  'projects.public': '公开项目',
+
+  'projects.descriptionPlaceholder': '描述（可选）',
+
+  'projects.namePlaceholder': '项目名称',
+
+  'projects.createNew': '创建新项目',
+
+  'projects.subtitle': '与协作者一起创建和管理您的 3D 场景。',
+
+  'projects.title': '我的项目',
+
 };

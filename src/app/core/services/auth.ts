@@ -54,6 +54,11 @@ export class AuthService {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly localUser = new BehaviorSubject<UserProfile | null>(this.loadLocalUser());
 
+  /** Usuario de Firebase Auth actual (puede ser null si no está autenticado). */
+  get currentUser() {
+    return this.auth?.currentUser;
+  }
+
   readonly user$: Observable<UserProfile | null> = this.auth && this.firestore
     ? authState(this.auth).pipe(
         switchMap((firebaseUser) => {

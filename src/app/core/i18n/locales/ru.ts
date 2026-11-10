@@ -304,4 +304,74 @@ export const RU_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ Создать новую модель',
   'chat.connecting': 'Подключение к беседе…',
 
+  'projects.project': 'Проект',
+
+  'projects.invitedBy': 'Пригласил {name}',
+
+  'projects.confirmDeleteProject': 'Вы уверены, что хотите удалить этот проект? Это нельзя отменить.',
+
+  'projects.confirmRemoveMember': 'Вы уверены, что хотите удалить этого участника?',
+
+  'projects.remove': 'Удалить',
+
+  'projects.roleViewer': 'Зритель',
+
+  'projects.roleEditor': 'Редактор',
+
+  'projects.roleOwner': 'Владелец',
+
+  'projects.noPendingInvitations': 'Нет ожидающих приглашений.',
+
+  'projects.reject': 'Отклонить',
+
+  'projects.accept': 'Принять',
+
+  'projects.pendingInvitations': 'Ожидающие приглашения',
+
+  'projects.inviting': 'Приглашение…',
+
+  'projects.invite': 'Пригласить',
+
+  'projects.inviteEmailPlaceholder': 'Электронная почта',
+
+  'projects.inviteMembers': 'Пригласить участников',
+
+  'projects.members': 'Участники',
+
+  'projects.deleteProject': 'Удалить проект',
+
+  'projects.openEditor': 'Открыть в редакторе',
+
+  'projects.created': 'Создан',
+
+  'projects.owner': 'Владелец',
+
+  'projects.privateLabel': 'Приватный',
+
+  'projects.publicLabel': 'Публичный',
+
+  'projects.updated': 'Обновлено',
+
+  'projects.noDescription': 'Без описания',
+
+  'projects.noProjects': 'У вас пока нет проектов. Создайте первый.',
+
+  'projects.myProjects': 'Мои проекты',
+
+  'projects.creating': 'Создание…',
+
+  'projects.create': 'Создать проект',
+
+  'projects.public': 'Публичный проект',
+
+  'projects.descriptionPlaceholder': 'Описание (необязательно)',
+
+  'projects.namePlaceholder': 'Название проекта',
+
+  'projects.createNew': 'Создать новый проект',
+
+  'projects.subtitle': 'Создавайте и управляйте своими 3D-сценами вместе с коллегами.',
+
+  'projects.title': 'Мои проекты',
+
 };

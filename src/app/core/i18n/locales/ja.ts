@@ -304,4 +304,74 @@ export const JA_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ モデルを作成する',
   'chat.connecting': '会話に接続中です…',
 
+  'projects.project': 'プロジェクト',
+
+  'projects.invitedBy': '{name} によって招待されました',
+
+  'projects.confirmDeleteProject': 'このプロジェクトを削除してもよろしいですか？元に戻せません。',
+
+  'projects.confirmRemoveMember': 'このメンバーを削除してもよろしいですか？',
+
+  'projects.remove': '削除',
+
+  'projects.roleViewer': 'ビューアー',
+
+  'projects.roleEditor': 'エディター',
+
+  'projects.roleOwner': 'オーナー',
+
+  'projects.noPendingInvitations': '保留中の招待はありません。',
+
+  'projects.reject': '拒否',
+
+  'projects.accept': '承認',
+
+  'projects.pendingInvitations': '保留中の招待',
+
+  'projects.inviting': '招待中…',
+
+  'projects.invite': '招待',
+
+  'projects.inviteEmailPlaceholder': 'メールアドレス',
+
+  'projects.inviteMembers': 'メンバーを招待',
+
+  'projects.members': 'メンバー',
+
+  'projects.deleteProject': 'プロジェクトを削除',
+
+  'projects.openEditor': 'エディターで開く',
+
+  'projects.created': '作成済み',
+
+  'projects.owner': 'オーナー',
+
+  'projects.privateLabel': '非公開',
+
+  'projects.publicLabel': '公開',
+
+  'projects.updated': '更新済み',
+
+  'projects.noDescription': '説明なし',
+
+  'projects.noProjects': 'プロジェクトがありません。最初のものを作成してください。',
+
+  'projects.myProjects': 'マイプロジェクト',
+
+  'projects.creating': '作成中…',
+
+  'projects.create': 'プロジェクトを作成',
+
+  'projects.public': '公開プロジェクト',
+
+  'projects.descriptionPlaceholder': '説明（任意）',
+
+  'projects.namePlaceholder': 'プロジェクト名',
+
+  'projects.createNew': '新しいプロジェクトを作成',
+
+  'projects.subtitle': 'コラボレーターと3Dシーンを作成・管理します。',
+
+  'projects.title': 'マイプロジェクト',
+
 };

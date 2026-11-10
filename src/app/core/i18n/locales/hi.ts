@@ -304,4 +304,74 @@ export const HI_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ एक मॉडल बनाएँ',
   'chat.connecting': 'बातचीत कनेक्ट हो रही है…',
 
+  'projects.project': 'प्रोजेक्ट',
+
+  'projects.invitedBy': '{name} द्वारा आमंत्रित',
+
+  'projects.confirmDeleteProject': 'क्या आप निश्चित हैं कि आप इस प्रोजेक्ट को हटाना चाहते हैं? इसे पूर्ववत नहीं किया जा सकता।',
+
+  'projects.confirmRemoveMember': 'क्या आप निश्चित हैं कि आप इस सदस्य को हटाना चाहते हैं?',
+
+  'projects.remove': 'हटाएं',
+
+  'projects.roleViewer': 'दर्शक',
+
+  'projects.roleEditor': 'संपादक',
+
+  'projects.roleOwner': 'मालिक',
+
+  'projects.noPendingInvitations': 'कोई लंबित आमंत्रण नहीं।',
+
+  'projects.reject': 'अस्वीकार करें',
+
+  'projects.accept': 'स्वीकार करें',
+
+  'projects.pendingInvitations': 'लंबित आमंत्रण',
+
+  'projects.inviting': 'आमंत्रित किया जा रहा है…',
+
+  'projects.invite': 'आमंत्रित करें',
+
+  'projects.inviteEmailPlaceholder': 'ईमेल पता',
+
+  'projects.inviteMembers': 'सदस्यों को आमंत्रित करें',
+
+  'projects.members': 'सदस्य',
+
+  'projects.deleteProject': 'प्रोजेक्ट हटाएं',
+
+  'projects.openEditor': 'एडिटर में खोलें',
+
+  'projects.created': 'बनाया गया',
+
+  'projects.owner': 'मालिक',
+
+  'projects.privateLabel': 'निजी',
+
+  'projects.publicLabel': 'सार्वजनिक',
+
+  'projects.updated': 'अपडेट किया गया',
+
+  'projects.noDescription': 'कोई विवरण नहीं',
+
+  'projects.noProjects': 'आपके पास अभी कोई प्रोजेक्ट नहीं है। अपना पहला बनाएं।',
+
+  'projects.myProjects': 'मेरे प्रोजेक्ट',
+
+  'projects.creating': 'बनाया जा रहा है…',
+
+  'projects.create': 'प्रोजेक्ट बनाएं',
+
+  'projects.public': 'सार्वजनिक प्रोजेक्ट',
+
+  'projects.descriptionPlaceholder': 'विवरण (वैकल्पिक)',
+
+  'projects.namePlaceholder': 'प्रोजेक्ट का नाम',
+
+  'projects.createNew': 'नया प्रोजेक्ट बनाएं',
+
+  'projects.subtitle': 'सहयोगियों के साथ अपने 3D सीन बनाएं और प्रबंधित करें।',
+
+  'projects.title': 'मेरे प्रोजेक्ट',
+
 };

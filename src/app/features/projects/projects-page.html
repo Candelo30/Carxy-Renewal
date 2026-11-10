@@ -1,0 +1,69 @@
+<app-shell-header title="'nav.projects' | translate"></app-shell-header>
+
+<main class="projects-page">
+  <section class="hero">
+    <div class="hero-content">
+      <h1>{{ 'projects.title' | translate }}</h1>
+      <p>{{ 'projects.subtitle' | translate }}</p>
+    </div>
+  </section>
+
+  <section class="create-section">
+    <h2>{{ 'projects.createNew' | translate }}</h2>
+    <form class="create-form" (ngSubmit)="createProject()">
+      <input
+        type="text"
+        [(ngModel)]="newProjectName"
+        name="name"
+        [placeholder]="'projects.namePlaceholder' | translate"
+        [disabled]="creating"
+        required
+      />
+      <input
+        type="text"
+        [(ngModel)]="newProjectDescription"
+        name="description"
+        [placeholder]="'projects.descriptionPlaceholder' | translate"
+        [disabled]="creating"
+      />
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="newProjectPublic"
+          name="isPublic"
+          [disabled]="creating"
+        />
+        {{ 'projects.public' | translate }}
+      </label>
+      <button type="submit" [disabled]="creating || !newProjectName.trim()">
+        {{ creating ? ('projects.creating' | translate) : ('projects.create' | translate) }}
+      </button>
+    </form>
+  </section>
+
+  <section class="projects-list-section">
+    <h2>{{ 'projects.myProjects' | translate }}</h2>
+    <div class="projects-grid">
+      <div class="empty-state" *ngIf="!(projects | async)?.length">
+        <p>{{ 'projects.noProjects' | translate }}</p>
+      </div>
+      <a
+        *ngFor="let project of projects | async"
+        class="project-card"
+        [routerLink]="['/projects', project.id]"
+      >
+        <div class="project-card-header">
+          <h3>{{ project.name }}</h3>
+          <span class="badge owner">{{ 'projects.owner' | translate }}</span>
+        </div>
+        <p class="project-description">{{ project.description || ('projects.noDescription' | translate) }}</p>
+        <div class="project-meta">
+          <span>{{ 'projects.updated' | translate }}: {{ project.updatedAt | date:'shortDate' }}</span>
+          <span>{{ project.isPublic ? ('projects.publicLabel' | translate) : ('projects.privateLabel' | translate) }}</span>
+        </div>
+      </a>
+    </div>
+  </section>
+</main>
+
+<app-site-footer></app-site-footer>

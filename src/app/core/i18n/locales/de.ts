@@ -304,4 +304,74 @@ export const DE_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ Ein Modell erstellen',
   'chat.connecting': 'Unterhaltung wird verbunden…',
 
+  'projects.project': 'Projekt',
+
+  'projects.invitedBy': 'Eingeladen von {name}',
+
+  'projects.confirmDeleteProject': 'Sind Sie sicher, dass Sie dieses Projekt löschen möchten? Dies kann nicht rückgängig gemacht werden.',
+
+  'projects.confirmRemoveMember': 'Sind Sie sicher, dass Sie dieses Mitglied entfernen möchten?',
+
+  'projects.remove': 'Entfernen',
+
+  'projects.roleViewer': 'Betrachter',
+
+  'projects.roleEditor': 'Redakteur',
+
+  'projects.roleOwner': 'Besitzer',
+
+  'projects.noPendingInvitations': 'Keine ausstehenden Einladungen.',
+
+  'projects.reject': 'Ablehnen',
+
+  'projects.accept': 'Annehmen',
+
+  'projects.pendingInvitations': 'Ausstehende Einladungen',
+
+  'projects.inviting': 'Einladen…',
+
+  'projects.invite': 'Einladen',
+
+  'projects.inviteEmailPlaceholder': 'E-Mail-Adresse',
+
+  'projects.inviteMembers': 'Mitglieder einladen',
+
+  'projects.members': 'Mitglieder',
+
+  'projects.deleteProject': 'Projekt löschen',
+
+  'projects.openEditor': 'Im Editor öffnen',
+
+  'projects.created': 'Erstellt',
+
+  'projects.owner': 'Besitzer',
+
+  'projects.privateLabel': 'Privat',
+
+  'projects.publicLabel': 'Öffentlich',
+
+  'projects.updated': 'Aktualisiert',
+
+  'projects.noDescription': 'Keine Beschreibung',
+
+  'projects.noProjects': 'Sie haben noch keine Projekte. Erstellen Sie Ihr erstes.',
+
+  'projects.myProjects': 'Meine Projekte',
+
+  'projects.creating': 'Erstellen…',
+
+  'projects.create': 'Projekt erstellen',
+
+  'projects.public': 'Öffentliches Projekt',
+
+  'projects.descriptionPlaceholder': 'Beschreibung (optional)',
+
+  'projects.namePlaceholder': 'Projektname',
+
+  'projects.createNew': 'Neues Projekt erstellen',
+
+  'projects.subtitle': 'Erstellen und verwalten Sie Ihre 3D-Szenen mit Mitarbeitern.',
+
+  'projects.title': 'Meine Projekte',
+
 };

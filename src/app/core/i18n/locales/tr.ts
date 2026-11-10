@@ -304,4 +304,74 @@ export const TR_TRANSLATIONS: Record<string, string> = {
   '＋ Crear un modelo': '＋ Bir model oluştur',
   'chat.connecting': 'Sohbet bağlanıyor…',
 
+  'projects.project': 'Proje',
+
+  'projects.invitedBy': '{name} tarafından davet edildi',
+
+  'projects.confirmDeleteProject': 'Bu projeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+
+  'projects.confirmRemoveMember': 'Bu üyeyi kaldırmak istediğinize emin misiniz?',
+
+  'projects.remove': 'Kaldır',
+
+  'projects.roleViewer': 'Görüntüleyici',
+
+  'projects.roleEditor': 'Düzenleyici',
+
+  'projects.roleOwner': 'Sahip',
+
+  'projects.noPendingInvitations': 'Bekleyen davet yok.',
+
+  'projects.reject': 'Reddet',
+
+  'projects.accept': 'Kabul et',
+
+  'projects.pendingInvitations': 'Bekleyen davetler',
+
+  'projects.inviting': 'Davet ediliyor…',
+
+  'projects.invite': 'Davet et',
+
+  'projects.inviteEmailPlaceholder': 'E-posta adresi',
+
+  'projects.inviteMembers': 'Üye davet et',
+
+  'projects.members': 'Üyeler',
+
+  'projects.deleteProject': 'Projeyi sil',
+
+  'projects.openEditor': 'Editörde aç',
+
+  'projects.created': 'Oluşturuldu',
+
+  'projects.owner': 'Sahip',
+
+  'projects.privateLabel': 'Özel',
+
+  'projects.publicLabel': 'Genel',
+
+  'projects.updated': 'Güncellendi',
+
+  'projects.noDescription': 'Açıklama yok',
+
+  'projects.noProjects': 'Henüz projeniz yok. İlk projenizi oluşturun.',
+
+  'projects.myProjects': 'Projelerim',
+
+  'projects.creating': 'Oluşturuluyor…',
+
+  'projects.create': 'Proje oluştur',
+
+  'projects.public': 'Genel proje',
+
+  'projects.descriptionPlaceholder': 'Açıklama (isteğe bağlı)',
+
+  'projects.namePlaceholder': 'Proje adı',
+
+  'projects.createNew': 'Yeni proje oluştur',
+
+  'projects.subtitle': '3D sahnelerinizi işbirlikçilerle birlikte oluşturun ve yönetin.',
+
+  'projects.title': 'Projelerim',
+
 };
