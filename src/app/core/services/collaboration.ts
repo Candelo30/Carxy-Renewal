@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -42,13 +42,17 @@ export function hasPermission(role: ProjectRole, permission: ProjectPermission):
 }
 
 @Injectable({ providedIn: 'root' })
-export class CollaborationService {
+export class CollaborationService implements OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly auth = inject(AuthService, { optional: true });
   private readonly i18n = inject(I18nService);
 
   private readonly membersStreams = new Map<string, { stream: BehaviorSubject<ProjectMember[]>; unsub: () => void }>();
   private readonly presencesStreams = new Map<string, { stream: BehaviorSubject<ProjectPresence[]>; unsub: () => void }>();
+
+  ngOnDestroy(): void {
+    this.releaseAll();
+  }
 
   private get authService(): AuthService {
     if (!this.auth) throw new Error(this.i18n.translate('Firebase no está configurado.'));
@@ -610,6 +614,35 @@ export class CollaborationService {
       isOnline: false,
       lastSeen: Date.now(),
     });
+  }
+
+  releaseProject(projectId: string): void {
+    if (!projectId) return;
+    this.releaseCachedStream(this.membersStreams, projectId);
+    this.releaseCachedStream(this.presencesStreams, projectId);
+  }
+
+  releaseAll(): void {
+    for (const projectId of [...this.membersStreams.keys()]) {
+      this.releaseCachedStream(this.membersStreams, projectId);
+    }
+    for (const projectId of [...this.presencesStreams.keys()]) {
+      this.releaseCachedStream(this.presencesStreams, projectId);
+    }
+  }
+
+  private releaseCachedStream<T>(
+    cache: Map<string, { stream: BehaviorSubject<T[]>; unsub: () => void }>,
+    projectId: string,
+  ): void {
+    const entry = cache.get(projectId);
+    if (!entry) return;
+    try {
+      entry.unsub();
+    } finally {
+      entry.stream.complete();
+      cache.delete(projectId);
+    }
   }
 
   /* ------------------------------------------------------------------ */

@@ -67,24 +67,13 @@ export class AuthService {
           const privateProfileRef = doc(this.firestore!, SOCIAL_COLLECTIONS.privateUsers, firebaseUser.uid);
           return combineLatest([docData(publicProfileRef), docData(privateProfileRef)]).pipe(
             tap(([profile, privateProfile]) => {
-              const writes: Promise<void>[] = [];
-              const createdAt = Date.now();
-              if (profile === undefined) {
-                writes.push(setDoc(publicProfileRef, {
-                    uid: firebaseUser.uid,
-                    displayName: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'Creador',
-                    photoURL: firebaseUser.photoURL,
-                    bio: '',
-                    role: DEFAULT_ROLE,
-                    isBanned: false,
-                    createdAt,
-                  }));
-              }
-              if (privateProfile === undefined) {
-                writes.push(setDoc(privateProfileRef, { email: firebaseUser.email ?? '', createdAt }));
-              }
-              if (writes.length) void Promise.all(writes)
-                .catch((error: unknown) => console.error('No se pudo inicializar el perfil de usuario.', error));
+              this.ensureFirebaseProfileInitialized(
+                firebaseUser,
+                profile as Record<string, unknown> | undefined,
+                privateProfile as Record<string, unknown> | undefined,
+                publicProfileRef,
+                privateProfileRef,
+              );
             }),
             map(([profile]) => this.firebaseProfile(firebaseUser, profile)),
           );
@@ -386,6 +375,35 @@ export class AuthService {
 
   private writeAccounts(accounts: UserProfile[]): void {
     localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(accounts));
+  }
+
+  private ensureFirebaseProfileInitialized(
+    firebaseUser: FirebaseAuthUser,
+    profile: Record<string, unknown> | undefined,
+    privateProfile: Record<string, unknown> | undefined,
+    publicProfileRef: ReturnType<typeof doc>,
+    privateProfileRef: ReturnType<typeof doc>,
+  ): void {
+    const writes: Promise<void>[] = [];
+    const createdAt = Date.now();
+    if (profile === undefined) {
+      writes.push(setDoc(publicProfileRef, {
+        uid: firebaseUser.uid,
+        displayName: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'Creador',
+        photoURL: firebaseUser.photoURL,
+        bio: '',
+        role: DEFAULT_ROLE,
+        isBanned: false,
+        createdAt,
+      }));
+    }
+    if (privateProfile === undefined) {
+      writes.push(setDoc(privateProfileRef, { email: firebaseUser.email ?? '', createdAt }));
+    }
+    if (!writes.length) return;
+    void Promise.all(writes).catch((error: unknown) =>
+      console.error('No se pudo inicializar el perfil de usuario.', error),
+    );
   }
 
   private firebaseProfile(
