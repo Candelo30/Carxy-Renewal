@@ -241,14 +241,15 @@
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" letter-spacing="5">3D STUDIO</text>
 
           <!-- Car -->
-          <ellipse cx="316" cy="322" rx="172" ry="10" fill="#000000" opacity="0.5"/>
+          <ellipse cx="316" cy="330" rx="168" ry="9" fill="#000000" opacity="0.55"/>
           <path [attr.d]="selectedBody.body" fill="url(#originCarpaint)"/>
+          <path [attr.d]="selectedBody.body" fill="url(#originPaintSheen)" [attr.fill-opacity]="selectedFinish.glossOpacity" opacity="0.82"/>
           <path [attr.d]="selectedBody.glass" fill="url(#originGlass)"/>
-          <path [attr.d]="selectedBody.body" fill="url(#originPaintSheen)" [attr.fill-opacity]="selectedFinish.glossOpacity" opacity="0.8"/>
-          <path [attr.d]="selectedBody.roof" fill="none" stroke="var(--text-muted)" stroke-opacity="0.35" stroke-width="2"/>
-          <line x1="344" y1="214" x2="344" y2="294" stroke="#0b1020" stroke-opacity="0.55" stroke-width="2.5"/>
-          <rect x="298" y="232" width="15" height="4" rx="2" fill="#0b1020" opacity="0.5"/>
-          <rect x="378" y="232" width="15" height="4" rx="2" fill="#0b1020" opacity="0.5"/>
+          <path d="M 236 238 L 512 194 L 506 232 L 240 248 Z" fill="url(#originPaintSheen)" [attr.opacity]="selectedFinish.sheenOpacity"/>
+          <path [attr.d]="selectedBody.roof" fill="none" stroke="var(--border-color)" stroke-opacity="0.65" stroke-width="2"/>
+          <line x1="346" y1="214" x2="346" y2="292" stroke="#0b1020" stroke-opacity="0.55" stroke-width="2.4"/>
+          <rect x="296" y="228" width="16" height="4" rx="2" fill="#0b1020" opacity="0.55"/>
+          <rect x="376" y="228" width="16" height="4" rx="2" fill="#0b1020" opacity="0.55"/>
 
           <!-- Head / tail lights -->
           <ellipse cx="520" cy="237" rx="8" ry="4" [attr.fill]="lightsOn ? '#fde68a' : '#575044'"/>
@@ -273,14 +274,14 @@
           <circle cx="422" cy="298" r="2.6" [attr.fill]="selectedWheel.hub"/>
 
           <!-- Finish badge -->
-          <rect x="46" y="126" width="230" height="28" rx="14" fill="#000000" opacity="0.45"/>
-          <circle cx="66" cy="140" r="7" [attr.fill]="selectedExterior.swatch" stroke="#ffffff" stroke-opacity="0.55"/>
-          <text x="82" y="145" font-size="10" fill="#e2e8f0"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ configurationSummary }}</text>
+          <rect x="46" y="128" width="120" height="28" rx="14" fill="#000000" opacity="0.45"/>
+          <circle cx="64" cy="142" r="7" [attr.fill]="selectedExterior.swatch" stroke="#ffffff" stroke-opacity="0.55"/>
+          <text x="80" y="147" font-size="9.5" fill="#e2e8f0"
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ selectedExterior.label }}</text>
 
           <!-- Right: options -->
-          <rect x="604" y="58" width="348" height="298" rx="14" fill="var(--surface-panel)" stroke="var(--border-color)"/>
-          <text x="620" y="84" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)"
+          <rect x="604" y="58" width="348" height="304" rx="14" fill="var(--surface-panel)" stroke="var(--border-color)"/>
+          <text x="620" y="82" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">CARROCERÍA</text>
           @for (option of bodyOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
@@ -288,17 +289,17 @@
                [attr.aria-label]="option.label"
                (click)="selectBody(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectBody(option.id)">
-              <rect [attr.x]="620 + ($index * 112)" y="96" width="92" height="24" rx="12"
+              <rect [attr.x]="620 + ($index * 112)" y="90" width="98" height="22" rx="11"
                     [attr.fill]="selectedBodyId === option.id ? 'var(--accent-color)' : 'var(--surface-raised)'"
                     [attr.stroke]="selectedBodyId === option.id ? 'var(--accent-color)' : 'var(--border-color)'"
-                    stroke-width="1.5"/>
-              <text [attr.x]="666 + ($index * 112)" y="112" text-anchor="middle" font-size="9" font-weight="700"
+                    stroke-width="1.4"/>
+              <text [attr.x]="669 + ($index * 112)" y="105" text-anchor="middle" font-size="9" font-weight="700"
                     [attr.fill]="selectedBodyId === option.id ? '#ffffff' : 'var(--text-primary)'"
                     font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
             </g>
           }
 
-          <text x="620" y="140" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)"
+          <text x="620" y="130" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">EXTERIOR</text>
           @for (option of exteriorOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
@@ -306,18 +307,17 @@
                [attr.aria-label]="option.label"
                (click)="selectExterior(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectExterior(option.id)">
-              <circle [attr.cx]="632 + ($index * 50)" cy="154" r="13" [attr.fill]="option.swatch"
+              <circle [attr.cx]="636 + ($index * 54)" cy="150" r="12" [attr.fill]="option.swatch"
                       [attr.stroke]="selectedExteriorId === option.id ? 'var(--accent-color)' : 'transparent'"
                       stroke-width="4" pointer-events="none"/>
-              <circle [attr.cx]="632 + ($index * 50)" cy="154" r="13" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" pointer-events="none"/>
             </g>
           }
-          <text x="620" y="180" font-size="11.5" font-weight="700" fill="var(--text-primary)"
+          <text x="620" y="178" font-size="11" font-weight="700" fill="var(--text-primary)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ selectedExterior.label }}</text>
-          <text x="620" y="192" font-size="8.5" fill="var(--text-muted)"
+          <text x="620" y="191" font-size="8" fill="var(--text-muted)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Acabado {{ selectedFinish.label }}</text>
 
-          <text x="620" y="210" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)"
+          <text x="620" y="209" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">ACABADO</text>
           @for (option of finishOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
@@ -325,17 +325,17 @@
                [attr.aria-label]="option.label"
                (click)="selectFinish(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectFinish(option.id)">
-              <rect [attr.x]="620 + ($index * 106)" y="218" width="92" height="20" rx="10"
+              <rect [attr.x]="620 + ($index * 112)" y="216" width="100" height="20" rx="10"
                     [attr.fill]="selectedFinishId === option.id ? 'var(--accent-color)' : 'var(--surface-raised)'"
                     [attr.stroke]="selectedFinishId === option.id ? 'var(--accent-color)' : 'var(--border-color)'"
                     stroke-width="1.4"/>
-              <text [attr.x]="666 + ($index * 106)" y="232" text-anchor="middle" font-size="8" font-weight="700"
+              <text [attr.x]="670 + ($index * 112)" y="230" text-anchor="middle" font-size="8.5" font-weight="700"
                     [attr.fill]="selectedFinishId === option.id ? '#ffffff' : 'var(--text-primary)'"
                     font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
             </g>
           }
 
-          <text x="620" y="246" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)"
+          <text x="620" y="244" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">INTERIOR</text>
           @for (option of interiorOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
@@ -343,15 +343,15 @@
                [attr.aria-label]="option.label"
                (click)="selectInterior(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectInterior(option.id)">
-              <rect [attr.x]="620 + ($index * 84)" y="254" width="70" height="20" rx="8" [attr.fill]="option.swatch"
+              <rect [attr.x]="620 + ($index * 86)" y="251" width="72" height="18" rx="8" [attr.fill]="option.swatch"
                     [attr.stroke]="selectedInteriorId === option.id ? 'var(--accent-color)' : 'transparent'"
                     stroke-width="3"/>
-              <text [attr.x]="655 + ($index * 84)" y="268" text-anchor="middle" font-size="6.5" fill="var(--text-muted)"
+              <text [attr.x]="656 + ($index * 86)" y="264" text-anchor="middle" font-size="6.5" fill="var(--text-muted)"
                     font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
             </g>
           }
 
-          <text x="620" y="290" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)"
+          <text x="620" y="278" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">LLANTAS</text>
           @for (option of wheelOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
@@ -359,11 +359,11 @@
                [attr.aria-label]="option.label"
                (click)="selectWheel(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectWheel(option.id)">
-              <rect [attr.x]="620 + ($index * 106)" y="298" width="92" height="20" rx="10"
+              <rect [attr.x]="620 + ($index * 112)" y="285" width="100" height="20" rx="10"
                     [attr.fill]="selectedWheelId === option.id ? 'var(--accent-color)' : 'var(--surface-raised)'"
                     [attr.stroke]="selectedWheelId === option.id ? 'var(--accent-color)' : 'var(--border-color)'"
                     stroke-width="1.4"/>
-              <text [attr.x]="666 + ($index * 106)" y="312" text-anchor="middle" font-size="8" font-weight="700"
+              <text [attr.x]="670 + ($index * 112)" y="299" text-anchor="middle" font-size="8.5" font-weight="700"
                     [attr.fill]="selectedWheelId === option.id ? '#ffffff' : 'var(--text-primary)'"
                     font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
             </g>
@@ -374,11 +374,11 @@
              aria-label="Spoiler"
              (click)="toggleSpoiler()"
              (keydown)="($event.key === 'Enter' || $event.key === ' ') && toggleSpoiler()">
-            <rect x="620" y="326" width="106" height="24" rx="8"
+            <rect x="620" y="312" width="120" height="22" rx="8"
                   [attr.fill]="showSpoiler ? 'var(--accent-color)' : 'var(--surface-raised)'"
                   [attr.stroke]="showSpoiler ? 'var(--accent-color)' : 'var(--border-color)'"
                   stroke-width="1.4"/>
-            <text x="673" y="342" text-anchor="middle" font-size="8" font-weight="700"
+            <text x="680" y="327" text-anchor="middle" font-size="8.5" font-weight="700"
                   [attr.fill]="showSpoiler ? '#ffffff' : 'var(--text-primary)'"
                   font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">Spoiler</text>
           </g>
@@ -387,24 +387,18 @@
              aria-label="Luces"
              (click)="toggleLights()"
              (keydown)="($event.key === 'Enter' || $event.key === ' ') && toggleLights()">
-            <rect x="738" y="326" width="96" height="24" rx="8"
+            <rect x="750" y="312" width="96" height="22" rx="8"
                   [attr.fill]="lightsOn ? '#f59e0b' : 'var(--surface-raised)'"
                   [attr.stroke]="lightsOn ? '#fbbf24' : 'var(--border-color)'"
                   stroke-width="1.4"/>
-            <text x="786" y="342" text-anchor="middle" font-size="8" font-weight="700"
+            <text x="798" y="327" text-anchor="middle" font-size="8.5" font-weight="700"
                   [attr.fill]="lightsOn ? '#111827' : 'var(--text-primary)'"
                   font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">Luces</text>
           </g>
 
-          <rect x="620" y="356" width="212" height="28" rx="9" fill="var(--accent-color)"
-                class="mockup-hotspot" role="button" tabindex="0"
-                aria-label="{{ 'Guardar configuración' | translate }}"
-                (click)="saveConfiguration()"
-                (keydown)="($event.key === 'Enter' || $event.key === ' ') && saveConfiguration()"/>
-          <path d="M 648 371 l 4.5 4.5 l 8 -10" stroke="#ffffff" stroke-width="2" fill="none"
-                stroke-linecap="round" stroke-linejoin="round" opacity="0.95" pointer-events="none"/>
-          <text x="734" y="375" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">Guardar</text>
+          <rect x="620" y="340" width="220" height="14" rx="7" fill="none" />
+          <text x="620" y="351" font-size="8" font-weight="700" fill="var(--text-primary)"
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ configurationSummary }}</text>
         </svg>
       </div>
       <p class="mockup-status" aria-live="polite">

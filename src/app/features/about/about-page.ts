@@ -96,12 +96,12 @@ export class AboutPage {
   }
 
   readonly exteriorOptions: ExteriorOption[] = [
-    { id: 'arctic-white', label: 'Arctic White', finish: 'Acabado perlado', swatch: '#e5e7eb', paintStart: '#ffffff', paintEnd: '#cbd5e1' },
-    { id: 'obsidian', label: 'Obsidian', finish: 'Acabado mate', swatch: '#111827', paintStart: '#1f2937', paintEnd: '#020617' },
-    { id: 'crimson', label: 'Crimson Red', finish: 'Acabado brillante', swatch: '#dc2626', paintStart: '#ef4444', paintEnd: '#991b1b' },
-    { id: 'midnight-azure', label: 'Midnight Azure', finish: 'Acabado metalizado', swatch: '#2563eb', paintStart: '#4f6df5', paintEnd: '#8b5cf6' },
-    { id: 'solar-amber', label: 'Solar Amber', finish: 'Acabado brillante', swatch: '#f59e0b', paintStart: '#fbbf24', paintEnd: '#d97706' },
-    { id: 'emerald', label: 'Emerald', finish: 'Acabado perlado', swatch: '#10b981', paintStart: '#34d399', paintEnd: '#047857' },
+    { id: 'arctic-white', label: 'Arctic White', finish: 'Perlado', swatch: '#f8fafc', paintStart: '#f8fafc', paintEnd: '#cbd5e1' },
+    { id: 'obsidian', label: 'Obsidian', finish: 'Mate', swatch: '#111827', paintStart: '#1f2937', paintEnd: '#020617' },
+    { id: 'crimson', label: 'Crimson Red', finish: 'Brillante', swatch: '#dc2626', paintStart: '#f87171', paintEnd: '#991b1b' },
+    { id: 'midnight-azure', label: 'Midnight Azure', finish: 'Metalizado', swatch: '#2563eb', paintStart: '#1d4ed8', paintEnd: '#7c3aed' },
+    { id: 'solar-amber', label: 'Solar Amber', finish: 'Brillante', swatch: '#f59e0b', paintStart: '#fbbf24', paintEnd: '#d97706' },
+    { id: 'emerald', label: 'Emerald', finish: 'Perlado', swatch: '#10b981', paintStart: '#34d399', paintEnd: '#047857' },
   ];
 
   readonly interiorOptions: InteriorOption[] = [
