@@ -113,17 +113,18 @@
         </div>
       }
 
-      <div class="lang-switch" role="group" [attr.aria-label]="'nav.language' | translate">
-        @for (option of languages; track option.code) {
-          <button
-            type="button"
-            [class.active]="currentLanguage() === option.code"
-            (click)="setLanguage(option.code)"
-            [title]="option.label"
-            [attr.aria-pressed]="currentLanguage() === option.code"
-          >{{ option.shortLabel }}</button>
-        }
-      </div>
+      <label class="lang-select">
+        <select
+          [ngModel]="currentLanguage()"
+          (ngModelChange)="onLanguageModelChange($event)"
+          [attr.aria-label]="'nav.language' | translate"
+          [title]="'nav.language' | translate"
+        >
+          @for (option of languages; track option.code) {
+            <option [value]="option.code">{{ option.shortLabel }} · {{ option.label }}</option>
+          }
+        </select>
+      </label>
 
       @if (!authMode) {
         <div class="header-actions">
@@ -238,11 +239,16 @@
 
       <div class="menu-section">
         <p class="menu-section-title">{{ 'nav.language' | translate }}</p>
-        <div class="menu-lang">
+        <select
+          class="menu-lang-select"
+          [ngModel]="currentLanguage()"
+          (ngModelChange)="onLanguageModelChange($event)"
+          [attr.aria-label]="'nav.language' | translate"
+        >
           @for (option of languages; track option.code) {
-            <button type="button" [class.active]="currentLanguage() === option.code" (click)="setLanguage(option.code)">{{ option.label }}</button>
+            <option [value]="option.code">{{ option.label }}</option>
           }
-        </div>
+        </select>
       </div>
     </nav>
 }

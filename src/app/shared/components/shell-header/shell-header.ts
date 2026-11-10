@@ -10,7 +10,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
-import { AppLanguage } from '../../../core/i18n/languages';
+import { AppLanguage, isAppLanguage } from '../../../core/i18n/languages';
 import { AuthService } from '../../../core/services/auth';
 import { I18nService } from '../../../core/services/i18n';
 import { SocialService } from '../../../core/services/social';
@@ -103,6 +103,10 @@ export class ShellHeaderComponent {
     if (this.currentLanguage() === language) return;
     this.i18n.setLanguage(language);
     this.languageChange.emit(language);
+  }
+
+  onLanguageModelChange(value: string): void {
+    if (isAppLanguage(value)) this.setLanguage(value);
   }
 
   togglePresentation(): void {

@@ -2,7 +2,7 @@ import type { AppLanguage } from './languages';
 import { FEATURE_TRANSLATIONS } from './feature-translations';
 import { PAGE_TRANSLATIONS } from './page-translations';
 
-export type SourceTranslation = Record<Exclude<AppLanguage, 'es'>, string>;
+export type SourceTranslation = Partial<Record<Exclude<AppLanguage, 'es'>, string>>;
 
 /**
  * Traducciones de las etiquetas históricas del editor y de la interfaz.

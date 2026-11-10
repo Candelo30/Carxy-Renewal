@@ -1,6 +1,6 @@
 import type { AppLanguage } from './languages';
 
-export type MessageTranslations = Record<Exclude<AppLanguage, 'es'>, string>;
+export type MessageTranslations = Partial<Record<Exclude<AppLanguage, 'es'>, string>>;
 
 /**
  * Claves semánticas para la interfaz compartida y las funciones nuevas.

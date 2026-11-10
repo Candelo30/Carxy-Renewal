@@ -1,6 +1,7 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { APP_LANGUAGES, AppLanguage, DEFAULT_LANGUAGE, isAppLanguage } from '../i18n/languages';
+import { LOCALE_OVERLAYS } from '../i18n/locales';
 import { MESSAGES, MessageTranslations } from '../i18n/messages';
 import { SOURCE_TRANSLATIONS, SourceTranslation } from '../i18n/source-translations';
 import { LocalStateService } from './local-state';
@@ -43,17 +44,26 @@ export class I18nService {
     const language = this.language();
     const message = this.lookupMessage(key);
     const source = this.lookupSource(key);
-    let value = language === 'es' ? undefined : message?.[language] ?? source?.[language];
-    if (!value) {
-      if (language === 'es') value = this.spanishMessage(key);
-      else value = message?.en ?? source?.en;
+
+    if (language === 'es') {
+      const spanish = this.spanishMessage(key) ?? (source ? key : undefined);
+      return this.interpolate(spanish ?? key, params);
     }
-    if (!value) return key;
-    return this.interpolate(value, params);
+
+    const value = this.lookupOverlay(language, key)
+      ?? message?.[language]
+      ?? source?.[language]
+      ?? message?.en
+      ?? source?.en
+      ?? this.spanishMessage(key)
+      ?? (source ? key : undefined);
+
+    return value ? this.interpolate(value, params) : key;
   }
 
   private readonly normalizedMessageIndex = new Map<string, MessageTranslations>();
   private readonly normalizedSourceIndex = new Map<string, SourceTranslation>();
+  private readonly overlayIndexes = new Map<AppLanguage, Map<string, string>>();
 
   private lookupMessage(key: string): MessageTranslations | undefined {
     const direct = MESSAGES[key];
@@ -83,6 +93,21 @@ export class I18nService {
     return this.normalizedSourceIndex.get(this.normalizeKey(key));
   }
 
+  private lookupOverlay(language: AppLanguage, key: string): string | undefined {
+    const overlay = LOCALE_OVERLAYS[language];
+    if (!overlay) return undefined;
+    let index = this.overlayIndexes.get(language);
+    if (!index) {
+      index = new Map<string, string>();
+      for (const [candidate, value] of Object.entries(overlay)) {
+        const normalized = this.normalizeKey(candidate);
+        if (!index.has(normalized)) index.set(normalized, value);
+      }
+      this.overlayIndexes.set(language, index);
+    }
+    return index.get(this.normalizeKey(key));
+  }
+
   private normalizeKey(key: string): string {
     return key.replace(/\s+/g, ' ').trim();
   }
@@ -92,8 +117,8 @@ export class I18nService {
     return this.translate(spanish, params);
   }
 
-  localize<T>(values: Record<AppLanguage, T>): T {
-    return values[this.language()] ?? values.es;
+  localize<T>(values: Partial<Record<AppLanguage, T>>): T | undefined {
+    return values[this.language()] ?? values.en ?? values.es;
   }
 
   private spanishMessage(key: string): string | undefined {
@@ -429,7 +454,9 @@ export class I18nService {
 
   private applyDocumentLanguage(language: AppLanguage): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.document.documentElement.lang = language;
+    const option = APP_LANGUAGES.find((item) => item.code === language);
+    this.document.documentElement.lang = option?.htmlLang ?? language;
+    this.document.documentElement.dir = option?.dir ?? 'ltr';
   }
 
   private interpolate(value: string, params?: TranslationParams): string {
