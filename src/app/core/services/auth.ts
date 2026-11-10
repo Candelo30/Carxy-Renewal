@@ -47,6 +47,18 @@ export function isPasswordStrongEnough(password: string): boolean {
     && /\d/.test(password);
 }
 
+/**
+ * Servicio de autenticación y perfil de usuario.
+ *
+ * Modos de operación:
+ * - Firebase (Auth + Firestore): fuente canónica para sesión/perfil y datos privados.
+ * - Solo Auth (sin Firestore): sesión remota con perfil mínimo derivado de Auth.
+ * - Local/demo (sin Firebase): cuentas/sesión en `localStorage` del navegador.
+ *
+ * El modo local/demo es útil para desarrollo y pruebas manuales, pero no reemplaza
+ * controles de seguridad del servidor, no sincroniza entre dispositivos y no debe
+ * usarse para cuentas o datos reales en producción.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly i18n = inject(I18nService);

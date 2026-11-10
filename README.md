@@ -82,6 +82,14 @@ El archivo permite el desarrollo en `localhost:4200`/`localhost:4202`, la vista 
 
 Sin configuración, el acceso y los datos sociales funcionan en el navegador local para demostración. Ese modo no verifica contraseñas en un servidor, no comparte datos entre dispositivos y no debe usarse para cuentas reales. Con Firebase configurado, Auth, Firestore y Storage son requeridos para autenticación y publicaciones; los errores de Firebase se muestran al usuario.
 
+### Modo local/demo (límites)
+
+- **Persistencia local**: el estado se guarda en el navegador (`localStorage`/IndexedDB) y puede variar entre pestañas, navegadores o dispositivos.
+- **Sin seguridad de servidor**: no reemplaza autenticación/autorización ni reglas de `firestore.rules`/`storage.rules`.
+- **Datos de demostración**: algunas vistas pueden mostrar contenido/usuarios de ejemplo cuando no hay datos locales previos.
+- **Paridad funcional limitada**: ciertos flujos y garantías (tiempo real multiusuario, permisos, consistencia entre servicios) pueden comportarse distinto a Firebase.
+- **Uso recomendado**: desarrollo, pruebas manuales y exploración de la UI; no para cuentas, datos sensibles ni operación real.
+
 ## Despliegue en GitHub Pages
 
 La app se publica en **https://candelo30.github.io/Carxy-Renewal/** mediante el workflow `.github/workflows/deploy-pages.yml` y el proyecto estático `angular-3d-editor-pages`. El proyecto SSR `angular-3d-editor` se mantiene intacto para otros entornos.
