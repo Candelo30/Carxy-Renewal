@@ -77,6 +77,7 @@ export class ThreeEngineService implements OnDestroy {
   public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
   public readonly collaboratorSelection$ = new Subject<{ uid: string; objectId: string | null }>();
   public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string }>();
+  public readonly objectLockChanged$ = new Subject<{ objectId: string; lockedBy: string | null }>();
   public snapToGrid = false;
   public gridStep = 0.5;
   readonly layerChanged$ = new Subject<string>();
@@ -141,6 +142,7 @@ export class ThreeEngineService implements OnDestroy {
   private nextObjectId = 1;
   private readonly platformId = inject(PLATFORM_ID);
   private sceneInitialized = false;
+  private readonly lockedObjects = new Map<string, string>(); // objectId -> uid del bloqueador
 
   /**
    * Si el usuario suelta el puntero fuera del canvas (header, HUD, otra ventana),
@@ -334,6 +336,41 @@ export class ThreeEngineService implements OnDestroy {
       console.error('No se pudo restaurar el borrador de la escena.', error);
       return false;
     }
+  }
+
+  /** Carga una escena serializada como contenido inicial de un proyecto compartido. */
+  public loadProjectScene(serialized: string): boolean {
+    return this.restoreScene(serialized);
+  }
+
+  /** Devuelve la serialización actual de la escena para guardarla en el proyecto. */
+  public get sceneJson(): string {
+    return this.serializeScene();
+  }
+
+  /** Bloquea un objeto para que solo el usuario indicado pueda editarlo. */
+  public lockObject(objectId: string, uid: string): boolean {
+    if (this.lockedObjects.has(objectId)) return false;
+    this.lockedObjects.set(objectId, uid);
+    this.objectLockChanged$.next({ objectId, lockedBy: uid });
+    return true;
+  }
+
+  /** Desbloquea un objeto. */
+  public unlockObject(objectId: string): void {
+    this.lockedObjects.delete(objectId);
+    this.objectLockChanged$.next({ objectId, lockedBy: null });
+  }
+
+  /** Devuelve true si el objeto está bloqueado por otro usuario. */
+  public isObjectLockedByOther(objectId: string, currentUid: string): boolean {
+    const locker = this.lockedObjects.get(objectId);
+    return locker != null && locker !== currentUid;
+  }
+
+  /** Devuelve el mapa de objetos bloqueados. */
+  public getLockedObjects(): ReadonlyMap<string, string> {
+    return this.lockedObjects;
   }
 
   public getSelectedNodeId(): string | null {

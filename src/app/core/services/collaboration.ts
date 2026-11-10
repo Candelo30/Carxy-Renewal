@@ -138,6 +138,53 @@ export class CollaborationService {
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Escena del proyecto                                               */
+  /* ------------------------------------------------------------------ */
+
+  getProjectScene(projectId: string): Observable<string | undefined> {
+    const db = this.firestore;
+    if (!db) return of(undefined);
+    return docData(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`), { idField: 'id' }).pipe(
+      switchMap((p) => of((p as Project)?.sceneJson))
+    );
+  }
+
+  async saveProjectScene(projectId: string, sceneJson: string): Promise<void> {
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+    await updateDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`), {
+      sceneJson,
+      updatedAt: Date.now(),
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Bloqueo de objetos                                                */
+  /* ------------------------------------------------------------------ */
+
+  async lockObject(projectId: string, objectId: string, uid: string): Promise<boolean> {
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+    const lockRef = doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}/locks/${objectId}`);
+    const snap = await getDoc(lockRef);
+    if (snap.exists()) return false;
+    await setDoc(lockRef, { objectId, lockedBy: uid, lockedAt: Date.now() });
+    return true;
+  }
+
+  async unlockObject(projectId: string, objectId: string): Promise<void> {
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+    await deleteDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}/locks/${objectId}`));
+  }
+
+  getObjectLock(projectId: string, objectId: string): Observable<{ id: string; lockedBy: string } | undefined> {
+    const db = this.firestore;
+    if (!db) return of(undefined);
+    return docData(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}/locks/${objectId}`), { idField: 'id' }) as Observable<{ id: string; lockedBy: string } | undefined>;
+  }
+
+  /* ------------------------------------------------------------------ */
   /*  Miembros                                                          */
   /* ------------------------------------------------------------------ */
 

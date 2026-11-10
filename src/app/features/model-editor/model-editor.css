@@ -161,6 +161,35 @@
   font-size: 0.55rem;
 }
 
+.locked-object {
+  opacity: 0.65;
+  filter: grayscale(0.4);
+  cursor: not-allowed;
+}
+
+.lock-badge {
+  font-size: 0.65rem;
+  margin-left: 6px;
+}
+
+.lock-toggle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--surface-control);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.lock-toggle:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
 .parts-heading {
   display: flex;
   justify-content: space-between;

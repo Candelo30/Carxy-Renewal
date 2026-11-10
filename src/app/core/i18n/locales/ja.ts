@@ -374,4 +374,14 @@ export const JA_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': 'マイプロジェクト',
 
+  'projects.unlockObject': 'オブジェクトのロックを解除',
+
+  'projects.lockObject': 'オブジェクトをロック',
+
+  'projects.objectAlreadyLocked': 'このオブジェクトは既に他の共同編集者によってロックされています。',
+
+  'projects.objectLockedBy': '{name} がこのオブジェクトを編集中です',
+
+  'projects.objectLocked': 'オブジェクトがロックされました',
+
 };

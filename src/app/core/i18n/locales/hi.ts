@@ -374,4 +374,14 @@ export const HI_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': 'मेरे प्रोजेक्ट',
 
+  'projects.unlockObject': 'ऑब्जेक्ट अनलॉक करें',
+
+  'projects.lockObject': 'ऑब्जेक्ट लॉक करें',
+
+  'projects.objectAlreadyLocked': 'यह ऑब्जेक्ट पहले से ही किसी अन्य सहयोगी द्वारा लॉक किया गया है।',
+
+  'projects.objectLockedBy': '{name} इस ऑब्जेक्ट को संपादित कर रहा है',
+
+  'projects.objectLocked': 'ऑब्जेक्ट लॉक किया गया',
+
 };

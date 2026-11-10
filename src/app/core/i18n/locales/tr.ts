@@ -374,4 +374,14 @@ export const TR_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': 'Projelerim',
 
+  'projects.unlockObject': 'Neslenin kilidini aç',
+
+  'projects.lockObject': 'Nesneyi kilitle',
+
+  'projects.objectAlreadyLocked': 'Bu nesne zaten başka bir işbirlikçi tarafından kilitli.',
+
+  'projects.objectLockedBy': '{name} bu nesneyi düzenliyor',
+
+  'projects.objectLocked': 'Nesne kilitli',
+
 };

@@ -374,4 +374,14 @@ export const DE_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': 'Meine Projekte',
 
+  'projects.unlockObject': 'Objekt entsperren',
+
+  'projects.lockObject': 'Objekt sperren',
+
+  'projects.objectAlreadyLocked': 'Dieses Objekt ist bereits von einem anderen Mitarbeiter gesperrt.',
+
+  'projects.objectLockedBy': '{name} bearbeitet dieses Objekt',
+
+  'projects.objectLocked': 'Objekt gesperrt',
+
 };

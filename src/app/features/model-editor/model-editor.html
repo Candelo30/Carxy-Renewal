@@ -31,11 +31,21 @@
           class="object-row"
           *ngFor="let item of sceneObjects; trackBy: trackById"
           [class.selected]="item.id === selectedObjectId"
+          [class.locked-object]="!isObjectEditable(item.id)"
           (click)="selectObject(item.id)"
         >
           <span class="object-glyph">◇</span>
           <span class="object-name">{{ item.name }}</span>
           <span class="object-state" *ngIf="item.id === selectedObjectId">●</span>
+          <span class="lock-badge" *ngIf="!isObjectEditable(item.id)" [title]="'projects.objectLocked' | translate">🔒</span>
+          <button
+            class="lock-toggle"
+            *ngIf="projectId && canWrite"
+            [title]="isObjectEditable(item.id) ? ('projects.lockObject' | translate) : ('projects.unlockObject' | translate)"
+            (click)="isObjectEditable(item.id) ? lockObject(item.id) : unlockObject(item.id); $event.stopPropagation()"
+          >
+            {{ isObjectEditable(item.id) ? '🔓' : '🔒' }}
+          </button>
         </button>
         <div class="empty-state" *ngIf="sceneObjects.length === 0">
           {{ 'Agrega una forma para comenzar.' | translate }}

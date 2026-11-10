@@ -374,4 +374,14 @@ export const RU_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': 'Мои проекты',
 
+  'projects.unlockObject': 'Разблокировать объект',
+
+  'projects.lockObject': 'Заблокировать объект',
+
+  'projects.objectAlreadyLocked': 'Этот объект уже заблокирован другим сотрудником.',
+
+  'projects.objectLockedBy': '{name} редактирует этот объект',
+
+  'projects.objectLocked': 'Объект заблокирован',
+
 };

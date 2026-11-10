@@ -374,4 +374,14 @@ export const IT_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': 'I miei progetti',
 
+  'projects.unlockObject': 'Sblocca oggetto',
+
+  'projects.lockObject': 'Blocca oggetto',
+
+  'projects.objectAlreadyLocked': 'Questo oggetto è già bloccato da un altro collaboratore.',
+
+  'projects.objectLockedBy': '{name} sta modificando questo oggetto',
+
+  'projects.objectLocked': 'Oggetto bloccato',
+
 };

@@ -374,4 +374,14 @@ export const KO_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': '내 프로젝트',
 
+  'projects.unlockObject': '개체 잠금 해제',
+
+  'projects.lockObject': '개체 잠금',
+
+  'projects.objectAlreadyLocked': '이 개체는 이미 다른 협업자가 잠금 처리했습니다.',
+
+  'projects.objectLockedBy': '{name} 님이 이 개체를 편집 중입니다',
+
+  'projects.objectLocked': '개체 잠김',
+
 };

@@ -11,10 +11,11 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { interval, Subscription, firstValueFrom, take } from 'rxjs';
-import { auditTime, merge } from 'rxjs';
+import { auditTime, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
 import { LocalStateService } from '../../core/services/local-state';
@@ -25,6 +26,7 @@ import { EditorHistoryService } from '../../core/services/editor-history';
 import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { CollaborationService, hasPermission } from '../../core/services/collaboration';
 import type { NotificationPosition } from '../../core/models/social.models';
 import type {
   EditableMaterial,
@@ -94,6 +96,9 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly fileHandler = inject(FileHandler);
   private readonly editorHistory = inject(EditorHistoryService);
+  private readonly collaboration = inject(CollaborationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   public canUndo = false;
   public canRedo = false;
@@ -111,6 +116,12 @@ export class ModelEditor implements OnInit, OnDestroy {
   public collaborationOpen = false;
   public collaborators: Array<{ uid: string; displayName: string; color: string; objectId: string | null }> = [];
   public myCursor = { x: 0.5, y: 0.5 };
+
+  public projectId: string | null = null;
+  public projectSceneLoaded = false;
+  public canWrite = false;
+  private autoSaveSub: Subscription | null = null;
+  private projectLockSub: Subscription | null = null;
 
   constructor(
     private threeEngine: ThreeEngineService,
@@ -155,17 +166,61 @@ export class ModelEditor implements OnInit, OnDestroy {
     }));
     this.refreshLayers();
     this.snapEnabled = this.threeEngine.snapToGrid;
-    this.subscriptions.add(
-      merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
-        .pipe(auditTime(800))
-        .subscribe(() => this.localState.saveDraft(this.threeEngine.serializeScene())),
-    );
-    this.sceneObjects = this.threeEngine.getSceneObjects();
-    this.selectedObjectId = this.threeEngine.getSceneObjects().at(-1)?.id ?? '';
-    this.updateSelectionState();
-    this.refreshSceneNodes();
-    this.loadMaterialsFromEngine();
-    this.applyAppearance();
+
+    // --- Proyecto: detectar ?project=<id> y cargar escena ---
+    const qp = this.route.snapshot.queryParamMap.get('project');
+    if (qp) {
+      this.projectId = qp;
+      this.collaboration.getProjectScene(this.projectId).pipe(take(1)).subscribe((sceneJson) => {
+        if (sceneJson) {
+          this.threeEngine.loadProjectScene(sceneJson);
+          this.projectSceneLoaded = true;
+        }
+        this.sceneObjects = this.threeEngine.getSceneObjects();
+        this.selectedObjectId = this.threeEngine.getSceneObjects().at(-1)?.id ?? '';
+        this.updateSelectionState();
+        this.refreshSceneNodes();
+        this.loadMaterialsFromEngine();
+        this.applyAppearance();
+        this.cdr.detectChanges();
+      });
+      // Calcular permiso de escritura para este proyecto
+      this.collaboration.getMembers(this.projectId).pipe(take(1)).subscribe((members) => {
+        const uid = this.auth.currentUser?.uid;
+        const member = members.find((m) => m.userId === uid);
+        this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
+      });
+      // Auto-guardar escena en el proyecto al cambiar (debounced)
+      this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
+        .pipe(debounceTime(2000), distinctUntilChanged())
+        .subscribe(() => {
+          if (!this.projectId) return;
+          const json = this.threeEngine.serializeScene();
+          void this.collaboration.saveProjectScene(this.projectId, json);
+        });
+      // Sincronizar bloqueos de objetos remotos
+      this.projectLockSub = this.threeEngine.objectLockChanged$.subscribe((lock) => {
+        if (lock.lockedBy && lock.lockedBy !== this.auth.currentUser?.uid) {
+          this.notifications.warning(
+            this.i18n.translate('projects.objectLockedBy', { name: lock.lockedBy }),
+            this.i18n.translate('projects.objectLocked')
+          );
+        }
+      });
+    } else {
+      // Sin proyecto: guardar en borrador local como antes
+      this.subscriptions.add(
+        merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
+          .pipe(auditTime(800))
+          .subscribe(() => this.localState.saveDraft(this.threeEngine.serializeScene())),
+      );
+      this.sceneObjects = this.threeEngine.getSceneObjects();
+      this.selectedObjectId = this.threeEngine.getSceneObjects().at(-1)?.id ?? '';
+      this.updateSelectionState();
+      this.refreshSceneNodes();
+      this.loadMaterialsFromEngine();
+      this.applyAppearance();
+    }
   }
 
   trackById(_index: number, item: { id: string }): string {
@@ -864,14 +919,44 @@ export class ModelEditor implements OnInit, OnDestroy {
     // así que dejamos que la limpieza se haga al destruir el componente.
   }
 
+  async lockObject(objectId: string): Promise<void> {
+    if (!this.projectId) return;
+    const uid = this.auth.currentUser?.uid;
+    if (!uid) return;
+    const ok = await this.collaboration.lockObject(this.projectId, objectId, uid);
+    if (!ok) {
+      this.notifications.warning(this.i18n.translate('projects.objectAlreadyLocked'), this.i18n.translate('projects.objectLocked'));
+    } else {
+      this.threeEngine.lockObject(objectId, uid);
+    }
+  }
+
+  async unlockObject(objectId: string): Promise<void> {
+    if (!this.projectId) return;
+    await this.collaboration.unlockObject(this.projectId, objectId);
+    this.threeEngine.unlockObject(objectId);
+  }
+
+  isObjectEditable(objectId: string): boolean {
+    if (!this.projectId) return true;
+    const uid = this.auth.currentUser?.uid;
+    return !this.threeEngine.isObjectLockedByOther(objectId, uid ?? '');
+  }
+
   toggleCollaborationPanel(): void {
     this.collaborationOpen = !this.collaborationOpen;
   }
 
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.localState.saveDraft(this.threeEngine.serializeScene());
+      if (this.projectId) {
+        void this.collaboration.saveProjectScene(this.projectId, this.threeEngine.serializeScene());
+      } else {
+        this.localState.saveDraft(this.threeEngine.serializeScene());
+      }
     }
+    this.autoSaveSub?.unsubscribe();
+    this.projectLockSub?.unsubscribe();
     this.subscriptions.unsubscribe();
     void this.audioReactive.stop();
   }

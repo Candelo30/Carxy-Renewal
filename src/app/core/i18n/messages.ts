@@ -432,4 +432,9 @@ export const MESSAGES: Record<string, MessageTranslations> = {
   'projects.confirmDeleteProject': { en: 'Are you sure you want to delete this project? This cannot be undone.', fr: 'Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.', pt: 'Tem certeza de que deseja excluir este projeto? Isso não pode ser desfeito.' },
   'projects.invitedBy': { en: 'Invited by {name}', fr: 'Invité par {name}', pt: 'Convidado por {name}' },
   'projects.project': { en: 'Project', fr: 'Projet', pt: 'Projeto' },
+  'projects.objectLocked': { en: 'Object locked', fr: 'Objet verrouillé', pt: 'Objeto bloqueado' },
+  'projects.objectLockedBy': { en: '{name} is editing this object', fr: '{name} modifie cet objet', pt: '{name} está editando este objeto' },
+  'projects.objectAlreadyLocked': { en: 'This object is already locked by another collaborator.', fr: 'Cet objet est déjà verrouillé par un autre collaborateur.', pt: 'Este objeto já está bloqueado por outro colaborador.' },
+  'projects.lockObject': { en: 'Lock object', fr: 'Verrouiller l’objet', pt: 'Bloquear objeto' },
+  'projects.unlockObject': { en: 'Unlock object', fr: 'Déverrouiller l’objet', pt: 'Desbloquear objeto' },
 };

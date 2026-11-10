@@ -374,4 +374,14 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
 
   'projects.title': '我的项目',
 
+  'projects.unlockObject': '解锁对象',
+
+  'projects.lockObject': '锁定对象',
+
+  'projects.objectAlreadyLocked': '此对象已被其他协作者锁定。',
+
+  'projects.objectLockedBy': '{name} 正在编辑此对象',
+
+  'projects.objectLocked': '对象已锁定',
+
 };
