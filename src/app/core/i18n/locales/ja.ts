@@ -384,4 +384,6 @@ export const JA_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': 'オブジェクトがロックされました',
 
+  'projects.sceneUpdatedRemotely': '共同編集者によってシーンが更新されました',
+
 };

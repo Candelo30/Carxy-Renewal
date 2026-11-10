@@ -384,4 +384,6 @@ export const KO_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': '개체 잠김',
 
+  'projects.sceneUpdatedRemotely': '협업자에 의해 씬이 업데이트되었습니다',
+
 };

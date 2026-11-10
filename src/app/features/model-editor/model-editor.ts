@@ -122,6 +122,8 @@ export class ModelEditor implements OnInit, OnDestroy {
   public canWrite = false;
   private autoSaveSub: Subscription | null = null;
   private projectLockSub: Subscription | null = null;
+  private remoteSceneSub: Subscription | null = null;
+  private isApplyingRemote = false;
 
   constructor(
     private threeEngine: ThreeEngineService,
@@ -190,14 +192,29 @@ export class ModelEditor implements OnInit, OnDestroy {
         const member = members.find((m) => m.userId === uid);
         this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
       });
-      // Auto-guardar escena en el proyecto al cambiar (debounced)
+      // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales
       this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
         .pipe(debounceTime(2000), distinctUntilChanged())
         .subscribe(() => {
-          if (!this.projectId) return;
+          if (!this.projectId || this.isApplyingRemote || !this.canWrite) return;
           const json = this.threeEngine.serializeScene();
           void this.collaboration.saveProjectScene(this.projectId, json);
         });
+      // Escuchar cambios remotos de la escena y aplicarlos localmente
+      this.remoteSceneSub = this.collaboration.watchProjectScene(this.projectId).subscribe((remoteJson) => {
+        if (!remoteJson || remoteJson === this.threeEngine.serializeScene()) return;
+        this.isApplyingRemote = true;
+        try {
+          this.threeEngine.loadProjectScene(remoteJson);
+          this.sceneObjects = this.threeEngine.getSceneObjects();
+          this.refreshSceneNodes();
+          this.loadMaterialsFromEngine();
+          this.cdr.detectChanges();
+          this.notifications.info(this.i18n.translate('projects.sceneUpdatedRemotely'), this.i18n.translate('projects.project'));
+        } finally {
+          this.isApplyingRemote = false;
+        }
+      });
       // Sincronizar bloqueos de objetos remotos
       this.projectLockSub = this.threeEngine.objectLockChanged$.subscribe((lock) => {
         if (lock.lockedBy && lock.lockedBy !== this.auth.currentUser?.uid) {
@@ -957,6 +974,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     }
     this.autoSaveSub?.unsubscribe();
     this.projectLockSub?.unsubscribe();
+    this.remoteSceneSub?.unsubscribe();
     this.subscriptions.unsubscribe();
     void this.audioReactive.stop();
   }

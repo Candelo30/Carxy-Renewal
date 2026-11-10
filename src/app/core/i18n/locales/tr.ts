@@ -384,4 +384,6 @@ export const TR_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': 'Nesne kilitli',
 
+  'projects.sceneUpdatedRemotely': 'Sahne bir işbirlikçi tarafından güncellendi',
+
 };

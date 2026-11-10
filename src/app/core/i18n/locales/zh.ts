@@ -384,4 +384,6 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': '对象已锁定',
 
+  'projects.sceneUpdatedRemotely': '场景已由协作者更新',
+
 };

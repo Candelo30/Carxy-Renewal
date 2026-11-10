@@ -437,4 +437,5 @@ export const MESSAGES: Record<string, MessageTranslations> = {
   'projects.objectAlreadyLocked': { en: 'This object is already locked by another collaborator.', fr: 'Cet objet est déjà verrouillé par un autre collaborateur.', pt: 'Este objeto já está bloqueado por outro colaborador.' },
   'projects.lockObject': { en: 'Lock object', fr: 'Verrouiller l’objet', pt: 'Bloquear objeto' },
   'projects.unlockObject': { en: 'Unlock object', fr: 'Déverrouiller l’objet', pt: 'Desbloquear objeto' },
+  'projects.sceneUpdatedRemotely': { en: 'Scene updated by a collaborator', fr: 'Scène mise à jour par un collaborateur', pt: 'Cena atualizada por um colaborador' },
 };

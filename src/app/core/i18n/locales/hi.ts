@@ -384,4 +384,6 @@ export const HI_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': 'ऑब्जेक्ट लॉक किया गया',
 
+  'projects.sceneUpdatedRemotely': 'सहयोगी द्वारा दृश्य अपडेट किया गया',
+
 };

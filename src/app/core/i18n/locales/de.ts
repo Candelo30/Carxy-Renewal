@@ -384,4 +384,6 @@ export const DE_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': 'Objekt gesperrt',
 
+  'projects.sceneUpdatedRemotely': 'Szene wurde von einem Mitarbeiter aktualisiert',
+
 };

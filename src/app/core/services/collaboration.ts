@@ -149,6 +149,11 @@ export class CollaborationService {
     );
   }
 
+  /** Observa cambios en tiempo real en la escena de un proyecto (para colaboración remota). */
+  watchProjectScene(projectId: string): Observable<string | undefined> {
+    return this.getProjectScene(projectId);
+  }
+
   async saveProjectScene(projectId: string, sceneJson: string): Promise<void> {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));

@@ -384,4 +384,6 @@ export const RU_TRANSLATIONS: Record<string, string> = {
 
   'projects.objectLocked': 'Объект заблокирован',
 
+  'projects.sceneUpdatedRemotely': 'Сцена обновлена соавтором',
+
 };
