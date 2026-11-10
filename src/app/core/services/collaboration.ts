@@ -339,30 +339,35 @@ export class CollaborationService {
     if (!db || !projectId) return of([]);
     if (!this.membersStreams.has(projectId)) {
       const stream = new BehaviorSubject<ProjectMember[]>([]);
-      const q = query(
-        collection(db, SOCIAL_COLLECTIONS.projectMembers),
-        where('projectId', '==', projectId),
-        orderBy('role', 'asc')
-      );
-      const fallbackQ = query(
+      const membersQuery = query(
         collection(db, SOCIAL_COLLECTIONS.projectMembers),
         where('projectId', '==', projectId)
       );
 
-      const subscription = (collectionData(q, { idField: 'id' }) as Observable<ProjectMember[]>)
+      const subscription = (collectionData(membersQuery, { idField: 'id' }) as Observable<ProjectMember[]>)
         .pipe(
+          map((members) => this.sortMembersByRole(members as ProjectMember[])),
           catchError((err) => {
-            console.warn('Fallback al obtener miembros sin orderBy:', err);
-            return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectMember[]>).pipe(
-              catchError(() => of([] as ProjectMember[]))
-            );
+            console.warn('No se pudieron cargar los miembros del proyecto.', err);
+            return of([] as ProjectMember[]);
           })
         )
-        .subscribe((members) => stream.next(members as ProjectMember[]));
+        .subscribe((members) => stream.next(members));
 
       this.membersStreams.set(projectId, { stream, unsub: () => subscription.unsubscribe() });
     }
     return this.membersStreams.get(projectId)!.stream as Observable<ProjectMember[]>;
+  }
+
+  private sortMembersByRole(members: ProjectMember[]): ProjectMember[] {
+    const priority: Record<ProjectRole, number> = { owner: 0, editor: 1, viewer: 2 };
+    return [...members].sort((a, b) => {
+      const roleDiff = (priority[a.role] ?? 99) - (priority[b.role] ?? 99);
+      if (roleDiff !== 0) return roleDiff;
+      const nameDiff = (a.userName || '').localeCompare(b.userName || '', undefined, { sensitivity: 'base' });
+      if (nameDiff !== 0) return nameDiff;
+      return (a.joinedAt || 0) - (b.joinedAt || 0);
+    });
   }
 
   private async addMember(

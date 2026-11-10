@@ -136,8 +136,10 @@ Las páginas disponibles son `/editor`, `/feed`, `/login`, `/register`, `/forgot
 
 ```bash
 npm run build
-npm test -- --watch=false
+npm test
 npm run build:pages
 ```
+
+> Nota: `npm test` ejecuta `ng test angular-3d-editor` con el builder `@angular/build:unit-test`. Evita pasar flags no soportados por ese comando (por ejemplo `--run`); si necesitas un modo específico, usa las opciones documentadas por el Angular CLI para tu entorno.
 
 Para validar la salida de GitHub Pages, ejecuta `npm run preview:pages` y prueba `/Carxy-Renewal/`, `/Carxy-Renewal/feed?sort=likes`, `/Carxy-Renewal/favorites` y un perfil profundo `/Carxy-Renewal/profile/:uid`.
