@@ -435,15 +435,28 @@ tbody tr:hover td {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: 1px solid var(--border-color);
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface-panel);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-color) 50%, var(--border-color));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+.stat-card:hover .stat-icon {
+  color: var(--accent-color);
+  transform: scale(1.1);
 }
 
 .stat-icon {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   flex: none;
+  transition: transform 140ms ease, color 140ms ease;
 }
 
 .stat-card small {
@@ -455,7 +468,7 @@ tbody tr:hover td {
 
 .stat-card strong {
   display: block;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
@@ -565,4 +578,161 @@ tbody tr:hover td {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
     padding: 12px;
   }
+}
+
+/* Mejoras visuales del panel de administración */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-panel);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-color) 50%, var(--border-color));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+.stat-card:hover .stat-icon {
+  color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  flex: none;
+  transition: transform 140ms ease, color 140ms ease;
+}
+
+.stat-card small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  margin-bottom: 2px;
+}
+
+.stat-card strong {
+  display: block;
+  font-size: 1.35rem;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.person img,
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.person img {
+  border: 2px solid color-mix(in srgb, var(--surface-panel) 50%, var(--border-color));
+}
+
+tbody tr:hover td {
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+tbody tr:hover td .state {
+  filter: brightness(1.1);
+}
+
+.empty {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  border: 2px dashed color-mix(in srgb, var(--border-color) 50%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-control) 30%, var(--surface-panel));
+}
+
+.empty p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.confirm-dialog {
+  width: min(480px, calc(100% - 32px));
+  margin: auto;
+  padding: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  box-shadow: 0 20px 60px color-mix(in srgb, #000 40%, transparent);
+}
+
+.confirm-dialog h2 {
+  margin: 4px 0 12px;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.confirm-dialog p {
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.confirm-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-dialog button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.confirm-dialog button.cancel {
+  border: 1px solid var(--border-color);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.confirm-dialog button.cancel:hover {
+  background: color-mix(in srgb, var(--surface-control) 70%, var(--surface-panel));
+}
+
+.confirm-dialog button.danger {
+  border: none;
+  background: color-mix(in srgb, var(--color-danger) 15%, var(--surface-panel));
+  color: var(--color-danger);
+}
+
+.confirm-dialog button.danger:hover {
+  background: color-mix(in srgb, var(--color-danger) 20%, var(--surface-panel));
+}
+
+.content-card {
+  transition: transform 140ms ease, border-color 140ms ease;
+}
+
+.content-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-color) 50%, var(--border-color));
+}
+
+.content-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.content-card p {
+  margin: 6px 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }

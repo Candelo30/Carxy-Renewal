@@ -496,4 +496,14 @@ export const KO_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': '프로젝트에 참여했습니다',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': '각 멤버는 소유자, 편집자 또는 뷰어 역할을 할 수 있습니다',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': '다른 창작자를 프로젝트에 초대하고, 함께 편집하고, 객체 잠금을 사용하여 다른 사람의 작업을 덮어쓰지 마세요.',
+
+  'Colabora en tiempo real': '실시간 협업',
+
+  'Proyectos, miembros e invitaciones': '프로젝트, 회원 및 초대',
+
+  'Colaboración 3D': '3D 협업',
+
 };

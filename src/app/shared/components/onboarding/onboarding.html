@@ -60,6 +60,13 @@
             <p [innerHTML]="'Cuando estés listo, haz clic en <strong>Publicar</strong> para compartir tu modelo con la comunidad CARXY.' | translate"></p>
             <div class="guide-hint">{{ 'Tu modelo se publicará con una vista previa y archivo GLB' | translate }}</div>
           </div>
+        } @else if (step === 'collaborate') {
+          <div class="guide-collaborate">
+            <div class="guide-icon">🤝</div>
+            <p [innerHTML]="'Crea un proyecto desde Proyectos e invita a otros creadores a editar juntos. Usa el candado 🔒 para bloquear objetos mientras trabajas en ellos.' | translate"></p>
+            <div class="guide-hint">{{ 'Cada miembro puede tener rol de dueño, editor o visor' | translate }}</div>
+            <a class="btn-help" routerLink="/projects">{{ 'Ir a Proyectos' | translate }}</a>
+          </div>
         } @else if (step === 'completed') {
           <div class="guide-completed">
             <div class="guide-icon">✅</div>

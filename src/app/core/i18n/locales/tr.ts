@@ -496,4 +496,14 @@ export const TR_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': 'Projeye katıldınız',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': 'Her üye sahip, düzenleyici veya görüntüleyici rolüne sahip olabilir',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': 'Diğer yaratıcıları projenize davet edin, birlikte düzenleyin ve başkalarının üzerine yazılmaması için nesne kilidini kullanın.',
+
+  'Colabora en tiempo real': 'Gerçek zamanlı işbirlik',
+
+  'Proyectos, miembros e invitaciones': 'Projeler, üyeler ve davetler',
+
+  'Colaboración 3D': '3B İşbirlik',
+
 };

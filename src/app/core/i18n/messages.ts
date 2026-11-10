@@ -657,8 +657,23 @@ export const MESSAGES: Record<string, MessageTranslations> = {
     fr: "L’historique se met à jour en temps réel à mesure que les collaborateurs modifient la scène.",
     pt: 'O histórico é atualizado em tempo real à medida que os colaboradores fazem alterações na cena.',
   },
-  'projects.youJoinedProject': { en: 'You joined the project', fr: 'Vous avez rejoint le projet', pt: 'Você entrou no projeto' },
-  'projects.editingObject': { en: 'editing an object', fr: 'modifie un objet', pt: 'editando um objeto' },
+  'Colabora en tiempo real': {
+    en: 'Collaborate in real time',
+    fr: 'Collaborez en temps réel',
+    pt: 'Colabore em tempo real',
+  },
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': {
+    en: 'Invite other creators to your project, edit together and use object locking so you don’t step on each other’s work.',
+    fr: 'Invitez d’autres créateurs sur votre projet, éditez ensemble et utilisez le verrouillage d’objets pour ne pas marcher sur le travail des autres.',
+    pt: 'Convide outros criadores para o seu projeto, editem juntos e use o bloqueio de objetos para não pisar no trabalho dos outros.',
+  },
+  'Cada miembro puede tener rol de dueño, editor o visor': {
+    en: 'Each member can have owner, editor or viewer role',
+    fr: 'Chaque membre peut avoir un rôle de propriétaire, éditeur ou lecteur',
+    pt: 'Cada membro pode ter função de dono, editor ou visualizador',
+  },
   'En línea ahora': { en: 'Online now', fr: 'En ligne maintenant', pt: 'Online agora' },
   'Colaboradores activos': { en: 'Active collaborators', fr: 'Collaborateurs actifs', pt: 'Colaboradores ativos' },
+  'Colaboración 3D': { en: '3D Collaboration', fr: 'Collaboration 3D', pt: 'Colaboração 3D' },
+  'Proyectos, miembros e invitaciones': { en: 'Projects, members and invitations', fr: 'Projets, membres et invitations', pt: 'Projetos, membros e convites' },
 };

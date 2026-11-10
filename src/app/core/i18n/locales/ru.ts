@@ -496,4 +496,14 @@ export const RU_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': 'Вы присоединились к проекту',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': 'Каждый участник может иметь роль владельца, редактора или зрителя',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': 'Приглашайте других создателей в свой проект, редактируйте вместе и используйте блокировку объектов, чтобы не перетирать работу друг друга.',
+
+  'Colabora en tiempo real': 'Сотрудничество в реальном времени',
+
+  'Proyectos, miembros e invitaciones': 'Проекты, участники и приглашения',
+
+  'Colaboración 3D': 'Сотрудничество в 3D',
+
 };

@@ -496,4 +496,14 @@ export const JA_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': 'プロジェクトに参加しました',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': '各メンバーはオーナー、エディター、ビューアーの役割を持つことができます',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': '他のクリエイターをプロジェクトに招待し、一緒に編集し、オブジェクトロックを使用して他の人の作業を上書きしないようにしてください。',
+
+  'Colabora en tiempo real': 'リアルタイムでコラボレーション',
+
+  'Proyectos, miembros e invitaciones': 'プロジェクト、メンバーと招待',
+
+  'Colaboración 3D': '3Dコラボレーション',
+
 };

@@ -496,4 +496,14 @@ export const ZH_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': '你加入了项目',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': '每个成员可以拥有所有者、编辑者或查看者角色',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': '邀请其他创作者加入您的项目，共同编辑并使用对象锁定，以免覆盖他人的工作。',
+
+  'Colabora en tiempo real': '实时协作',
+
+  'Proyectos, miembros e invitaciones': '项目、成员和邀请',
+
+  'Colaboración 3D': '3D协作',
+
 };

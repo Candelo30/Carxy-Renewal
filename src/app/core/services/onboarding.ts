@@ -9,6 +9,7 @@ export type OnboardingStep =
   | 'transform'
   | 'material'
   | 'publish'
+  | 'collaborate'
   | 'completed';
 
 export interface OnboardingState {
@@ -30,6 +31,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   'transform',
   'material',
   'publish',
+  'collaborate',
   'completed',
 ];
 
@@ -74,6 +76,10 @@ const STEP_LABELS: Record<OnboardingStep, { title: string; description: string }
     title: 'Publica tu creación',
     description: 'Cuando estés listo, haz clic en "Publicar" para compartir tu modelo con la comunidad.',
   },
+  collaborate: {
+    title: 'Colabora en tiempo real',
+    description: 'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.',
+  },
   completed: {
     title: '¡Listo!',
     description: 'Ya conoces lo básico. Puedes seguir creando o explorar la comunidad.',
@@ -92,8 +98,18 @@ export class OnboardingService {
     map((s) => s.currentStep)
   );
   readonly isCompleted$ = this.state.pipe(
-    map((s) => s.currentStep === 'completed' || s.seen && s.completedSteps.length >= 5)
+    map((s) => s.currentStep === 'completed' || s.seen && s.completedSteps.length >= this.order.length - 1)
   );
+
+  readonly order: OnboardingStep[] = [
+    'welcome',
+    'add-primitive',
+    'transform',
+    'material',
+    'publish',
+    'collaborate',
+    'completed',
+  ];
 
   private readLocal(): OnboardingState {
     if (typeof localStorage === 'undefined') return { ...DEFAULT_STATE };
@@ -147,18 +163,10 @@ export class OnboardingService {
   }
 
   nextStep(): void {
-    const order: OnboardingStep[] = [
-      'welcome',
-      'add-primitive',
-      'transform',
-      'material',
-      'publish',
-      'completed',
-    ];
     const current = this.state.value.currentStep;
-    const idx = order.indexOf(current);
+    const idx = this.order.indexOf(current);
     const nextIdx = idx + 1;
-    const nextStep = order[nextIdx] ?? 'completed';
+    const nextStep = this.order[nextIdx] ?? 'completed';
 
     const completed = [...this.state.value.completedSteps];
     if (!completed.includes(current)) completed.push(current);

@@ -496,4 +496,14 @@ export const DE_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': 'Du bist dem Projekt beigetreten',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': 'Jedes Mitglied kann die Rolle Besitzer, Editor oder Betrachter haben',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': 'Lade andere Schöpfer in dein Projekt ein, bearbeite gemeinsam und verwende Objekt-Sperren, um die Arbeit anderer nicht zu überschreiben.',
+
+  'Colabora en tiempo real': 'In Echtzeit zusammenarbeiten',
+
+  'Proyectos, miembros e invitaciones': 'Projekte, Mitglieder und Einladungen',
+
+  'Colaboración 3D': '3D-Zusammenarbeit',
+
 };

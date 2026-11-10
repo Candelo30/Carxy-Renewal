@@ -496,4 +496,14 @@ export const HI_TRANSLATIONS: Record<string, string> = {
 
   'projects.youJoinedProject': 'आप प्रोजेक्ट में शामिल हो गए',
 
+  'Cada miembro puede tener rol de dueño, editor o visor': 'प्रत्येक सदस्य के पास मालिक, संपादक या दर्शक की भूमिका हो सकती है',
+
+  'Invita a otros creadores a tu proyecto, edita juntos y usa el bloqueo de objetos para no pisar el trabajo de otros.': 'अपने प्रोजेक्ट में अन्य रचनाकारों को आमंत्रित करें, एक साथ संपादित करें और दूसरों के काम पर कदम रखने से बचने के लिए ऑब्जेक्ट लॉक का उपयोग करें।',
+
+  'Colabora en tiempo real': 'रियल टाइम में सहयोग करें',
+
+  'Proyectos, miembros e invitaciones': 'प्रोजेक्ट, सदस्य और आमंत्रण',
+
+  'Colaboración 3D': '3D सहयोग',
+
 };

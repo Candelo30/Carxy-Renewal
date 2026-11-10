@@ -59,16 +59,16 @@ export class OnboardingComponent {
   }
 
   getStepNumber(step: string): number {
-    const order: string[] = ['welcome', 'add-primitive', 'transform', 'material', 'publish', 'completed'];
+    const order: string[] = ['welcome', 'add-primitive', 'transform', 'material', 'publish', 'collaborate', 'completed'];
     return order.indexOf(step) + 1;
   }
 
   getTotalSteps(): number {
-    return 5;
+    return 6;
   }
 
   getProgressPercent(): number {
-    const order: string[] = ['welcome', 'add-primitive', 'transform', 'material', 'publish', 'completed'];
+    const order: string[] = ['welcome', 'add-primitive', 'transform', 'material', 'publish', 'collaborate', 'completed'];
     const idx = order.indexOf(this.onboarding.state.value.currentStep);
     return Math.round(((idx) / (order.length - 1)) * 100);
   }
