@@ -5,39 +5,37 @@
 >
   <!-- Header unificado -->
   <app-shell-header
-    [language]="language"
     [showSearch]="false"
     [showNav]="false"
     [showPublish]="true"
     [showPresentation]="true"
-    (languageChange)="language = $event"
     (publishClick)="onPublishClick()"
     (presentationChange)="onPresentationChange($event)"
   ></app-shell-header>
 
   <aside class="editor-panel-area">
-    <app-model-editor (languageChange)="language = $event" />
+    <app-model-editor />
   </aside>
 
   <section class="viewer-area">
-    <app-model-viewer [language]="language" />
+    <app-model-viewer />
     <button
       type="button"
       class="panel-toggle"
       [attr.aria-expanded]="modelEditorOpen"
       [attr.aria-label]="modelEditorOpen
-        ? (language === 'es' ? 'Contraer editor de modelo' : 'Collapse model editor')
-        : (language === 'es' ? 'Abrir editor de modelo' : 'Open model editor')"
+        ? ('Contraer editor de modelo' | translate)
+        : ('Abrir editor de modelo' | translate)"
       [title]="modelEditorOpen
-        ? (language === 'es' ? 'Contraer editor' : 'Collapse editor')
-        : (language === 'es' ? 'Abrir editor' : 'Open editor')"
+        ? ('Contraer editor' | translate)
+        : ('Abrir editor' | translate)"
       (click)="modelEditorOpen = !modelEditorOpen"
     >
       <span aria-hidden="true">{{ modelEditorOpen ? '◀' : '▶' }}</span>
       <span class="toggle-label">
         {{ modelEditorOpen
-          ? (language === 'es' ? 'Ocultar panel' : 'Hide panel')
-          : (language === 'es' ? 'Editor' : 'Editor') }}
+          ? ('Ocultar panel' | translate)
+          : ('Editor' | translate) }}
       </span>
     </button>
   </section>

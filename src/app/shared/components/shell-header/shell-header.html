@@ -8,7 +8,7 @@
           type="button"
           [class.is-open]="openMobileMenu"
           [attr.aria-expanded]="openMobileMenu"
-          aria-label="Abrir menú principal"
+          [attr.aria-label]="'nav.openMenu' | translate"
           (click)="toggleMobileMenu()"
         >
           <span class="hamburger-line"></span>
@@ -34,46 +34,48 @@
     <!-- Centro: búsqueda -->
     @if (showSearch && !authMode) {
       <div class="header-center">
-        <div class="search-field">
+        <form class="search-field" role="search" (ngSubmit)="submitSearch()">
           <svg viewBox="0 0 24 24" class="search-icon" aria-hidden="true">
             <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z" />
           </svg>
           <input
             type="search"
             class="search-input"
-            placeholder="Buscar modelos, creadores, etiquetas…"
+            [placeholder]="'nav.searchPlaceholder' | translate"
+            [attr.aria-label]="'nav.searchAria' | translate"
             [(ngModel)]="searchQuery"
+            name="globalSearch"
             (input)="onSearchChange($any($event.target).value)"
           />
           @if (searchQuery) {
-            <button class="search-clear" type="button" aria-label="Limpiar búsqueda" (click)="clearSearch()">×</button>
+            <button class="search-clear" type="button" [attr.aria-label]="'nav.clearSearch' | translate" (click)="clearSearch()">×</button>
           }
-        </div>
+        </form>
       </div>
     }
 
     <!-- Fin: navegación + acciones de página + cuenta -->
     <div class="header-end">
       @if (showNav && !authMode) {
-        <nav class="header-nav" aria-label="Navegación principal">
+        <nav class="header-nav" [attr.aria-label]="'nav.navigation' | translate">
           <a routerLink="/feed" routerLinkActive="active">
-            {{ language === 'es' ? 'Comunidad' : 'Community' }}
+            {{ 'nav.community' | translate }}
           </a>
           <a routerLink="/editor" routerLinkActive="active">
-            {{ language === 'es' ? 'Editor 3D' : '3D Editor' }}
+            {{ 'nav.editor' | translate }}
           </a>
           <a routerLink="/my-models" routerLinkActive="active">
-            {{ language === 'es' ? 'Mis creaciones' : 'My models' }}
+            {{ 'nav.myModels' | translate }}
           </a>
           @if (user$ | async; as user) {
             <a routerLink="/chat" routerLinkActive="active">
-              {{ language === 'es' ? 'Mensajes' : 'Messages' }}
+              {{ 'nav.messages' | translate }}
             </a>
             @if (user.role === 'admin') {
-              <a routerLink="/admin" routerLinkActive="active">Admin</a>
+              <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | translate }}</a>
             } @else if (user.role === 'moderator') {
               <a routerLink="/moderation" routerLinkActive="active">
-                {{ language === 'es' ? 'Moderar' : 'Moderate' }}
+                {{ 'nav.moderation' | translate }}
               </a>
             }
           }
@@ -88,7 +90,7 @@
               type="button"
               [class.active]="presentationEnabled"
               [attr.aria-pressed]="presentationEnabled"
-              title="Modo presentación"
+              [title]="'nav.presentation' | translate"
               (click)="togglePresentation()"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -96,29 +98,46 @@
                 <path d="M10 8.2v5.6l4.6-2.8L10 8.2Z" />
                 <path d="M8 21h8M12 17v4" />
               </svg>
-              <span class="btn-label">{{ language === 'es' ? 'Presentación' : 'Presentation' }}</span>
+              <span class="btn-label">{{ 'nav.presentation' | translate }}</span>
             </button>
           }
           @if (showPublish) {
-            <button class="btn-publish" type="button" title="Publicar modelo" (click)="publishClick.emit()">
+            <button class="btn-publish" type="button" [title]="'nav.publish' | translate" (click)="publishClick.emit()">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 16V4M7.5 8.5 12 4l4.5 4.5" />
                 <path d="M4 15.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3.5" />
               </svg>
-              <span class="btn-label">{{ language === 'es' ? 'Publicar' : 'Publish' }}</span>
+              <span class="btn-label">{{ 'nav.publish' | translate }}</span>
             </button>
           }
         </div>
       }
 
-      @if (!authMode) {
-        <div class="lang-switch" role="group" aria-label="Idioma">
-          <button type="button" [class.active]="language === 'es'" (click)="setLanguage('es')" title="Español">ES</button>
-          <button type="button" [class.active]="language === 'en'" (click)="setLanguage('en')" title="English">EN</button>
-        </div>
+      <div class="lang-switch" role="group" [attr.aria-label]="'nav.language' | translate">
+        @for (option of languages; track option.code) {
+          <button
+            type="button"
+            [class.active]="currentLanguage() === option.code"
+            (click)="setLanguage(option.code)"
+            [title]="option.label"
+            [attr.aria-pressed]="currentLanguage() === option.code"
+          >{{ option.shortLabel }}</button>
+        }
+      </div>
 
+      @if (!authMode) {
         <div class="header-actions">
-          <a class="header-help" routerLink="/help" title="Centro de ayuda" aria-label="Centro de ayuda">
+          <button
+            class="header-command"
+            type="button"
+            title="Ctrl/Cmd + K"
+            [attr.aria-label]="'nav.commandPalette' | translate"
+            (click)="openCommandPalette()"
+          >
+            <span class="command-glyph" aria-hidden="true">⌘</span>
+            <span class="command-shortcut" aria-hidden="true">K</span>
+          </button>
+          <a class="header-help" routerLink="/community-help" [title]="'nav.communityHelp' | translate" [attr.aria-label]="'nav.communityHelp' | translate">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="12" r="9" />
               <path d="M9.4 9a2.7 2.7 0 1 1 4.2 2.3c-.9.6-1.6 1.1-1.6 2.2" />
@@ -136,55 +155,61 @@
 <!-- Menú desplegable: funciona en escritorio y móvil -->
 @if (openMobileMenu) {
     <div class="menu-scrim" (click)="closeMobileMenu()"></div>
-    <nav class="menu-panel" aria-label="Menú principal">
+    <nav class="menu-panel" [attr.aria-label]="'nav.menu' | translate">
       <div class="menu-panel-head">
-        <span class="menu-panel-title">{{ language === 'es' ? 'Menú' : 'Menu' }}</span>
-        <button class="menu-close" type="button" aria-label="Cerrar menú" (click)="closeMobileMenu()">✕</button>
+        <span class="menu-panel-title">{{ 'nav.menu' | translate }}</span>
+        <button class="menu-close" type="button" [attr.aria-label]="'nav.closeMenu' | translate" (click)="closeMobileMenu()">✕</button>
       </div>
 
       <div class="menu-section">
-        <p class="menu-section-title">{{ language === 'es' ? 'Navegación' : 'Navigation' }}</p>
+        <p class="menu-section-title">{{ 'nav.navigation' | translate }}</p>
         <a routerLink="/feed" class="menu-link" (click)="closeMobileMenu()">
-          <span>{{ language === 'es' ? 'Comunidad' : 'Community' }}</span><span class="menu-arrow">→</span>
+          <span>{{ 'nav.community' | translate }}</span><span class="menu-arrow">→</span>
         </a>
         <a routerLink="/editor" class="menu-link" (click)="closeMobileMenu()">
-          <span>{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</span><span class="menu-arrow">→</span>
+          <span>{{ 'nav.editor' | translate }}</span><span class="menu-arrow">→</span>
         </a>
         <a routerLink="/my-models" class="menu-link" (click)="closeMobileMenu()">
-          <span>{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</span><span class="menu-arrow">→</span>
+          <span>{{ 'nav.myModels' | translate }}</span><span class="menu-arrow">→</span>
         </a>
         @if (user$ | async; as menuUser) {
           <a routerLink="/chat" class="menu-link" (click)="closeMobileMenu()">
-            <span>{{ language === 'es' ? 'Mensajes' : 'Messages' }}</span><span class="menu-arrow">→</span>
+            <span>{{ 'nav.messages' | translate }}</span><span class="menu-arrow">→</span>
           </a>
           @if (menuUser.role === 'admin') {
             <a routerLink="/admin" class="menu-link" (click)="closeMobileMenu()">
-              <span>Panel de administración</span><span class="menu-arrow">→</span>
+              <span>{{ 'nav.adminPanel' | translate }}</span><span class="menu-arrow">→</span>
             </a>
           } @else if (menuUser.role === 'moderator') {
             <a routerLink="/moderation" class="menu-link" (click)="closeMobileMenu()">
-              <span>{{ language === 'es' ? 'Moderación' : 'Moderation' }}</span><span class="menu-arrow">→</span>
+              <span>{{ 'nav.moderation' | translate }}</span><span class="menu-arrow">→</span>
             </a>
           }
         }
       </div>
 
       <div class="menu-section">
-        <p class="menu-section-title">{{ language === 'es' ? 'Recursos' : 'Resources' }}</p>
+        <p class="menu-section-title">{{ 'nav.resources' | translate }}</p>
         <a routerLink="/getting-started" class="menu-link" (click)="closeMobileMenu()">
-          <span>{{ language === 'es' ? 'Guía de inicio' : 'Getting started' }}</span><span class="menu-arrow">→</span>
+          <span>{{ 'nav.gettingStarted' | translate }}</span><span class="menu-arrow">→</span>
         </a>
         <a routerLink="/help" class="menu-link" (click)="closeMobileMenu()">
-          <span>{{ language === 'es' ? 'Centro de ayuda' : 'Help center' }}</span><span class="menu-arrow">→</span>
+          <span>{{ 'nav.help' | translate }}</span><span class="menu-arrow">→</span>
+        </a>
+        <a routerLink="/community-help" class="menu-link" (click)="closeMobileMenu()">
+          <span>{{ 'nav.communityHelp' | translate }}</span><span class="menu-arrow">→</span>
+        </a>
+        <a routerLink="/contact" class="menu-link" (click)="closeMobileMenu()">
+          <span>{{ 'nav.contact' | translate }}</span><span class="menu-arrow">→</span>
         </a>
         <a routerLink="/about" class="menu-link" (click)="closeMobileMenu()">
-          <span>{{ language === 'es' ? 'Sobre nosotros' : 'About us' }}</span><span class="menu-arrow">→</span>
+          <span>{{ 'nav.about' | translate }}</span><span class="menu-arrow">→</span>
         </a>
       </div>
 
       @if (user$ | async; as user) {
         <div class="menu-section">
-          <p class="menu-section-title">{{ language === 'es' ? 'Cuenta' : 'Account' }}</p>
+          <p class="menu-section-title">{{ 'nav.account' | translate }}</p>
           <a [routerLink]="['/profile', user.uid]" class="menu-link" (click)="closeMobileMenu()">
             <span class="menu-user">
               <span class="menu-avatar">{{ user.displayName.charAt(0) }}</span>
@@ -192,28 +217,34 @@
             </span>
             <span class="menu-arrow">→</span>
           </a>
+          <a routerLink="/favorites" class="menu-link" (click)="closeMobileMenu()">
+            <span>{{ 'nav.myFavorites' | translate }}</span><span class="menu-arrow">→</span>
+          </a>
           <button class="menu-link menu-link-danger" type="button" (click)="closeMobileMenu(); auth.logout()">
-            <span>{{ language === 'es' ? 'Cerrar sesión' : 'Sign out' }}</span>
+            <span>{{ 'nav.logout' | translate }}</span>
           </button>
         </div>
       } @else {
         <div class="menu-section">
-          <p class="menu-section-title">{{ language === 'es' ? 'Cuenta' : 'Account' }}</p>
+          <p class="menu-section-title">{{ 'nav.account' | translate }}</p>
           <a routerLink="/login" class="menu-link" (click)="closeMobileMenu()">
-            <span>{{ language === 'es' ? 'Iniciar sesión' : 'Sign in' }}</span><span class="menu-arrow">→</span>
+            <span>{{ 'nav.login' | translate }}</span><span class="menu-arrow">→</span>
           </a>
           <a routerLink="/register" class="menu-link" (click)="closeMobileMenu()">
-            <span>{{ language === 'es' ? 'Crear cuenta' : 'Create account' }}</span><span class="menu-arrow">→</span>
+            <span>{{ 'nav.register' | translate }}</span><span class="menu-arrow">→</span>
           </a>
         </div>
       }
 
       <div class="menu-section">
-        <p class="menu-section-title">{{ language === 'es' ? 'Idioma' : 'Language' }}</p>
+        <p class="menu-section-title">{{ 'nav.language' | translate }}</p>
         <div class="menu-lang">
-          <button type="button" [class.active]="language === 'es'" (click)="setLanguage('es')">Español</button>
-          <button type="button" [class.active]="language === 'en'" (click)="setLanguage('en')">English</button>
+          @for (option of languages; track option.code) {
+            <button type="button" [class.active]="currentLanguage() === option.code" (click)="setLanguage(option.code)">{{ option.label }}</button>
+          }
         </div>
       </div>
     </nav>
 }
+
+<app-command-palette />

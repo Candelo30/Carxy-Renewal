@@ -1,0 +1,145 @@
+<main class="favorites-shell page-with-header">
+  <app-shell-header
+    [showSearch]="true"
+    [showNav]="true"
+    [title]="'Mis favoritos' | translate"
+    [subtitle]="'Tu colección personal de modelos 3D' | translate"
+  ></app-shell-header>
+
+  <section class="favorites-content">
+    <header class="favorites-hero">
+      <div>
+        <p class="eyebrow">{{ 'TU COLECCIÓN' | translate }}</p>
+        <h1>{{ 'Favoritos que' | translate }}<br /><span>{{ 'vuelven a inspirarte.' | translate }}</span></h1>
+        <p>
+          {{ 'Guarda modelos mientras exploras la comunidad y recupéralos aquí para remixearlos, compartirlos o volver a verlos en 3D.' | translate }}
+        </p>
+      </div>
+      <div class="hero-actions">
+        <a class="primary" routerLink="/feed">{{ '◎ Explorar comunidad' | translate }}</a>
+        <a class="secondary" routerLink="/editor">{{ '＋ Crear modelo' | translate }}</a>
+      </div>
+    </header>
+
+    @let favorites = favorites$ | async;
+    @if (favorites === null) {
+      <app-loading-spinner [label]="'Cargando tus favoritos…' | translate" />
+    } @else {
+      @if (favorites.length) {
+        <div class="favorites-stats" [aria-label]="'Resumen de favoritos' | translate">
+          <article>
+            <small>{{ 'MODELOS' | translate }}</small>
+            <strong>{{ favorites.length }}</strong>
+          </article>
+          <article>
+            <small>{{ 'ME GUSTA' | translate }}</small>
+            <strong>{{ totalLikes(favorites) }}</strong>
+          </article>
+          <article>
+            <small>{{ 'VISTAS' | translate }}</small>
+            <strong>{{ totalViews(favorites) }}</strong>
+          </article>
+        </div>
+
+        @if (error) {
+          <p class="error" role="alert">{{ error }}</p>
+        }
+
+        <div class="favorites-grid">
+          @for (post of favorites; track post.id) {
+            <article class="favorite-card">
+              @if (previewModes[post.id] === '3d') {
+                <app-model-preview [modelUrl]="post.modelUrl" />
+              } @else {
+                <img
+                  class="thumbnail"
+                  [src]="post.thumbnailUrl"
+                  [alt]="'Render de {title}' | translate: { title: post.title }"
+                  loading="lazy"
+                />
+              }
+              <div class="preview-switch" role="group" [attr.aria-label]="'Vista de {title}' | translate: { title: post.title }">
+                <button
+                  type="button"
+                  [class.active]="previewModes[post.id] !== '3d'"
+                  (click)="setPreviewMode(post, 'image')"
+                >
+                  {{ '▧ Imagen' | translate }}
+                </button>
+                <button
+                  type="button"
+                  [class.active]="previewModes[post.id] === '3d'"
+                  (click)="setPreviewMode(post, '3d')"
+                >
+                  {{ '◇ Ver en 3D' | translate }}
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="author-row">
+                  @if (post.author.photoURL) {
+                    <img
+                      class="avatar"
+                      [src]="post.author.photoURL"
+                      alt=""
+                      (error)="useFallbackAvatar($event)"
+                    />
+                  } @else {
+                    <img class="avatar" src="user-avatar.svg" alt="" />
+                  }
+                  <a [routerLink]="['/profile', post.author.uid]">{{ post.author.displayName }}</a>
+                  <time>{{ post.createdAt | date: 'mediumDate' }}</time>
+                </div>
+
+                @if (post.tags?.length) {
+                  <div class="card-tags" [aria-label]="'Etiquetas del modelo' | translate">
+                    @for (tag of post.tags ?? []; track tag) {
+                      <span>#{{ tag }}</span>
+                    }
+                  </div>
+                }
+
+                <h2>{{ post.title }}</h2>
+                <p class="description">{{ post.description || ('Sin descripción.' | translate) }}</p>
+
+                <div class="card-stats">
+                  <span [title]="'Vistas' | translate">◉ {{ post.viewsCount ?? 0 }}</span>
+                  <span [title]="'Remixes' | translate">↗ {{ post.remixCount ?? 0 }}</span>
+                  <span [title]="'Favoritos' | translate">♡ {{ post.likes }}</span>
+                </div>
+
+                <div class="card-actions">
+                  <button
+                    type="button"
+                    class="remove"
+                    [disabled]="likeBusy[post.id]"
+                    (click)="remove(post)"
+                  >{{ '♥ Quitar' | translate }}</button>
+                  <button
+                    type="button"
+                    class="icon-button"
+                    [title]="'Compartir modelo' | translate"
+                    [aria-label]="'Compartir modelo' | translate"
+                    (click)="share(post)"
+                  >⧉</button>
+                  <button type="button" class="remix" (click)="remix(post)">{{ '↗ Remix' | translate }}</button>
+                  <a class="profile-link" [routerLink]="['/profile', post.author.uid]">{{ 'Ver perfil' | translate }}</a>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span>♡</span>
+          <h2>{{ 'Tu colección está vacía' | translate }}</h2>
+          <p>
+            {{ 'Explora la comunidad y pulsa el corazón de los modelos que quieras guardar. Aparecerán aquí, listos para remixear.' | translate }}
+          </p>
+          <a routerLink="/feed">{{ 'Descubrir modelos' | translate }}</a>
+        </div>
+      }
+    }
+  </section>
+
+  <app-site-footer />
+</main>

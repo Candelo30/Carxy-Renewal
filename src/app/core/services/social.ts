@@ -29,6 +29,7 @@ import {
 } from '@angular/fire/storage';
 import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
+import { I18nService } from './i18n';
 import {
   ActivityNotification,
   ChatConversation,
@@ -68,6 +69,7 @@ export function formatStorageError(error: unknown): string {
 export class SocialService {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly storage = inject(Storage, { optional: true });
+  private readonly i18n = inject(I18nService);
   private readonly localPosts = new BehaviorSubject<Post3D[]>(this.readLocal(LOCAL_KEYS.posts, []));
   private readonly commentStreams = new Map<string, BehaviorSubject<Comment[]>>();
   private readonly commentObservables = new Map<string, Observable<Comment[]>>();
@@ -162,7 +164,7 @@ export class SocialService {
         if (cleanup.some((result) => result.status === 'rejected')) {
           console.error('Falló la limpieza de archivos después de un error de subida.', cleanup);
         }
-        throw new Error(formatStorageError(error), { cause: error });
+        throw new Error(this.i18n.translate(formatStorageError(error)), { cause: error });
       }
 
       try {
@@ -256,7 +258,17 @@ export class SocialService {
    * Requiere que se escriba en users/{uid}/likedPosts/{postId} al dar/quitar like.
    */
   userLikedPosts$(uid: string): Observable<Post3D[]> {
-    if (!this.firestore || !uid) return of([]);
+    if (!uid) return of([]);
+    if (!this.firestore) {
+      return combineLatest([this.localLikes, this.localPosts]).pipe(
+        map(([likes, posts]) => {
+          const likedIds = new Set(likes[uid] ?? []);
+          return posts
+            .filter((post) => likedIds.has(post.id) && !post.isPrivate)
+            .sort((a, b) => b.createdAt - a.createdAt);
+        }),
+      );
+    }
     const firestore = this.firestore;
     return collectionData(
       query(

@@ -5,15 +5,20 @@ import {
   inject,
   Input,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { AppLanguage } from '../../../core/i18n/languages';
 import { AuthService } from '../../../core/services/auth';
+import { I18nService } from '../../../core/services/i18n';
 import { SocialService } from '../../../core/services/social';
 import { NotificationService } from '../../../core/services/notifications';
 import { AccountMenuComponent } from '../account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../activity-notifications/activity-notifications';
+import { CommandPaletteComponent } from '../command-palette/command-palette';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-shell-header',
@@ -24,6 +29,8 @@ import { ActivityNotificationsComponent } from '../activity-notifications/activi
     RouterLink,
     AccountMenuComponent,
     ActivityNotificationsComponent,
+    CommandPaletteComponent,
+    TranslatePipe,
   ],
   templateUrl: './shell-header.html',
   styleUrl: './shell-header.css',
@@ -32,6 +39,11 @@ export class ShellHeaderComponent {
   readonly auth = inject(AuthService);
   readonly social = inject(SocialService);
   readonly notifications = inject(NotificationService);
+  readonly i18n = inject(I18nService);
+  private readonly router = inject(Router);
+
+  @ViewChild(CommandPaletteComponent)
+  private commandPalette?: CommandPaletteComponent;
 
   readonly user$: Observable<{ uid: string; displayName: string; photoURL: string | null; role: string; emailVerified: boolean } | null> =
     this.auth.user$ as Observable<{
@@ -42,7 +54,11 @@ export class ShellHeaderComponent {
       emailVerified: boolean;
     } | null>;
 
-  @Input() language: 'es' | 'en' = 'es';
+  readonly languages = this.i18n.languages;
+  readonly currentLanguage = this.i18n.language;
+
+  /** @deprecated El idioma se gestiona globalmente con I18nService. */
+  @Input() language?: AppLanguage;
   @Input() showSearch = true;
   @Input() showNav = true;
   @Input() authMode = false;
@@ -50,7 +66,7 @@ export class ShellHeaderComponent {
   @Input() showPresentation = false;
   @Input() title = '';
   @Input() subtitle = '';
-  @Output() languageChange = new EventEmitter<'es' | 'en'>();
+  @Output() languageChange = new EventEmitter<AppLanguage>();
   @Output() menuToggle = new EventEmitter<void>();
   @Output() publishClick = new EventEmitter<void>();
   @Output() presentationChange = new EventEmitter<boolean>();
@@ -68,13 +84,24 @@ export class ShellHeaderComponent {
     this.searchQuery = value;
   }
 
+  submitSearch(): void {
+    const query = this.searchQuery.trim();
+    void this.router.navigate(['/feed'], {
+      queryParams: query ? { q: query } : {},
+    });
+  }
+
   clearSearch(): void {
     this.searchQuery = '';
   }
 
-  setLanguage(language: 'es' | 'en'): void {
-    if (this.language === language) return;
-    this.language = language;
+  openCommandPalette(): void {
+    this.commandPalette?.open();
+  }
+
+  setLanguage(language: AppLanguage): void {
+    if (this.currentLanguage() === language) return;
+    this.i18n.setLanguage(language);
     this.languageChange.emit(language);
   }
 

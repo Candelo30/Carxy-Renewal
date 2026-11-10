@@ -2,10 +2,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { LOCAL_KEYS } from '../../core/config/app.constants';
+import { I18nService } from '../../core/services/i18n';
 import { NotificationService } from '../../core/services/notifications';
 import { OnboardingService } from '../../core/services/onboarding';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
-import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
 
 interface GuideStep {
   id: string;
@@ -79,7 +81,8 @@ const STEPS: GuideStep[] = [
 @Component({
   selector: 'app-getting-started-page',
   standalone: true,
-  imports: [RouterLink, ShellHeaderComponent, SiteFooterComponent],
+  imports: [
+    TranslatePipe,RouterLink, ShellHeaderComponent, SiteFooterComponent],
   templateUrl: './getting-started-page.html',
   styleUrl: './getting-started-page.css',
 })
@@ -91,6 +94,7 @@ export class GettingStartedPage implements OnInit {
   private readonly router = inject(Router);
   private readonly onboarding = inject(OnboardingService);
   private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -136,7 +140,10 @@ export class GettingStartedPage implements OnInit {
     } else {
       this.completed.add(id);
       if (this.completed.size === this.steps.length) {
-        this.notifications.success('¡Guía completada! Ya puedes crear, publicar y compartir tus modelos.', 'Guía de inicio');
+        this.notifications.success(
+          this.i18n.translate('¡Guía completada! Ya puedes crear, publicar y compartir tus modelos.'),
+          this.i18n.translate('Guía de inicio'),
+        );
       }
     }
     this.persist();
@@ -145,7 +152,10 @@ export class GettingStartedPage implements OnInit {
   resetProgress(): void {
     this.completed.clear();
     this.persist();
-    this.notifications.info('Progreso de la guía reiniciado.', 'Guía de inicio');
+    this.notifications.info(
+      this.i18n.translate('Progreso de la guía reiniciado.'),
+      this.i18n.translate('Guía de inicio'),
+    );
   }
 
   startTutorial(): void {

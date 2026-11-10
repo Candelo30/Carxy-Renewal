@@ -1,78 +1,141 @@
 <main class="admin-shell page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="false"
     [showNav]="true"
-    title="{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}"
-    subtitle="Gestiona acceso, roles y publicaciones de la comunidad"
+    [title]="(moderationOnly ? 'Moderación de contenido' : 'Panel de administración') | translate"
+    [subtitle]="'Gestiona acceso, roles y publicaciones de la comunidad.' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   @if (vm$ | async; as vm) {
     @if (stats$ | async; as stats) {
       <div class="stats-grid">
-        <article class="stat-card"><span class="stat-icon">👥</span><div><small>Usuarios totales</small><strong>{{ stats.totalUsers }}</strong></div></article>
-        <article class="stat-card"><span class="stat-icon">✅</span><div><small>Activos</small><strong>{{ stats.activeUsers }}</strong></div></article>
-        <article class="stat-card"><span class="stat-icon">⛔</span><div><small>Suspendidos</small><strong>{{ stats.suspendedUsers }}</strong></div></article>
-        <article class="stat-card"><span class="stat-icon">🛡️</span><div><small>Administradores</small><strong>{{ stats.adminUsers }}</strong></div></article>
-        <article class="stat-card"><span class="stat-icon">📦</span><div><small>Publicaciones</small><strong>{{ stats.totalPosts }}</strong></div></article>
-        <article class="stat-card"><span class="stat-icon">⚑</span><div><small>Reportes abiertos</small><strong>{{ stats.openReports }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">👥</span><div><small>{{ 'Usuarios totales' | translate }}</small><strong>{{ stats.totalUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">✅</span><div><small>{{ 'Activos' | translate }}</small><strong>{{ stats.activeUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">⛔</span><div><small>{{ 'Suspendidos' | translate }}</small><strong>{{ stats.suspendedUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">🛡️</span><div><small>{{ 'Administradores' | translate }}</small><strong>{{ stats.adminUsers }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">📦</span><div><small>{{ 'Publicaciones' | translate }}</small><strong>{{ stats.totalPosts }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">⚑</span><div><small>{{ 'Reportes abiertos' | translate }}</small><strong>{{ stats.openReports }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">💬</span><div><small>{{ 'Feedback nuevo' | translate }}</small><strong>{{ stats.newFeedback }}</strong></div></article>
+        <article class="stat-card"><span class="stat-icon">❓</span><div><small>{{ 'Preguntas abiertas' | translate }}</small><strong>{{ stats.openQuestions }}</strong></div></article>
       </div>
     }
     <section class="page-content">
       <div class="heading">
         <div>
-          <p class="eyebrow">CONTROL CENTER</p>
-          <h1>{{ moderationOnly ? 'Moderación de contenido' : 'Panel de administración' }}</h1>
-          <p>Gestiona acceso, roles y publicaciones de la comunidad.</p>
+          <p class="eyebrow">{{ 'CONTROL CENTER' | translate }}</p>
+          <h1>{{ (moderationOnly ? 'Moderación de contenido' : 'Panel de administración') | translate }}</h1>
+          <p>{{ 'Gestiona acceso, roles y publicaciones de la comunidad.' | translate }}</p>
         </div>
         <div class="heading-actions">
-          <button class="refresh-button" type="button" (click)="refresh()">↻ Refrescar datos</button>
-          <span class="secure">● Sesión verificada · {{ vm.user?.role }}</span>
+          <button class="refresh-button" type="button" (click)="refresh()">{{ '↻ Refrescar datos' | translate }}</button>
+          <span class="secure">● {{ 'Sesión verificada' | translate }} · {{ vm.user?.role | translate }}</span>
         </div>
       </div>
       @if (!moderationOnly && vm.user?.role === 'admin') {
-        <div class="tabs"><button [class.active]="tab === 'users'" (click)="tab = 'users'">Usuarios <span>{{ vm.users.length }}</span></button><button [class.active]="tab === 'content'" (click)="tab = 'content'">Publicaciones <span>{{ vm.posts.length }}</span></button></div>
+        <div class="tabs">
+          <button [class.active]="tab === 'users'" (click)="tab = 'users'">{{ 'admin.tab.users' | translate }} <span>{{ vm.users.length }}</span></button>
+          <button [class.active]="tab === 'content'" (click)="tab = 'content'">{{ 'admin.tab.content' | translate }} <span>{{ vm.posts.length }}</span></button>
+          <button [class.active]="tab === 'feedback'" (click)="tab = 'feedback'">{{ 'admin.tab.feedback' | translate }} <span>{{ vm.feedback.length }}</span></button>
+          <button [class.active]="tab === 'help'" (click)="tab = 'help'">{{ 'admin.tab.help' | translate }} <span>{{ vm.questions.length }}</span></button>
+        </div>
       } @else {
-        <div class="tabs"><button class="active">Publicaciones <span>{{ vm.posts.length }}</span></button></div>
+        <div class="tabs">
+          <button [class.active]="tab === 'content'" (click)="tab = 'content'">{{ 'admin.tab.content' | translate }} <span>{{ vm.posts.length }}</span></button>
+          <button [class.active]="tab === 'feedback'" (click)="tab = 'feedback'">{{ 'admin.tab.feedback' | translate }} <span>{{ vm.feedback.length }}</span></button>
+          <button [class.active]="tab === 'help'" (click)="tab = 'help'">{{ 'admin.tab.help' | translate }} <span>{{ vm.questions.length }}</span></button>
+        </div>
       }
       @if (error) { <p class="alert error" role="alert">{{ error }}</p> }
       @if (status) { <p class="alert success" role="status">{{ status }}</p> }
       @if (!moderationOnly && tab === 'users' && vm.user?.role === 'admin') {
         <section class="panel">
-          <div class="panel-heading"><div><h2>Usuarios registrados</h2><p>Los roles limitan las acciones en la aplicación y en las reglas de Firebase.</p></div><span>{{ vm.users.length }} cuentas</span></div>
-          <div class="table-wrap"><table><thead><tr><th>CREADOR</th><th>EMAIL</th><th>REGISTRO</th><th>ROL</th><th>ESTADO</th><th></th></tr></thead>
+          <div class="panel-heading"><div><h2>{{ 'Usuarios registrados' | translate }}</h2><p>{{ 'Los roles limitan las acciones en la aplicación y en las reglas de Firebase.' | translate }}</p></div><span>{{ vm.users.length }} {{ 'cuentas' | translate }}</span></div>
+          <div class="table-wrap"><table><thead><tr><th>{{ 'CREADOR' | translate }}</th><th>{{ 'EMAIL' | translate }}</th><th>{{ 'REGISTRO' | translate }}</th><th>{{ 'ROL' | translate }}</th><th>{{ 'ESTADO' | translate }}</th><th></th></tr></thead>
             <tbody>@for (user of vm.users; track trackUser($index, user)) {
               <tr>
                 <td><div class="person">@if (user.photoURL) { <img [src]="user.photoURL" alt="" /> } @else { <span class="avatar">{{ user.displayName.slice(0, 1) }}</span> }<div><strong>{{ user.displayName }}</strong><small>{{ user.uid }}</small></div></div></td>
                 <td>{{ user.email || '—' }}</td>
                 <td>{{ user.createdAt | date:'mediumDate' }}</td>
-                <td><select [value]="user.role" [disabled]="user.uid === vm.user?.uid" (change)="changeRole(user, $event, vm.user)">@for (role of roles; track role) { <option [value]="role">{{ role }}</option> }</select></td>
-                <td><span class="state" [class.banned]="user.isBanned">{{ user.isBanned ? 'Suspendida' : 'Activa' }}</span></td>
-                <td><button class="small-button" [disabled]="user.uid === vm.user?.uid" (click)="toggleBan(user, vm.user)">{{ user.isBanned ? 'Reactivar' : 'Suspender' }}</button></td>
+                <td><select [value]="user.role" [disabled]="user.uid === vm.user?.uid" (change)="changeRole(user, $event, vm.user)">@for (role of roles; track role) { <option [value]="role">{{ role | translate }}</option> }</select></td>
+                <td><span class="state" [class.banned]="user.isBanned">{{ (user.isBanned ? 'Suspendida' : 'Activa') | translate }}</span></td>
+                <td><button class="small-button" [disabled]="user.uid === vm.user?.uid" (click)="toggleBan(user, vm.user)">{{ (user.isBanned ? 'Reactivar' : 'Suspender') | translate }}</button></td>
               </tr>
             }</tbody>
           </table></div>
         </section>
+      } @else if (tab === 'feedback') {
+        <section class="panel">
+          <div class="panel-heading"><div><h2>{{ 'admin.feedbackTitle' | translate }}</h2><p>{{ 'admin.feedbackIntro' | translate }}</p></div><span>{{ vm.feedback.length }} {{ 'mensajes' | translate }}</span></div>
+          @if (vm.feedback.length) {
+            <div class="table-wrap"><table><thead><tr><th>{{ 'FECHA' | translate }}</th><th>{{ 'TIPO' | translate }}</th><th>{{ 'CONTACTO' | translate }}</th><th>{{ 'ASUNTO' | translate }}</th><th>{{ 'ESTADO' | translate }}</th><th></th></tr></thead>
+              <tbody>@for (item of vm.feedback; track trackFeedback($index, item)) {
+                <tr>
+                  <td>{{ item.createdAt | date:'short' }}</td>
+                  <td><span class="badge">{{ ('contact.type.' + item.type) | translate }}</span></td>
+                  <td><strong>{{ item.name }}</strong><br/><small class="creator-id">{{ item.email || '—' }}</small></td>
+                  <td><strong>{{ item.subject }}</strong><br/><small class="feedback-message">{{ item.message }}</small></td>
+                  <td><span class="state" [class.banned]="item.status === 'new'">{{ ('admin.status.' + item.status) | translate }}</span></td>
+                  <td>
+                    <div class="report-actions">
+                      @if (item.status !== 'reviewing') { <button class="small-button" (click)="setFeedbackStatus(item, 'reviewing')">{{ 'admin.markInReview' | translate }}</button> }
+                      @if (item.status !== 'resolved') { <button class="small-button" (click)="setFeedbackStatus(item, 'resolved')">{{ 'admin.markResolved' | translate }}</button> }
+                      <button class="small-button danger" (click)="deleteFeedback(item)">{{ 'admin.deleteMessage' | translate }}</button>
+                    </div>
+                  </td>
+                </tr>
+              }</tbody>
+            </table></div>
+          } @else { <div class="empty">{{ 'admin.feedbackEmpty' | translate }}</div> }
+        </section>
+      } @else if (tab === 'help') {
+        <section class="panel">
+          <div class="panel-heading"><div><h2>{{ 'admin.helpTitle' | translate }}</h2><p>{{ 'admin.helpIntro' | translate }}</p></div><span>{{ vm.questions.length }} {{ 'preguntas' | translate }}</span></div>
+          @if (vm.questions.length) {
+            <div class="table-wrap"><table><thead><tr><th>{{ 'PREGUNTA' | translate }}</th><th>{{ 'AUTOR' | translate }}</th><th>{{ 'RESPUESTAS' | translate }}</th><th>{{ 'VOTOS' | translate }}</th><th>{{ 'ESTADO' | translate }}</th><th></th></tr></thead>
+              <tbody>@for (question of vm.questions; track trackQuestion($index, question)) {
+                <tr>
+                  <td><a [routerLink]="['/community-help']" [queryParams]="{ q: question.id }"><strong>{{ question.title }}</strong></a><br/><small class="creator-id">{{ question.tags.join(' · ') }}</small></td>
+                  <td>{{ question.authorName }}</td>
+                  <td>{{ question.answersCount }}</td>
+                  <td>{{ question.votes }}</td>
+                  <td>
+                    <span class="state" [class.banned]="question.resolved">{{ (question.resolved ? 'common.resolved' : 'common.open') | translate }}</span>
+                    @if (question.pinned) { <span class="badge">{{ 'communityHelp.pinned' | translate }}</span> }
+                    @if (question.locked) { <span class="badge">{{ 'Bloqueada' | translate }}</span> }
+                  </td>
+                  <td>
+                    <div class="report-actions">
+                      <button class="small-button" (click)="toggleQuestionPinned(question)">{{ (question.pinned ? 'communityHelp.unpin' : 'communityHelp.pin') | translate }}</button>
+                      <button class="small-button" (click)="toggleQuestionLocked(question)">{{ (question.locked ? 'communityHelp.unlock' : 'communityHelp.lock') | translate }}</button>
+                      <button class="small-button" (click)="toggleQuestionResolved(question)">{{ (question.resolved ? 'communityHelp.reopen' : 'communityHelp.resolve') | translate }}</button>
+                      <button class="small-button danger" (click)="deleteQuestion(question)">{{ 'communityHelp.delete' | translate }}</button>
+                    </div>
+                  </td>
+                </tr>
+              }</tbody>
+            </table></div>
+          } @else { <div class="empty">{{ 'admin.helpEmpty' | translate }}</div> }
+        </section>
       } @else {
         <section class="panel">
-          <div class="panel-heading"><div><h2>Modelos de la comunidad</h2><p>Oculta una publicación o elimínala junto con el modelo y su miniatura de Storage.</p></div><span>{{ vm.posts.length }} modelos</span></div>
+          <div class="panel-heading"><div><h2>{{ 'Modelos de la comunidad' | translate }}</h2><p>{{ 'Oculta una publicación o elimínala junto con el modelo y su miniatura de Storage.' | translate }}</p></div><span>{{ vm.posts.length }} {{ 'modelos' | translate }}</span></div>
           @if (vm.posts.length) {
             @if (vm.reports?.length) {
             <section class="panel reports-panel" style="margin-top:16px;">
-              <div class="panel-heading"><div><h2>Reportes de la comunidad</h2><p>Revisa y resuelve los reportes enviados por los usuarios.</p></div><span>{{ vm.reports.length }} reportes</span></div>
-              <div class="table-wrap"><table><thead><tr><th>MODELO</th><th>REPORTADO POR</th><th>MOTIVO</th><th>ESTADO</th><th>FECHA</th><th></th></tr></thead>
+              <div class="panel-heading"><div><h2>{{ 'Reportes de la comunidad' | translate }}</h2><p>{{ 'Revisa y resuelve los reportes enviados por los usuarios.' | translate }}</p></div><span>{{ vm.reports.length }} {{ 'reportes' | translate }}</span></div>
+              <div class="table-wrap"><table><thead><tr><th>{{ 'MODELO' | translate }}</th><th>{{ 'REPORTADO POR' | translate }}</th><th>{{ 'MOTIVO' | translate }}</th><th>{{ 'ESTADO' | translate }}</th><th>{{ 'FECHA' | translate }}</th><th></th></tr></thead>
                 <tbody>@for (report of vm.reports; track report.id) {
                   <tr>
                     <td><strong>{{ report.postTitle }}</strong><br/><small class="creator-id">{{ report.postId }}</small></td>
                     <td>{{ report.reporterName }}</td>
-                    <td><span class="badge">{{ report.reason }}</span></td>
-                    <td><span class="state">{{ report.status === 'open' ? 'Abierto' : report.status === 'resolved' ? 'Resuelto' : 'Descartado' }}</span></td>
+                    <td><span class="badge">{{ report.reason | translate }}</span></td>
+                    <td><span class="state">{{ (report.status === 'open' ? 'Abierto' : report.status === 'resolved' ? 'Resuelto' : 'Descartado') | translate }}</span></td>
                     <td>{{ report.createdAt | date:'shortDate' }}</td>
                     <td>
                       @if (report.status === 'open') {
-                        <div class="report-actions"><button class="small-button" (click)="resolveReport(report, 'resolved')">Resolver</button><button class="small-button" (click)="resolveReport(report, 'dismissed')">Descartar</button></div>
+                        <div class="report-actions"><button class="small-button" (click)="resolveReport(report, 'resolved')">{{ 'Resolver' | translate }}</button><button class="small-button" (click)="resolveReport(report, 'dismissed')">{{ 'Descartar' | translate }}</button></div>
                       } @else {
-                        <span class="state" [class.banned]="report.status === 'resolved'">{{ report.status === 'resolved' ? 'Resuelto' : 'Descartado' }}</span>
+                        <span class="state" [class.banned]="report.status === 'resolved'">{{ (report.status === 'resolved' ? 'Resuelto' : 'Descartado') | translate }}</span>
                       }
                     </td>
                   </tr>
@@ -83,22 +146,22 @@
           <div class="moderation-grid">@for (post of vm.posts; track trackPost($index, post)) {
               <article class="content-card">
                 <img [src]="post.thumbnailUrl" [alt]="post.title" />
-                <div><div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
-                  <p>{{ post.description || 'Sin descripción' }}</p><small>Por {{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }}</small>
-                  <button class="danger" (click)="requestDelete(post, deleteDialog)">Eliminar publicación y archivos</button>
+                <div><div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ (post.isPrivate ? 'Privado' : 'Público') | translate }}</span></div>
+                  <p>{{ post.description || ('Sin descripción' | translate) }}</p><small>{{ 'Por' | translate }} {{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }}</small>
+                  <button class="danger" (click)="requestDelete(post, deleteDialog)">{{ 'Eliminar publicación y archivos' | translate }}</button>
                 </div>
               </article>
             }</div>
-          } @else { <div class="empty">No hay modelos para moderar.</div> }
+          } @else { <div class="empty">{{ 'No hay modelos para moderar.' | translate }}</div> }
         </section>
       }
     </section>
     <dialog #deleteDialog class="confirm-dialog">
-      <form method="dialog"><button class="dismiss" value="cancel">×</button><p class="eyebrow">ACCIÓN IRREVERSIBLE</p><h2>Eliminar publicación</h2><p>Se eliminará “{{ postToDelete?.title }}”, la miniatura, el archivo 3D y sus comentarios.</p>
-        <footer><button class="cancel" value="cancel">Cancelar</button><button type="button" class="danger" (click)="confirmDelete(deleteDialog)">Eliminar definitivamente</button></footer>
+      <form method="dialog"><button class="dismiss" value="cancel">×</button><p class="eyebrow">{{ 'ACCIÓN IRREVERSIBLE' | translate }}</p><h2>{{ 'Eliminar publicación' | translate }}</h2><p>{{ 'Se eliminará “{title}”, la miniatura, el archivo 3D y sus comentarios.' | translate: { title: postToDelete?.title ?? '' } }}</p>
+        <footer><button class="cancel" value="cancel">{{ 'Cancelar' | translate }}</button><button type="button" class="danger" (click)="confirmDelete(deleteDialog)">{{ 'Eliminar definitivamente' | translate }}</button></footer>
       </form>
     </dialog>
   } @else {
-    <app-loading-spinner label="Cargando panel de control…" />
+    <app-loading-spinner [label]="'Cargando panel de control…' | translate" />
   }
 </main>

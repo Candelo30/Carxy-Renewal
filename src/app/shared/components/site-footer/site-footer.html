@@ -13,11 +13,7 @@
           <small>3D STUDIO</small>
         </span>
       </a>
-      <p class="brand-copy">
-        {{ language === 'es'
-          ? 'Un estudio 3D en el navegador para crear, publicar y remixear ideas con la comunidad.'
-          : 'A browser-based 3D studio to create, publish and remix ideas with the community.' }}
-      </p>
+      <p class="brand-copy">{{ 'footer.brandCopy' | translate }}</p>
       <div class="footer-badges" aria-hidden="true">
         <span>WebGL</span>
         <span>Three.js</span>
@@ -25,35 +21,33 @@
       </div>
     </div>
 
-    <nav class="footer-columns" [attr.aria-label]="language === 'es' ? 'Enlaces del pie de página' : 'Footer links'">
+    <nav class="footer-columns" [attr.aria-label]="'nav.footerLinks' | translate">
       <div class="footer-col">
-        <h3>{{ language === 'es' ? 'Producto' : 'Product' }}</h3>
-        <a routerLink="/editor">{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</a>
-        <a routerLink="/feed">{{ language === 'es' ? 'Comunidad' : 'Community' }}</a>
-        <a routerLink="/my-models">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</a>
+        <h3>{{ 'nav.product' | translate }}</h3>
+        <a routerLink="/editor">{{ 'nav.editor' | translate }}</a>
+        <a routerLink="/feed">{{ 'nav.community' | translate }}</a>
+        <a routerLink="/my-models">{{ 'nav.myModels' | translate }}</a>
       </div>
       <div class="footer-col">
-        <h3>{{ language === 'es' ? 'Recursos' : 'Resources' }}</h3>
-        <a routerLink="/getting-started">{{ language === 'es' ? 'Guía de inicio' : 'Getting started' }}</a>
-        <a routerLink="/help">{{ language === 'es' ? 'Centro de ayuda' : 'Help center' }}</a>
-        <a routerLink="/help" fragment="atajos">{{ language === 'es' ? 'Atajos de teclado' : 'Keyboard shortcuts' }}</a>
-        <a routerLink="/about">{{ language === 'es' ? 'Sobre nosotros' : 'About us' }}</a>
+        <h3>{{ 'nav.resources' | translate }}</h3>
+        <a routerLink="/getting-started">{{ 'nav.gettingStarted' | translate }}</a>
+        <a routerLink="/help">{{ 'nav.help' | translate }}</a>
+        <a routerLink="/community-help">{{ 'nav.communityHelp' | translate }}</a>
+        <a routerLink="/contact">{{ 'nav.contact' | translate }}</a>
+        <a routerLink="/about">{{ 'nav.about' | translate }}</a>
       </div>
       <div class="footer-col">
-        <h3>{{ language === 'es' ? 'Seguridad' : 'Security' }}</h3>
-        <a routerLink="/help" fragment="seguridad">{{ language === 'es' ? 'Cuenta y seguridad' : 'Account security' }}</a>
-        <a routerLink="/help" fragment="privacidad">{{ language === 'es' ? 'Privacidad y datos' : 'Privacy & data' }}</a>
-        <a [href]="repositoryUrl" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <h3>{{ 'nav.security' | translate }}</h3>
+        <a routerLink="/help" fragment="seguridad">{{ 'nav.accountSecurity' | translate }}</a>
+        <a routerLink="/help" fragment="privacidad">{{ 'nav.privacyData' | translate }}</a>
+        <a routerLink="/help" fragment="atajos">{{ 'nav.keyboardShortcuts' | translate }}</a>
+        <a [href]="repositoryUrl" target="_blank" rel="noopener noreferrer">{{ 'nav.github' | translate }} ↗</a>
       </div>
     </nav>
   </div>
 
   <div class="footer-bottom">
     <span>© {{ year }} CARXY 3D STUDIO</span>
-    <span class="footer-note">
-      {{ language === 'es'
-        ? 'Hecho con Angular + Three.js · Creado para navegar, no para instalar'
-        : 'Built with Angular + Three.js · Made to run, not to install' }}
-    </span>
+    <span class="footer-note">{{ 'nav.footerCopy' | translate }}</span>
   </div>
 </footer>

@@ -10,6 +10,7 @@ import { PublishModalComponent } from '../publish-modal/publish-modal';
 import { OnboardingComponent } from '../../shared/components/onboarding/onboarding';
 import { OnboardingService } from '../../core/services/onboarding';
 import { ThreeEngineService } from '../../core/services/three-engine';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-editor-page',
@@ -20,12 +21,12 @@ import { ThreeEngineService } from '../../core/services/three-engine';
     ShellHeaderComponent,
     PublishModalComponent,
     OnboardingComponent,
+    TranslatePipe,
   ],
   templateUrl: './editor-page.html',
   styleUrl: './editor-page.css',
 })
 export class EditorPage implements OnInit, OnDestroy {
-  language: 'es' | 'en' = 'es';
   presentationMode = false;
   publishModalOpen = false;
   modelEditorOpen = true;

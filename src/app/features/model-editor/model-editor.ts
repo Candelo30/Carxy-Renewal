@@ -22,6 +22,9 @@ import { NotificationService } from '../../core/services/notifications';
 import { AuthService } from '../../core/services/auth';
 import { FileHandler } from '../../core/services/file-handler';
 import { EditorHistoryService } from '../../core/services/editor-history';
+import { I18nService } from '../../core/services/i18n';
+import { AppLanguage } from '../../core/i18n/languages';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import type { NotificationPosition } from '../../core/models/social.models';
 import type {
   EditableMaterial,
@@ -35,7 +38,7 @@ import * as THREE from 'three';
 @Component({
   selector: 'app-model-editor',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, TranslatePipe],
   templateUrl: './model-editor.html',
   styleUrl: './model-editor.css',
 })
@@ -61,7 +64,10 @@ export class ModelEditor implements OnInit, OnDestroy {
   public searchTerm = '';
   public theme: 'dark' | 'light' = 'dark';
   public accentColor = '#8b5cf6';
-  public language: 'es' | 'en' = 'es';
+  public language: AppLanguage = 'es';
+  get languages() {
+    return this.i18n.languages;
+  }
   public notificationPosition: NotificationPosition = 'top-right';
   public showGrid = true;
   public showShadows = true;
@@ -79,9 +85,10 @@ export class ModelEditor implements OnInit, OnDestroy {
   public audioStatus = '';
   public hotspotMode = false;
   public hotspots: ViewportHotspot[] = [];
-  @Output() languageChange = new EventEmitter<'es' | 'en'>();
+  @Output() languageChange = new EventEmitter<AppLanguage>();
   private subscriptions = new Subscription();
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly i18n = inject(I18nService);
   private readonly localState = inject(LocalStateService);
   private readonly notifications = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -174,7 +181,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     const preferences = this.localState.loadPreferences();
     this.theme = preferences.theme;
     this.accentColor = preferences.accentColor;
-    this.language = preferences.language;
+    this.language = this.i18n.language();
     this.notificationPosition = preferences.notificationPosition;
     this.bgColor = preferences.backgroundColor;
     this.lightIntensity = preferences.lightIntensity;
@@ -230,8 +237,9 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.applyAppearance();
   }
 
-  setLanguage(language: 'es' | 'en'): void {
+  setLanguage(language: AppLanguage): void {
     this.language = language;
+    this.i18n.setLanguage(language);
     this.languageChange.emit(language);
     this.persistPreferences();
   }
@@ -405,13 +413,16 @@ export class ModelEditor implements OnInit, OnDestroy {
       await this.audioReactive.startFile(file);
       this.audioEnabled = true;
       this.threeEngine.setAudioReactive(true);
-      this.audioStatus = `Reproduciendo: ${file.name}`;
-      this.notifications.success(`Reproduciendo ${file.name}.`, 'Audio activado');
+      this.audioStatus = this.i18n.translate('Reproduciendo: {name}', { name: file.name });
+      this.notifications.success(
+        this.i18n.translate('Reproduciendo {name}.', { name: file.name }),
+        this.i18n.translate('Audio activado'),
+      );
     } catch (error) {
       console.error('No se pudo reproducir el archivo de audio.', error);
       await this.audioReactive.stop();
-      this.audioStatus = 'No se pudo abrir el audio. Revisa el formato del archivo.';
-      this.notifications.error(this.audioStatus, 'No se pudo abrir el audio');
+      this.audioStatus = this.i18n.translate('No se pudo abrir el audio. Revisa el formato del archivo.');
+      this.notifications.error(this.audioStatus, this.i18n.translate('No se pudo abrir el audio'));
     }
   }
 
@@ -420,13 +431,13 @@ export class ModelEditor implements OnInit, OnDestroy {
       await this.audioReactive.startMicrophone();
       this.audioEnabled = true;
       this.threeEngine.setAudioReactive(true);
-      this.audioStatus = 'Micrófono activo';
-      this.notifications.info('La escena responderá al sonido del micrófono.');
+      this.audioStatus = this.i18n.translate('Micrófono activo');
+      this.notifications.info(this.i18n.translate('La escena responderá al sonido del micrófono.'));
     } catch (error) {
       console.error('No se pudo iniciar el micrófono.', error);
       await this.audioReactive.stop();
-      this.audioStatus = 'No se pudo acceder al micrófono. Revisa permisos y conexión segura.';
-      this.notifications.warning(this.audioStatus, 'Micrófono no disponible');
+      this.audioStatus = this.i18n.translate('No se pudo acceder al micrófono. Revisa permisos y conexión segura.');
+      this.notifications.warning(this.audioStatus, this.i18n.translate('Micrófono no disponible'));
     }
   }
 
@@ -435,7 +446,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.audioEnabled = false;
     this.threeEngine.setAudioReactive(false);
     this.threeEngine.setAudioLevels(0, 0);
-    this.audioStatus = 'Audio detenido';
+    this.audioStatus = this.i18n.translate('Audio detenido');
     this.notifications.info(this.audioStatus);
   }
 
@@ -472,17 +483,17 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   undo(): void {
     if (!this.editorHistory.undo()) return;
-    this.notifications.info('Deshacer realizado.', 'Historial');
+    this.notifications.info(this.i18n.translate('Deshacer realizado.'), this.i18n.translate('Historial'));
   }
 
   redo(): void {
     if (!this.editorHistory.redo()) return;
-    this.notifications.info('Rehacer realizado.', 'Historial');
+    this.notifications.info(this.i18n.translate('Rehacer realizado.'), this.i18n.translate('Historial'));
   }
 
   clearHistory(): void {
     this.editorHistory.clear();
-    this.notifications.info('Historial limpiado.', 'Historial');
+    this.notifications.info(this.i18n.translate('Historial limpiado.'), this.i18n.translate('Historial'));
   }
 
   // --- Duplicar / copiar / pegar ---
@@ -490,23 +501,23 @@ export class ModelEditor implements OnInit, OnDestroy {
   duplicateSelectedObject(): void {
     const ok = this.threeEngine.duplicateSelected();
     if (!ok) {
-      this.notifications.warning('Selecciona un objeto para duplicar.');
+      this.notifications.warning(this.i18n.translate('Selecciona un objeto para duplicar.'));
       return;
     }
-    this.notifications.success('Objeto duplicado.', 'Duplicar');
+    this.notifications.success(this.i18n.translate('Objeto duplicado.'), this.i18n.translate('Duplicar'));
   }
 
   copySelectedToClipboard(): void {
     const payload = this.threeEngine.copySelectedToClipboard();
     if (!payload) {
-      this.notifications.warning('Selecciona un objeto para copiar.');
+      this.notifications.warning(this.i18n.translate('Selecciona un objeto para copiar.'));
       return;
     }
     if (!isPlatformBrowser(this.platformId)) return;
     void navigator.clipboard.writeText(payload).then(() => {
-      this.notifications.success('Objeto copiado al portapapeles.', 'Copiar');
+      this.notifications.success(this.i18n.translate('Objeto copiado al portapapeles.'), this.i18n.translate('Copiar'));
     }, () => {
-      this.notifications.error('No se pudo acceder al portapapeles.', 'Copiar');
+      this.notifications.error(this.i18n.translate('No se pudo acceder al portapapeles.'), this.i18n.translate('Copiar'));
     });
   }
 
@@ -515,12 +526,12 @@ export class ModelEditor implements OnInit, OnDestroy {
     navigator.clipboard.readText().then((raw) => {
       const ok = this.threeEngine.pasteObjectFromClipboard(raw);
       if (!ok) {
-        this.notifications.warning('No hay un objeto 3D válido en el portapapeles.');
+        this.notifications.warning(this.i18n.translate('No hay un objeto 3D válido en el portapapeles.'));
         return;
       }
-      this.notifications.success('Objeto pegado desde el portapapeles.', 'Pegar');
+      this.notifications.success(this.i18n.translate('Objeto pegado desde el portapapeles.'), this.i18n.translate('Pegar'));
     }, () => {
-      this.notifications.error('No se pudo leer el portapapeles.', 'Pegar');
+      this.notifications.error(this.i18n.translate('No se pudo leer el portapapeles.'), this.i18n.translate('Pegar'));
     });
   }
 
@@ -532,8 +543,8 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.fileHandler.exportCurrentModelGLB();
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : 'No se pudo exportar la escena.',
-        'Exportar',
+        error instanceof Error ? error.message : this.i18n.translate('No se pudo exportar la escena.'),
+        this.i18n.translate('Exportar'),
       );
     } finally {
       this.exportBusy = false;
@@ -546,7 +557,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     input.value = '';
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
-      this.notifications.warning('Selecciona un archivo .glb o .gltf.');
+      this.notifications.warning(this.i18n.translate('Selecciona un archivo .glb o .gltf.'));
       return;
     }
     this.importBusy = true;
@@ -554,8 +565,8 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.fileHandler.loadLocalGLTF(file);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : 'No se pudo importar el modelo.',
-        'Importar',
+        error instanceof Error ? error.message : this.i18n.translate('No se pudo importar el modelo.'),
+        this.i18n.translate('Importar'),
       );
     } finally {
       this.importBusy = false;
@@ -567,14 +578,14 @@ export class ModelEditor implements OnInit, OnDestroy {
   captureScreenshot(): void {
     const image = this.threeEngine.captureImageDataUrl();
     if (!image) {
-      this.notifications.warning('No se pudo capturar la vista actual.');
+      this.notifications.warning(this.i18n.translate('No se pudo capturar la vista actual.'));
       return;
     }
     const link = document.createElement('a');
     link.href = image;
     link.download = `carxy-render-${Date.now()}.png`;
     link.click();
-    this.notifications.success('Imagen capturada y descargada.', 'Captura');
+    this.notifications.success(this.i18n.translate('Imagen capturada y descargada.'), this.i18n.translate('Captura'));
   }
 
   // --- Presentación / turntable ---
@@ -582,8 +593,10 @@ export class ModelEditor implements OnInit, OnDestroy {
   togglePresentation(): void {
     const enabled = this.threeEngine.togglePresentation();
     this.notifications.info(
-      enabled ? 'Modo presentación activado.' : 'Modo presentación desactivado.',
-      'Presentación',
+      enabled
+        ? this.i18n.translate('Modo presentación activado.')
+        : this.i18n.translate('Modo presentación desactivado.'),
+      this.i18n.translate('Presentación'),
     );
   }
 
@@ -593,8 +606,8 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.threeEngine.recordTurntable(10);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : 'No se pudo grabar el video.',
-        'Turntable',
+        error instanceof Error ? error.message : this.i18n.translate('No se pudo grabar el video.'),
+        this.i18n.translate('Turntable'),
       );
     } finally {
       this.presentationBusy = false;
@@ -636,30 +649,38 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.measuringDistance = !this.measuringDistance;
     this.distanceMeasurement = null;
     this.notifications.info(
-      this.measuringDistance ? 'Modo medición activado. Selecciona dos objetos.' : 'Modo medición desactivado.',
-      'Medición',
+      this.measuringDistance
+        ? this.i18n.translate('Modo medición activado. Selecciona dos objetos.')
+        : this.i18n.translate('Modo medición desactivado.'),
+      this.i18n.translate('Medición'),
     );
   }
 
   measureSelectedDistance(): void {
     if (!this.selectedObjectId) {
-      this.notifications.warning('Selecciona un objeto primero.');
+      this.notifications.warning(this.i18n.translate('Selecciona un objeto primero.'));
       return;
     }
     if (!this.distanceMeasurement) {
       this.distanceMeasurement = { idA: this.selectedObjectId, idB: '', distance: 0 };
-      this.notifications.info('Selecciona el segundo objeto para medir la distancia.', 'Medición');
+      this.notifications.info(
+        this.i18n.translate('Selecciona el segundo objeto para medir la distancia.'),
+        this.i18n.translate('Medición'),
+      );
       return;
     }
     if (this.distanceMeasurement.idA === this.selectedObjectId) {
-      this.notifications.warning('Selecciona un objeto diferente.');
+      this.notifications.warning(this.i18n.translate('Selecciona un objeto diferente.'));
       return;
     }
     this.distanceMeasurement.idB = this.selectedObjectId;
     const distance = this.threeEngine.measureDistanceBetweenObjects(this.distanceMeasurement.idA, this.distanceMeasurement.idB);
     if (distance !== null) {
       this.distanceMeasurement.distance = distance;
-      this.notifications.success(`Distancia: ${distance.toFixed(2)} unidades.`, 'Medición');
+      this.notifications.success(
+        this.i18n.translate('Distancia: {distance} unidades.', { distance: distance.toFixed(2) }),
+        this.i18n.translate('Medición'),
+      );
     }
     this.measuringDistance = false;
   }
@@ -673,15 +694,18 @@ export class ModelEditor implements OnInit, OnDestroy {
   // --- Capas ---
 
   addLayer(): void {
-    const name = prompt('Nombre de la capa:');
+    const name = prompt(this.i18n.translate('Nombre de la capa:'));
     if (!name || name.trim() === '') return;
     const trimmed = name.trim();
     if (this.layers.includes(trimmed)) {
-      this.notifications.warning('Esa capa ya existe.');
+      this.notifications.warning(this.i18n.translate('Esa capa ya existe.'));
       return;
     }
     this.threeEngine.addToLayer('', trimmed); // no-op para crear la capa (se crea al añadir un objeto)
-    this.notifications.success(`Capa "${trimmed}" creada. Asigna objetos a ella desde la lista.`, 'Capa');
+    this.notifications.success(
+      this.i18n.translate('Capa "{name}" creada. Asigna objetos a ella desde la lista.', { name: trimmed }),
+      this.i18n.translate('Capa'),
+    );
     this.refreshLayers();
   }
 
@@ -692,7 +716,10 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.objectsInLayer(layer).forEach((id) => this.threeEngine.removeFromLayer(id));
     this.selectedLayer = null;
     this.refreshLayers();
-    this.notifications.success(`Capa "${layer}" eliminada.`, 'Capa');
+    this.notifications.success(
+      this.i18n.translate('Capa "{name}" eliminada.', { name: layer }),
+      this.i18n.translate('Capa'),
+    );
   }
 
   objectsInLayer(layerName: string): string[] {
@@ -714,17 +741,20 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   assignSelectedToLayer(): void {
     if (!this.selectedLayer || !this.selectedObjectId) {
-      this.notifications.warning('Selecciona una capa y un objeto.');
+      this.notifications.warning(this.i18n.translate('Selecciona una capa y un objeto.'));
       return;
     }
     this.threeEngine.addToLayer(this.selectedObjectId, this.selectedLayer);
-    this.notifications.success(`Objeto asignado a "${this.selectedLayer}".`, 'Capa');
+    this.notifications.success(
+      this.i18n.translate('Objeto asignado a "{name}".', { name: this.selectedLayer }),
+      this.i18n.translate('Capa'),
+    );
   }
 
   removeSelectedFromLayer(): void {
     if (!this.selectedObjectId) return;
     this.threeEngine.removeFromLayer(this.selectedObjectId);
-    this.notifications.info('Objeto retirado de su capa.', 'Capa');
+    this.notifications.info(this.i18n.translate('Objeto retirado de su capa.'), this.i18n.translate('Capa'));
   }
 
   // --- Snap a grid ---
@@ -733,25 +763,27 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.snapEnabled = !this.snapEnabled;
     this.threeEngine.setSnapToGrid(this.snapEnabled, this.threeEngine.gridStep);
     this.notifications.info(
-      this.snapEnabled ? 'Snap a grid activado.' : 'Snap a grid desactivado.',
-      'Cuadrícula',
+      this.snapEnabled
+        ? this.i18n.translate('Snap a grid activado.')
+        : this.i18n.translate('Snap a grid desactivado.'),
+      this.i18n.translate('Cuadrícula'),
     );
   }
 
   applySnapToGrid(): void {
     this.threeEngine.applySnapToGrid();
-    this.notifications.success('Posición ajustada a la cuadrícula.', 'Snap');
+    this.notifications.success(this.i18n.translate('Posición ajustada a la cuadrícula.'), this.i18n.translate('Snap'));
   }
 
   // --- Compartir escena (colaboración) ---
 
   shareScene(): void {
-    const title = prompt('Título de la escena:', 'Mi escena 3D');
+    const title = prompt(this.i18n.translate('Título de la escena:'), this.i18n.translate('Mi escena 3D'));
     if (!title) return;
-    const description = prompt('Descripción (opcional):', '');
+    const description = prompt(this.i18n.translate('Descripción (opcional):'), '');
     const userSub = this.auth.user$.subscribe((user) => {
       if (!user) {
-        this.notifications.warning('Inicia sesión para compartir la escena.');
+        this.notifications.warning(this.i18n.translate('Inicia sesión para compartir la escena.'));
         userSub.unsubscribe();
         return;
       }
@@ -766,10 +798,13 @@ export class ModelEditor implements OnInit, OnDestroy {
         return;
       }
       void navigator.clipboard.writeText(payload).then(() => {
-        this.notifications.success('Escena copiada al portapapeles. Comparte este código con otro creador.', 'Escena compartida');
+        this.notifications.success(
+          this.i18n.translate('Escena copiada al portapapeles. Comparte este código con otro creador.'),
+          this.i18n.translate('Escena compartida'),
+        );
         userSub.unsubscribe();
       }, () => {
-        this.notifications.error('No se pudo acceder al portapapeles.', 'Compartir');
+        this.notifications.error(this.i18n.translate('No se pudo acceder al portapapeles.'), this.i18n.translate('Compartir'));
         userSub.unsubscribe();
       });
     });
@@ -786,7 +821,7 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   importSharedScenePrompt(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    const text = prompt('Pega el código de la escena compartida:');
+    const text = prompt(this.i18n.translate('Pega el código de la escena compartida:'));
     if (!text) return;
     this.applySharedSceneCode(text);
   }
@@ -794,14 +829,20 @@ export class ModelEditor implements OnInit, OnDestroy {
   private applySharedSceneCode(text: string): void {
     const parsed = this.threeEngine.importSceneWithMetadata(text);
     if (!parsed) {
-      this.notifications.warning('Código de escena inválido.');
+      this.notifications.warning(this.i18n.translate('Código de escena inválido.'));
       return;
     }
     const ok = this.threeEngine.restoreScene(parsed.scene as string);
     if (ok) {
-      this.notifications.success('Escena importada correctamente.', 'Importar escena');
+      this.notifications.success(
+        this.i18n.translate('Escena importada correctamente.'),
+        this.i18n.translate('Importar escena'),
+      );
     } else {
-      this.notifications.error('No se pudo restaurar la escena.', 'Importar escena');
+      this.notifications.error(
+        this.i18n.translate('No se pudo restaurar la escena.'),
+        this.i18n.translate('Importar escena'),
+      );
     }
   }
 

@@ -1,17 +1,16 @@
 <main class="chat-shell page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="false"
     [showNav]="true"
-    title="Mensajes"
-    subtitle="Conversaciones directas con otros creadores"
+    [title]="'Mensajes' | translate"
+    [subtitle]="'Conversaciones directas con otros creadores' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   <section class="chat-layout" [class.has-chat]="!!chatId">
-    <aside class="conversations"><p class="eyebrow">CREADORES</p><h1>Mensajes</h1><p>Inicia una conversación directa usando el UID público del creador.</p>
+    <aside class="conversations"><p class="eyebrow">{{ 'CREADORES' | translate }}</p><h1>{{ 'Mensajes' | translate }}</h1><p>{{ 'Inicia una conversación directa usando el UID público del creador.' | translate }}</p>
       @if (user$ | async; as user) {
         <section class="recent-conversations" aria-labelledby="recent-conversations-title">
-          <h2 id="recent-conversations-title">Recientes</h2>
+          <h2 id="recent-conversations-title">{{ 'Recientes' | translate }}</h2>
           @let conversations = conversations$ | async;
           @if (conversations?.length) {
             <div class="recent-list">
@@ -24,7 +23,7 @@
                   (click)="selectConversation(conversation, user.uid)"
                 >
                   <img
-                    [src]="conversation.partner?.photoURL || '/user-avatar.svg'"
+                    [src]="conversation.partner?.photoURL || 'user-avatar.svg'"
                     alt=""
                     (error)="useFallbackAvatar($event)"
                   />
@@ -32,9 +31,9 @@
                     <strong>{{ conversation.partner?.displayName || peer }}</strong>
                     <small>{{
                       conversation.lastMessage
-                        ? (conversation.lastMessage.senderId === user.uid ? 'Tú: ' : '') +
+                        ? (conversation.lastMessage.senderId === user.uid ? ('Tú: ' | translate) : '') +
                           conversation.lastMessage.text
-                        : 'Conversación abierta'
+                        : ('Conversación abierta' | translate)
                     }}</small>
                   </span>
                   <time>{{ conversation.updatedAt | date: 'shortDate' }}</time>
@@ -43,39 +42,38 @@
             </div>
           } @else {
             <p class="no-recent-chats">
-              Aún no tienes conversaciones. Abre un perfil para enviar un mensaje o inicia un chat
-              por UID.
+              {{ 'Aún no tienes conversaciones. Abre un perfil para enviar un mensaje o inicia un chat por UID.' | translate }}
             </p>
           }
         </section>
       }
-      <h2 class="new-conversation-title">Nuevo chat</h2>
+      <h2 class="new-conversation-title">{{ 'Nuevo chat' | translate }}</h2>
       <form (ngSubmit)="openConversation()">
-        <label for="peer">UID del creador</label
+        <label for="peer">{{ 'UID del creador' | translate }}</label
         ><input
           id="peer"
           name="peer"
           [(ngModel)]="partnerId"
-          placeholder="UID de Firebase o modo local"
+          [placeholder]="'UID de Firebase o modo local' | translate"
           required
-        /><button type="submit">Abrir conversación</button>
+        /><button type="submit">{{ 'Abrir conversación' | translate }}</button>
       </form>
       @if (error) {
         <p class="error">{{ error }}</p>
       }
       @if (!auth.isConfigured) {
-        <p class="notice">Modo local: los mensajes solo se sincronizan en este navegador.</p>
+        <p class="notice">{{ 'Modo local: los mensajes solo se sincronizan en este navegador.' | translate }}</p>
       }
     </aside>
     <section class="conversation">
       @if (messages$; as stream) {
         <div class="conversation-header">
-          <button type="button" class="back-button" (click)="deselectChat()" aria-label="Volver">
+          <button type="button" class="back-button" (click)="deselectChat()" [aria-label]="'Volver' | translate">
             ←
           </button>
           <div class="avatar">✦</div>
           <div>
-            <strong>Conversación directa</strong><small>{{ partnerId }}</small>
+            <strong>{{ 'Conversación directa' | translate }}</strong><small>{{ partnerId }}</small>
           </div>
         </div>
         <div class="message-list">
@@ -89,7 +87,7 @@
                 </article>
               }
             } @else {
-              <div class="empty">Aún no hay mensajes. Saluda para iniciar la conversación.</div>
+              <div class="empty">{{ 'Aún no hay mensajes. Saluda para iniciar la conversación.' | translate }}</div>
             }
           } @else {
             <app-loading-spinner variant="inline" label="Conectando conversación…" />
@@ -100,15 +98,15 @@
             name="message"
             [(ngModel)]="message"
             maxlength="2000"
-            placeholder="Escribe un mensaje…"
+            [placeholder]="'Escribe un mensaje…' | translate"
             required
-          /><button type="submit" [disabled]="!message.trim()">Enviar</button>
+          /><button type="submit" [disabled]="!message.trim()">{{ 'Enviar' | translate }}</button>
         </form>
       } @else {
         <div class="empty">
           <span>✉</span>
-          <h2>Tus conversaciones</h2>
-          <p>Escribe el UID de otro creador para iniciar un chat privado.</p>
+          <h2>{{ 'Tus conversaciones' | translate }}</h2>
+          <p>{{ 'Escribe el UID de otro creador para iniciar un chat privado.' | translate }}</p>
         </div>
       }
     </section>

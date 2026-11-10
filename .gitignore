@@ -42,3 +42,13 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Local audit outputs
+/build-output.txt
+/pages-output.txt
+/test-output.txt
+/i18n-audit.txt
+/data-audit.txt
+/help-missing.json
+/missing-keys.json
+/translation-keys.txt

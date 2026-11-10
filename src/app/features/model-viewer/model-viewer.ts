@@ -14,6 +14,7 @@ import { ThreeEngineService } from '../../core/services/three-engine';
 import { LocalStateService } from '../../core/services/local-state';
 import { AuthService } from '../../core/services/auth';
 import { CollaboratorCursorComponent } from '../../shared/components/collaborator-cursor/collaborator-cursor';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import type { ViewportHotspot } from '../../core/services/three-engine';
 
 interface RemoteCursor {
@@ -25,14 +26,12 @@ interface RemoteCursor {
 }
 
 @Component({
-  imports: [CollaboratorCursorComponent, DecimalPipe],
+  imports: [CollaboratorCursorComponent, DecimalPipe, TranslatePipe],
   selector: 'app-model-viewer',
   styleUrl: './model-viewer.css',
   templateUrl: './model-viewer.html',
 })
 export class ModelViewer implements OnDestroy {
-  @Input() language: 'es' | 'en' = 'es';
-
   // Capturamos el <canvas #rendererCanvas> del HTML
   @ViewChild('rendererCanvas', { static: true })
   public rendererCanvas!: ElementRef<HTMLCanvasElement>;

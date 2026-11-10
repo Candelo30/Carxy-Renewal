@@ -3,11 +3,14 @@ import { afterNextRender, Component, inject, OnDestroy, PLATFORM_ID, signal } fr
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LocalStateService } from './core/services/local-state';
+import { I18nService } from './core/services/i18n';
 import { NotificationCenterComponent } from './shared/components/notification-center/notification-center';
-import { NotificationService } from './core/services/notifications';
+import { NotificationService } from './core/services/notifications';import { TranslatePipe } from './shared/pipes/translate.pipe';
+
 
 @Component({
-  imports: [RouterOutlet, NotificationCenterComponent],
+  imports: [
+    TranslatePipe,RouterOutlet, NotificationCenterComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -16,6 +19,7 @@ export class App implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly document = inject(DOCUMENT);
   private readonly localState = inject(LocalStateService);
+  private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly routerSubscription = new Subscription();
@@ -40,6 +44,7 @@ export class App implements OnDestroy {
     afterNextRender(() => {
       if (!isPlatformBrowser(this.platformId)) return;
       const preferences = this.localState.loadPreferences();
+      this.i18n.setLanguage(preferences.language);
       this.document.documentElement.dataset['theme'] = preferences.theme;
       this.document.documentElement.style.setProperty('--accent-color', preferences.accentColor);
       this.notifications.setPosition(preferences.notificationPosition);

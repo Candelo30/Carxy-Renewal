@@ -1,18 +1,17 @@
 <main class="profile-shell page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="false"
     [showNav]="true"
-    title="Perfil de creador"
-    subtitle="Portafolio y modelos publicados"
+    [title]="'Perfil de creador' | translate"
+    [subtitle]="'Portafolio y modelos publicados' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   @if (error) { <p class="error" role="alert">{{ error }}</p> }
   @if (profile$ | async; as state) {
     @if (state.profile; as profile) {
       <section class="profile-hero">
-        <img class="avatar" [src]="profile.photoURL || '/user-avatar.svg'" alt="" (error)="useFallbackAvatar($event)" />
-        <div class="profile-info"><p class="eyebrow">CREADOR 3D</p><h1>{{ profile.displayName }}</h1><p>{{ profile.bio || 'Este creador todavía no ha escrito una biografía.' }}</p><div class="stats"><span><b>{{ state.posts.length }}</b> modelos</span><span><b>{{ totalLikes(state.posts) }}</b> likes</span><span><b>{{ state.followCounts.followers }}</b> seguidores</span><span><b>{{ state.followCounts.following }}</b> siguiendo</span></div>
+        <img class="avatar" [src]="profile.photoURL || 'user-avatar.svg'" alt="" (error)="useFallbackAvatar($event)" />
+        <div class="profile-info"><p class="eyebrow">{{ 'CREADOR 3D' | translate }}</p><h1>{{ profile.displayName }}</h1><p>{{ profile.bio || ('Este creador todavía no ha escrito una biografía.' | translate) }}</p><div class="stats"><span><b>{{ state.posts.length }}</b> {{ 'modelos' | translate }}</span><span><b>{{ totalLikes(state.posts) }}</b> {{ 'likes' | translate }}</span><span><b>{{ state.followCounts.followers }}</b> {{ 'seguidores' | translate }}</span><span><b>{{ state.followCounts.following }}</b> {{ 'siguiendo' | translate }}</span></div>
           @if (state.currentUser; as currentUser) {
             @if (currentUser.uid !== profile.uid) {
               @let following = (social.isFollowing$(currentUser.uid, profile.uid) | async) ?? false;
@@ -20,52 +19,52 @@
                 <button
                   class="follow-button"
                   type="button"
-                  [attr.aria-label]="following ? 'Dejar de seguir a ' + profile.displayName : 'Seguir a ' + profile.displayName"
+                  [attr.aria-label]="(following ? 'Dejar de seguir a {name}' : 'Seguir a {name}') | translate: { name: profile.displayName }"
                   (click)="toggleFollow(profile, currentUser, following)"
-                >{{ following ? 'Dejar de seguir' : 'Seguir' }}</button>
-                <a class="message-button" [routerLink]="['/chat']" [queryParams]="{ peer: profile.uid }">Enviar mensaje</a>
+                >{{ (following ? 'Dejar de seguir' : 'Seguir') | translate }}</button>
+                <a class="message-button" [routerLink]="['/chat']" [queryParams]="{ peer: profile.uid }">{{ 'Enviar mensaje' | translate }}</a>
               </div>
             }
           } @else {
-            <a class="follow-button guest-follow" routerLink="/login">Inicia sesión para seguir</a>
+            <a class="follow-button guest-follow" routerLink="/login">{{ 'Inicia sesión para seguir' | translate }}</a>
           }
         </div>
         @if (isOwner(profile, state.currentUser)) {
-          <a class="manage-button" routerLink="/my-models">Gestionar mis diseños</a>
+          <a class="manage-button" routerLink="/my-models">{{ 'Gestionar mis diseños' | translate }}</a>
         }
         @if (isOwner(profile, state.currentUser)) {
-          <button class="edit-button" type="button" (click)="prepareEdit(profile); editDialog.showModal()">Editar perfil</button>
+          <button class="edit-button" type="button" (click)="prepareEdit(profile); editDialog.showModal()">{{ 'Editar perfil' | translate }}</button>
         }
       </section>
-      <section class="portfolio"><p class="eyebrow">PORTAFOLIO</p><h2>{{ isOwner(profile, state.currentUser) ? 'Mis diseños' : 'Modelos publicados' }}</h2>
+      <section class="portfolio"><p class="eyebrow">{{ 'PORTAFOLIO' | translate }}</p><h2>{{ (isOwner(profile, state.currentUser) ? 'Mis diseños' : 'Modelos publicados') | translate }}</h2>
         @if (isOwner(profile, state.currentUser)) {
-          <a class="manage-inline" routerLink="/my-models">Administrar privacidad, detalles y archivos →</a>
+          <a class="manage-inline" routerLink="/my-models">{{ 'Administrar privacidad, detalles y archivos →' | translate }}</a>
         }
         @if (state.posts.length) {
           <div class="post-grid">@for (post of state.posts; track trackPost($index, post)) {
             <article>
               @if (previewModes[post.id]) { <app-model-preview [modelUrl]="post.modelUrl" /> }
-              @else { <img [src]="post.thumbnailUrl" [alt]="'Render de ' + post.title" /> }
-              <div><div class="model-card-heading"><h3>{{ post.title }}</h3>@if (post.isPrivate) { <span class="private-badge">Privado</span> }<button type="button" (click)="togglePreview(post.id)">{{ previewModes[post.id] ? 'Ver imagen' : 'Vista 3D' }}</button></div><p>{{ post.description || 'Sin descripción.' }}</p><span>♡ {{ post.likes }} · {{ post.createdAt | date:'mediumDate' }}</span></div>
+              @else { <img [src]="post.thumbnailUrl" [alt]="'Render de {title}' | translate: { title: post.title }" /> }
+              <div><div class="model-card-heading"><h3>{{ post.title }}</h3>@if (post.isPrivate) { <span class="private-badge">{{ 'Privado' | translate }}</span> }<button type="button" (click)="togglePreview(post.id)">{{ (previewModes[post.id] ? 'Ver imagen' : 'Vista 3D') | translate }}</button></div><p>{{ post.description || ('Sin descripción.' | translate) }}</p><span>♡ {{ post.likes }} · {{ post.createdAt | date:'mediumDate' }}</span></div>
             </article>
           }</div>
-        } @else { <div class="empty"><h3>Aún no hay modelos publicados</h3><a routerLink="/editor">Abrir el editor</a></div> }
+        } @else { <div class="empty"><h3>{{ 'Aún no hay modelos publicados' | translate }}</h3><a routerLink="/editor">{{ 'Abrir el editor' | translate }}</a></div> }
       </section>
       <dialog #editDialog class="edit-dialog">
         <form (ngSubmit)="saveProfile(profile, editDialog)">
-          <button class="dismiss" type="button" (click)="editDialog.close()">×</button><p class="eyebrow">TU CUENTA</p><h2>Editar perfil</h2>
-          <label>Nombre visible<input name="name" [(ngModel)]="name" required maxlength="60" /></label>
-          <label>Biografía<textarea name="bio" [(ngModel)]="bio" rows="4" maxlength="500"></textarea></label>
-          <label>URL de foto<input name="photo" [(ngModel)]="photoURL" type="url" placeholder="https://…" /></label>
+          <button class="dismiss" type="button" (click)="editDialog.close()">×</button><p class="eyebrow">{{ 'TU CUENTA' | translate }}</p><h2>{{ 'Editar perfil' | translate }}</h2>
+          <label>{{ 'Nombre visible' | translate }}<input name="name" [(ngModel)]="name" required maxlength="60" /></label>
+          <label>{{ 'Biografía' | translate }}<textarea name="bio" [(ngModel)]="bio" rows="4" maxlength="500"></textarea></label>
+          <label>{{ 'URL de foto' | translate }}<input name="photo" [(ngModel)]="photoURL" type="url" [placeholder]="'https://…' | translate" /></label>
           @if (error) { <p class="error">{{ error }}</p> } @if (status) { <p class="status">{{ status }}</p> }
-          <button class="save-button" type="submit">Guardar cambios</button>
+          <button class="save-button" type="submit">{{ 'Guardar cambios' | translate }}</button>
         </form>
       </dialog>
     } @else {
-      <section class="not-found"><h1>Perfil no encontrado</h1><p>Este creador todavía no tiene publicaciones visibles.</p><a routerLink="/feed">Volver a la comunidad</a></section>
+      <section class="not-found"><h1>{{ 'Perfil no encontrado' | translate }}</h1><p>{{ 'Este creador todavía no tiene publicaciones visibles.' | translate }}</p><a routerLink="/feed">{{ 'Volver a la comunidad' | translate }}</a></section>
     }
   } @else {
-    <app-loading-spinner label="Cargando perfil y portafolio…" />
+    <app-loading-spinner [label]="'Cargando perfil y portafolio…' | translate" />
   }
   <app-site-footer />
 </main>

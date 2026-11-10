@@ -1,6 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { LOCAL_KEYS } from '../config/app.constants';
+import { isAppLanguage } from '../i18n/languages';
 import { EditorPreferences, NotificationPosition } from '../models/social.models';
 
 const DEFAULT_PREFERENCES: EditorPreferences = {
@@ -41,7 +42,7 @@ export class LocalStateService {
           ? Math.max(0, Math.min(5, saved.lightIntensity!))
           : DEFAULT_PREFERENCES.lightIntensity,
         theme: saved.theme === 'light' ? 'light' : 'dark',
-        language: saved.language === 'en' ? 'en' : 'es',
+        language: isAppLanguage(saved.language) ? saved.language : DEFAULT_PREFERENCES.language,
         gizmoMode: ['translate', 'rotate', 'scale'].includes(saved.gizmoMode ?? '')
           ? saved.gizmoMode!
           : 'translate',

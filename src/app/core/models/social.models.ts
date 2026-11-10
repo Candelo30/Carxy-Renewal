@@ -1,3 +1,5 @@
+import type { AppLanguage } from '../i18n/languages';
+
 export type UserRole = 'admin' | 'moderator' | 'user';
 export type NotificationPosition = 'top-right' | 'top-center' | 'top-left' | 'bottom-right' | 'bottom-center' | 'bottom-left';
 
@@ -22,6 +24,54 @@ export interface UserProfile extends User {
 
 export type ReportReason = 'spam' | 'inappropriate' | 'copyright' | 'other';
 export type ReportStatus = 'open' | 'resolved' | 'dismissed';
+
+export type FeedbackType = 'bug' | 'idea' | 'account' | 'collaboration' | 'other';
+export type FeedbackStatus = 'new' | 'reviewing' | 'resolved';
+
+export interface FeedbackMessage {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  type: FeedbackType;
+  subject: string;
+  message: string;
+  status: FeedbackStatus;
+  createdAt: number;
+  updatedAt?: number;
+}
+
+export interface CommunityAnswer {
+  id: string;
+  questionId: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string | null;
+  body: string;
+  createdAt: number;
+  votes: number;
+  voterIds: string[];
+  accepted: boolean;
+}
+
+export interface CommunityQuestion {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string | null;
+  title: string;
+  body: string;
+  tags: string[];
+  createdAt: number;
+  updatedAt?: number;
+  answersCount: number;
+  votes: number;
+  voterIds: string[];
+  resolved: boolean;
+  pinned: boolean;
+  locked: boolean;
+  acceptedAnswerId: string | null;
+}
 
 export interface ContentReport {
   id: string;
@@ -101,7 +151,7 @@ export interface Follow {
 export interface EditorPreferences {
   theme: 'dark' | 'light';
   accentColor: string;
-  language: 'es' | 'en';
+  language: AppLanguage;
   backgroundColor: string;
   lightIntensity: number;
   gizmoMode: 'translate' | 'rotate' | 'scale';

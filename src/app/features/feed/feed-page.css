@@ -630,6 +630,189 @@ h2 {
   display: none;
 }
 
+/* Acciones del hero y novedades del feed */
+.hero-actions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.secondary-button {
+  padding: 11px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 45%, var(--border-color));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-raised));
+  color: var(--accent-color);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secondary-button:hover {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 17%, var(--surface-raised));
+}
+
+.hero-hint {
+  max-width: 190px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.hero-hint kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--surface-control);
+  font-family: inherit;
+  font-size: 0.64rem;
+}
+
+.sort-wrap {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-wrap select {
+  padding: 9px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.feed-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin: -8px 0 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.feed-summary strong {
+  color: var(--text-primary);
+}
+
+.feed-summary .summary-note {
+  margin-left: auto;
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.card-tags button {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-control);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.card-tags button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.post-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.post-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-actions .share-button {
+  color: var(--text-muted);
+}
+
+.post-card.is-highlighted {
+  border-color: var(--accent-color);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent-color) 22%, transparent),
+    0 18px 50px color-mix(in srgb, var(--accent-color) 24%, transparent);
+  animation: postHighlight 900ms ease;
+}
+
+@keyframes postHighlight {
+  from {
+    transform: translateY(-5px);
+  }
+}
+
+.load-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.load-more button {
+  padding: 12px 22px;
+  border: 1px solid var(--accent-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+  color: var(--accent-color);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.load-more button:hover {
+  background: var(--accent-color);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.load-more small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.empty-state .empty-action {
+  padding: 11px 16px;
+  border: 1px solid var(--accent-color);
+  border-radius: 10px;
+  background: var(--accent-color);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 @media (max-width: 700px) {
   .site-header {
     height: auto;
@@ -667,5 +850,30 @@ h2 {
   .site-header > .sign-in,
   .site-header > .user-chip {
     margin-left: auto;
+  }
+
+  .hero-actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .sort-wrap {
+    width: 100%;
+  }
+
+  .sort-wrap select {
+    flex: 1;
+  }
+
+  .feed-summary .summary-note {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card.is-highlighted,
+  .load-more button {
+    animation: none;
+    transition: none;
   }
 }

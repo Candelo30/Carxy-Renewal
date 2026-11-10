@@ -1,0 +1,287 @@
+<main class="community-shell page-with-header">
+  <app-shell-header
+    [showSearch]="false"
+    [showNav]="true"
+    [title]="'communityHelp.title' | translate"
+    [subtitle]="'communityHelp.subtitle' | translate"
+  ></app-shell-header>
+
+  <section class="community-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <p class="eyebrow">{{ 'communityHelp.heroEyebrow' | translate }}</p>
+    <h1>{{ 'communityHelp.heroTitle' | translate }}</h1>
+    <p class="hero-copy">{{ 'communityHelp.heroText' | translate }}</p>
+    <div class="hero-actions">
+      <button type="button" class="primary" (click)="openAskForm()">
+        ＋ {{ 'communityHelp.ask' | translate }}
+      </button>
+      <a class="secondary" href="#questions">{{ 'communityHelp.browse' | translate }} ↓</a>
+    </div>
+    <p class="guidelines">{{ 'communityHelp.guidelines' | translate }}</p>
+  </section>
+
+  <section class="community-content" id="questions">
+    <div class="toolbar">
+      <label class="search-field">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          name="community-search"
+          [(ngModel)]="query"
+          [placeholder]="'communityHelp.searchPlaceholder' | translate"
+          [attr.aria-label]="'communityHelp.searchPlaceholder' | translate"
+          autocomplete="off"
+        />
+      </label>
+
+      <div class="filter-row" role="group" [attr.aria-label]="'communityHelp.browse' | translate">
+        @for (option of filters; track option) {
+          <button
+            type="button"
+            class="filter-button"
+            [class.active]="filter === option"
+            [attr.aria-pressed]="filter === option"
+            (click)="filter = option"
+          >
+            {{ ('communityHelp.filter.' + option) | translate }}
+          </button>
+        }
+      </div>
+
+      <label class="sort-field">
+        <span>{{ 'Ordenar' | translate }}</span>
+        <select name="community-sort" [(ngModel)]="sort">
+          @for (option of sorts; track option) {
+            <option [value]="option">{{ ('communityHelp.sort.' + option) | translate }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (!currentUser) {
+      <p class="signin-hint">
+        {{ 'communityHelp.signInToAsk' | translate }}
+        <a routerLink="/login">{{ 'nav.login' | translate }}</a>
+      </p>
+    }
+
+    @if (showAskForm) {
+      <form class="ask-form" (ngSubmit)="publishQuestion()">
+        <div class="form-heading">
+          <div>
+            <p class="eyebrow">{{ 'communityHelp.ask' | translate }}</p>
+            <h2>{{ 'communityHelp.heroTitle' | translate }}</h2>
+          </div>
+          <button
+            type="button"
+            class="close-button"
+            [attr.aria-label]="'common.close' | translate"
+            (click)="showAskForm = false"
+          >×</button>
+        </div>
+        <label>
+          <span>{{ 'communityHelp.questionTitle' | translate }}</span>
+          <input
+            type="text"
+            name="question-title"
+            [(ngModel)]="draft.title"
+            maxlength="140"
+            required
+            autocomplete="off"
+          />
+        </label>
+        <label>
+          <span>{{ 'communityHelp.questionBody' | translate }}</span>
+          <textarea
+            name="question-body"
+            [(ngModel)]="draft.body"
+            rows="5"
+            maxlength="4000"
+            required
+          ></textarea>
+        </label>
+        <label>
+          <span>{{ 'communityHelp.questionTags' | translate }}</span>
+          <input
+            type="text"
+            name="question-tags"
+            [(ngModel)]="draft.tags"
+            maxlength="120"
+            autocomplete="off"
+          />
+        </label>
+        <p class="guidelines">{{ 'communityHelp.guidelines' | translate }}</p>
+        <div class="form-actions">
+          <button type="submit" class="primary" [disabled]="askBusy">
+            {{ (askBusy ? 'common.sending' : 'communityHelp.publishQuestion') | translate }}
+          </button>
+          <button type="button" class="secondary" (click)="showAskForm = false">
+            {{ 'common.cancel' | translate }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (error) {
+      <p class="alert error" role="alert">{{ error }}</p>
+    }
+
+    @let questions = questions$ | async;
+    @if (questions === null) {
+      <app-loading-spinner [label]="'common.loading' | translate" />
+    } @else {
+      @let visible = filteredQuestions(questions);
+      @if (!visible.length) {
+        <div class="empty">
+          <span class="empty-icon" aria-hidden="true">◇</span>
+          <p>{{ 'communityHelp.empty' | translate }}</p>
+          <button type="button" class="primary" (click)="openAskForm()">
+            {{ 'communityHelp.emptyAction' | translate }}
+          </button>
+        </div>
+      } @else {
+        <p class="result-count">
+          {{ '{count} preguntas' | translate: { count: visible.length } }}
+        </p>
+        <div class="question-list">
+          @for (question of visible; track question.id) {
+            <article
+              class="question-card"
+              [class.pinned]="question.pinned"
+              [class.resolved]="question.resolved"
+            >
+              <div class="vote-column">
+                <button
+                  type="button"
+                  class="vote-button"
+                  [class.voted]="community.hasVoted(question, currentUser?.uid)"
+                  [disabled]="voteBusy[question.id]"
+                  [attr.aria-pressed]="community.hasVoted(question, currentUser?.uid)"
+                  [title]="'communityHelp.vote' | translate"
+                  (click)="toggleVote(question)"
+                >
+                  <span aria-hidden="true">▲</span>
+                  <span>{{ question.votes }}</span>
+                </button>
+              </div>
+
+              <div class="question-body">
+                <div class="badges">
+                  @if (question.pinned) {
+                    <span class="badge pinned">📌 {{ 'communityHelp.pinned' | translate }}</span>
+                  }
+                  @if (question.resolved) {
+                    <span class="badge resolved">✓ {{ 'common.resolved' | translate }}</span>
+                  } @else {
+                    <span class="badge open">● {{ 'common.open' | translate }}</span>
+                  }
+                  @if (question.locked) {
+                    <span class="badge locked">🔒 {{ 'Bloqueada' | translate }}</span>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="question-title"
+                  [attr.aria-expanded]="expandedId === question.id"
+                  (click)="toggleQuestion(question)"
+                >
+                  {{ question.title }}
+                </button>
+
+                <p class="question-meta">
+                  {{ 'communityHelp.by' | translate }} <strong>{{ question.authorName }}</strong>
+                  · {{ question.createdAt | date: 'mediumDate' }}
+                  · {{ 'communityHelp.answerCount' | translate: { count: question.answersCount } }}
+                </p>
+
+                @if (question.tags.length) {
+                  <div class="tags">
+                    @for (tag of question.tags; track tag) {
+                      <span>#{{ tag }}</span>
+                    }
+                  </div>
+                }
+
+                @if (expandedId === question.id) {
+                  <div class="question-detail">
+                    <p class="question-text">{{ question.body }}</p>
+
+                    <div class="question-actions">
+                      @if (canManage(question)) {
+                        <button type="button" class="small" (click)="toggleResolved(question)">
+                          {{ (question.resolved ? 'communityHelp.reopen' : 'communityHelp.resolve') | translate }}
+                        </button>
+                      }
+                      @if (isModerator()) {
+                        <button type="button" class="small" (click)="togglePinned(question)">
+                          {{ (question.pinned ? 'communityHelp.unpin' : 'communityHelp.pin') | translate }}
+                        </button>
+                        <button type="button" class="small" (click)="toggleLocked(question)">
+                          {{ (question.locked ? 'communityHelp.unlock' : 'communityHelp.lock') | translate }}
+                        </button>
+                        <button type="button" class="small danger" (click)="removeQuestion(question)">
+                          {{ 'communityHelp.delete' | translate }}
+                        </button>
+                      }
+                    </div>
+
+                    @if (answersFor(question.id) | async; as answers) {
+                      <div class="answers">
+                        <h3>{{ 'communityHelp.answers' | translate }} ({{ answers.length }})</h3>
+                        @if (!answers.length) {
+                          <p class="no-answers">{{ 'Aún no hay respuestas. Sé la primera persona en ayudar.' | translate }}</p>
+                        }
+                        @for (answer of answers; track answer.id) {
+                          <article class="answer" [class.accepted]="answer.accepted">
+                            @if (answer.accepted) {
+                              <span class="accepted-badge">✓ {{ 'communityHelp.accepted' | translate }}</span>
+                            }
+                            <p class="answer-meta">
+                              <strong>{{ answer.authorName }}</strong>
+                              · {{ answer.createdAt | date: 'mediumDate' }}
+                            </p>
+                            <p class="answer-text">{{ answer.body }}</p>
+                            @if (isMine(question) && !answer.accepted) {
+                              <button type="button" class="small" (click)="acceptAnswer(question, answer)">
+                                {{ 'communityHelp.accept' | translate }}
+                              </button>
+                            }
+                          </article>
+                        }
+                      </div>
+                    }
+
+                    @if (question.locked) {
+                      <p class="locked-note">🔒 {{ 'communityHelp.locked' | translate }}</p>
+                    } @else if (currentUser) {
+                      <form class="answer-form" (ngSubmit)="postAnswer(question)">
+                        <textarea
+                          [name]="'answer-' + question.id"
+                          [(ngModel)]="answerDrafts[question.id]"
+                          [placeholder]="'communityHelp.answerPlaceholder' | translate"
+                          rows="3"
+                          maxlength="4000"
+                        ></textarea>
+                        <button type="submit" class="primary" [disabled]="answerBusy[question.id]">
+                          {{ 'communityHelp.postAnswer' | translate }}
+                        </button>
+                      </form>
+                    } @else {
+                      <p class="signin-hint">
+                        {{ 'communityHelp.signInToAsk' | translate }}
+                        <a routerLink="/login">{{ 'nav.login' | translate }}</a>
+                      </p>
+                    }
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  <app-site-footer />
+</main>

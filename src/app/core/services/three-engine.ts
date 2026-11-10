@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, NgZone, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as THREE from 'three';
+import { I18nService } from './i18n';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -51,6 +52,7 @@ export interface ViewportHotspot {
 
 @Injectable({ providedIn: 'root' })
 export class ThreeEngineService implements OnDestroy {
+  private readonly i18n = inject(I18nService);
   public camera!: THREE.PerspectiveCamera | THREE.OrthographicCamera;
   public readonly transformChanged$ = new Subject<void>();
   public readonly materialsLoaded$ = new Subject<void>();
@@ -468,7 +470,7 @@ export class ThreeEngineService implements OnDestroy {
     this.scene?.add(marker);
     this.hotspotRecords.push({
       id: `hotspot-${crypto.randomUUID()}`,
-      label: `Nota ${this.hotspotRecords.length + 1}`,
+      label: this.i18n.translate('Nota {index}', { index: this.hotspotRecords.length + 1 }),
       position,
       marker,
     model: this.currentModel,

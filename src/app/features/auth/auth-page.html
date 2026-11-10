@@ -1,46 +1,45 @@
 <main class="auth-page page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="false"
     [showNav]="false"
     [authMode]="true"
-    title="{{ mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta' }}"
-    subtitle="{{ mode === 'login' ? 'Inicia sesión para conectar con otros creadores.' : 'Comparte tus modelos y descubre nuevas ideas.' }}"
+    [title]="(mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta') | translate"
+    [subtitle]="(mode === 'login' ? 'Inicia sesión para conectar con otros creadores.' : 'Comparte tus modelos y descubre nuevas ideas.') | translate"
   ></app-shell-header>
   @if (user$ | async; as user) {
     <section class="auth-card signed-in">
-      <span class="success-mark">✓</span><p class="eyebrow">SESIÓN ACTIVA</p><h1>Hola, {{ user.displayName }}</h1>
-      <p>Tu espacio de creación está listo.</p>
+      <span class="success-mark">✓</span><p class="eyebrow">{{ 'SESIÓN ACTIVA' | translate }}</p><h1>{{ 'Hola, {name}' | translate: { name: user.displayName } }}</h1>
+      <p>{{ 'Tu espacio de creación está listo.' | translate }}</p>
       @if (user.emailVerified === false) {
-        <p class="verify-hint">Tu correo aún no está verificado. Ábrelo desde Ajustes → Seguridad para proteger la cuenta.</p>
+        <p class="verify-hint">{{ 'Tu correo aún no está verificado. Ábrelo desde Ajustes → Seguridad para proteger la cuenta.' | translate }}</p>
       }
-      <a class="primary" routerLink="/feed">Ir a la comunidad</a>
-      <button class="text-button" type="button" (click)="logout()">Cerrar sesión</button>
+      <a class="primary" routerLink="/feed">{{ 'Ir a la comunidad' | translate }}</a>
+      <button class="text-button" type="button" (click)="logout()">{{ 'Cerrar sesión' | translate }}</button>
     </section>
   } @else {
     <section class="auth-card">
-      <p class="eyebrow">{{ mode === 'reset' ? 'RECUPERACIÓN SEGURA' : 'TU PORTAFOLIO 3D' }}</p>
+      <p class="eyebrow">{{ (mode === 'reset' ? 'RECUPERACIÓN SEGURA' : 'TU PORTAFOLIO 3D') | translate }}</p>
       <h1>
-        @if (mode === 'login') { Bienvenido de vuelta }
-        @else if (mode === 'register') { Crea tu cuenta }
-        @else { Restablece tu contraseña }
+        @if (mode === 'login') { {{ 'Bienvenido de vuelta' | translate }} }
+        @else if (mode === 'register') { {{ 'Crea tu cuenta' | translate }} }
+        @else { {{ 'Restablece tu contraseña' | translate }} }
       </h1>
       <p class="subtext">
-        @if (mode === 'login') { Inicia sesión para conectar con otros creadores. }
-        @else if (mode === 'register') { Comparte tus modelos y descubre nuevas ideas. }
-        @else { Te enviaremos un enlace seguro a tu correo para crear una nueva contraseña. }
+        @if (mode === 'login') { {{ 'Inicia sesión para conectar con otros creadores.' | translate }} }
+        @else if (mode === 'register') { {{ 'Comparte tus modelos y descubre nuevas ideas.' | translate }} }
+        @else { {{ 'Te enviaremos un enlace seguro a tu correo para crear una nueva contraseña.' | translate }} }
       </p>
       @if (!auth.isConfigured) {
-        <div class="local-banner">Modo local de demostración. Los datos quedan en este navegador; configura Firebase para cuentas reales y sincronización en la nube.</div>
+        <div class="local-banner">{{ 'Modo local de demostración. Los datos quedan en este navegador; configura Firebase para cuentas reales y sincronización en la nube.' | translate }}</div>
       }
       <form (ngSubmit)="submit()">
         @if (mode === 'register') {
-          <label>Nombre visible<input name="displayName" [(ngModel)]="displayName" required minlength="2" maxlength="60" autocomplete="name" /></label>
+          <label>{{ 'Nombre visible' | translate }}<input name="displayName" [(ngModel)]="displayName" required minlength="2" maxlength="60" autocomplete="name" /></label>
         }
-        <label>Correo electrónico<input name="email" type="email" [(ngModel)]="email" required autocomplete="email" /></label>
+        <label>{{ 'Correo electrónico' | translate }}<input name="email" type="email" [(ngModel)]="email" required autocomplete="email" /></label>
         @if (mode !== 'reset') {
           <label class="password-label">
-            Contraseña
+            {{ 'Contraseña' | translate }}
             <div class="password-field">
               <input
                 name="password"
@@ -50,8 +49,8 @@
                 [minlength]="mode === 'register' ? 8 : 6"
                 [attr.autocomplete]="mode === 'login' ? 'current-password' : 'new-password'"
               />
-              <button type="button" class="toggle-visibility" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
-                {{ showPassword ? 'Ocultar' : 'Ver' }}
+              <button type="button" class="toggle-visibility" (click)="showPassword = !showPassword" [attr.aria-label]="(showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña') | translate">
+                {{ (showPassword ? 'Ocultar' : 'Ver') | translate }}
               </button>
             </div>
           </label>
@@ -59,9 +58,9 @@
             <div class="strength" [attr.data-level]="passwordStrength" aria-live="polite">
               <span class="strength-bar"></span>
               <small>
-                @if (passwordStrength === 'weak') { Débil · usa 8+ caracteres, letras y un número }
-                @else if (passwordStrength === 'fair') { Aceptable · añade mayúsculas o un símbolo }
-                @else { Fuerte · buena protección para tu cuenta }
+                @if (passwordStrength === 'weak') { {{ 'Débil · usa 8+ caracteres, letras y un número' | translate }} }
+                @else if (passwordStrength === 'fair') { {{ 'Aceptable · añade mayúsculas o un símbolo' | translate }} }
+                @else { {{ 'Fuerte · buena protección para tu cuenta' | translate }} }
               </small>
             </div>
           }
@@ -70,29 +69,29 @@
         @if (status) { <p class="status" role="status">{{ status }}</p> }
         <button class="primary full" [disabled]="busy || (mode === 'register' && !passwordReady)" type="submit">
           @if (busy) {
-            <app-loading-spinner variant="inline" label="Conectando con tu cuenta…" />
+            <app-loading-spinner variant="inline" [label]="'Conectando con tu cuenta…' | translate" />
           } @else if (mode === 'login') {
-            Iniciar sesión
+            {{ 'Iniciar sesión' | translate }}
           } @else if (mode === 'register') {
-            Crear cuenta
+            {{ 'Crear cuenta' | translate }}
           } @else {
-            Enviar enlace de recuperación
+            {{ 'Enviar enlace de recuperación' | translate }}
           }
         </button>
       </form>
       @if (mode === 'login') {
-        <p class="forgot"><a routerLink="/forgot-password">¿Olvidaste tu contraseña?</a></p>
+        <p class="forgot"><a routerLink="/forgot-password">{{ '¿Olvidaste tu contraseña?' | translate }}</a></p>
       }
       @if (mode !== 'reset') {
-        <div class="divider"><span>o continúa con</span></div>
-        <button class="google" type="button" [disabled]="!auth.isConfigured" (click)="googleLogin()">G&nbsp; Continuar con Google</button>
-        <p class="switch">{{ mode === 'login' ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?' }}
-          <a [routerLink]="mode === 'login' ? '/register' : '/login'">{{ mode === 'login' ? 'Regístrate' : 'Inicia sesión' }}</a>
+        <div class="divider"><span>{{ 'o continúa con' | translate }}</span></div>
+        <button class="google" type="button" [disabled]="!auth.isConfigured" (click)="googleLogin()">G&nbsp; {{ 'Continuar con Google' | translate }}</button>
+        <p class="switch">{{ (mode === 'login' ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?') | translate }}
+          <a [routerLink]="mode === 'login' ? '/register' : '/login'">{{ (mode === 'login' ? 'Regístrate' : 'Inicia sesión') | translate }}</a>
         </p>
       } @else {
-        <p class="switch">¿Ya la recordaste? <a routerLink="/login">Volver al inicio de sesión</a></p>
+        <p class="switch">{{ '¿Ya la recordaste?' | translate }} <a routerLink="/login">{{ 'Volver al inicio de sesión' | translate }}</a></p>
       }
     </section>
   }
-  <a class="back-link" routerLink="/editor">← Volver al editor</a>
+  <a class="back-link" routerLink="/editor">{{ '← Volver al editor' | translate }}</a>
 </main>

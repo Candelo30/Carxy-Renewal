@@ -2,7 +2,7 @@
   class="navigation-loading"
   [class.is-visible]="navigationLoading()"
   role="progressbar"
-  aria-label="Cargando página"
+  [aria-label]="'Cargando página' | translate"
   [attr.aria-hidden]="!navigationLoading()"
   [attr.aria-valuetext]="navigationLoading() ? 'Cargando' : null"
 ></div>

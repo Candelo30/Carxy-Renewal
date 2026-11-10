@@ -1,6 +1,5 @@
 <main class="guide-shell page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="false"
     [showNav]="true"
   ></app-shell-header>
@@ -10,56 +9,55 @@
   <section class="guide-hero">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-copy">
-      <p class="eyebrow">GUÍA DE INICIO</p>
-      <h1>Tu primera creación en 3D, paso a paso.</h1>
+      <p class="eyebrow">{{ 'GUÍA DE INICIO' | translate }}</p>
+      <h1>{{ 'Tu primera creación en 3D, paso a paso.' | translate }}</h1>
       <p class="hero-text">
-        Seis pasos para pasar de una cuenta nueva a tu primer modelo publicado. Marca cada paso al
-        terminarlo: el progreso se guarda en este dispositivo.
+        {{ 'Seis pasos para pasar de una cuenta nueva a tu primer modelo publicado. Marca cada paso al terminarlo: el progreso se guarda en este dispositivo.' | translate }}
       </p>
       <div class="hero-actions">
-        <button type="button" class="btn-primary" (click)="startTutorial()">Iniciar tutorial guiado</button>
-        <a routerLink="/help" class="btn-secondary">Centro de ayuda</a>
+        <button type="button" class="btn-primary" (click)="startTutorial()">{{ 'Iniciar tutorial guiado' | translate }}</button>
+        <a routerLink="/help" class="btn-secondary">{{ 'Centro de ayuda' | translate }}</a>
       </div>
       <div class="hero-meta">
-        <span>{{ completedCount }} de {{ steps.length }} pasos completados</span>
-        <span>Tiempo estimado: 10 minutos</span>
+        <span>{{ '{completed} de {total} pasos completados' | translate: { completed: completedCount, total: steps.length } }}</span>
+        <span>{{ 'Tiempo estimado: 10 minutos' | translate }}</span>
       </div>
     </div>
 
-    <aside class="progress-card" aria-label="Progreso de la guía">
+    <aside class="progress-card" [aria-label]="'Progreso de la guía' | translate">
       <div class="progress-ring" [style.--progress]="progressPercent + '%'">
         <span>{{ progressPercent }}%</span>
       </div>
       <div class="progress-info">
-        <strong>{{ allDone ? '¡Guía completada!' : 'Tu progreso' }}</strong>
+        <strong>{{ (allDone ? '¡Guía completada!' : 'Tu progreso') | translate }}</strong>
         <p>
           @if (allDone) {
-            Ya conoces el flujo completo. Sigue creando y comparte tus modelos.
+            {{ 'Ya conoces el flujo completo. Sigue creando y comparte tus modelos.' | translate }}
           } @else if (next) {
-            Siguiente: {{ next.title }}
+            {{ 'Siguiente:' | translate }} {{ next.title | translate }}
           } @else {
-            Marca cada paso cuando lo termines.
+            {{ 'Marca cada paso cuando lo termines.' | translate }}
           }
         </p>
         @if (next && !allDone) {
           <a class="next-link" [routerLink]="next.route" [queryParams]="next.queryParams">
-            Continuar → {{ next.actionLabel }}
+            {{ 'Continuar →' | translate }} {{ next.actionLabel | translate }}
           </a>
         } @else if (allDone) {
-          <a class="next-link" routerLink="/editor">Crear otro modelo →</a>
+          <a class="next-link" routerLink="/editor">{{ 'Crear otro modelo →' | translate }}</a>
         }
       </div>
       <button class="reset-progress" type="button" (click)="resetProgress()" [disabled]="completedCount === 0">
-        Reiniciar progreso
+        {{ 'Reiniciar progreso' | translate }}
       </button>
     </aside>
   </section>
 
   <section class="guide-section">
     <div class="section-head">
-      <p class="eyebrow">CHECKLIST</p>
-      <h2>Los seis pasos</h2>
-      <p>Puedes hacerlos en orden o ir directamente al que necesites.</p>
+      <p class="eyebrow">{{ 'CHECKLIST' | translate }}</p>
+      <h2>{{ 'Los seis pasos' | translate }}</h2>
+      <p>{{ 'Puedes hacerlos en orden o ir directamente al que necesites.' | translate }}</p>
     </div>
 
     <div class="step-list">
@@ -73,7 +71,7 @@
             type="button"
             class="step-check"
             [attr.aria-pressed]="isDone(step.id)"
-            [attr.aria-label]="isDone(step.id) ? 'Marcar ' + step.title + ' como pendiente' : 'Marcar ' + step.title + ' como completado'"
+            [attr.aria-label]="(isDone(step.id) ? 'Marcar {title} como pendiente' : 'Marcar {title} como completado') | translate: { title: (step.title | translate) }"
             (click)="toggleStep(step.id)"
           >
             @if (isDone(step.id)) {
@@ -86,21 +84,21 @@
           <div class="step-main">
             <div class="step-title-row">
               <span class="step-icon" aria-hidden="true">{{ step.icon }}</span>
-              <h3>{{ step.title }}</h3>
+              <h3>{{ step.title | translate }}</h3>
               @if (isDone(step.id)) {
-                <span class="done-badge">Completado</span>
+                <span class="done-badge">{{ 'Completado' | translate }}</span>
               } @else if (next?.id === step.id) {
-                <span class="current-badge">Siguiente</span>
+                <span class="current-badge">{{ 'Siguiente' | translate }}</span>
               }
             </div>
-            <p>{{ step.description }}</p>
+            <p>{{ step.description | translate }}</p>
             @if (step.tip) {
-              <p class="step-tip"><span aria-hidden="true">💡</span> {{ step.tip }}</p>
+              <p class="step-tip"><span aria-hidden="true">💡</span> {{ step.tip | translate }}</p>
             }
           </div>
 
           <a class="step-action" [routerLink]="step.route" [queryParams]="step.queryParams">
-            {{ step.actionLabel }} →
+            {{ step.actionLabel | translate }} →
           </a>
         </article>
       }
@@ -110,51 +108,51 @@
       <div class="guide-success">
         <span class="success-icon" aria-hidden="true">🎉</span>
         <div>
-          <strong>¡Guía completada!</strong>
-          <p>Ya sabes crear, publicar y compartir. La comunidad te espera.</p>
+          <strong>{{ '¡Guía completada!' | translate }}</strong>
+          <p>{{ 'Ya sabes crear, publicar y compartir. La comunidad te espera.' | translate }}</p>
         </div>
-        <a routerLink="/editor" class="btn-primary">Crear otro modelo</a>
+        <a routerLink="/editor" class="btn-primary">{{ 'Crear otro modelo' | translate }}</a>
       </div>
     }
   </section>
 
   <section class="guide-section">
     <div class="section-head">
-      <p class="eyebrow">RECURSOS ÚTILES</p>
-      <h2>Cuando necesites profundizar</h2>
+      <p class="eyebrow">{{ 'RECURSOS ÚTILES' | translate }}</p>
+      <h2>{{ 'Cuando necesites profundizar' | translate }}</h2>
     </div>
 
     <div class="resource-grid">
       <a routerLink="/help" fragment="atajos" class="resource-card">
         <span class="resource-icon" aria-hidden="true">⌨️</span>
-        <strong>Atajos de teclado</strong>
-        <small>Mueve, rota, escala y deshaz sin soltar el teclado.</small>
+        <strong>{{ 'Atajos de teclado' | translate }}</strong>
+        <small>{{ 'Mueve, rota, escala y deshaz sin soltar el teclado.' | translate }}</small>
       </a>
       <a routerLink="/help" fragment="publicar" class="resource-card">
         <span class="resource-icon" aria-hidden="true">📤</span>
-        <strong>Cómo publicar</strong>
-        <small>Título, descripción, etiquetas y visibilidad.</small>
+        <strong>{{ 'Cómo publicar' | translate }}</strong>
+        <small>{{ 'Título, descripción, etiquetas y visibilidad.' | translate }}</small>
       </a>
       <a routerLink="/help" fragment="seguridad" class="resource-card">
         <span class="resource-icon" aria-hidden="true">🛡</span>
-        <strong>Cuenta y seguridad</strong>
-        <small>Verificación de correo, contraseñas y sesiones.</small>
+        <strong>{{ 'Cuenta y seguridad' | translate }}</strong>
+        <small>{{ 'Verificación de correo, contraseñas y sesiones.' | translate }}</small>
       </a>
       <a routerLink="/about" class="resource-card">
         <span class="resource-icon" aria-hidden="true">✦</span>
-        <strong>Sobre CARXY</strong>
-        <small>La historia, la misión y el roadmap del proyecto.</small>
+        <strong>{{ 'Sobre CARXY' | translate }}</strong>
+        <small>{{ 'La historia, la misión y el roadmap del proyecto.' | translate }}</small>
       </a>
     </div>
   </section>
 
   <section class="guide-cta">
     <div>
-      <p class="eyebrow">TUTORIAL GUIADO</p>
-      <h2>¿Prefieres que te llevemos de la mano?</h2>
-      <p>El tutorial muestra los pasos dentro del propio editor, sin salir de la escena.</p>
+      <p class="eyebrow">{{ 'TUTORIAL GUIADO' | translate }}</p>
+      <h2>{{ '¿Prefieres que te llevemos de la mano?' | translate }}</h2>
+      <p>{{ 'El tutorial muestra los pasos dentro del propio editor, sin salir de la escena.' | translate }}</p>
     </div>
-    <button type="button" class="btn-primary" (click)="startTutorial()">Iniciar tutorial guiado</button>
+    <button type="button" class="btn-primary" (click)="startTutorial()">{{ 'Iniciar tutorial guiado' | translate }}</button>
   </section>
 
   <app-site-footer />

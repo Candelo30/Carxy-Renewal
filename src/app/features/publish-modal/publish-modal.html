@@ -1,6 +1,6 @@
 <div class="publish-backdrop" (click)="close()" (keydown.escape)="close()">
   <section class="publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-title" (click)="$event.stopPropagation()">
-    <button class="btn-close" type="button" aria-label="Cerrar" (click)="close()">✕</button>
+    <button class="btn-close" type="button" [aria-label]="'Cerrar' | translate" (click)="close()">✕</button>
 
     <!-- Paso indicator -->
     <div class="publish-steps">
@@ -12,20 +12,20 @@
       }
     </div>
 
-    <p class="eyebrow" id="publish-title">PUBLICAR MODELO 3D</p>
-    <h1>{{ stepLabel }}</h1>
+    <p class="eyebrow" id="publish-title">{{ 'PUBLICAR MODELO 3D' | translate }}</p>
+    <h1>{{ stepLabel | translate }}</h1>
 
     <!-- Step 1: Datos del modelo -->
     @if (currentStep === 1) {
       <div class="step-content">
-        <p class="step-description">Dale un nombre y cuenta qué creaste. Esto ayudará a otros a encontrar tu modelo.</p>
+        <p class="step-description">{{ 'Dale un nombre y cuenta qué creaste. Esto ayudará a otros a encontrar tu modelo.' | translate }}</p>
         <label>
-          <span>Título <span class="required">*</span></span>
-          <input type="text" [(ngModel)]="title" maxlength="100" placeholder="Ej. Concepto de vehículo eléctrico" />
+          <span>{{ 'Título' | translate }} <span class="required">*</span></span>
+          <input type="text" [(ngModel)]="title" maxlength="100" [placeholder]="'Ej. Concepto de vehículo eléctrico' | translate" />
         </label>
         <label>
-          <span>Descripción</span>
-          <textarea [(ngModel)]="description" maxlength="2000" rows="4" placeholder="Cuenta cómo creaste este modelo…"></textarea>
+          <span>{{ 'Descripción' | translate }}</span>
+          <textarea [(ngModel)]="description" maxlength="2000" rows="4" [placeholder]="'Cuenta cómo creaste este modelo…' | translate"></textarea>
         </label>
         @if (error) { <p class="error">{{ error }}</p> }
       </div>
@@ -34,15 +34,15 @@
     <!-- Step 2: Etiquetas y visibilidad -->
     @if (currentStep === 2) {
       <div class="step-content">
-        <p class="step-description">Organiza tu modelo con etiquetas y elige quién puede verlo.</p>
+        <p class="step-description">{{ 'Organiza tu modelo con etiquetas y elige quién puede verlo.' | translate }}</p>
         <label>
-          <span>Etiquetas</span>
-          <input type="text" [(ngModel)]="tags" placeholder="vehículo, sci-fi, concept" />
-          <small>Separa con comas (máximo 12).</small>
+          <span>{{ 'Etiquetas' | translate }}</span>
+          <input type="text" [(ngModel)]="tags" [placeholder]="'vehículo, sci-fi, concept' | translate" />
+          <small>{{ 'Separa con comas (máximo 12).' | translate }}</small>
         </label>
         <label class="toggle-label">
           <input type="checkbox" [(ngModel)]="isPrivate" />
-          <span>Modelo privado (solo tú podrás verlo)</span>
+          <span>{{ 'Modelo privado (solo tú podrás verlo)' | translate }}</span>
         </label>
         @if (error) { <p class="error">{{ error }}</p> }
       </div>
@@ -51,18 +51,18 @@
     <!-- Step 3: Vista previa -->
     @if (currentStep === 3) {
       <div class="step-content">
-        <p class="step-description">Revisa cómo se verá tu modelo en la comunidad.</p>
+        <p class="step-description">{{ 'Revisa cómo se verá tu modelo en la comunidad.' | translate }}</p>
         <div class="preview-wrap">
           @if (preview) {
-            <img class="preview-img" [src]="preview" alt="Vista previa del modelo 3D" />
+            <img class="preview-img" [src]="preview" [alt]="'Vista previa del modelo 3D' | translate" />
           } @else {
-            <div class="preview-empty">Vista previa no disponible</div>
+            <div class="preview-empty">{{ 'Vista previa no disponible' | translate }}</div>
           }
         </div>
         <div class="preview-info">
-          <span class="info-item">📦 Formato: GLB</span>
-          <span class="info-item">🖼️ Miniatura: PNG</span>
-          <span class="info-item">🔒 {{ isPrivate ? 'Privado' : 'Público' }}</span>
+          <span class="info-item">{{ '📦 Formato: GLB' | translate }}</span>
+          <span class="info-item">{{ '🖼️ Miniatura: PNG' | translate }}</span>
+          <span class="info-item">🔒 {{ (isPrivate ? 'Privado' : 'Público') | translate }}</span>
         </div>
         @if (error) { <p class="error">{{ error }}</p> }
       </div>
@@ -74,20 +74,20 @@
         @if (publishedPostId) {
           <div class="success-state">
             <div class="success-icon">🚀</div>
-            <h2>¡Publicado!</h2>
-            <p>“{{ publishedPostTitle }}” está disponible en la comunidad CARXY.</p>
+            <h2>{{ '¡Publicado!' | translate }}</h2>
+            <p>{{ '“{title}” está disponible en la comunidad CARXY.' | translate: { title: publishedPostTitle ?? '' } }}</p>
           </div>
 
           <div class="share-section">
-            <p class="share-label">Código de la escena (para compartir con colaboradores)</p>
+            <p class="share-label">{{ 'Código de la escena (para compartir con colaboradores)' | translate }}</p>
             <div class="code-wrap">
               <textarea readonly class="share-code">{{ shareCode }}</textarea>
-              <button class="btn-copy" type="button" (click)="copyShareCode()">Copiar</button>
+              <button class="btn-copy" type="button" (click)="copyShareCode()">{{ 'Copiar' | translate }}</button>
             </div>
-            <p class="share-hint">Envía este código a otro creador para que pueda importar tu escena en su editor.</p>
+            <p class="share-hint">{{ 'Envía este código a otro creador para que pueda importar tu escena en su editor.' | translate }}</p>
           </div>
         } @else {
-          <p class="step-description">¡Listo! Publica tu modelo para compartirlo con la comunidad.</p>
+          <p class="step-description">{{ '¡Listo! Publica tu modelo para compartirlo con la comunidad.' | translate }}</p>
           @if (error) { <p class="error">{{ error }}</p> }
         }
       </div>
@@ -96,20 +96,20 @@
     <!-- Footer actions -->
     <footer class="publish-footer">
       @if (currentStep > 1) {
-        <button class="btn-ghost" type="button" (click)="prevStep()">◀ Anterior</button>
+        <button class="btn-ghost" type="button" (click)="prevStep()">{{ '◀ Anterior' | translate }}</button>
       }
       <div class="footer-actions">
         @if (currentStep === 4 && publishedPostId) {
-          <button class="btn-primary" type="button" (click)="close()">Listo</button>
+          <button class="btn-primary" type="button" (click)="close()">{{ 'Listo' | translate }}</button>
         } @else {
-          <button class="btn-ghost" type="button" (click)="close()">Cancelar</button>
+          <button class="btn-ghost" type="button" (click)="close()">{{ 'Cancelar' | translate }}</button>
           <button class="btn-primary" type="button" [disabled]="busy" (click)="currentStep < 4 ? nextStep() : publish()">
             @if (busy) {
-              <app-loading-spinner variant="inline" label="Procesando…" />
+              <app-loading-spinner variant="inline" [label]="'Procesando…' | translate" />
             } @else if (currentStep === 4) {
-              Publicar y compartir
+              {{ 'Publicar y compartir' | translate }}
             } @else {
-              Siguiente ▶
+              {{ 'Siguiente ▶' | translate }}
             }
           </button>
         }

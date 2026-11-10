@@ -4,6 +4,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import * as THREE from 'three';
 import { ThreeEngineService } from './three-engine';
 import { NotificationService } from './notifications';
+import { I18nService } from './i18n';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +17,7 @@ export class FileHandler {
     private threeEngine: ThreeEngineService,
     private ngZone: NgZone,
     private notifications: NotificationService,
+    private i18n: I18nService,
   ) {}
 
   // --- Cargar archivo .glb / .gltf ---
@@ -38,8 +40,8 @@ export class FileHandler {
         console.error('Error al cargar el modelo 3D:', error);
         URL.revokeObjectURL(objectUrl);
         this.ngZone.run(() => this.notifications.error(
-          error instanceof Error ? error.message : 'Revisa que el archivo GLB o glTF sea válido.',
-          'No se pudo importar el modelo',
+          error instanceof Error ? error.message : this.i18n.translate('Revisa que el archivo GLB o glTF sea válido.'),
+          this.i18n.translate('No se pudo importar el modelo'),
         ));
       },
     );

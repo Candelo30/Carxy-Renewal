@@ -20,13 +20,17 @@ CARXY 3D Studio es un editor 3D en Angular con una capa social para compartir, d
 - Indicadores de carga accesibles y coherentes para navegación, feed, perfiles, paneles, conversaciones, acceso y publicación.
 - Capturar el visor como imagen PNG.
 - Feed comunitario responsive con alternancia entre miniatura e inspección 3D orbital, perfiles de creador con avatar/fallback, likes, comentarios en tiempo real y mensajería directa.
+- Feed con búsqueda por título/autor/etiqueta, filtros sincronizados con la URL (`q`, `tag`, `sort`, `post`), orden por recientes/gustados/vistos/remixeados, paginación «Cargar más», compartir con Web Share/clipboard, estadísticas agregadas y enlaces profundos a cada modelo.
+- **Mis favoritos** (`/favorites`): colección personal de modelos guardados, con vista 3D, remix, compartir y eliminación inmediata. Funciona con Firestore (`users/{uid}/likedPosts`) y con el modo local de demostración.
+- Paleta de comandos global con **Ctrl/Cmd + K**: navegación, recursos, cambio de tema, tutorial, publicación, copia del enlace actual, perfil, administración y cierre de sesión.
+- La búsqueda del header envía la consulta al feed (`/feed?q=…`); el menú de cuenta y el menú móvil enlazan a favoritos.
 - Seguimiento de creadores con conteos de seguidores/seguidos y campana de actividad para follows, likes y comentarios; cada elemento puede marcarse leído.
 - Publicar renders PNG junto con modelos GLB; abrir publicaciones en el editor para remixearlas.
 - Panel de creaciones con métricas, edición de metadatos, privacidad y eliminación en cascada; administración de roles y moderación.
 - Borradores de escena y preferencias del editor guardados localmente.
 - Rutas standalone con carga diferida y protección para perfiles, chats, paneles de creaciones y administración.
 
-En el menú de cuenta puedes abrir el perfil, acceder a tus creaciones, cambiar tema/color de acento y cerrar sesión. Si no has iniciado sesión, el menú conserva los ajustes visuales y muestra un acceso directo al login. En el feed, selecciona **Ver en 3D** para cargar el GLB de una publicación; arrastra para orbitar y usa la rueda para acercar o alejar. El visor se crea solo al solicitarlo para evitar inicializar WebGL en todas las tarjetas a la vez.
+En el menú de cuenta puedes abrir el perfil, acceder a tus creaciones y favoritos, cambiar tema/color de acento y cerrar sesión. Si no has iniciado sesión, el menú conserva los ajustes visuales y muestra un acceso directo al login. En el feed, selecciona **Ver en 3D** para cargar el GLB de una publicación; arrastra para orbitar y usa la rueda para acercar o alejar. El visor se crea solo al solicitarlo para evitar inicializar WebGL en todas las tarjetas a la vez.
 
 ## Guía, ayuda y sobre el proyecto
 
@@ -65,7 +69,7 @@ gcloud config set project carxy-f3e27
 gcloud storage buckets update gs://carxy-f3e27.firebasestorage.app --cors-file=storage.cors.json
 ```
 
-El archivo permite el desarrollo en `localhost:4200`/`localhost:4202` y los dominios predeterminados de Firebase Hosting. Añade ahí el origen exacto de cualquier dominio personalizado antes de usarlo. Si la solicitud sigue fallando, revisa **Network**: un `404` suele indicar que el bucket o archivo no existe; un `403`, que las reglas/permisos lo rechazaron. CORS no crea el bucket ni concede acceso: `storage.rules` continúa controlando autenticación, propiedad y tamaño.
+El archivo permite el desarrollo en `localhost:4200`/`localhost:4202`, la vista previa de Pages en `localhost:4300`, los dominios predeterminados de Firebase Hosting y `https://candelo30.github.io`. Añade ahí el origen exacto de cualquier dominio personalizado antes de usarlo. Si la solicitud sigue fallando, revisa **Network**: un `404` suele indicar que el bucket o archivo no existe; un `403`, que las reglas/permisos lo rechazaron. CORS no crea el bucket ni concede acceso: `storage.rules` continúa controlando autenticación, propiedad y tamaño.
 
 ## Configuración, conexiones y secretos
 
@@ -77,6 +81,22 @@ El archivo permite el desarrollo en `localhost:4200`/`localhost:4202` y los domi
 - No se añadieron URLs de API ficticias ni variables de integración sin servicio implementado. Cuando exista un backend, configura su URL pública en el cliente y guarda sus credenciales exclusivamente en el backend.
 
 Sin configuración, el acceso y los datos sociales funcionan en el navegador local para demostración. Ese modo no verifica contraseñas en un servidor, no comparte datos entre dispositivos y no debe usarse para cuentas reales. Con Firebase configurado, Auth, Firestore y Storage son requeridos para autenticación y publicaciones; los errores de Firebase se muestran al usuario.
+
+## Despliegue en GitHub Pages
+
+La app se publica en **https://candelo30.github.io/Carxy-Renewal/** mediante el workflow `.github/workflows/deploy-pages.yml` y el proyecto estático `angular-3d-editor-pages`. El proyecto SSR `angular-3d-editor` se mantiene intacto para otros entornos.
+
+```bash
+npm run build:pages     # build estático + 404.html + rutas + .nojekyll
+npm run preview:pages   # http://localhost:4300/Carxy-Renewal/
+```
+
+Antes del primer despliegue hay dos ajustes manuales imprescindibles:
+
+1. En Firebase Console → Authentication → Settings → Authorized domains, añade `candelo30.github.io`.
+2. En GitHub → Settings → Pages → Source, selecciona **GitHub Actions**.
+
+La guía completa (secretos de Firebase, reglas/índices, CORS, dominio personalizado, enlaces profundos y solución de problemas) está en [`docs/DEPLOY_GITHUB_PAGES.md`](docs/DEPLOY_GITHUB_PAGES.md). GitHub Pages no permite cabeceras HTTP personalizadas; si necesitas CSP/HSTS, publica el mismo build detrás de Cloudflare/Firebase Hosting.
 
 ## Seguridad
 
@@ -92,7 +112,7 @@ Las reglas de Storage protegen las operaciones normales del SDK. Los enlaces de 
 
 - La publicación en Firebase depende de que exista el bucket y coincida con `storageBucket`; el código puede probarse localmente, pero una publicación remota no se considera validada hasta completar una subida real.
 - La moderación permite revisar y eliminar publicaciones, pero no hay todavía un flujo para reportarlas desde el feed ni una cola de reportes aunque esté reservado el nombre de colección `reports`.
-- El feed no tiene todavía búsqueda, filtros ni paginación; conviene implementarlos antes de crecer la colección para limitar lecturas y tiempos de carga.
+- El feed filtra, ordena y pagina en el cliente sobre la colección cargada. Para colecciones muy grandes conviene añadir paginación con cursores de Firestore y consultas por etiqueta/orden en el servidor.
 - No existe edición colaborativa multiusuario, invitación a espacios de trabajo ni historial compartido.
 - Pagos, planes, suscripciones y contenido exclusivo no están habilitados. Antes de implementarlos hay que definir planes, moneda/país y reglas de propiedad; la autorización de equipos y cobros debe validarse en un backend, no en el cliente.
 - Los tests actuales cubren servicios y componentes en local; no sustituyen pruebas de integración contra Firebase. Para validar reglas, índices y flujos remotos, configura y ejecuta Firebase Emulator Suite o un proyecto de staging con credenciales autorizadas.
@@ -110,11 +130,14 @@ npm start
 
 Abre `http://localhost:4200/` en un navegador compatible con WebGL.
 
-Las páginas disponibles son `/editor`, `/feed`, `/login`, `/register`, `/forgot-password`, `/profile/:uid`, `/my-models`, `/chat`, `/help`, `/getting-started` y `/about`. El chat directo requiere el UID del otro creador. Los alias en español `/ayuda`, `/guia` y `/nosotros` redirigen a sus rutas canónicas.
+Las páginas disponibles son `/editor`, `/feed`, `/login`, `/register`, `/forgot-password`, `/profile/:uid`, `/my-models`, `/favorites`, `/chat`, `/help`, `/getting-started` y `/about`. El chat directo requiere el UID del otro creador. Los alias en español `/ayuda`, `/guia` y `/nosotros` redirigen a sus rutas canónicas. La paleta de comandos se abre con **Ctrl/Cmd + K** en cualquier página que use el header compartido.
 
 ## Validación
 
 ```bash
 npm run build
 npm test -- --watch=false
+npm run build:pages
 ```
+
+Para validar la salida de GitHub Pages, ejecuta `npm run preview:pages` y prueba `/Carxy-Renewal/`, `/Carxy-Renewal/feed?sort=likes`, `/Carxy-Renewal/favorites` y un perfil profundo `/Carxy-Renewal/profile/:uid`.

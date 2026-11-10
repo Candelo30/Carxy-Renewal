@@ -1,6 +1,5 @@
 <main class="about-shell page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="false"
     [showNav]="true"
   ></app-shell-header>
@@ -9,21 +8,19 @@
   <section class="about-hero">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-copy">
-      <p class="eyebrow">SOBRE NOSOTROS</p>
-      <h1>Un estudio 3D para <span>crear, compartir y remixear.</span></h1>
+      <p class="eyebrow">{{ 'SOBRE NOSOTROS' | translate }}</p>
+      <h1>{{ 'Un estudio 3D para' | translate }} <span>{{ 'crear, compartir y remixear.' | translate }}</span></h1>
       <p class="hero-text">
-        CARXY 3D STUDIO nace de una idea simple: que crear en tres dimensiones sea tan fácil como abrir
-        una pestaña. Sin instalaciones, sin configuraciones complicadas y con una comunidad que aprende
-        contigo.
+        {{ 'CARXY 3D STUDIO nace de una idea simple: que crear en tres dimensiones sea tan fácil como abrir una pestaña. Sin instalaciones, sin configuraciones complicadas y con una comunidad que aprende contigo.' | translate }}
       </p>
       <div class="hero-actions">
-        <a routerLink="/editor" class="btn-primary">Empezar a crear</a>
-        <a routerLink="/getting-started" class="btn-secondary">Ver la guía de inicio</a>
+        <a routerLink="/editor" class="btn-primary">{{ 'Empezar a crear' | translate }}</a>
+        <a routerLink="/getting-started" class="btn-secondary">{{ 'Ver la guía de inicio' | translate }}</a>
       </div>
       <div class="hero-meta">
-        <span>Angular + Three.js</span>
-        <span>100% en el navegador</span>
-        <a [href]="repositoryUrl" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <span>{{ 'Angular + Three.js' | translate }}</span>
+        <span>{{ '100% en el navegador' | translate }}</span>
+        <a [href]="repositoryUrl" target="_blank" rel="noopener noreferrer">{{ 'GitHub ↗' | translate }}</a>
       </div>
     </div>
 
@@ -43,11 +40,11 @@
   </section>
 
   <!-- Cifras -->
-  <section class="stats-strip" aria-label="CARXY en cifras">
+  <section class="stats-strip" [aria-label]="'CARXY en cifras' | translate">
     @for (stat of stats; track stat.label) {
       <div class="stat">
         <strong>{{ stat.value }}</strong>
-        <span>{{ stat.label }}</span>
+        <span>{{ stat.label | translate }}</span>
       </div>
     }
   </section>
@@ -55,40 +52,35 @@
   <!-- Qué es CARXY -->
   <section class="about-section">
     <div class="section-head">
-      <p class="eyebrow">EL PROYECTO</p>
-      <h2>¿De qué trata CARXY?</h2>
-      <p>Un editor y una comunidad pensados para que el 3D deje de ser intimidante.</p>
+      <p class="eyebrow">{{ 'EL PROYECTO' | translate }}</p>
+      <h2>{{ '¿De qué trata CARXY?' | translate }}</h2>
+      <p>{{ 'Un editor y una comunidad pensados para que el 3D deje de ser intimidante.' | translate }}</p>
     </div>
 
     <div class="story-grid">
       <div class="story-copy">
         <p>
-          CARXY es un espacio de creación 3D que combina lo mejor de un editor de escritorio con la
-          inmediatez de la web. Abres el navegador, añades formas, ajustas materiales y publicas tu
-          escena para que otras personas la vean, la comenten o la remezclen.
+          {{ 'CARXY es un espacio de creación 3D que combina lo mejor de un editor de escritorio con la inmediatez de la web. Abres el navegador, añades formas, ajustas materiales y publicas tu escena para que otras personas la vean, la comenten o la remezclen.' | translate }}
         </p>
         <p>
-          El proyecto también es una forma de aprender: cada publicación puede abrirse en el editor,
-          así que puedes descubrir cómo está construida una escena y convertirla en el punto de partida
-          de la tuya.
+          {{ 'El proyecto también es una forma de aprender: cada publicación puede abrirse en el editor, así que puedes descubrir cómo está construida una escena y convertirla en el punto de partida de la tuya.' | translate }}
         </p>
         <ul class="story-list">
-          <li><span aria-hidden="true">✓</span> Editor 3D con primitivas, materiales y transformaciones.</li>
-          <li><span aria-hidden="true">✓</span> Publicaciones con vista previa, likes, comentarios y remixes.</li>
-          <li><span aria-hidden="true">✓</span> Perfiles de creador, seguimiento, chat y notificaciones.</li>
-          <li><span aria-hidden="true">✓</span> Moderación y reglas de seguridad para cuidar la comunidad.</li>
+          <li><span aria-hidden="true">✓</span> {{ 'Editor 3D con primitivas, materiales y transformaciones.' | translate }}</li>
+          <li><span aria-hidden="true">✓</span> {{ 'Publicaciones con vista previa, likes, comentarios y remixes.' | translate }}</li>
+          <li><span aria-hidden="true">✓</span> {{ 'Perfiles de creador, seguimiento, chat y notificaciones.' | translate }}</li>
+          <li><span aria-hidden="true">✓</span> {{ 'Moderación y reglas de seguridad para cuidar la comunidad.' | translate }}</li>
         </ul>
       </div>
 
       <aside class="story-card">
-        <p class="eyebrow">NUESTRA MISIÓN</p>
+        <p class="eyebrow">{{ 'NUESTRA MISIÓN' | translate }}</p>
         <blockquote>
-          «Que cualquier persona pueda pasar de una idea a un modelo 3D compartido sin fricción,
-          sin instalar nada y sin sentirse sola en el proceso.»
+          {{ '«Que cualquier persona pueda pasar de una idea a un modelo 3D compartido sin fricción, sin instalar nada y sin sentirse sola en el proceso.»' | translate }}
         </blockquote>
         <div class="story-card-footer">
           <span class="mission-mark" aria-hidden="true">✦</span>
-          <span>Diseño, código y comunidad en un mismo lugar.</span>
+          <span>{{ 'Diseño, código y comunidad en un mismo lugar.' | translate }}</span>
         </div>
       </aside>
     </div>
@@ -97,17 +89,17 @@
   <!-- Funcionalidades -->
   <section class="about-section">
     <div class="section-head">
-      <p class="eyebrow">LO QUE PUEDES HACER</p>
-      <h2>Todo lo esencial, en una sola pestaña</h2>
-      <p>Herramientas de creación, publicación y comunidad conectadas entre sí.</p>
+      <p class="eyebrow">{{ 'LO QUE PUEDES HACER' | translate }}</p>
+      <h2>{{ 'Todo lo esencial, en una sola pestaña' | translate }}</h2>
+      <p>{{ 'Herramientas de creación, publicación y comunidad conectadas entre sí.' | translate }}</p>
     </div>
 
     <div class="feature-grid">
       @for (feature of features; track feature.title) {
         <article class="feature-card">
           <span class="feature-icon" aria-hidden="true">{{ feature.icon }}</span>
-          <h3>{{ feature.title }}</h3>
-          <p>{{ feature.description }}</p>
+          <h3>{{ feature.title | translate }}</h3>
+          <p>{{ feature.description | translate }}</p>
         </article>
       }
     </div>
@@ -116,25 +108,25 @@
   <!-- Cómo funciona -->
   <section class="about-section">
     <div class="section-head">
-      <p class="eyebrow">CÓMO FUNCIONA</p>
-      <h2>De la idea a la comunidad en tres pasos</h2>
+      <p class="eyebrow">{{ 'CÓMO FUNCIONA' | translate }}</p>
+      <h2>{{ 'De la idea a la comunidad en tres pasos' | translate }}</h2>
     </div>
 
     <div class="steps-grid">
       <article class="step-card">
         <span class="step-number">01</span>
-        <h3>Crea tu cuenta</h3>
-        <p>Regístrate con correo o Google para guardar tu portafolio y conectar con otros creadores.</p>
+        <h3>{{ 'Crea tu cuenta' | translate }}</h3>
+        <p>{{ 'Regístrate con correo o Google para guardar tu portafolio y conectar con otros creadores.' | translate }}</p>
       </article>
       <article class="step-card">
         <span class="step-number">02</span>
-        <h3>Modela tu escena</h3>
-        <p>Añade primitivas, transforma objetos, ajusta materiales y prueba distintas vistas de cámara.</p>
+        <h3>{{ 'Modela tu escena' | translate }}</h3>
+        <p>{{ 'Añade primitivas, transforma objetos, ajusta materiales y prueba distintas vistas de cámara.' | translate }}</p>
       </article>
       <article class="step-card">
         <span class="step-number">03</span>
-        <h3>Publica y comparte</h3>
-        <p>Publica con título, descripción y etiquetas. Recibe likes, comentarios y remixes de la comunidad.</p>
+        <h3>{{ 'Publica y comparte' | translate }}</h3>
+        <p>{{ 'Publica con título, descripción y etiquetas. Recibe likes, comentarios y remixes de la comunidad.' | translate }}</p>
       </article>
     </div>
   </section>
@@ -142,8 +134,8 @@
   <!-- Principios -->
   <section class="about-section">
     <div class="section-head">
-      <p class="eyebrow">NUESTROS PRINCIPIOS</p>
-      <h2>Lo que cuidamos en cada decisión</h2>
+      <p class="eyebrow">{{ 'NUESTROS PRINCIPIOS' | translate }}</p>
+      <h2>{{ 'Lo que cuidamos en cada decisión' | translate }}</h2>
     </div>
 
     <div class="principles-grid">
@@ -151,8 +143,8 @@
         <article class="principle-card">
           <span class="principle-icon" aria-hidden="true">{{ principle.icon }}</span>
           <div>
-            <h3>{{ principle.title }}</h3>
-            <p>{{ principle.description }}</p>
+            <h3>{{ principle.title | translate }}</h3>
+            <p>{{ principle.description | translate }}</p>
           </div>
         </article>
       }
@@ -163,14 +155,13 @@
   <section class="about-section">
     <div class="stack-panel">
       <div>
-        <p class="eyebrow">TECNOLOGÍA</p>
-        <h2>Construido con herramientas abiertas</h2>
+        <p class="eyebrow">{{ 'TECNOLOGÍA' | translate }}</p>
+        <h2>{{ 'Construido con herramientas abiertas' | translate }}</h2>
         <p>
-          El editor funciona con WebGL y Three.js; la interfaz con Angular y TypeScript; y la capa
-          social con Firebase. El servidor usa renderizado del lado del servidor para cargar más rápido.
+          {{ 'El editor funciona con WebGL y Three.js; la interfaz con Angular y TypeScript; y la capa social con Firebase. El servidor usa renderizado del lado del servidor para cargar más rápido.' | translate }}
         </p>
       </div>
-      <div class="stack-list" aria-label="Tecnologías utilizadas">
+      <div class="stack-list" [aria-label]="'Tecnologías utilizadas' | translate">
         @for (item of stack; track item) {
           <span>{{ item }}</span>
         }
@@ -181,18 +172,18 @@
   <!-- Roadmap -->
   <section class="about-section">
     <div class="section-head">
-      <p class="eyebrow">ROADMAP</p>
-      <h2>Hacia dónde vamos</h2>
-      <p>Un vistazo honesto a lo que ya existe, lo que viene y lo que estamos explorando.</p>
+      <p class="eyebrow">{{ 'ROADMAP' | translate }}</p>
+      <h2>{{ 'Hacia dónde vamos' | translate }}</h2>
+      <p>{{ 'Un vistazo honesto a lo que ya existe, lo que viene y lo que estamos explorando.' | translate }}</p>
     </div>
 
     <div class="roadmap-grid">
       @for (item of roadmap; track item.phase) {
         <article class="roadmap-card" [class.now]="item.tone === 'now'" [class.next]="item.tone === 'next'" [class.explore]="item.tone === 'explore'">
-          <span class="roadmap-phase">{{ item.phase }}</span>
+          <span class="roadmap-phase">{{ item.phase | translate }}</span>
           <ul>
             @for (entry of item.items; track entry) {
-              <li>{{ entry }}</li>
+              <li>{{ entry | translate }}</li>
             }
           </ul>
         </article>
@@ -203,13 +194,13 @@
   <!-- CTA -->
   <section class="about-cta">
     <div>
-      <p class="eyebrow">ÚNETE</p>
-      <h2>Tu próxima idea ya tiene un lugar.</h2>
-      <p>Abre el editor, crea algo y compártelo con la comunidad.</p>
+      <p class="eyebrow">{{ 'ÚNETE' | translate }}</p>
+      <h2>{{ 'Tu próxima idea ya tiene un lugar.' | translate }}</h2>
+      <p>{{ 'Abre el editor, crea algo y compártelo con la comunidad.' | translate }}</p>
     </div>
     <div class="cta-actions">
-      <a routerLink="/editor" class="btn-primary">Crear un modelo</a>
-      <a routerLink="/feed" class="btn-secondary">Explorar la comunidad</a>
+      <a routerLink="/editor" class="btn-primary">{{ 'Crear un modelo' | translate }}</a>
+      <a routerLink="/feed" class="btn-secondary">{{ 'Explorar la comunidad' | translate }}</a>
     </div>
   </section>
 

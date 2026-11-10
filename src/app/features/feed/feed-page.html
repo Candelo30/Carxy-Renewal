@@ -1,216 +1,288 @@
 <main class="social-shell feed-main page-with-header">
   <app-shell-header
-    [language]="'es'"
     [showSearch]="true"
     [showNav]="true"
-    title="Comunidad 3D"
-    subtitle="Descubre, crea y remixa modelos en tres dimensiones"
+    [title]="'Comunidad 3D' | translate"
+    [subtitle]="'Descubre, crea y remixa modelos en tres dimensiones' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
   <section class="feed-content">
     <div class="community-section-header">
       <button class="collapse-btn" (click)="toggleCommunitySection()" [attr.aria-expanded]="communitySectionOpen">
         <span>{{ communitySectionOpen ? '▼' : '▶' }}</span>
-        Comunidad 3D
+        {{ 'Comunidad 3D' | translate }}
       </button>
     </div>
     <div class="community-content" [class.hidden]="!communitySectionOpen">
-    <div class="hero">
-      <div>
-        <p class="eyebrow">DESCUBRE · CREA · REMIXEA</p>
-        <h1>El arte toma forma<br /><span>en tres dimensiones.</span></h1>
-        <p>
-          Explora trabajos de la comunidad y abre cualquier modelo para crear tu propia versión.
-        </p>
-      </div>
-      <a class="create-button" routerLink="/editor">＋ Crear un modelo</a>
-    </div>
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">EXPLORAR</p>
-        <h2>Creaciones recientes</h2>
-      </div>
-      <span>Comunidad 3D</span>
-    </div>
-
-    <div class="feed-filters">
-      <div class="search-wrap">
-        <label class="search-label" for="feed-search">Buscar modelos</label>
-        <input
-          id="feed-search"
-          type="search"
-          placeholder="Título, autor o descripción…"
-          [(ngModel)]="searchTerm"
-        />
-      </div>
-      <div class="tag-pills">
-        <span class="pill-label">Etiquetas</span>
-        @let tags = allTags$ | async;
-        @if (tags?.length) {
-          @for (tag of tags; track tag) {
-            <button
-              class="pill"
-              [class.active]="selectedTag === tag"
-              (click)="setTag(tag)"
-            >#{{ tag }}</button>
+      @let vm = feed();
+      <div class="hero">
+        <div>
+          <p class="eyebrow">{{ 'DESCUBRE · CREA · REMIXEA' | translate }}</p>
+          <h1>{{ 'El arte toma forma' | translate }}<br /><span>{{ 'en tres dimensiones.' | translate }}</span></h1>
+          <p>
+            {{ 'Explora trabajos de la comunidad y abre cualquier modelo para crear tu propia versión.' | translate }}
+          </p>
+        </div>
+        <div class="hero-actions">
+          <a class="create-button" routerLink="/editor">{{ '＋ Crear un modelo' | translate }}</a>
+          @if (user$ | async) {
+            <a class="secondary-button" routerLink="/favorites">{{ '♡ Mis favoritos' | translate }}</a>
           }
-        }
-        @if (selectedTag) {
-          <button class="pill pill-remove" (click)="setTag(selectedTag)">✕ {{ selectedTag }}</button>
-        }
-        @if (hasActiveFilters()) {
-          <button class="pill clear" type="button" (click)="clearFilters()">Limpiar filtros</button>
-        }
+          <small class="hero-hint">{{ 'Pulsa' | translate }} <kbd>Ctrl</kbd> + <kbd>K</kbd> {{ 'para buscar cualquier acción.' | translate }}</small>
+        </div>
       </div>
-    </div>
 
-    @if (error) {
-      <p class="error" role="alert">{{ error }}</p>
-    }
-    @let posts = posts$ | async;
-    @if (posts === null) {
-      <app-loading-spinner label="Preparando la comunidad…" />
-    } @else {
-      @if (posts.length) {
-        <div class="post-grid">
-          @for (post of posts; track post.id) {
-            <article class="post-card">
-              @if (previewModes[post.id] === '3d') {
-                <app-model-preview [modelUrl]="post.modelUrl" />
-              } @else {
-                <img
-                  class="thumbnail"
-                  [src]="post.thumbnailUrl"
-                  [alt]="'Render de ' + post.title"
-                />
-              }
-              <div class="preview-switch" role="group" [attr.aria-label]="'Vista de ' + post.title">
-                <button
-                  type="button"
-                  [class.active]="previewModes[post.id] !== '3d'"
-                  (click)="setPreviewMode(post, 'image')"
-                >
-                  ▧ Imagen
-                </button>
-                <button
-                  type="button"
-                  [class.active]="previewModes[post.id] === '3d'"
-                  (click)="setPreviewMode(post, '3d')"
-                >
-                  ◇ Ver en 3D
-                </button>
-              </div>
-              <div class="card-content">
-                <div class="author-row">
-                  @if (post.author.photoURL) {
-                    <img
-                      class="avatar"
-                      [src]="post.author.photoURL"
-                      alt=""
-                      (error)="useFallbackAvatar($event)"
-                    />
-                  } @else {
-                    <img class="avatar" src="/user-avatar.svg" alt="" />
-                  }
-                  <a [routerLink]="['/profile', post.author.uid]">{{ post.author.displayName }}</a>
-                  <time>{{ post.createdAt | date: 'mediumDate' }}</time>
-                </div>
-                @if (user$ | async; as currentUser) {
-                  @if (currentUser.uid !== post.author.uid) {
-                    @let following =
-                      (social.isFollowing$(currentUser.uid, post.author.uid) | async) ?? false;
-                    <button
-                      class="follow-inline"
-                      type="button"
-                      [attr.aria-label]="
-                        following
-                          ? 'Dejar de seguir a ' + post.author.displayName
-                          : 'Seguir a ' + post.author.displayName
-                      "
-                      (click)="toggleFollow(post, currentUser, following)"
-                    >
-                      {{ following ? 'Dejar de seguir' : 'Seguir creador' }}
-                    </button>
-                  }
-                }
-                <h3>{{ post.title }}</h3>
-                <p class="description">{{ post.description || 'Sin descripción.' }}</p>
-                <div class="card-actions">
-                  @if (user$ | async; as likeUser) {
-                    @let isLiked = (social.isLiked$(post.id, likeUser.uid) | async) ?? false;
-                    <button
-                      type="button"
-                      class="like-button"
-                      [class.liked]="isLiked"
-                      [disabled]="likeBusy[post.id]"
-                      [attr.aria-pressed]="isLiked"
-                      [attr.aria-label]="isLiked ? 'Quitar de favoritos' : 'Marcar como favorito'"
-                      (click)="like(post)"
-                    >{{ isLiked ? '♥' : '♡' }} {{ post.likes }}</button>
-                  } @else {
-                    <button type="button" class="like-button" (click)="like(post)">♡ {{ post.likes }}</button>
-                  }
-                  <button type="button" class="remix" (click)="remix(post)">
-                    ↗ Remix / Editar en 3D
-                  </button>
-                  <button type="button" class="report-button" title="Reportar" (click)="openReport(post, reportDialog)">⚑</button>
-                </div>
-                @let comments = (social.comments$(post.id) | async) ?? [];
-                @if (comments.length) {
-                  <div class="comments">
-                    @for (comment of comments; track trackComment($index, comment)) {
-                      <p>
-                        <strong>{{ comment.author.displayName }}:</strong> {{ comment.text }}
-                      </p>
-                    }
-                  </div>
-                }
-                <form class="comment-form" (ngSubmit)="addComment(post)">
-                  <input
-                    name="comment-{{ post.id }}"
-                    [(ngModel)]="commentDrafts[post.id]"
-                    placeholder="Escribe un comentario…"
-                    maxlength="500"
-                  />
-                  <button type="submit" aria-label="Enviar comentario">➤</button>
-                </form>
-              </div>
-            </article>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">{{ 'EXPLORAR' | translate }}</p>
+          <h2>{{ 'Creaciones recientes' | translate }}</h2>
+        </div>
+        <span>{{ vm ? (vm.total + ' ' + ('modelos' | translate)) : ('Comunidad 3D' | translate) }}</span>
+      </div>
+
+      <div class="feed-filters">
+        <div class="search-wrap">
+          <label class="search-label" for="feed-search">{{ 'Buscar modelos' | translate }}</label>
+          <input
+            id="feed-search"
+            name="feedSearch"
+            type="search"
+            [placeholder]="'Título, autor o etiqueta…' | translate"
+            [ngModel]="searchTerm"
+            (ngModelChange)="setSearch($event)"
+          />
+        </div>
+        <div class="sort-wrap">
+          <label class="search-label" for="feed-sort">{{ 'Ordenar' | translate }}</label>
+          <select
+            id="feed-sort"
+            name="feedSort"
+            [ngModel]="sort"
+            (ngModelChange)="setSort($event)"
+          >
+            @for (option of sortOptions; track option.value) {
+              <option [value]="option.value">{{ option.label | translate }}</option>
+            }
+          </select>
+        </div>
+        <div class="tag-pills">
+          <span class="pill-label">{{ 'Etiquetas' | translate }}</span>
+          @let tags = allTags$ | async;
+          @if (tags?.length) {
+            @for (tag of tags; track tag) {
+              <button
+                class="pill"
+                type="button"
+                [class.active]="selectedTag === tag"
+                (click)="setTag(tag)"
+              >#{{ tag }}</button>
+            }
+          }
+          @if (selectedTag) {
+            <button class="pill pill-remove" type="button" (click)="setTag(selectedTag)">✕ {{ selectedTag }}</button>
+          }
+          @if (hasActiveFilters()) {
+            <button class="pill clear" type="button" (click)="clearFilters()">{{ 'Limpiar filtros' | translate }}</button>
           }
         </div>
-      } @else {
-        <div class="empty-state">
-          <span>◇</span>
-          <h3>Aquí comienza la comunidad</h3>
-          <p>Sé la primera persona en publicar un modelo 3D.</p>
-          <a routerLink="/editor">Crear y publicar</a>
+      </div>
+
+      @if (vm && vm.total) {
+        <div class="feed-summary" [aria-label]="'Resumen del feed' | translate">
+          <span><strong>{{ vm.total }}</strong> {{ 'modelos' | translate }}</span>
+          <span><strong>{{ vm.stats.likes }}</strong> {{ 'me gusta' | translate }}</span>
+          <span><strong>{{ vm.stats.views }}</strong> {{ 'vistas' | translate }}</span>
+          <span><strong>{{ vm.stats.remixes }}</strong> {{ 'remixes' | translate }}</span>
+          @if (vm.hasMore) {
+            <span class="summary-note">{{ 'Mostrando {count}' | translate: { count: vm.items.length } }}</span>
+          }
         </div>
       }
-    }
+
+      @if (error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+
+      @if (vm === null) {
+        <app-loading-spinner [label]="'Preparando la comunidad…' | translate" />
+      } @else {
+        @if (vm.items.length) {
+          <div class="post-grid">
+            @for (post of vm.items; track post.id) {
+              <article
+                class="post-card"
+                [id]="'post-' + post.id"
+                [class.is-highlighted]="highlightedPostId() === post.id"
+              >
+                @if (previewModes[post.id] === '3d') {
+                  <app-model-preview [modelUrl]="post.modelUrl" />
+                } @else {
+                  <img
+                    class="thumbnail"
+                    [src]="post.thumbnailUrl"
+                    [alt]="'Render de {title}' | translate: { title: post.title }"
+                    loading="lazy"
+                  />
+                }
+                <div class="preview-switch" role="group" [attr.aria-label]="'Vista de {title}' | translate: { title: post.title }">
+                  <button
+                    type="button"
+                    [class.active]="previewModes[post.id] !== '3d'"
+                    (click)="setPreviewMode(post, 'image')"
+                  >
+                    {{ '▧ Imagen' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    [class.active]="previewModes[post.id] === '3d'"
+                    (click)="setPreviewMode(post, '3d')"
+                  >
+                    {{ '◇ Ver en 3D' | translate }}
+                  </button>
+                </div>
+                <div class="card-content">
+                  <div class="author-row">
+                    @if (post.author.photoURL) {
+                      <img
+                        class="avatar"
+                        [src]="post.author.photoURL"
+                        alt=""
+                        (error)="useFallbackAvatar($event)"
+                      />
+                    } @else {
+                      <img class="avatar" src="user-avatar.svg" alt="" />
+                    }
+                    <a [routerLink]="['/profile', post.author.uid]">{{ post.author.displayName }}</a>
+                    <time>{{ post.createdAt | date: 'mediumDate' }}</time>
+                  </div>
+                  @if (user$ | async; as currentUser) {
+                    @if (currentUser.uid !== post.author.uid) {
+                      @let following =
+                        (social.isFollowing$(currentUser.uid, post.author.uid) | async) ?? false;
+                      <button
+                        class="follow-inline"
+                        type="button"
+                        [attr.aria-label]="
+                          (following
+                            ? 'Dejar de seguir a {name}'
+                            : 'Seguir a {name}') | translate: { name: post.author.displayName }
+                        "
+                        (click)="toggleFollow(post, currentUser, following)"
+                      >
+                        {{ (following ? 'Dejar de seguir' : 'Seguir creador') | translate }}
+                      </button>
+                    }
+                  }
+                  @if (post.tags?.length) {
+                    <div class="card-tags" [aria-label]="'Etiquetas del modelo' | translate">
+                      @for (tag of post.tags ?? []; track tag) {
+                        <button type="button" (click)="setTag(tag)">#{{ tag }}</button>
+                      }
+                    </div>
+                  }
+                  <h3>{{ post.title }}</h3>
+                  <p class="description">{{ post.description || ('Sin descripción.' | translate) }}</p>
+                  <div class="post-stats">
+                    <span [title]="'Vistas' | translate">◉ {{ post.viewsCount ?? 0 }}</span>
+                    <span [title]="'Remixes' | translate">↗ {{ post.remixCount ?? 0 }}</span>
+                    <span [title]="'Favoritos' | translate">♡ {{ post.likes }}</span>
+                  </div>
+                  <div class="card-actions">
+                    @if (user$ | async; as likeUser) {
+                      @let isLiked = (social.isLiked$(post.id, likeUser.uid) | async) ?? false;
+                      <button
+                        type="button"
+                        class="like-button"
+                        [class.liked]="isLiked"
+                        [disabled]="likeBusy[post.id]"
+                        [attr.aria-pressed]="isLiked"
+                        [attr.aria-label]="(isLiked ? 'Quitar de favoritos' : 'Marcar como favorito') | translate"
+                        (click)="like(post)"
+                      >{{ isLiked ? '♥' : '♡' }} {{ post.likes }}</button>
+                    } @else {
+                      <button type="button" class="like-button" (click)="like(post)">♡ {{ post.likes }}</button>
+                    }
+                    <button
+                      type="button"
+                      class="share-button"
+                      [title]="'Compartir modelo' | translate"
+                      [aria-label]="'Compartir modelo' | translate"
+                      (click)="share(post)"
+                    >⧉</button>
+                    <button type="button" class="remix" (click)="remix(post)">
+                      {{ '↗ Remix / Editar en 3D' | translate }}
+                    </button>
+                    <button type="button" class="report-button" [title]="'Reportar' | translate" [aria-label]="'Reportar modelo' | translate" (click)="openReport(post, reportDialog)">⚑</button>
+                  </div>
+                  @let comments = (social.comments$(post.id) | async) ?? [];
+                  @if (comments.length) {
+                    <div class="comments">
+                      @for (comment of comments; track trackComment($index, comment)) {
+                        <p>
+                          <strong>{{ comment.author.displayName }}:</strong> {{ comment.text }}
+                        </p>
+                      }
+                    </div>
+                  }
+                  <form class="comment-form" (ngSubmit)="addComment(post)">
+                    <input
+                      name="comment-{{ post.id }}"
+                      [(ngModel)]="commentDrafts[post.id]"
+                      [placeholder]="'Escribe un comentario…' | translate"
+                      maxlength="500"
+                    />
+                    <button type="submit" [aria-label]="'Enviar comentario' | translate">➤</button>
+                  </form>
+                </div>
+              </article>
+            }
+          </div>
+          @if (vm.hasMore) {
+            <div class="load-more">
+              <button type="button" (click)="loadMore()">{{ 'Cargar más modelos' | translate }}</button>
+              <small>{{ vm.items.length }} de {{ vm.total }}</small>
+            </div>
+          }
+        } @else if (hasActiveFilters()) {
+          <div class="empty-state">
+            <span>⌕</span>
+            <h3>{{ 'Sin resultados' | translate }}</h3>
+            <p>{{ 'No encontramos modelos con estos filtros. Prueba otra búsqueda u orden.' | translate }}</p>
+            <button type="button" class="empty-action" (click)="clearFilters()">{{ 'Limpiar filtros' | translate }}</button>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <span>◇</span>
+            <h3>{{ 'Aquí comienza la comunidad' | translate }}</h3>
+            <p>{{ 'Sé la primera persona en publicar un modelo 3D.' | translate }}</p>
+            <a routerLink="/editor">{{ 'Crear y publicar' | translate }}</a>
+          </div>
+        }
+      }
     </div>
   </section>
   <app-site-footer />
   <dialog #reportDialog class="report-dialog">
     <form method="dialog">
       <button class="dismiss" value="cancel" type="submit">×</button>
-      <p class="eyebrow">REPORTAR CONTENIDO</p>
-      <h2>¿Qué ocurre con “{{ reportPostTarget?.title }}”?</h2>
+      <p class="eyebrow">{{ 'REPORTAR CONTENIDO' | translate }}</p>
+      <h2>{{ '¿Qué ocurre con “{title}”?' | translate: { title: reportPostTarget?.title ?? '' } }}</h2>
       <label>
-        Motivo
+        {{ 'Motivo' | translate }}
         <select name="reportReason" [(ngModel)]="reportReason">
           @for (reason of reportReasons; track reason.value) {
-            <option [value]="reason.value">{{ reason.label }}</option>
+            <option [value]="reason.value">{{ reason.label | translate }}</option>
           }
         </select>
       </label>
       <label>
-        Detalles (opcional)
-        <textarea name="reportDetails" [(ngModel)]="reportDetails" rows="3" maxlength="500" placeholder="Cuéntanos qué viste…"></textarea>
+        {{ 'Detalles (opcional)' | translate }}
+        <textarea name="reportDetails" [(ngModel)]="reportDetails" rows="3" maxlength="500" [placeholder]="'Cuéntanos qué viste…' | translate"></textarea>
       </label>
       <footer>
-        <button class="cancel" value="cancel">Cancelar</button>
+        <button class="cancel" value="cancel">{{ 'Cancelar' | translate }}</button>
         <button type="button" class="danger" [disabled]="reporting" (click)="submitReport(reportDialog)">
-          {{ reporting ? 'Enviando…' : 'Enviar reporte' }}
+          {{ (reporting ? 'Enviando…' : 'Enviar reporte') | translate }}
         </button>
       </footer>
     </form>

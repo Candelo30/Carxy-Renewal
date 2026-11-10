@@ -1,0 +1,138 @@
+<main class="contact-shell page-with-header">
+  <app-shell-header
+    [showSearch]="false"
+    [showNav]="true"
+    [title]="'contact.title' | translate"
+    [subtitle]="'contact.subtitle' | translate"
+  ></app-shell-header>
+
+  <section class="contact-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <p class="eyebrow">{{ 'contact.heroEyebrow' | translate }}</p>
+    <h1>{{ 'contact.heroTitle' | translate }}</h1>
+    <p class="hero-copy">{{ 'contact.heroText' | translate }}</p>
+  </section>
+
+  <section class="contact-content">
+    <form class="contact-form" (ngSubmit)="submit()">
+      <div class="form-heading">
+        <p class="eyebrow">{{ 'contact.formTitle' | translate }}</p>
+        <h2>{{ 'contact.formTitle' | translate }}</h2>
+        <p>{{ 'contact.formIntro' | translate }}</p>
+      </div>
+
+      @if (sent) {
+        <p class="alert success" role="status">
+          ✓ {{ 'contact.success' | translate }}
+          <a routerLink="/community-help">{{ 'contact.communityHelp' | translate }}</a>
+        </p>
+      }
+      @if (error) {
+        <p class="alert error" role="alert">{{ error }}</p>
+      }
+
+      <div class="field-grid">
+        <label>
+          <span>{{ 'contact.name' | translate }} <em>*</em></span>
+          <input
+            type="text"
+            name="contact-name"
+            [(ngModel)]="form.name"
+            maxlength="80"
+            autocomplete="name"
+            required
+          />
+        </label>
+        <label>
+          <span>{{ 'contact.email' | translate }} <em>*</em></span>
+          <input
+            type="email"
+            name="contact-email"
+            [(ngModel)]="form.email"
+            maxlength="120"
+            autocomplete="email"
+            required
+          />
+        </label>
+      </div>
+
+      <div class="field-grid">
+        <label>
+          <span>{{ 'contact.type' | translate }}</span>
+          <select name="contact-type" [(ngModel)]="form.type">
+            @for (type of types; track type) {
+              <option [value]="type">{{ ('contact.type.' + type) | translate }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>{{ 'contact.subject' | translate }} <em>*</em></span>
+          <input
+            type="text"
+            name="contact-subject"
+            [(ngModel)]="form.subject"
+            maxlength="120"
+            autocomplete="off"
+            required
+          />
+        </label>
+      </div>
+
+      <label class="message-field">
+        <span>{{ 'contact.message' | translate }} <em>*</em></span>
+        <textarea
+          name="contact-message"
+          [(ngModel)]="form.message"
+          rows="7"
+          maxlength="4000"
+          required
+        ></textarea>
+      </label>
+
+      <p class="privacy">{{ 'contact.privacy' | translate }}</p>
+
+      <div class="form-actions">
+        <button type="submit" class="primary" [disabled]="busy">
+          {{ (busy ? 'common.sending' : 'contact.submit') | translate }}
+        </button>
+        <a class="secondary" routerLink="/community-help">{{ 'contact.communityHelp' | translate }}</a>
+      </div>
+    </form>
+
+    <aside class="contact-sidebar">
+      <article class="sidebar-card">
+        <span class="card-icon" aria-hidden="true">⏱</span>
+        <h2>{{ 'contact.responseTime' | translate }}</h2>
+        <p>{{ '24–48 h' | translate }}</p>
+      </article>
+
+      <article class="sidebar-card">
+        <span class="card-icon" aria-hidden="true">◈</span>
+        <h2>{{ 'contact.channels' | translate }}</h2>
+        <a [href]="links.issues" target="_blank" rel="noopener noreferrer">
+          {{ 'contact.githubIssues' | translate }} ↗
+        </a>
+        <a [href]="links.discussions" target="_blank" rel="noopener noreferrer">
+          {{ 'contact.githubDiscussions' | translate }} ↗
+        </a>
+      </article>
+
+      <article class="sidebar-card accent">
+        <span class="card-icon" aria-hidden="true">💬</span>
+        <h2>{{ 'contact.communityHelp' | translate }}</h2>
+        <p>{{ 'contact.communityHelpCopy' | translate }}</p>
+        <a routerLink="/community-help" class="card-link">
+          {{ 'communityHelp.browse' | translate }} →
+        </a>
+      </article>
+
+      <article class="sidebar-card">
+        <span class="card-icon" aria-hidden="true">🛡</span>
+        <h2>{{ 'Privacidad' | translate }}</h2>
+        <p>{{ 'contact.privacy' | translate }}</p>
+      </article>
+    </aside>
+  </section>
+
+  <app-site-footer />
+</main>

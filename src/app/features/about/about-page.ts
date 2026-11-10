@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
-import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
 
 interface AboutFeature {
   icon: string;
@@ -24,7 +25,8 @@ interface RoadmapItem {
 @Component({
   selector: 'app-about-page',
   standalone: true,
-  imports: [RouterLink, ShellHeaderComponent, SiteFooterComponent],
+  imports: [
+    TranslatePipe,RouterLink, ShellHeaderComponent, SiteFooterComponent],
   templateUrl: './about-page.html',
   styleUrl: './about-page.css',
 })

@@ -6,7 +6,7 @@
   [class.bottom-left]="notificationService.position() === 'bottom-left'"
   [class.bottom-center]="notificationService.position() === 'bottom-center'"
   [class.bottom-right]="notificationService.position() === 'bottom-right'"
-  aria-label="Notificaciones"
+  [aria-label]="'Notificaciones' | translate"
   aria-live="polite"
   aria-relevant="additions text"
 >
@@ -24,7 +24,7 @@
         <strong>{{ notification.title }}</strong>
         <p>{{ notification.message }}</p>
       </div>
-      <button type="button" aria-label="Cerrar notificación" (click)="notificationService.dismiss(notification.id)">×</button>
+      <button type="button" [aria-label]="'Cerrar notificación' | translate" (click)="notificationService.dismiss(notification.id)">×</button>
     </article>
   }
 </section>

@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
 import { Post3D, User } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
+import { I18nService } from '../../core/services/i18n';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
@@ -12,12 +13,14 @@ import { AccountMenuComponent } from '../../shared/components/account-menu/accou
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
-import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
   imports: [
+    TranslatePipe,
     ShellHeaderComponent,
     AccountMenuComponent,
     ActivityNotificationsComponent,
@@ -37,6 +40,7 @@ export class ProfilePage {
   private readonly auth = inject(AuthService);
   readonly social = inject(SocialService);
   private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
   readonly user$ = this.auth.user$;
   mobileMenuOpen = false;
   readonly posts$ = this.social.posts$.pipe(
@@ -44,9 +48,9 @@ export class ProfilePage {
       console.error('No se pudo cargar el portafolio del creador.', error);
       const message = error instanceof Error ? error.message : '';
       this.error = message.includes('The query requires an index')
-        ? 'Falta desplegar un índice de Firestore para cargar los modelos. Ejecuta `firebase deploy --only firestore:indexes`.'
-        : message || 'No se pudo cargar el portafolio.';
-      this.notifications.error(this.error, 'No se pudo cargar el perfil');
+        ? this.i18n.translate('Falta desplegar un índice de Firestore para cargar los modelos. Ejecuta `firebase deploy --only firestore:indexes`.')
+        : message || this.i18n.translate('No se pudo cargar el portafolio.');
+      this.notifications.error(this.error, this.i18n.translate('No se pudo cargar el perfil'));
       return of([]);
     }),
   );
@@ -96,11 +100,11 @@ export class ProfilePage {
         bio: this.bio.trim(),
         photoURL: this.photoURL.trim() || null,
       });
-      this.status = 'Perfil actualizado.';
-      this.notifications.success(this.status, 'Perfil actualizado');
+      this.status = this.i18n.translate('Perfil actualizado.');
+      this.notifications.success(this.status, this.i18n.translate('Perfil actualizado'));
       dialog.close();
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'No se pudo actualizar el perfil.';
+      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el perfil.');
       this.notifications.error(this.error);
     }
   }
@@ -117,16 +121,22 @@ export class ProfilePage {
 
   useFallbackAvatar(event: Event): void {
     const image = event.target;
-    if (image instanceof HTMLImageElement) image.src = '/user-avatar.svg';
+    if (image instanceof HTMLImageElement) image.src = 'user-avatar.svg';
   }
 
   async toggleFollow(profile: User, currentUser: User, following: boolean): Promise<void> {
     try {
       if (following) await this.social.unfollowUser(currentUser.uid, profile.uid);
       else await this.social.followUser(currentUser, profile.uid);
-      this.notifications.success(following ? 'Dejaste de seguir a este creador.' : `Ahora sigues a ${profile.displayName}.`);
+      this.notifications.success(
+        following
+          ? this.i18n.translate('Dejaste de seguir a este creador.')
+          : this.i18n.translate('Ahora sigues a {name}.', { name: profile.displayName }),
+      );
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : 'No se pudo actualizar el seguimiento.');
+      this.notifications.error(
+        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el seguimiento.'),
+      );
     }
   }
 

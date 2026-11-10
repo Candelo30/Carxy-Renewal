@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { LOCAL_KEYS } from '../config/app.constants';
+import { I18nService } from './i18n';
 
 export type OnboardingStep =
   | 'welcome'
@@ -81,6 +82,7 @@ const STEP_LABELS: Record<OnboardingStep, { title: string; description: string }
 
 @Injectable({ providedIn: 'root' })
 export class OnboardingService {
+  private readonly i18n = inject(I18nService);
   readonly state = new BehaviorSubject<OnboardingState>(
     this.readLocal()
   );
@@ -126,7 +128,11 @@ export class OnboardingService {
   }
 
   getStepLabel(step: OnboardingStep): { title: string; description: string } {
-    return STEP_LABELS[step];
+    const label = STEP_LABELS[step];
+    return {
+      title: this.i18n.translate(label.title),
+      description: this.i18n.translate(label.description),
+    };
   }
 
   start(): void {

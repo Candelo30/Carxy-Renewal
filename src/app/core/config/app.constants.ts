@@ -7,9 +7,12 @@ export const APP_ROUTES = {
   chat: '/chat',
   admin: '/admin',
   myModels: '/my-models',
+  favorites: '/favorites',
   help: '/help',
   about: '/about',
   gettingStarted: '/getting-started',
+  communityHelp: '/community-help',
+  contact: '/contact',
 } as const;
 
 export const SOCIAL_COLLECTIONS = {
@@ -19,6 +22,8 @@ export const SOCIAL_COLLECTIONS = {
   chats: 'chats',
   reports: 'reports',
   follows: 'follows',
+  feedback: 'feedback',
+  communityQuestions: 'communityQuestions',
 } as const;
 
 export const SOCIAL_STORAGE_PATHS = {
@@ -35,6 +40,9 @@ export const LOCAL_KEYS = {
   follows: 'forma-social-follows',
   likes: 'forma-social-likes',
   reports: 'forma-social-reports',
+  feedback: 'forma-social-feedback',
+  communityQuestions: 'forma-social-community-questions',
+  communityAnswers: 'forma-social-community-answers',
   activityNotifications: 'forma-social-activity-notifications',
   modelDatabase: 'forma-social-models',
   preferences: 'forma-3d-preferences',

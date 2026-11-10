@@ -1,0 +1,71 @@
+@if (isOpen()) {
+  <div class="palette-backdrop" role="presentation" (click)="close()"></div>
+  <section
+    class="palette"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'palette.aria' | translate"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="palette-search">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input
+        #searchInput
+        type="search"
+        name="commandQuery"
+        autocomplete="off"
+        spellcheck="false"
+        [placeholder]="'palette.placeholder' | translate"
+        [attr.aria-label]="'palette.searchAria' | translate"
+        [ngModel]="query()"
+        (ngModelChange)="onQueryChange($event)"
+      />
+      <kbd class="esc-hint">Esc</kbd>
+    </div>
+
+    <div class="palette-body">
+      @if (filtered().length === 0) {
+        <div class="palette-empty">
+          <span aria-hidden="true">◌</span>
+          <p>{{ 'palette.empty' | translate: { query: query() } }}</p>
+          <small>{{ 'palette.emptyHint' | translate }}</small>
+        </div>
+      } @else {
+        @for (group of grouped(); track group.name) {
+          <div class="palette-group">
+            <p class="group-label">{{ group.name | translate }}</p>
+            <ul class="command-list" role="listbox" [attr.aria-label]="group.name | translate">
+              @for (item of group.items; track item.id) {
+                <li role="option" [attr.aria-selected]="indexOf(item) === activeIndex()">
+                  <button
+                    type="button"
+                    class="command-item"
+                    [class.is-active]="indexOf(item) === activeIndex()"
+                    (mouseenter)="activeIndex.set(indexOf(item))"
+                    (click)="execute(item)"
+                  >
+                    <span class="command-icon" aria-hidden="true">{{ item.icon }}</span>
+                    <span class="command-copy">
+                      <strong>{{ item.label }}</strong>
+                      <small>{{ item.description }}</small>
+                    </span>
+                    @if (indexOf(item) === activeIndex()) {
+                      <kbd>↵</kbd>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </div>
+
+    <footer class="palette-footer" aria-hidden="true">
+      <span><kbd>↑</kbd><kbd>↓</kbd> {{ 'palette.navigate' | translate }}</span>
+      <span><kbd>↵</kbd> {{ 'palette.open' | translate }}</span>
+      <span><kbd>Esc</kbd> {{ 'palette.close' | translate }}</span>
+      <span class="footer-brand">CARXY · Command</span>
+    </footer>
+  </section>
+}

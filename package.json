@@ -3,10 +3,13 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "start": "ng serve angular-3d-editor",
+    "build": "ng build angular-3d-editor",
+    "watch": "ng build angular-3d-editor --watch --configuration development",
+    "test": "ng test angular-3d-editor",
+    "build:pages": "node scripts/build-pages.mjs",
+    "prepare:pages": "node scripts/prepare-pages.mjs",
+    "preview:pages": "node scripts/preview-pages.mjs",
     "serve:ssr:angular-3d-editor": "node dist/angular-3d-editor/server/server.mjs"
   },
   "private": true,

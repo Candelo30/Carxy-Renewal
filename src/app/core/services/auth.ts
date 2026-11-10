@@ -21,6 +21,7 @@ import { BehaviorSubject, Observable, combineLatest, map, of, switchMap, tap } f
 import { Firestore, doc, docData, setDoc } from '@angular/fire/firestore';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { User as SocialUser, UserProfile, UserRole } from '../models/social.models';
+import { I18nService } from './i18n';
 
 const DEFAULT_ROLE: UserRole = 'user';
 const MIN_PASSWORD_LENGTH = 8;
@@ -48,6 +49,7 @@ export function isPasswordStrongEnough(password: string): boolean {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly i18n = inject(I18nService);
   private readonly auth = inject(Auth, { optional: true });
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly localUser = new BehaviorSubject<UserProfile | null>(this.loadLocalUser());
@@ -113,8 +115,8 @@ export class AuthService {
     }
     const accounts = this.readAccounts();
     const account = accounts.find((item) => item.email === email.trim().toLowerCase());
-    if (!account) throw new Error('No existe una cuenta local con ese correo. Regístrate primero.');
-    if (!password) throw new Error('Escribe tu contraseña.');
+    if (!account) throw new Error(this.i18n.translate('No existe una cuenta local con ese correo. Regístrate primero.'));
+    if (!password) throw new Error(this.i18n.translate('Escribe tu contraseña.'));
     this.setLocalUser(account);
   }
 
@@ -144,7 +146,7 @@ export class AuthService {
     const normalizedEmail = email.trim().toLowerCase();
     const accounts = this.readAccounts();
     if (accounts.some((item) => item.email === normalizedEmail)) {
-      throw new Error('Ya existe una cuenta local con ese correo.');
+      throw new Error(this.i18n.translate('Ya existe una cuenta local con ese correo.'));
     }
     const user: UserProfile = {
       uid: `local-${crypto.randomUUID()}`,
@@ -163,17 +165,17 @@ export class AuthService {
 
   async sendPasswordReset(email: string): Promise<void> {
     const normalized = email.trim().toLowerCase();
-    if (!normalized) throw new Error('Escribe el correo de tu cuenta.');
+    if (!normalized) throw new Error(this.i18n.translate('Escribe el correo de tu cuenta.'));
     if (!this.auth) {
-      throw new Error('La recuperación de contraseña requiere Firebase configurado.');
+      throw new Error(this.i18n.translate('La recuperación de contraseña requiere Firebase configurado.'));
     }
     await sendPasswordResetEmail(this.auth, normalized);
   }
 
   async sendVerificationEmail(): Promise<void> {
     const currentUser = this.auth?.currentUser;
-    if (!currentUser) throw new Error('Inicia sesión para verificar tu correo.');
-    if (currentUser.emailVerified) throw new Error('Tu correo ya está verificado.');
+    if (!currentUser) throw new Error(this.i18n.translate('Inicia sesión para verificar tu correo.'));
+    if (currentUser.emailVerified) throw new Error(this.i18n.translate('Tu correo ya está verificado.'));
     await sendEmailVerification(currentUser);
   }
 
@@ -190,10 +192,10 @@ export class AuthService {
     this.assertPasswordPolicy(nextPassword);
     const currentUser = this.auth?.currentUser;
     if (!currentUser?.email) {
-      throw new Error('Cambia tu contraseña desde una cuenta con correo y contraseña.');
+      throw new Error(this.i18n.translate('Cambia tu contraseña desde una cuenta con correo y contraseña.'));
     }
     if (!currentUser.providerData.some((provider) => provider.providerId === 'password')) {
-      throw new Error('Tu cuenta usa un proveedor externo. Gestiona la contraseña desde ese proveedor.');
+      throw new Error(this.i18n.translate('Tu cuenta usa un proveedor externo. Gestiona la contraseña desde ese proveedor.'));
     }
     await reauthenticateWithCredential(
       currentUser,
@@ -208,39 +210,39 @@ export class AuthService {
       : '';
     switch (code) {
       case 'auth/invalid-email':
-        return 'El correo no es válido.';
+        return this.i18n.translate('El correo no es válido.');
       case 'auth/user-disabled':
-        return 'Esta cuenta está deshabilitada. Contacta con soporte.';
+        return this.i18n.translate('Esta cuenta está deshabilitada. Contacta con soporte.');
       case 'auth/user-not-found':
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
-        return 'Correo o contraseña incorrectos.';
+        return this.i18n.translate('Correo o contraseña incorrectos.');
       case 'auth/email-already-in-use':
-        return 'Ya existe una cuenta con ese correo.';
+        return this.i18n.translate('Ya existe una cuenta con ese correo.');
       case 'auth/weak-password':
-        return 'La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';
+        return this.i18n.translate('La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.');
       case 'auth/too-many-requests':
-        return 'Demasiados intentos. Espera unos minutos o restablece tu contraseña.';
+        return this.i18n.translate('Demasiados intentos. Espera unos minutos o restablece tu contraseña.');
       case 'auth/requires-recent-login':
-        return 'Por seguridad, vuelve a iniciar sesión e inténtalo de nuevo.';
+        return this.i18n.translate('Por seguridad, vuelve a iniciar sesión e inténtalo de nuevo.');
       case 'auth/network-request-failed':
       case 'auth/operation-not-allowed':
-        return 'Firebase Authentication no está listo. En Firebase Console, habilita Email/Password (y Google si lo usas).';
+        return this.i18n.translate('Firebase Authentication no está listo. En Firebase Console, habilita Email/Password (y Google si lo usas).');
       case 'auth/popup-closed-by-user':
-        return 'Se cerró la ventana de Google antes de completar el acceso.';
+        return this.i18n.translate('Se cerró la ventana de Google antes de completar el acceso.');
       default:
-        return error instanceof Error ? error.message : 'No se pudo completar la autenticación.';
+        return error instanceof Error ? error.message : this.i18n.translate('No se pudo completar la autenticación.');
     }
   }
 
   private assertPasswordPolicy(password: string): void {
     if (!isPasswordStrongEnough(password)) {
-      throw new Error('La contraseña debe tener al menos 8 caracteres, incluir letras y al menos un número.');
+      throw new Error(this.i18n.translate('La contraseña debe tener al menos 8 caracteres, incluir letras y al menos un número.'));
     }
   }
 
   async loginWithGoogle(): Promise<void> {
-    if (!this.auth) throw new Error('El inicio con Google requiere configurar Firebase.');
+    if (!this.auth) throw new Error(this.i18n.translate('El inicio con Google requiere configurar Firebase.'));
     await signInWithPopup(this.auth, new GoogleAuthProvider());
   }
 
@@ -261,11 +263,11 @@ export class AuthService {
     const currentUser = this.auth?.currentUser;
     if (!currentUser) {
       if (!this.auth && this.localUser.value) return;
-      throw new Error('Inicia sesión para eliminar tu cuenta.');
+      throw new Error(this.i18n.translate('Inicia sesión para eliminar tu cuenta.'));
     }
 
     if (currentUser.providerData.some((provider) => provider.providerId === 'password')) {
-      if (!currentUser.email || !password) throw new Error('Escribe tu contraseña para confirmar la eliminación.');
+      if (!currentUser.email || !password) throw new Error(this.i18n.translate('Escribe tu contraseña para confirmar la eliminación.'));
       await reauthenticateWithCredential(currentUser, EmailAuthProvider.credential(currentUser.email, password));
       return;
     }
@@ -273,7 +275,7 @@ export class AuthService {
       await reauthenticateWithPopup(currentUser, new GoogleAuthProvider());
       return;
     }
-    throw new Error('Vuelve a iniciar sesión con tu proveedor para eliminar la cuenta.');
+    throw new Error(this.i18n.translate('Vuelve a iniciar sesión con tu proveedor para eliminar la cuenta.'));
   }
 
   async deleteAccount(): Promise<void> {
@@ -282,7 +284,7 @@ export class AuthService {
       return;
     }
     const current = this.localUser.value;
-    if (!current) throw new Error('Inicia sesión para eliminar tu cuenta.');
+    if (!current) throw new Error(this.i18n.translate('Inicia sesión para eliminar tu cuenta.'));
     this.writeAccounts(this.readAccounts().filter((account) => account.uid !== current.uid));
     localStorage.removeItem(LOCAL_KEYS.user);
     this.localUser.next(null);
@@ -290,7 +292,7 @@ export class AuthService {
 
   async updateUser(patch: Partial<Pick<SocialUser, 'displayName' | 'photoURL' | 'bio'>>): Promise<void> {
     const current = this.currentLocalUser();
-    if (!current) throw new Error('Inicia sesión antes de editar tu perfil.');
+    if (!current) throw new Error(this.i18n.translate('Inicia sesión antes de editar tu perfil.'));
     if (this.auth?.currentUser) {
       await updateProfile(this.auth.currentUser, {
         displayName: patch.displayName ?? current.displayName,

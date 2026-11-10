@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { NotificationPosition } from '../models/social.models';
+import { I18nService } from './i18n';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -14,24 +15,25 @@ const MAX_NOTIFICATIONS = 4;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+  private readonly i18n = inject(I18nService);
   readonly notifications = signal<AppNotification[]>([]);
   readonly position = signal<NotificationPosition>('top-right');
   private nextId = 0;
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
 
-  success(message: string, title = 'Operación exitosa'): void {
+  success(message: string, title = this.i18n.translate('Operación exitosa')): void {
     this.show('success', title, message);
   }
 
-  error(message: string, title = 'No se pudo completar'): void {
+  error(message: string, title = this.i18n.translate('No se pudo completar')): void {
     this.show('error', title, message);
   }
 
-  warning(message: string, title = 'Atención'): void {
+  warning(message: string, title = this.i18n.translate('Atención')): void {
     this.show('warning', title, message);
   }
 
-  info(message: string, title = 'Información'): void {
+  info(message: string, title = this.i18n.translate('Información')): void {
     this.show('info', title, message);
   }
 

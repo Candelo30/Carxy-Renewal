@@ -42,6 +42,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/my-models/my-models').then((module) => module.MyModelsComponent),
   },
+  {
+    path: 'favorites',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/favorites/favorites-page').then((module) => module.FavoritesPage),
+  },
   { path: 'dashboard', pathMatch: 'full', redirectTo: 'my-models' },
   {
     path: 'admin',
@@ -66,8 +71,19 @@ export const routes: Routes = [
     path: 'about',
     loadComponent: () => import('./features/about/about-page').then((module) => module.AboutPage),
   },
+  {
+    path: 'community-help',
+    loadComponent: () =>
+      import('./features/community-help/community-help-page').then((module) => module.CommunityHelpPage),
+  },
+  {
+    path: 'contact',
+    loadComponent: () => import('./features/contact/contact-page').then((module) => module.ContactPage),
+  },
   { path: 'ayuda', pathMatch: 'full', redirectTo: 'help' },
   { path: 'guia', pathMatch: 'full', redirectTo: 'getting-started' },
   { path: 'nosotros', pathMatch: 'full', redirectTo: 'about' },
+  { path: 'ayuda-comunitaria', pathMatch: 'full', redirectTo: 'community-help' },
+  { path: 'contacto', pathMatch: 'full', redirectTo: 'contact' },
   { path: '**', redirectTo: 'editor' },
 ];

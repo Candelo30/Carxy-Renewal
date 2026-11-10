@@ -11,4 +11,9 @@ export const environment = {
     modelContentType: 'model/gltf-binary',
     thumbnailContentType: 'image/png',
   },
+  links: {
+    repository: 'https://github.com/Candelo30/Carxy-Renewal',
+    issues: 'https://github.com/Candelo30/Carxy-Renewal/issues',
+    discussions: 'https://github.com/Candelo30/Carxy-Renewal/discussions',
+  },
 };

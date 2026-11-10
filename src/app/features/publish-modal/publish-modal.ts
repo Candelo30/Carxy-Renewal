@@ -4,18 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom, take } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { FileHandler } from '../../core/services/file-handler';
+import { I18nService } from '../../core/services/i18n';
 import { SocialService } from '../../core/services/social';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { LocalStateService } from '../../core/services/local-state';
 import { NotificationService } from '../../core/services/notifications';
-import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
 
 export type PublishStep = 1 | 2 | 3 | 4;
 
 @Component({
   selector: 'app-publish-modal',
   standalone: true,
-  imports: [FormsModule, LoadingSpinner],
+  imports: [
+    TranslatePipe,FormsModule, LoadingSpinner],
   templateUrl: './publish-modal.html',
   styleUrl: './publish-modal.css',
 })
@@ -30,6 +33,7 @@ export class PublishModalComponent {
   private readonly engine = inject(ThreeEngineService);
   private readonly localState = inject(LocalStateService);
   private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   currentStep: PublishStep = 1;
   title = '';
@@ -75,17 +79,17 @@ export class PublishModalComponent {
     this.error = '';
     const author = await firstValueFrom(this.auth.user$.pipe(take(1)));
     if (!author) {
-      this.error = 'Inicia sesión para publicar tu modelo.';
+      this.error = this.i18n.translate('Inicia sesión para publicar tu modelo.');
       this.notifications.warning(this.error);
       return;
     }
     if (!this.title.trim()) {
-      this.error = 'Escribe un título para la publicación.';
+      this.error = this.i18n.translate('Escribe un título para la publicación.');
       this.notifications.warning(this.error);
       return;
     }
     if (!this.preview) {
-      this.error = 'El visor todavía no está listo para capturar la imagen.';
+      this.error = this.i18n.translate('El visor todavía no está listo para capturar la imagen.');
       this.notifications.warning(this.error);
       return;
     }
@@ -115,12 +119,15 @@ export class PublishModalComponent {
       });
 
       this.currentStep = 4;
-      this.notifications.success('¡Tu modelo está publicado en la comunidad!', 'Publicado');
+      this.notifications.success(
+        this.i18n.translate('¡Tu modelo está publicado en la comunidad!'),
+        this.i18n.translate('Publicado'),
+      );
       this.published.emit({ title: post.title, id: post.id });
     } catch (error) {
       console.error('No se pudo publicar el modelo.', error);
-      this.error = error instanceof Error ? error.message : 'No se pudo publicar el modelo.';
-      this.notifications.error(this.error, 'No se pudo publicar');
+      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo publicar el modelo.');
+      this.notifications.error(this.error, this.i18n.translate('No se pudo publicar'));
     } finally {
       this.busy = false;
     }
@@ -130,7 +137,10 @@ export class PublishModalComponent {
     if (!this.shareCode) return;
     if (typeof navigator === 'undefined' || !navigator.clipboard) return;
     void navigator.clipboard.writeText(this.shareCode).then(() => {
-      this.notifications.success('Código de escena copiado al portapapeles.', 'Compartir');
+      this.notifications.success(
+        this.i18n.translate('Código de escena copiado al portapapeles.'),
+        this.i18n.translate('Compartir'),
+      );
     });
   }
 

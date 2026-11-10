@@ -3,8 +3,10 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject } 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { I18nService } from '../../core/services/i18n';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
-import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
 
 type HelpCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'cuenta';
 type HelpCategoryFilter = HelpCategory | 'todas';
@@ -399,7 +401,8 @@ const ARTICLES: HelpArticle[] = [
 @Component({
   selector: 'app-help-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, ShellHeaderComponent, SiteFooterComponent],
+  imports: [
+    TranslatePipe,FormsModule, RouterLink, ShellHeaderComponent, SiteFooterComponent],
   templateUrl: './help-page.html',
   styleUrl: './help-page.css',
 })
@@ -415,6 +418,7 @@ export class HelpPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly i18n = inject(I18nService);
   private readonly subscription = new Subscription();
 
   ngOnInit(): void {
@@ -448,6 +452,11 @@ export class HelpPage implements OnInit, OnDestroy {
         ...article.body,
         ...(article.steps ?? []),
         article.tip ?? '',
+        this.i18n.translate(article.title),
+        this.i18n.translate(article.summary),
+        ...article.body.map((paragraph) => this.i18n.translate(paragraph)),
+        ...(article.steps ?? []).map((step) => this.i18n.translate(step)),
+        this.i18n.translate(article.tip ?? ''),
       ].join(' ').toLowerCase();
       return haystack.includes(query);
     });

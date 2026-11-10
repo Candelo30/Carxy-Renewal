@@ -24,15 +24,18 @@ import { ChatConversation, ChatMessage, User } from '../../core/models/social.mo
 import { AuthService } from '../../core/services/auth';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
+import { I18nService } from '../../core/services/i18n';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
-import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
+import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
 
 @Component({
   selector: 'app-chat-page',
   standalone: true,
   imports: [
+    TranslatePipe,
     ShellHeaderComponent,
     AccountMenuComponent,
     ActivityNotificationsComponent,
@@ -50,6 +53,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly auth = inject(AuthService);
   private readonly social = inject(SocialService);
   private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
   private readonly subscription = new Subscription();
   private currentUser: User | null = null;
@@ -104,7 +108,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   openConversation(): void {
     const peer = this.partnerId.trim();
     if (!this.currentUser || !peer || peer === this.currentUser.uid || /[/.#$/\[\]]/.test(peer)) {
-      this.error = 'Ingresa un UID válido de otro creador.';
+      this.error = this.i18n.translate('Ingresa un UID válido de otro creador.');
       this.notifications.warning(this.error);
       return;
     }
@@ -114,7 +118,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.chatId = nextChatId;
     this.messages$ = this.social.chatMessages$(this.chatId);
     void this.social.ensureChatConversation(this.chatId).catch((error: unknown) => {
-      this.error = error instanceof Error ? error.message : 'No se pudo abrir la conversación.';
+      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo abrir la conversación.');
       this.notifications.error(this.error);
     });
   }
@@ -148,7 +152,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
 
   useFallbackAvatar(event: Event): void {
     const image = event.target;
-    if (image instanceof HTMLImageElement) image.src = '/user-avatar.svg';
+    if (image instanceof HTMLImageElement) image.src = 'user-avatar.svg';
   }
 
   private openRequestedConversation(): void {
@@ -169,8 +173,8 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       this.message = '';
       this.error = '';
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'No se pudo enviar el mensaje.';
-      this.notifications.error(this.error, 'No se pudo enviar el mensaje');
+      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar el mensaje.');
+      this.notifications.error(this.error, this.i18n.translate('No se pudo enviar el mensaje'));
     }
   }
 

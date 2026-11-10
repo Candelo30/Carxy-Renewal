@@ -9,21 +9,26 @@ import {
   isPasswordStrongEnough,
   PasswordStrength,
 } from '../../../core/services/auth';
+import { AppLanguage } from '../../../core/i18n/languages';
+import { I18nService } from '../../../core/services/i18n';
 import { LocalStateService } from '../../../core/services/local-state';
 import { NotificationService } from '../../../core/services/notifications';
 import { EditorPreferences } from '../../../core/models/social.models';
 import { SocialService } from '../../../core/services/social';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-account-menu',
   standalone: true,
-  imports: [AsyncPipe, FormsModule, RouterLink],
+  imports: [AsyncPipe, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './account-menu.html',
   styleUrl: './account-menu.css',
 })
 export class AccountMenuComponent {
   readonly user$ = inject(AuthService).user$;
-  readonly fallbackAvatar = '/user-avatar.svg';
+  readonly fallbackAvatar = 'user-avatar.svg';
+  readonly i18n = inject(I18nService);
+  readonly languages = this.i18n.languages;
   readonly preferences: EditorPreferences;
   open = false;
   settingsOpen = false;
@@ -76,10 +81,19 @@ export class AccountMenuComponent {
     this.state.savePreferences(this.preferences);
   }
 
+  setLanguage(language: AppLanguage): void {
+    this.preferences.language = language;
+    this.i18n.setLanguage(language);
+    this.saveAppearance();
+  }
+
   finishSettings(): void {
     this.saveAppearance();
     this.settingsOpen = false;
-    this.notifications.success('Tus preferencias visuales quedaron guardadas en este dispositivo.', 'Ajustes guardados');
+    this.notifications.success(
+      this.i18n.translate('account.settingsSaved'),
+      this.i18n.translate('common.saved'),
+    );
   }
 
   cancelAccountDeletion(): void {
@@ -92,9 +106,12 @@ export class AccountMenuComponent {
     this.sendingVerification = true;
     try {
       await this.auth.sendVerificationEmail();
-      this.notifications.success('Revisa tu bandeja de entrada (y spam) para verificar el correo.', 'Verificación enviada');
+      this.notifications.success(
+        this.i18n.translate('Revisa tu bandeja de entrada (y spam) para verificar el correo.'),
+        this.i18n.translate('Verificación enviada'),
+      );
     } catch (error) {
-      this.notifications.error(this.auth.authErrorMessage(error), 'No se pudo verificar');
+      this.notifications.error(this.auth.authErrorMessage(error), this.i18n.translate('No se pudo verificar'));
     } finally {
       this.sendingVerification = false;
     }
@@ -108,9 +125,12 @@ export class AccountMenuComponent {
       this.currentPassword = '';
       this.nextPassword = '';
       this.confirmPassword = '';
-      this.notifications.success('Tu contraseña se actualizó. Usa la nueva en el próximo inicio de sesión.', 'Contraseña actualizada');
+      this.notifications.success(
+        this.i18n.translate('Tu contraseña se actualizó. Usa la nueva en el próximo inicio de sesión.'),
+        this.i18n.translate('Contraseña actualizada'),
+      );
     } catch (error) {
-      this.notifications.error(this.auth.authErrorMessage(error), 'No se pudo cambiar la contraseña');
+      this.notifications.error(this.auth.authErrorMessage(error), this.i18n.translate('No se pudo cambiar la contraseña'));
     } finally {
       this.changingPassword = false;
     }
@@ -126,10 +146,13 @@ export class AccountMenuComponent {
       this.open = false;
       this.settingsOpen = false;
       await this.router.navigate(['/login']);
-      this.notifications.success('Tu cuenta se eliminó y tus conversaciones quedaron anonimizadas.', 'Cuenta eliminada');
+      this.notifications.success(
+        this.i18n.translate('Tu cuenta se eliminó y tus conversaciones quedaron anonimizadas.'),
+        this.i18n.translate('Cuenta eliminada'),
+      );
     } catch (error) {
       console.error('No se pudo completar la eliminación de la cuenta.', error);
-      this.notifications.error(this.auth.authErrorMessage(error), 'Error al eliminar la cuenta');
+      this.notifications.error(this.auth.authErrorMessage(error), this.i18n.translate('Error al eliminar la cuenta'));
     } finally {
       this.deletingAccount = false;
     }
@@ -141,11 +164,11 @@ export class AccountMenuComponent {
       this.open = false;
       this.settingsOpen = false;
       await this.router.navigate(['/login']);
-      this.notifications.info('Tu sesión se ha cerrado.');
+      this.notifications.info(this.i18n.translate('Tu sesión se ha cerrado.'));
     } catch (error) {
       this.notifications.error(
         this.auth.authErrorMessage(error),
-        'Error al cerrar sesión',
+        this.i18n.translate('Error al cerrar sesión'),
       );
     }
   }

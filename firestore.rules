@@ -264,6 +264,165 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /feedback/{feedbackId} {
+      allow read: if canModerate();
+      allow create: if request.resource.data.keys().hasOnly([
+          'userId', 'name', 'email', 'type', 'subject', 'message', 'status', 'createdAt'
+        ])
+        && (signedIn()
+          ? request.resource.data.userId == request.auth.uid
+          : request.resource.data.userId == '')
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 120
+        && request.resource.data.type in ['bug', 'idea', 'account', 'collaboration', 'other']
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() > 0
+        && request.resource.data.subject.size() <= 120
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 4000
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt is number;
+      allow update: if canModerate()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in ['new', 'reviewing', 'resolved']
+        && request.resource.data.updatedAt is number;
+      allow delete: if canModerate();
+    }
+
+    match /communityQuestions/{questionId} {
+      allow read: if true;
+      allow create: if isActiveUser()
+        && request.resource.data.keys().hasOnly([
+          'authorId', 'authorName', 'authorPhotoURL', 'title', 'body', 'tags',
+          'createdAt', 'answersCount', 'votes', 'voterIds', 'resolved', 'pinned',
+          'locked', 'acceptedAnswerId'
+        ])
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.authorName
+          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        && (request.resource.data.authorPhotoURL == null
+          || request.resource.data.authorPhotoURL
+            == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoURL)
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 8
+        && request.resource.data.title.size() <= 140
+        && request.resource.data.body is string
+        && request.resource.data.body.size() >= 15
+        && request.resource.data.body.size() <= 4000
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() <= 5
+        && request.resource.data.createdAt is number
+        && request.resource.data.answersCount == 0
+        && request.resource.data.votes == 0
+        && request.resource.data.voterIds == []
+        && request.resource.data.resolved == false
+        && request.resource.data.pinned == false
+        && request.resource.data.locked == false
+        && request.resource.data.acceptedAnswerId == null;
+      allow update: if (
+          isActiveUser()
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['title', 'body', 'tags', 'updatedAt'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() >= 8
+          && request.resource.data.title.size() <= 140
+          && request.resource.data.body is string
+          && request.resource.data.body.size() >= 15
+          && request.resource.data.body.size() <= 4000
+          && request.resource.data.tags is list
+          && request.resource.data.tags.size() <= 5
+        ) || (
+          isActiveUser()
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['resolved', 'updatedAt'])
+          && request.resource.data.resolved is bool
+        ) || (
+          isActiveUser()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['votes', 'voterIds'])
+          && request.resource.data.votes is int
+          && request.resource.data.votes >= 0
+          && request.resource.data.voterIds is list
+          && (
+            (request.resource.data.votes == resource.data.votes + 1
+              && request.resource.data.voterIds.hasAll(resource.data.voterIds)
+              && request.resource.data.voterIds.size() == resource.data.voterIds.size() + 1
+              && request.resource.data.voterIds.hasAny([request.auth.uid])
+              && !resource.data.voterIds.hasAny([request.auth.uid]))
+            || (request.resource.data.votes == resource.data.votes - 1
+              && resource.data.voterIds.hasAny([request.auth.uid])
+              && !request.resource.data.voterIds.hasAny([request.auth.uid])
+              && request.resource.data.voterIds.size() == resource.data.voterIds.size() - 1)
+          )
+        ) || (
+          isActiveUser()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['answersCount'])
+          && request.resource.data.answersCount == resource.data.answersCount + 1
+        ) || (
+          isActiveUser()
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['acceptedAnswerId', 'resolved', 'updatedAt'])
+          && request.resource.data.resolved == true
+          && request.resource.data.acceptedAnswerId is string
+          && exists(/databases/$(database)/documents/communityQuestions/$(questionId)/answers/$(request.resource.data.acceptedAnswerId))
+        ) || (
+          canModerate()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['pinned', 'locked', 'resolved', 'updatedAt'])
+        );
+      allow delete: if (isActiveUser() && resource.data.authorId == request.auth.uid)
+        || canModerate();
+
+      match /answers/{answerId} {
+        allow read: if true;
+        allow create: if isActiveUser()
+          && get(/databases/$(database)/documents/communityQuestions/$(questionId)).data.locked == false
+          && request.resource.data.keys().hasOnly([
+            'authorId', 'authorName', 'authorPhotoURL', 'body', 'createdAt', 'votes', 'voterIds', 'accepted'
+          ])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName
+            == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+          && (request.resource.data.authorPhotoURL == null
+            || request.resource.data.authorPhotoURL
+              == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoURL)
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 4000
+          && request.resource.data.createdAt is number
+          && request.resource.data.votes == 0
+          && request.resource.data.voterIds == []
+          && request.resource.data.accepted == false;
+        allow update: if (
+            isActiveUser()
+            && resource.data.authorId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body'])
+            && request.resource.data.body is string
+            && request.resource.data.body.size() > 0
+            && request.resource.data.body.size() <= 4000
+          ) || (
+            isActiveUser()
+            && get(/databases/$(database)/documents/communityQuestions/$(questionId)).data.authorId
+              == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['accepted'])
+            && request.resource.data.accepted is bool
+          );
+        allow delete: if (isActiveUser() && resource.data.authorId == request.auth.uid)
+          || canModerate()
+          || (isActiveUser()
+            && get(/databases/$(database)/documents/communityQuestions/$(questionId)).data.authorId
+              == request.auth.uid);
+      }
+    }
+
     match /chats/{chatId} {
       function isParticipant(participants) {
         return signedIn()
