@@ -4,6 +4,7 @@ import {
   ElementRef,
   HostListener,
   inject,
+  Input,
   OnDestroy,
   PLATFORM_ID,
   ViewChild,
@@ -30,6 +31,8 @@ interface RemoteCursor {
   templateUrl: './model-viewer.html',
 })
 export class ModelViewer implements OnDestroy {
+  @Input() language: 'es' | 'en' = 'es';
+
   // Capturamos el <canvas #rendererCanvas> del HTML
   @ViewChild('rendererCanvas', { static: true })
   public rendererCanvas!: ElementRef<HTMLCanvasElement>;
@@ -69,27 +72,31 @@ export class ModelViewer implements OnDestroy {
     if (draft) this.threeEngine.restoreScene(draft);
     this.hotspotSubscription = this.threeEngine.hotspotsChanged$.subscribe(() => this.refreshHotspots());
     this.cursorSubscription = this.threeEngine.remoteCursor$.subscribe((c) => {
-      if (c.uid !== this.ownCursorUid) {
-        this.remoteCursors.set(c.uid, {
-          uid: c.uid,
-          displayName: this.threeEngine.getCollaborators().find((col) => col.uid === c.uid)?.displayName ?? c.uid,
-          color: c.color,
-          x: c.x,
-          y: c.y,
-        });
-      } else {
+      // El motor emite también el cursor propio: nunca debe dibujarse como remoto.
+      if (c.uid === this.ownCursorUid || c.uid === this.threeEngine.ownCursorUid) {
         this.remoteCursors.delete(c.uid);
+        return;
       }
+      this.remoteCursors.set(c.uid, {
+        uid: c.uid,
+        displayName: this.threeEngine.getCollaborators().find((col) => col.uid === c.uid)?.displayName ?? c.uid,
+        color: c.color,
+        x: c.x,
+        y: c.y,
+      });
     });
     // Suscribirse a cambios de estado del motor 3D
     this.subscription.add(this.threeEngine.transformChanged$.subscribe(() => {
       // Sincronizar estado de explosión y otros cambios
     }));
-    // Configurar el cursor propio del usuario actual
+    // Configurar el cursor propio del usuario actual y limpiar cualquier
+    // entrada previa que se haya dibujado antes de conocer el UID.
     this.auth.user$.subscribe((user) => {
-      if (user) {
-        this.ownCursorUid = user.uid;
-        this.threeEngine.setOwnCursorUid(user.uid);
+      if (!user) return;
+      this.ownCursorUid = user.uid;
+      this.threeEngine.setOwnCursorUid(user.uid);
+      for (const uid of Array.from(this.remoteCursors.keys())) {
+        if (uid === user.uid) this.remoteCursors.delete(uid);
       }
     });
     // Suscribirse a cambios de presentación
@@ -110,11 +117,11 @@ export class ModelViewer implements OnDestroy {
   }
 
   onCanvasPointerDown(event: PointerEvent): void {
+    // Solo interceptamos el clic cuando el modo hotspot está activo.
+    // El resto del tiempo OrbitControls maneja el arrastre, el zoom y el paneo.
     if (this.threeEngine.addHotspotFromPointer(event.clientX, event.clientY)) {
       event.stopPropagation();
-      return;
     }
-    this.threeEngine.placeCurrentModelOnARSurface();
   }
 
   // --- Controles 3D ---

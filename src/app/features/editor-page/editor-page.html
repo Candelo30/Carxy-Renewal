@@ -11,9 +11,8 @@
     [showPublish]="true"
     [showPresentation]="true"
     (languageChange)="language = $event"
-    (menuToggle)="toggleMobileMenu()"
     (publishClick)="onPublishClick()"
-    (presentationChange)="presentationMode = $event"
+    (presentationChange)="onPresentationChange($event)"
   ></app-shell-header>
 
   <aside class="editor-panel-area">
@@ -21,7 +20,7 @@
   </aside>
 
   <section class="viewer-area">
-    <app-model-viewer />
+    <app-model-viewer [language]="language" />
     <button
       type="button"
       class="panel-toggle"

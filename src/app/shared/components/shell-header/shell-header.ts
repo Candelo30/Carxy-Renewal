@@ -72,6 +72,12 @@ export class ShellHeaderComponent {
     this.searchQuery = '';
   }
 
+  setLanguage(language: 'es' | 'en'): void {
+    if (this.language === language) return;
+    this.language = language;
+    this.languageChange.emit(language);
+  }
+
   togglePresentation(): void {
     this.presentationEnabled = !this.presentationEnabled;
     this.presentationChange.emit(this.presentationEnabled);

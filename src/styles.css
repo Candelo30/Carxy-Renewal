@@ -4,6 +4,7 @@
 /* 1. Reset Global y Box-Sizing */
 :root {
   color-scheme: dark;
+  --shell-header-height: 64px;
   --accent-color: #8b5cf6;
   --surface-main: #171a22;
   --surface-panel: #1e222d;
@@ -41,6 +42,21 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* El header es fijo: reservar su altura en todas las páginas */
+main.page-with-header {
+  padding-top: var(--shell-header-height);
+}
+
+html {
+  scroll-padding-top: calc(var(--shell-header-height) + 12px);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --shell-header-height: 56px;
+  }
 }
 
 /* 2. Configuración de pantalla completa y tipografía */

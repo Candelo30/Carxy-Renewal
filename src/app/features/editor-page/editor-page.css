@@ -13,7 +13,7 @@
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding-top: 64px; /* Altura del header fijo */
+  padding-top: var(--shell-header-height, 64px); /* Altura del header fijo */
   grid-template-rows: minmax(0, 1fr);
   grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
   grid-template-areas: "sidebar viewer";
@@ -111,7 +111,7 @@
   .editor-layout {
     grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-    padding-top: 56px;
+    padding-top: var(--shell-header-height, 56px);
   }
 
   .editor-panel-area {
@@ -130,7 +130,7 @@
 /* Móvil grande: 461px - 760px */
 @media (max-width: 760px) {
   .editor-layout {
-    padding-top: 56px;
+    padding-top: var(--shell-header-height, 56px);
     grid-template-rows: minmax(0, 1fr) minmax(0, 40dvh);
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "viewer" "sidebar";
@@ -146,9 +146,9 @@
   }
 
   .panel-toggle {
-    top: auto;
-    bottom: 12px;
-    left: 12px;
+    top: 10px;
+    bottom: auto;
+    left: 10px;
     font-size: 0.72rem;
     padding: 0 10px;
     min-height: 34px;
@@ -157,17 +157,12 @@
   .panel-collapsed {
     grid-template-rows: minmax(0, 1fr) 0;
   }
-
-  /* Ocultar el toggle del panel cuando está colapsado en móvil (ya no hay panel) */
-  .panel-collapsed .panel-toggle {
-    display: none;
-  }
 }
 
 /* Móvil pequeño: hasta 460px */
 @media (max-width: 460px) {
   .editor-layout {
-    padding-top: 52px;
+    padding-top: var(--shell-header-height, 56px);
     grid-template-rows: minmax(0, 1fr) minmax(0, 38dvh);
   }
 
@@ -180,9 +175,9 @@
     min-height: 32px;
     padding: 0 8px;
     font-size: 0.68rem;
-    top: auto;
-    bottom: 10px;
-    left: 10px;
+    top: 8px;
+    bottom: auto;
+    left: 8px;
   }
 }
 
@@ -206,8 +201,9 @@
 
 /* Orientación landscape en móvil: dar más altura al viewer */
 @media (max-width: 760px) and (orientation: landscape) {
-  .editor-layout {
-    padding-top: 52px;
+  .editor-layout,
+  .panel-collapsed {
+    padding-top: var(--shell-header-height, 56px);
     grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "viewer";
@@ -215,10 +211,6 @@
 
   .editor-panel-area {
     display: none;
-  }
-
-  .panel-collapsed {
-    grid-template-rows: 52px minmax(0, 1fr);
   }
 }
 

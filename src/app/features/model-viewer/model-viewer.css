@@ -10,6 +10,7 @@
   background: var(--surface-main);
 }
 
+/* Lienzo 3D: ocupa todo y recibe todos los gestos */
 .webgl-canvas {
   position: absolute;
   inset: 0;
@@ -18,11 +19,14 @@
   height: 100%;
   outline: none;
   z-index: 1;
-  cursor: crosshair;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.webgl-canvas:hover {
-  cursor: crosshair;
+.webgl-canvas:active {
+  cursor: grabbing;
 }
 
 /* Hotspots */
@@ -31,7 +35,7 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 15;
+  z-index: 10;
 }
 
 .hotspot-label {
@@ -60,13 +64,13 @@
   box-shadow: 0 0 9px #f59e0b;
 }
 
-/* Cursores remotos de colaboradores */
+/* Cursores remotos: solo decorativos, nunca bloquean el canvas */
 .remote-cursors-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: visible;
-  z-index: 15;
+  z-index: 10;
 }
 
 .remote-cursors-layer app-collaborator-cursor {
@@ -74,132 +78,304 @@
 }
 
 /* ==========================================================================
-   PANEL DE CONTROLES 3D - PANEL LATERAL DERECHO
+   HUD del visor 3D
    ========================================================================== */
 
-.viewer-controls {
+.view-hud,
+.tools-hud {
   position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 300px;
-  max-width: 300px;
-  padding: 24px;
-  gap: 16px;
-  z-index: 40;
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface-panel);
-  border-left: 1px solid var(--border-color);
-}
-
-.viewer-controls .control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.viewer-controls .control-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.viewer-controls .view-btn-group,
-.viewer-controls .toggle-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.viewer-controls .view-btn,
-.viewer-controls .toggle-btn {
-  width: 40px;
-  height: 36px;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: var(--surface-raised);
-  color: var(--text-muted);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 #ffffff0f,
+    0 12px 34px color-mix(in srgb, #000 38%, transparent);
 }
 
-.viewer-controls .view-btn:hover,
-.viewer-controls .toggle-btn:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+/* --- Vistas de cámara (arriba a la derecha) --- */
+.view-hud {
+  top: 14px;
+  right: 14px;
+  padding: 6px 8px;
+  border-radius: 12px;
 }
 
-.viewer-controls .view-btn.active,
-.viewer-controls .toggle-btn.active {
-  border-color: var(--accent-color);
-  background: var(--accent-color);
-  color: #ffffff;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-color) 40%, transparent);
-}
-
-.measure-info {
-  font-size: 0.72rem;
+.hud-label {
+  padding-left: 3px;
   color: var(--text-muted);
-  margin-top: 8px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-/* Responsivo */
+.view-segmented {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-control) 65%, transparent);
+}
+
+.view-btn {
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.view-btn:hover {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--surface-raised) 80%, transparent);
+}
+
+.view-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 92%, #ffffff), color-mix(in srgb, var(--accent-color) 74%, #2b0f5e));
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent-color) 36%, transparent);
+}
+
+/* --- Herramientas (abajo al centro) --- */
+.tools-hud {
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 7px 9px;
+  border-radius: 15px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tools-hud::-webkit-scrollbar {
+  display: none;
+}
+
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+}
+
+.group-label {
+  padding: 0 5px 0 3px;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tool-divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 5px;
+  background: color-mix(in srgb, var(--border-color) 80%, transparent);
+  flex: none;
+}
+
+.tool-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.tool-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.tool-btn:hover {
+  border-color: color-mix(in srgb, var(--border-color) 75%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
+  color: var(--text-primary);
+}
+
+.tool-btn.active {
+  border-color: color-mix(in srgb, var(--accent-color) 55%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 20%, var(--surface-raised));
+  color: color-mix(in srgb, var(--accent-color) 82%, #ffffff);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 18%, transparent);
+}
+
+.tool-btn:focus-visible,
+.view-btn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+
+.measure-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  margin-left: 4px;
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 45%, var(--border-color));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-color) 14%, var(--surface-panel));
+  color: color-mix(in srgb, var(--accent-color) 80%, #ffffff);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* --- Pista de navegación --- */
+.viewer-hint {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-main) 62%, transparent);
+  color: color-mix(in srgb, var(--text-muted) 88%, transparent);
+  font-size: 0.66rem;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: hintFade 9s ease forwards;
+}
+
+.hint-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color);
+  flex: none;
+}
+
+@keyframes hintFade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .viewer-hint {
+    display: none;
+  }
+}
+
 @media (max-width: 760px) {
-  .viewer-controls {
-    width: 260px;
-    padding: 12px;
-    gap: 12px;
+  .view-hud {
+    top: 8px;
+    right: 8px;
+    padding: 4px 5px;
+    gap: 4px;
   }
 
-  .viewer-controls .control-group {
-    padding: 4px 6px;
-    gap: 5px;
+  .hud-label {
+    display: none;
   }
 
-  .viewer-controls .control-label {
-    font-size: 0.64rem;
-    margin-right: 4px;
-  }
-
-  .viewer-controls .view-btn,
-  .viewer-controls .toggle-btn {
-    width: 28px;
+  .view-btn {
     height: 28px;
-    font-size: 0.9rem;
+    padding: 0 7px;
+    font-size: 0.64rem;
+  }
+
+  .tools-hud {
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    max-width: none;
+    padding: 5px 6px;
+    border-radius: 13px;
+  }
+
+  .group-label,
+  .tool-divider {
+    display: none;
+  }
+
+  .tool-group {
+    gap: 1px;
+  }
+
+  .tool-btn {
+    width: 31px;
+    height: 31px;
+    border-radius: 8px;
+  }
+
+  .tool-btn svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
-/* Smartphone */
 @media (max-width: 460px) {
-  .viewer-controls {
-    width: 240px;
-    padding: 8px;
+  .view-hud {
+    top: 6px;
+    right: 6px;
   }
 
-  .viewer-controls .control-group {
-    gap: 5px;
-    padding: 5px;
-  }
-
-  .viewer-controls .control-label {
+  .view-btn {
+    padding: 0 5px;
     font-size: 0.6rem;
   }
 
-  .viewer-controls .view-btn,
-  .viewer-controls .toggle-btn {
-    width: 26px;
-    height: 26px;
-    font-size: 0.8rem;
+  .tools-hud {
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+    gap: 2px;
+  }
+
+  .tool-btn {
+    width: 29px;
+    height: 29px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer-hint {
+    animation: none;
+  }
+
+  .view-btn,
+  .tool-btn {
+    transition: none;
   }
 }

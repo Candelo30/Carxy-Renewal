@@ -92,6 +92,15 @@ export class EditorPage implements OnInit, OnDestroy {
     this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
+  onPresentationChange(enabled: boolean): void {
+    this.presentationMode = enabled;
+    // Sincronizar el modo presentación con el motor 3D para que la cámara
+    // orbital se detenga al presentar y vuelva a habilitarse al salir.
+    if (this.threeEngine.presentationEnabled !== enabled) {
+      this.threeEngine.togglePresentation();
+    }
+  }
+
   async onPublishClick(): Promise<void> {
     const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
     if (user) {

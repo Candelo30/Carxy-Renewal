@@ -140,6 +140,20 @@ export class ThreeEngineService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private sceneInitialized = false;
 
+  /**
+   * Si el usuario suelta el puntero fuera del canvas (header, HUD, otra ventana),
+   * TransformControls puede quedar en estado "dragging" y dejar la cámara
+   * bloqueada. Esta salvaguarda devuelve siempre el control de órbita.
+   */
+  private readonly handleGlobalPointerUp = (): void => {
+    if (this.transformControls?.dragging) {
+      this.transformControls.dragging = false;
+    }
+    if (this.controls && !this.presentationEnabled) {
+      this.controls.enabled = true;
+    }
+  };
+
   constructor(private ngZone: NgZone) {}
 
   public initialize(canvas: HTMLCanvasElement): void {
@@ -208,6 +222,9 @@ export class ThreeEngineService implements OnDestroy {
     });
     this.transformControls.addEventListener('change', () => this.transformChanged$.next());
     this.scene!.add(this.transformControls.getHelper());
+    window.addEventListener('pointerup', this.handleGlobalPointerUp);
+    window.addEventListener('pointercancel', this.handleGlobalPointerUp);
+    window.addEventListener('blur', this.handleGlobalPointerUp);
     this.initializePostProcessing(width, height);
     this.detectARSupport();
 
@@ -225,6 +242,11 @@ export class ThreeEngineService implements OnDestroy {
 
   public releaseViewport(): void {
     if (this.frameId !== null) this.renderer?.setAnimationLoop(null);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pointerup', this.handleGlobalPointerUp);
+      window.removeEventListener('pointercancel', this.handleGlobalPointerUp);
+      window.removeEventListener('blur', this.handleGlobalPointerUp);
+    }
     if (this.transformControls) {
       this.scene?.remove(this.transformControls.getHelper());
       this.transformControls.dispose();
@@ -1351,6 +1373,8 @@ export class ThreeEngineService implements OnDestroy {
 
   joinCollaboration(uid: string, displayName: string): void {
     if (this.collaborators.has(uid)) return;
+    // El cursor propio nunca se dibuja como colaborador remoto.
+    if (uid === this.ownCursorUid) return;
     const color = this.collaboratorColor(uid);
     this.collaborators.set(uid, { displayName, color, objectId: null, x: 0, y: 0 });
     this.collaboratorJoined$.next({ uid, displayName, color });
@@ -1366,9 +1390,18 @@ export class ThreeEngineService implements OnDestroy {
 
   setOwnCursorUid(uid: string): void {
     this.ownCursorUid = uid;
+    // Guardamos el color propio para el broadcast, pero sin marcador 3D:
+    // el cursor local lo dibuja el navegador, no la escena.
     if (!this.collaborators.has(uid)) {
-      this.joinCollaboration(uid, uid);
+      this.collaborators.set(uid, {
+        displayName: uid,
+        color: this.collaboratorColor(uid),
+        objectId: null,
+        x: 0,
+        y: 0,
+      });
     }
+    this.removeCollaboratorMarker(uid);
   }
 
   updateOwnCursor(x: number, y: number): void {
@@ -1427,11 +1460,20 @@ export class ThreeEngineService implements OnDestroy {
       new THREE.MeshBasicMaterial({ color, depthTest: false })
     );
     sphere.renderOrder = 100;
-    group.add(sphere);
-    const label = new THREE.Sprite(new THREE.SpriteMaterial({ color, transparent: true, opacity: 0.9 }));
-    label.scale.set(0.5, 0.5, 1);
-    label.position.y = 0.25;
-    group.add(label);
+    // Anillo orientado a cámara en lugar del antiguo Sprite sin textura,
+    // que se renderizaba como un cuadro blanco siguiendo el ratón.
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.11, 0.15, 24),
+      new THREE.MeshBasicMaterial({
+        color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85,
+        depthTest: false,
+      })
+    );
+    ring.renderOrder = 101;
+    group.add(sphere, ring);
     this.scene.add(group);
     this.collaboratorObjects.set(uid, group);
   }
@@ -1458,6 +1500,8 @@ export class ThreeEngineService implements OnDestroy {
     const dir = raycaster.ray.direction;
     const pos = raycaster.ray.origin.clone().addScaledVector(dir, 3);
     group.position.copy(pos);
+    // Mantener el anillo mirando a la cámara para que siempre se lea bien.
+    group.lookAt(this.camera.position);
   }
 
   private updateCollaboratorMarker(uid: string): void {
