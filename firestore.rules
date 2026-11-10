@@ -586,6 +586,14 @@ service cloud.firestore {
           || (isProjectWriter(request.resource.data.projectId) && request.resource.data.role in ['editor', 'viewer'])
           || (request.resource.data.userId == request.auth.uid
             && request.resource.data.role in ['viewer', 'editor']
+            && request.auth.token.email is string
+            && existsAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email))
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.projectId == request.resource.data.projectId
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.invitedEmail == request.auth.token.email
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.invitedUid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.status == 'accepted'
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.role == request.resource.data.role
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.respondedAt is number
             && request.resource.data.joinedAt >= request.time.toMillis() - 300000
             && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
         );
@@ -624,33 +632,59 @@ service cloud.firestore {
         && request.resource.data.invitedEmail is string
         && request.resource.data.invitedEmail.size() > 0
         && request.resource.data.invitedEmail.size() <= 120
+        && request.resource.data.projectId is string
+        && invitationId == request.resource.data.projectId + '_' + request.resource.data.invitedEmail
         && request.resource.data.role in ['owner', 'editor', 'viewer']
         && request.resource.data.status == 'pending'
         && request.resource.data.createdAt is number
-        && request.resource.data.expiresAt is number;
+        && request.resource.data.expiresAt is number
+        && request.resource.data.projectName is string
+        && request.resource.data.keys().hasOnly([
+          'id', 'projectId', 'projectName', 'invitedBy', 'invitedByName', 'invitedEmail',
+          'invitedUid', 'role', 'status', 'createdAt', 'expiresAt'
+        ])
+        && request.resource.data.id == invitationId
+        && request.resource.data.invitedUid == null;
 
       allow update: if signedIn()
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.invitedEmail == resource.data.invitedEmail
         && (
-          resource.data.invitedBy == request.auth.uid
-          || (request.auth.token.email is string && resource.data.invitedEmail == request.auth.token.email)
-        )
-        && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'respondedAt', 'invitedUid'])
-        && request.resource.data.status in ['pending', 'accepted', 'rejected', 'revoked', 'expired']
-        && (
-          request.resource.data.status == resource.data.status
-          || (
-            resource.data.status == 'pending'
-            && request.resource.data.respondedAt is number
+          (
+            // Reenvío/actualización de invitación pendiente por un miembro con permisos de escritura.
+            isProjectWriter(resource.data.projectId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'projectName', 'invitedBy', 'invitedByName', 'role', 'status', 'createdAt', 'expiresAt', 'invitedUid'
+            ])
+            && request.resource.data.status == 'pending'
+            && request.resource.data.role in ['owner', 'editor', 'viewer']
+            && request.resource.data.createdAt is number
+            && request.resource.data.expiresAt is number
+            && request.resource.data.invitedUid == null
+            && request.resource.data.projectName is string
+          ) || (
+            // Aceptación/rechazo por la persona invitada, o revocación/expiración por quien invitó.
+            (resource.data.invitedBy == request.auth.uid
+              || (request.auth.token.email is string && resource.data.invitedEmail == request.auth.token.email))
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'respondedAt', 'invitedUid'])
+            && request.resource.data.status in ['pending', 'accepted', 'rejected', 'revoked', 'expired']
             && (
-              (
-                request.auth.token.email is string
-                && resource.data.invitedEmail == request.auth.token.email
-                && request.resource.data.status in ['accepted', 'rejected']
-                && request.resource.data.invitedUid == request.auth.uid
-              ) || (
-                resource.data.invitedBy == request.auth.uid
-                && request.resource.data.status in ['revoked', 'expired', 'pending']
+              request.resource.data.status == resource.data.status
+              || (
+                resource.data.status == 'pending'
+                && request.resource.data.respondedAt is number
+                && (
+                  (
+                    request.auth.token.email is string
+                    && resource.data.invitedEmail == request.auth.token.email
+                    && request.resource.data.status in ['accepted', 'rejected']
+                    && request.resource.data.invitedUid == request.auth.uid
+                  ) || (
+                    resource.data.invitedBy == request.auth.uid
+                    && request.resource.data.status in ['revoked', 'expired', 'pending']
+                  )
+                )
               )
             )
           )

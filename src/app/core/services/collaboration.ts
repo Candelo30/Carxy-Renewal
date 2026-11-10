@@ -402,6 +402,14 @@ export class CollaborationService implements OnDestroy {
     return ref.id;
   }
 
+  private normalizeInvitationEmail(email: string): string {
+    return (email || '').trim().toLowerCase();
+  }
+
+  private invitationDocId(projectId: string, invitedEmail: string): string {
+    return `${projectId}_${this.normalizeInvitationEmail(invitedEmail)}`;
+  }
+
   async inviteMember(projectId: string, invitedEmail: string, role: ProjectRole): Promise<string> {
     const user = await this.currentUser();
     if (!user) throw new Error(this.i18n.translate('Inicia sesión para invitar miembros.'));
@@ -411,16 +419,20 @@ export class CollaborationService implements OnDestroy {
     const canWrite = await this.canUserWrite(projectId, user.uid);
     if (!canWrite) throw new Error(this.i18n.translate('No tienes permiso para invitar a este proyecto.'));
 
+    const normalizedEmail = this.normalizeInvitationEmail(invitedEmail);
+    if (!normalizedEmail) throw new Error(this.i18n.translate('Indica un correo válido para la invitación.'));
+
     const now = Date.now();
     const expiresAt = now + 7 * 24 * 60 * 60 * 1000; // 7 días
-    const ref = doc(collection(db, SOCIAL_COLLECTIONS.projectInvitations));
+    const invitationId = this.invitationDocId(projectId, normalizedEmail);
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`);
     const invitation: ProjectInvitation = {
-      id: ref.id,
+      id: invitationId,
       projectId,
       projectName: '',
       invitedBy: user.uid,
       invitedByName: user.displayName,
-      invitedEmail,
+      invitedEmail: normalizedEmail,
       invitedUid: undefined,
       role,
       status: 'pending',
@@ -431,7 +443,7 @@ export class CollaborationService implements OnDestroy {
     if (projectSnap.exists()) {
       invitation.projectName = (projectSnap.data() as Project).name;
     }
-    await setDoc(ref, invitation);
+    await setDoc(ref, invitation, { merge: true });
     return ref.id;
   }
 
@@ -441,7 +453,8 @@ export class CollaborationService implements OnDestroy {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
 
-    const invSnap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`));
+    const invRef = doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`);
+    const invSnap = await getDoc(invRef);
     if (!invSnap.exists()) throw new Error(this.i18n.translate('Invitación no encontrada.'));
     const inv = invSnap.data() as ProjectInvitation;
     if (inv.status !== 'pending') throw new Error(this.i18n.translate('La invitación ya no está pendiente.'));
@@ -449,27 +462,35 @@ export class CollaborationService implements OnDestroy {
 
     const memberId = `${inv.projectId}_${user.uid}`;
     await runTransaction(db, async (tx) => {
-      const invRef = doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`);
+      const currentInvSnap = await tx.get(invRef);
+      if (!currentInvSnap.exists()) throw new Error(this.i18n.translate('Invitación no encontrada.'));
+      const currentInv = currentInvSnap.data() as ProjectInvitation;
+      if (currentInv.status !== 'pending') throw new Error(this.i18n.translate('La invitación ya no está pendiente.'));
+      if (currentInv.expiresAt < Date.now()) throw new Error(this.i18n.translate('La invitación ha expirado.'));
+
       const memberRef = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
       tx.update(invRef, { status: 'accepted', respondedAt: Date.now(), invitedUid: user.uid });
       tx.set(memberRef, {
         id: memberId,
-        projectId: inv.projectId,
+        projectId: currentInv.projectId,
         userId: user.uid,
         userName: user.displayName,
         userPhotoURL: user.photoURL,
-        role: inv.role,
+        role: currentInv.role,
         joinedAt: Date.now(),
       }, { merge: true });
     });
   }
 
   async rejectInvitation(invitationId: string): Promise<void> {
+    const user = await this.currentUser();
+    if (!user) throw new Error(this.i18n.translate('Inicia sesión para rechazar la invitación.'));
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
     await updateDoc(doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`), {
       status: 'rejected',
       respondedAt: Date.now(),
+      invitedUid: user.uid,
     });
   }
 
