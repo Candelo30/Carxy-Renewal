@@ -1,0 +1,161 @@
+<main class="guide-shell page-with-header">
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="false"
+    [showNav]="true"
+  ></app-shell-header>
+
+  @let next = nextStep;
+
+  <section class="guide-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-copy">
+      <p class="eyebrow">GUÍA DE INICIO</p>
+      <h1>Tu primera creación en 3D, paso a paso.</h1>
+      <p class="hero-text">
+        Seis pasos para pasar de una cuenta nueva a tu primer modelo publicado. Marca cada paso al
+        terminarlo: el progreso se guarda en este dispositivo.
+      </p>
+      <div class="hero-actions">
+        <button type="button" class="btn-primary" (click)="startTutorial()">Iniciar tutorial guiado</button>
+        <a routerLink="/help" class="btn-secondary">Centro de ayuda</a>
+      </div>
+      <div class="hero-meta">
+        <span>{{ completedCount }} de {{ steps.length }} pasos completados</span>
+        <span>Tiempo estimado: 10 minutos</span>
+      </div>
+    </div>
+
+    <aside class="progress-card" aria-label="Progreso de la guía">
+      <div class="progress-ring" [style.--progress]="progressPercent + '%'">
+        <span>{{ progressPercent }}%</span>
+      </div>
+      <div class="progress-info">
+        <strong>{{ allDone ? '¡Guía completada!' : 'Tu progreso' }}</strong>
+        <p>
+          @if (allDone) {
+            Ya conoces el flujo completo. Sigue creando y comparte tus modelos.
+          } @else if (next) {
+            Siguiente: {{ next.title }}
+          } @else {
+            Marca cada paso cuando lo termines.
+          }
+        </p>
+        @if (next && !allDone) {
+          <a class="next-link" [routerLink]="next.route" [queryParams]="next.queryParams">
+            Continuar → {{ next.actionLabel }}
+          </a>
+        } @else if (allDone) {
+          <a class="next-link" routerLink="/editor">Crear otro modelo →</a>
+        }
+      </div>
+      <button class="reset-progress" type="button" (click)="resetProgress()" [disabled]="completedCount === 0">
+        Reiniciar progreso
+      </button>
+    </aside>
+  </section>
+
+  <section class="guide-section">
+    <div class="section-head">
+      <p class="eyebrow">CHECKLIST</p>
+      <h2>Los seis pasos</h2>
+      <p>Puedes hacerlos en orden o ir directamente al que necesites.</p>
+    </div>
+
+    <div class="step-list">
+      @for (step of steps; track step.id; let index = $index) {
+        <article
+          class="guide-step"
+          [class.done]="isDone(step.id)"
+          [class.current]="next?.id === step.id"
+        >
+          <button
+            type="button"
+            class="step-check"
+            [attr.aria-pressed]="isDone(step.id)"
+            [attr.aria-label]="isDone(step.id) ? 'Marcar ' + step.title + ' como pendiente' : 'Marcar ' + step.title + ' como completado'"
+            (click)="toggleStep(step.id)"
+          >
+            @if (isDone(step.id)) {
+              <span aria-hidden="true">✓</span>
+            } @else {
+              <span aria-hidden="true">{{ index + 1 }}</span>
+            }
+          </button>
+
+          <div class="step-main">
+            <div class="step-title-row">
+              <span class="step-icon" aria-hidden="true">{{ step.icon }}</span>
+              <h3>{{ step.title }}</h3>
+              @if (isDone(step.id)) {
+                <span class="done-badge">Completado</span>
+              } @else if (next?.id === step.id) {
+                <span class="current-badge">Siguiente</span>
+              }
+            </div>
+            <p>{{ step.description }}</p>
+            @if (step.tip) {
+              <p class="step-tip"><span aria-hidden="true">💡</span> {{ step.tip }}</p>
+            }
+          </div>
+
+          <a class="step-action" [routerLink]="step.route" [queryParams]="step.queryParams">
+            {{ step.actionLabel }} →
+          </a>
+        </article>
+      }
+    </div>
+
+    @if (allDone) {
+      <div class="guide-success">
+        <span class="success-icon" aria-hidden="true">🎉</span>
+        <div>
+          <strong>¡Guía completada!</strong>
+          <p>Ya sabes crear, publicar y compartir. La comunidad te espera.</p>
+        </div>
+        <a routerLink="/editor" class="btn-primary">Crear otro modelo</a>
+      </div>
+    }
+  </section>
+
+  <section class="guide-section">
+    <div class="section-head">
+      <p class="eyebrow">RECURSOS ÚTILES</p>
+      <h2>Cuando necesites profundizar</h2>
+    </div>
+
+    <div class="resource-grid">
+      <a routerLink="/help" fragment="atajos" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">⌨️</span>
+        <strong>Atajos de teclado</strong>
+        <small>Mueve, rota, escala y deshaz sin soltar el teclado.</small>
+      </a>
+      <a routerLink="/help" fragment="publicar" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">📤</span>
+        <strong>Cómo publicar</strong>
+        <small>Título, descripción, etiquetas y visibilidad.</small>
+      </a>
+      <a routerLink="/help" fragment="seguridad" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">🛡</span>
+        <strong>Cuenta y seguridad</strong>
+        <small>Verificación de correo, contraseñas y sesiones.</small>
+      </a>
+      <a routerLink="/about" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">✦</span>
+        <strong>Sobre CARXY</strong>
+        <small>La historia, la misión y el roadmap del proyecto.</small>
+      </a>
+    </div>
+  </section>
+
+  <section class="guide-cta">
+    <div>
+      <p class="eyebrow">TUTORIAL GUIADO</p>
+      <h2>¿Prefieres que te llevemos de la mano?</h2>
+      <p>El tutorial muestra los pasos dentro del propio editor, sin salir de la escena.</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="startTutorial()">Iniciar tutorial guiado</button>
+  </section>
+
+  <app-site-footer />
+</main>

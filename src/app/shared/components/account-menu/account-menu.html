@@ -26,6 +26,8 @@
           </span>
         </a>
         <a routerLink="/my-models" (click)="open = false">Mis creaciones</a>
+        <a routerLink="/getting-started" (click)="open = false">Guía de inicio</a>
+        <a routerLink="/help" (click)="open = false">Centro de ayuda</a>
         @if (user.role === 'admin') {
           <a routerLink="/admin" (click)="open = false">Panel admin</a>
         } @else if (user.role === 'moderator') {

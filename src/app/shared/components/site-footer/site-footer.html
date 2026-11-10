@@ -1,0 +1,59 @@
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="brand-link" routerLink="/editor" aria-label="CARXY 3D STUDIO">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L1 21h22L12 2zm0 2.5L3 15.5l4.5 4.5L12 10l4.5 4.5L21 15.5z" />
+            <path d="M12 10l-4.5 4.5L21 15.5L12 2z" fill="currentColor" opacity=".12" />
+          </svg>
+        </span>
+        <span class="brand-text">
+          <strong>CARXY</strong>
+          <small>3D STUDIO</small>
+        </span>
+      </a>
+      <p class="brand-copy">
+        {{ language === 'es'
+          ? 'Un estudio 3D en el navegador para crear, publicar y remixear ideas con la comunidad.'
+          : 'A browser-based 3D studio to create, publish and remix ideas with the community.' }}
+      </p>
+      <div class="footer-badges" aria-hidden="true">
+        <span>WebGL</span>
+        <span>Three.js</span>
+        <span>Angular</span>
+      </div>
+    </div>
+
+    <nav class="footer-columns" [attr.aria-label]="language === 'es' ? 'Enlaces del pie de página' : 'Footer links'">
+      <div class="footer-col">
+        <h3>{{ language === 'es' ? 'Producto' : 'Product' }}</h3>
+        <a routerLink="/editor">{{ language === 'es' ? 'Editor 3D' : '3D Editor' }}</a>
+        <a routerLink="/feed">{{ language === 'es' ? 'Comunidad' : 'Community' }}</a>
+        <a routerLink="/my-models">{{ language === 'es' ? 'Mis creaciones' : 'My models' }}</a>
+      </div>
+      <div class="footer-col">
+        <h3>{{ language === 'es' ? 'Recursos' : 'Resources' }}</h3>
+        <a routerLink="/getting-started">{{ language === 'es' ? 'Guía de inicio' : 'Getting started' }}</a>
+        <a routerLink="/help">{{ language === 'es' ? 'Centro de ayuda' : 'Help center' }}</a>
+        <a routerLink="/help" fragment="atajos">{{ language === 'es' ? 'Atajos de teclado' : 'Keyboard shortcuts' }}</a>
+        <a routerLink="/about">{{ language === 'es' ? 'Sobre nosotros' : 'About us' }}</a>
+      </div>
+      <div class="footer-col">
+        <h3>{{ language === 'es' ? 'Seguridad' : 'Security' }}</h3>
+        <a routerLink="/help" fragment="seguridad">{{ language === 'es' ? 'Cuenta y seguridad' : 'Account security' }}</a>
+        <a routerLink="/help" fragment="privacidad">{{ language === 'es' ? 'Privacidad y datos' : 'Privacy & data' }}</a>
+        <a [href]="repositoryUrl" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© {{ year }} CARXY 3D STUDIO</span>
+    <span class="footer-note">
+      {{ language === 'es'
+        ? 'Hecho con Angular + Three.js · Creado para navegar, no para instalar'
+        : 'Built with Angular + Three.js · Made to run, not to install' }}
+    </span>
+  </div>
+</footer>

@@ -54,5 +54,20 @@ export const routes: Routes = [
     loadComponent: () => import('./features/admin/admin-dashboard').then((module) => module.AdminDashboardComponent),
     data: { moderationOnly: true },
   },
+  {
+    path: 'help',
+    loadComponent: () => import('./features/help/help-page').then((module) => module.HelpPage),
+  },
+  {
+    path: 'getting-started',
+    loadComponent: () => import('./features/getting-started/getting-started-page').then((module) => module.GettingStartedPage),
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./features/about/about-page').then((module) => module.AboutPage),
+  },
+  { path: 'ayuda', pathMatch: 'full', redirectTo: 'help' },
+  { path: 'guia', pathMatch: 'full', redirectTo: 'getting-started' },
+  { path: 'nosotros', pathMatch: 'full', redirectTo: 'about' },
   { path: '**', redirectTo: 'editor' },
 ];

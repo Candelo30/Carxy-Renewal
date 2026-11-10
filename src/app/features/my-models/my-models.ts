@@ -12,6 +12,7 @@ import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
 
 @Component({
   selector: 'app-my-models',
@@ -25,6 +26,7 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
     FormsModule,
     LoadingSpinner,
     RouterLink,
+    SiteFooterComponent,
   ],
   templateUrl: './my-models.html',
   styleUrl: './my-models.css',

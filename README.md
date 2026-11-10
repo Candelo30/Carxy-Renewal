@@ -28,6 +28,14 @@ CARXY 3D Studio es un editor 3D en Angular con una capa social para compartir, d
 
 En el menú de cuenta puedes abrir el perfil, acceder a tus creaciones, cambiar tema/color de acento y cerrar sesión. Si no has iniciado sesión, el menú conserva los ajustes visuales y muestra un acceso directo al login. En el feed, selecciona **Ver en 3D** para cargar el GLB de una publicación; arrastra para orbitar y usa la rueda para acercar o alejar. El visor se crea solo al solicitarlo para evitar inicializar WebGL en todas las tarjetas a la vez.
 
+## Guía, ayuda y sobre el proyecto
+
+- **Guía de inicio** (`/getting-started`, alias `/guia`): checklist interactivo de seis pasos con anillo de progreso. El avance se guarda en `localStorage` (`forma-3d-guide-progress`) y se puede reiniciar. Incluye un botón para relanzar el tutorial guiado dentro del editor.
+- **Centro de ayuda** (`/help`, alias `/ayuda`): búsqueda de artículos, filtros por categoría, documentación desplegable, tablas de atajos de teclado y ratón, y enlaces profundos como `/help#atajos`, `/help#seguridad` y `/help#privacidad`.
+- **Sobre nosotros** (`/about`, alias `/nosotros`): historia y misión del proyecto, funcionalidades, principios de diseño y privacidad, stack técnico y roadmap.
+- **Footer compartido**: las páginas de comunidad, perfil y «Mis creaciones» enlazan la guía, la ayuda, la seguridad y el repositorio. El editor, el chat, la autenticación y la administración mantienen su propio layout.
+- **Tutorial del editor**: aparece solo en la primera visita. Se puede relanzar desde la guía de inicio o abriendo `/editor?tutorial=1`; el parámetro se limpia de la URL para que una recarga normal no lo reabra.
+
 ## Configurar Firebase
 
 La app incluye un modo local de demostración y puede usar Firebase Authentication, Firestore y Storage cuando se configura el proyecto:
@@ -70,6 +78,14 @@ El archivo permite el desarrollo en `localhost:4200`/`localhost:4202` y los domi
 
 Sin configuración, el acceso y los datos sociales funcionan en el navegador local para demostración. Ese modo no verifica contraseñas en un servidor, no comparte datos entre dispositivos y no debe usarse para cuentas reales. Con Firebase configurado, Auth, Firestore y Storage son requeridos para autenticación y publicaciones; los errores de Firebase se muestran al usuario.
 
+## Seguridad
+
+- El servidor SSR (`src/server.ts`) aplica `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, una CSP mínima de `frame-ancestors`/`base-uri`/`object-src` y HSTS cuando la petición llega por HTTPS. También deshabilita `X-Powered-By`.
+- `SECURITY.md` describe el proceso de reporte de vulnerabilidades y las medidas vigentes. `public/.well-known/security.txt` publica el contacto para investigadores; actualiza `Canonical` si usas un dominio personalizado.
+- La autoridad de acceso son las reglas desplegadas en `firestore.rules` y `storage.rules`, no el cliente. Revisa y despliega ambos archivos junto con los índices después de cambiar el modelo de datos.
+- No publiques claves de cuenta de servicio, tokens privados ni secretos de pago en el bundle. La configuración web de Firebase son identificadores públicos; las operaciones privilegiadas deben ejecutarse en un backend de confianza.
+- En producción, sirve la app exclusivamente por HTTPS y configura los dominios autorizados de Firebase Authentication. Para probar reglas sin tocar datos reales, usa Firebase Emulator Suite.
+
 Las reglas de Storage protegen las operaciones normales del SDK. Los enlaces de descarga de Firebase Storage contienen un token de acceso y deben tratarse como enlaces públicos una vez compartidos; al pasar un post de público a privado, una URL con token previamente expuesta puede seguir funcionando. Para confidencialidad real de archivos privados, usa un backend de confianza que entregue descargas autorizadas y revoque tokens. Los posts antiguos sin `isPrivate` también necesitan migrarse a `isPrivate: false` para aparecer en el feed.
 
 ## Pendientes conocidos
@@ -94,7 +110,7 @@ npm start
 
 Abre `http://localhost:4200/` en un navegador compatible con WebGL.
 
-Las páginas disponibles son `/editor`, `/feed`, `/login`, `/register`, `/profile/:uid` y `/chat`. El chat directo requiere el UID del otro creador.
+Las páginas disponibles son `/editor`, `/feed`, `/login`, `/register`, `/forgot-password`, `/profile/:uid`, `/my-models`, `/chat`, `/help`, `/getting-started` y `/about`. El chat directo requiere el UID del otro creador. Los alias en español `/ayuda`, `/guia` y `/nosotros` redirigen a sus rutas canónicas.
 
 ## Validación
 

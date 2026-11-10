@@ -1,0 +1,205 @@
+<main class="help-shell page-with-header">
+  <app-shell-header
+    [language]="'es'"
+    [showSearch]="false"
+    [showNav]="true"
+    (menuToggle)="mobileMenuOpen = !mobileMenuOpen"
+  ></app-shell-header>
+
+  <section class="help-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <p class="eyebrow">CENTRO DE AYUDA</p>
+    <h1>Aprende, crea y resuelve tus dudas.</h1>
+    <p class="hero-copy">
+      Documentación clara sobre el editor 3D, la publicación, la comunidad y la seguridad de tu cuenta.
+      Busca un tema o explora las categorías.
+    </p>
+
+    <div class="help-search">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z" />
+      </svg>
+      <input
+        type="search"
+        name="help-search"
+        [(ngModel)]="query"
+        placeholder="Busca: publicar, atajos, contraseña…"
+        aria-label="Buscar en el centro de ayuda"
+        autocomplete="off"
+      />
+      @if (query) {
+        <button class="search-clear" type="button" aria-label="Limpiar búsqueda" (click)="clearSearch()">×</button>
+      }
+    </div>
+
+    <div class="popular-searches">
+      <span>Popular:</span>
+      <button type="button" (click)="applyQuery('publicar')">Publicar</button>
+      <button type="button" (click)="applyQuery('atajos')">Atajos</button>
+      <button type="button" (click)="applyQuery('contraseña')">Contraseña</button>
+      <button type="button" (click)="applyQuery('importar')">Importar</button>
+      <button type="button" (click)="applyQuery('remix')">Remix</button>
+    </div>
+
+    <div class="quick-links">
+      <a routerLink="/getting-started" class="quick-link">
+        <span class="quick-icon">🚀</span>
+        <span><strong>Guía de inicio</strong><small>Tu primera escena paso a paso</small></span>
+      </a>
+      <a routerLink="/about" class="quick-link">
+        <span class="quick-icon">✦</span>
+        <span><strong>Sobre el proyecto</strong><small>Qué es CARXY y cómo funciona</small></span>
+      </a>
+      <a routerLink="/help" fragment="seguridad" class="quick-link">
+        <span class="quick-icon">🛡</span>
+        <span><strong>Cuenta y seguridad</strong><small>Protege tu acceso y tus datos</small></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="help-layout">
+    <aside class="help-sidebar">
+      <p class="sidebar-title">Categorías</p>
+      @for (category of categories; track category.id) {
+        <button
+          type="button"
+          class="category-btn"
+          [class.active]="activeCategory === category.id"
+          [attr.aria-pressed]="activeCategory === category.id"
+          (click)="selectCategory(category.id)"
+        >
+          <span class="cat-icon" aria-hidden="true">{{ category.icon }}</span>
+          <span class="cat-label">{{ category.label }}</span>
+          <span class="cat-count">{{ countFor(category.id) }}</span>
+        </button>
+      }
+
+      <div class="sidebar-card">
+        <span class="sidebar-card-icon" aria-hidden="true">💬</span>
+        <strong>¿No encuentras respuesta?</strong>
+        <p>Abre un issue en GitHub y cuéntanos qué necesitas.</p>
+        <a href="https://github.com/Candelo30/Carxy-Renewal/issues" target="_blank" rel="noopener noreferrer">
+          Ir a GitHub ↗
+        </a>
+      </div>
+    </aside>
+
+    <div class="help-content">
+      <div class="results-head">
+        <div>
+          <p class="eyebrow">DOCUMENTACIÓN</p>
+          <h2>{{ activeCategoryLabel }}</h2>
+        </div>
+        <span class="results-count">{{ filteredArticles.length }} {{ filteredArticles.length === 1 ? 'artículo' : 'artículos' }}</span>
+      </div>
+
+      @if (filteredArticles.length) {
+        <div class="article-list">
+          @for (article of filteredArticles; track article.id) {
+            <article class="article-card" [id]="article.id" [class.open]="expandedId === article.id">
+              <button
+                type="button"
+                class="article-head"
+                [attr.aria-expanded]="expandedId === article.id"
+                [attr.aria-controls]="'article-body-' + article.id"
+                (click)="toggleArticle(article.id)"
+              >
+                <span class="article-icon" aria-hidden="true">{{ article.icon }}</span>
+                <span class="article-heading">
+                  <span class="article-cat">{{ categoryLabel(article.category) }}</span>
+                  <strong>{{ article.title }}</strong>
+                  <small>{{ article.summary }}</small>
+                </span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </button>
+
+              @if (expandedId === article.id) {
+                <div class="article-body" [id]="'article-body-' + article.id">
+                  @for (paragraph of article.body; track $index) {
+                    <p>{{ paragraph }}</p>
+                  }
+
+                  @if (article.steps?.length) {
+                    <ol class="article-steps">
+                      @for (step of article.steps; track $index) {
+                        <li><span aria-hidden="true">{{ $index + 1 }}</span>{{ step }}</li>
+                      }
+                    </ol>
+                  }
+
+                  @if (article.id === 'atajos') {
+                    <div class="shortcut-groups">
+                      <h4>Teclado</h4>
+                      <div class="shortcut-table">
+                        @for (row of shortcuts; track row.keys) {
+                          <div class="shortcut-row">
+                            <kbd>{{ row.keys }}</kbd>
+                            <span>{{ row.action }}</span>
+                          </div>
+                        }
+                      </div>
+                      <h4>Ratón y pantallas táctiles</h4>
+                      <div class="shortcut-table">
+                        @for (row of mouseShortcuts; track row.keys) {
+                          <div class="shortcut-row">
+                            <kbd>{{ row.keys }}</kbd>
+                            <span>{{ row.action }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (article.tip) {
+                    <p class="article-tip"><strong>Consejo:</strong> {{ article.tip }}</p>
+                  }
+
+                  @if (article.action; as action) {
+                    @if (action.external) {
+                      <a class="article-action" [href]="action.external" target="_blank" rel="noopener noreferrer">
+                        {{ action.label }} ↗
+                      </a>
+                    } @else if (action.route) {
+                      <a class="article-action" [routerLink]="action.route" [queryParams]="action.queryParams">
+                        {{ action.label }} →
+                      </a>
+                    }
+                  }
+                </div>
+              }
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="help-empty">
+          <span aria-hidden="true">🔍</span>
+          <h3>No encontramos artículos para «{{ query }}»</h3>
+          <p>Prueba con otra palabra o explora todas las categorías.</p>
+          <button type="button" (click)="clearSearch()">Ver todos los artículos</button>
+        </div>
+      }
+
+      <div class="help-note">
+        <span aria-hidden="true">ℹ️</span>
+        <p>
+          Esta documentación se actualiza con la aplicación. Si detectas información desactualizada,
+          abre un issue indicando el artículo y el cambio necesario.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="help-cta">
+    <div>
+      <p class="eyebrow">SIGUIENTE PASO</p>
+      <h2>¿Listo para crear tu primera escena?</h2>
+      <p>La guía de inicio te acompaña desde la cuenta hasta la publicación.</p>
+    </div>
+    <div class="cta-actions">
+      <a routerLink="/getting-started" class="cta-primary">Empezar la guía</a>
+      <a routerLink="/editor" class="cta-secondary">Abrir el editor</a>
+    </div>
+  </section>
+
+  <app-site-footer />
+</main>

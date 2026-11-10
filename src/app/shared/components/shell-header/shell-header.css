@@ -405,6 +405,43 @@
   flex: none;
 }
 
+/* Acceso directo al centro de ayuda */
+.header-help {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.header-help:hover {
+  border-color: color-mix(in srgb, var(--accent-color) 65%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+  color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.header-help:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.header-help svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* --- Menú desplegable (escritorio y móvil) --- */
 .menu-scrim {
   position: fixed;
@@ -700,6 +737,17 @@
   .header-actions {
     gap: 4px;
   }
+
+  .header-help {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
+  .header-help svg {
+    width: 17px;
+    height: 17px;
+  }
 }
 
 @media (max-width: 460px) {
@@ -722,11 +770,18 @@
   }
 }
 
+@media (max-width: 380px) {
+  .header-help {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-toggle,
   .hamburger-line,
   .btn-presentation,
   .btn-publish,
+  .header-help,
   .menu-link,
   .menu-arrow {
     transition: none;

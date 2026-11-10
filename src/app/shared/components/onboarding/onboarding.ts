@@ -1,13 +1,14 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { OnboardingService } from '../../../core/services/onboarding';
 import { NotificationService } from '../../../core/services/notifications';
 
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [AsyncPipe, FormsModule],
+  imports: [AsyncPipe, FormsModule, RouterLink],
   templateUrl: './onboarding.html',
   styleUrl: './onboarding.css',
 })

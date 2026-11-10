@@ -1,0 +1,6 @@
+Contact: https://github.com/Candelo30/Carxy-Renewal/security/advisories/new
+Contact: https://github.com/Candelo30
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: es, en
+Canonical: https://carxy-f3e27.web.app/.well-known/security.txt
+Policy: https://github.com/Candelo30/Carxy-Renewal/blob/develop/SECURITY.md

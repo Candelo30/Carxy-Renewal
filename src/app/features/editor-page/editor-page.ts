@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription, take } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
@@ -35,6 +36,7 @@ export class EditorPage implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly onboarding = inject(OnboardingService);
   private readonly threeEngine = inject(ThreeEngineService);
   private readonly subscription = new Subscription();
@@ -42,21 +44,36 @@ export class EditorPage implements OnInit, OnDestroy {
   private hasAddedPrimitive = false;
   private hasTransformed = false;
   private hasChangedMaterial = false;
+  private tutorialRequested = false;
 
   ngOnInit(): void {
     this.subscription.add(this.route.queryParamMap.subscribe((params) => {
       if (params.get('publish') === '1') this.publishModalOpen = true;
+      if (params.get('tutorial') === '1') {
+        this.tutorialRequested = true;
+        this.openTutorial();
+        // Quitar el parámetro para que una recarga normal no vuelva a abrir el tutorial.
+        if (isPlatformBrowser(this.platformId)) {
+          void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { tutorial: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+          });
+        }
+      }
     }));
 
-    // Iniciar onboarding si es la primera vez
+    // Mantener el paso actual sincronizado con el servicio.
     this.subscription.add(this.onboarding.state$.subscribe((state) => {
-      this.onboardingOpen = !state.seen;
       this.onboardingStep = state.currentStep;
     }));
 
-    // Si nunca se vio antes, iniciar
-    if (!this.onboarding.state.value.seen) {
-      this.onboarding.start();
+    // Primera visita: abrir el tutorial una sola vez. `start()` marca el estado
+    // como visto para que no reaparezca en cada recarga. Solo se decide en el
+    // navegador porque el servidor no tiene acceso al almacenamiento local.
+    if (isPlatformBrowser(this.platformId) && !this.tutorialRequested && !this.onboarding.state.value.seen) {
+      this.openTutorial();
     }
 
     // Detectar pasos automáticamente del motor 3D
@@ -117,6 +134,12 @@ export class EditorPage implements OnInit, OnDestroy {
   onOnboardingComplete(): void {
     this.onboardingOpen = false;
     this.onboarding.skip(); // Marcar como completado para que no vuelva a aparecer
+  }
+
+  private openTutorial(): void {
+    this.onboarding.reset();
+    this.onboardingStep = 'welcome';
+    this.onboardingOpen = true;
   }
 
   ngOnDestroy(): void {

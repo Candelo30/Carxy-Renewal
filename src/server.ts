@@ -10,7 +10,38 @@ import { join } from 'node:path';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
+app.disable('x-powered-by');
 const angularApp = new AngularNodeAppEngine();
+
+/**
+ * Cabeceras de seguridad para todas las respuestas.
+ * Se aplican antes de los archivos estáticos y del renderizado SSR.
+ */
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
+  );
+  // Permite los popups de Firebase Auth, pero aísla la ventana del resto de orígenes.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  const isHttps = req.secure
+    || forwardedProto === 'https'
+    || (Array.isArray(forwardedProto) && forwardedProto.includes('https'));
+  if (isHttps) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  next();
+});
 
 /**
  * Example Express Rest API endpoints can be defined here.

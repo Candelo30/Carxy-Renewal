@@ -17,7 +17,13 @@
         <div class="step-progress">
           <div class="step-progress-fill" [style.width.%]="getProgressPercent()"></div>
         </div>
-        <span class="step-text">{{ step }}</span>
+        <span class="step-text">
+          @if (step === 'completed') {
+            Completado
+          } @else {
+            Paso {{ getStepNumber(step) }} de {{ getTotalSteps() }}
+          }
+        </span>
       </div>
 
       <h2 class="onboarding-title">{{ label.title }}</h2>
@@ -66,9 +72,12 @@
 
     <!-- Footer con acciones -->
     <footer class="onboarding-footer">
-      @if (step !== 'welcome') {
-        <button class="btn-ghost" type="button" (click)="onboarding.skip()" [disabled]="step === 'completed'">Saltar tutorial</button>
-      }
+      <div class="footer-links">
+        @if (step !== 'welcome') {
+          <button class="btn-ghost" type="button" (click)="onboarding.skip()" [disabled]="step === 'completed'">Saltar tutorial</button>
+        }
+        <a class="btn-help" routerLink="/help" title="Abrir el centro de ayuda">¿Necesitas ayuda?</a>
+      </div>
       <div class="step-actions">
         @if (isLastStep()) {
           <button class="btn-primary" type="button" (click)="finish()">Comenzar a crear</button>

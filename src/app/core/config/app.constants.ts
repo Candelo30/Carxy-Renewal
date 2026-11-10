@@ -7,6 +7,9 @@ export const APP_ROUTES = {
   chat: '/chat',
   admin: '/admin',
   myModels: '/my-models',
+  help: '/help',
+  about: '/about',
+  gettingStarted: '/getting-started',
 } as const;
 
 export const SOCIAL_COLLECTIONS = {
@@ -37,4 +40,5 @@ export const LOCAL_KEYS = {
   preferences: 'forma-3d-preferences',
   draft: 'forma-3d-draft',
   onboarding: 'forma-3d-onboarding',
+  guideProgress: 'forma-3d-guide-progress',
 } as const;

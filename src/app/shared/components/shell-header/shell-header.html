@@ -118,6 +118,13 @@
         </div>
 
         <div class="header-actions">
+          <a class="header-help" routerLink="/help" title="Centro de ayuda" aria-label="Centro de ayuda">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.4 9a2.7 2.7 0 1 1 4.2 2.3c-.9.6-1.6 1.1-1.6 2.2" />
+              <path d="M12 17h.01" />
+            </svg>
+          </a>
           <app-activity-notifications class="compact" />
           <app-account-menu class="compact" />
         </div>
@@ -160,6 +167,19 @@
             </a>
           }
         }
+      </div>
+
+      <div class="menu-section">
+        <p class="menu-section-title">{{ language === 'es' ? 'Recursos' : 'Resources' }}</p>
+        <a routerLink="/getting-started" class="menu-link" (click)="closeMobileMenu()">
+          <span>{{ language === 'es' ? 'Guía de inicio' : 'Getting started' }}</span><span class="menu-arrow">→</span>
+        </a>
+        <a routerLink="/help" class="menu-link" (click)="closeMobileMenu()">
+          <span>{{ language === 'es' ? 'Centro de ayuda' : 'Help center' }}</span><span class="menu-arrow">→</span>
+        </a>
+        <a routerLink="/about" class="menu-link" (click)="closeMobileMenu()">
+          <span>{{ language === 'es' ? 'Sobre nosotros' : 'About us' }}</span><span class="menu-arrow">→</span>
+        </a>
       </div>
 
       @if (user$ | async; as user) {

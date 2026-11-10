@@ -12,6 +12,7 @@ import { AccountMenuComponent } from '../../shared/components/account-menu/accou
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
 import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
 
 @Component({
   selector: 'app-profile-page',
@@ -26,6 +27,7 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
     LoadingSpinner,
     ModelPreviewComponent,
     RouterLink,
+    SiteFooterComponent,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.css',

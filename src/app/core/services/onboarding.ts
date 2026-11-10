@@ -23,6 +23,35 @@ const DEFAULT_STATE: OnboardingState = {
   completedSteps: [],
 };
 
+const ONBOARDING_STEPS: OnboardingStep[] = [
+  'welcome',
+  'add-primitive',
+  'transform',
+  'material',
+  'publish',
+  'completed',
+];
+
+function normalizeState(value: unknown): OnboardingState {
+  const saved = value && typeof value === 'object'
+    ? value as Partial<OnboardingState>
+    : {};
+  const currentStep = saved.currentStep && ONBOARDING_STEPS.includes(saved.currentStep)
+    ? saved.currentStep
+    : 'welcome';
+  const completedSteps = Array.isArray(saved.completedSteps)
+    ? [...new Set(saved.completedSteps.filter(
+      (step): step is OnboardingStep => ONBOARDING_STEPS.includes(step as OnboardingStep),
+    ))]
+    : [];
+  return {
+    seen: saved.seen === true,
+    currentStep,
+    completedSteps,
+    dismissedAt: typeof saved.dismissedAt === 'number' ? saved.dismissedAt : undefined,
+  };
+}
+
 const STEP_LABELS: Record<OnboardingStep, { title: string; description: string }> = {
   welcome: {
     title: 'Bienvenido a CARXY 3D STUDIO',
@@ -67,24 +96,30 @@ export class OnboardingService {
   private readLocal(): OnboardingState {
     if (typeof localStorage === 'undefined') return { ...DEFAULT_STATE };
     try {
-      const raw = localStorage.getItem(LOCAL_KEYS.preferences);
-      if (!raw) return { ...DEFAULT_STATE };
-      const saved = JSON.parse(raw) as { onboarding?: OnboardingState };
-      return saved.onboarding ?? { ...DEFAULT_STATE };
-    } catch {
-      return { ...DEFAULT_STATE };
+      const raw = localStorage.getItem(LOCAL_KEYS.onboarding);
+      if (raw) return normalizeState(JSON.parse(raw));
+
+      // Migración: versiones anteriores guardaban el onboarding dentro de las
+      // preferencias del editor, donde podía sobrescribirse al guardar temas.
+      const legacyRaw = localStorage.getItem(LOCAL_KEYS.preferences);
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw) as { onboarding?: unknown };
+        if (legacy.onboarding) {
+          const migrated = normalizeState(legacy.onboarding);
+          localStorage.setItem(LOCAL_KEYS.onboarding, JSON.stringify(migrated));
+          return migrated;
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo recuperar el estado de onboarding.', error);
     }
+    return { ...DEFAULT_STATE };
   }
 
   private writeLocal(next: OnboardingState): void {
     if (typeof localStorage === 'undefined') return;
     try {
-      const raw = localStorage.getItem(LOCAL_KEYS.preferences);
-      const saved = raw ? JSON.parse(raw) as Record<string, unknown> : {};
-      localStorage.setItem(
-        LOCAL_KEYS.preferences,
-        JSON.stringify({ ...saved, onboarding: next })
-      );
+      localStorage.setItem(LOCAL_KEYS.onboarding, JSON.stringify(next));
     } catch (error) {
       console.warn('No se pudo guardar el estado de onboarding.', error);
     }
