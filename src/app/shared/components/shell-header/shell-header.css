@@ -724,9 +724,15 @@
     display: none;
   }
 
-  /* En login/registro (auth-mode) no hay menú móvil con selector, así que se mantiene visible */
-  :not(.auth-mode) .lang-select {
-    display: none;
+  /* Selector de idioma siempre visible en móvil, también en login/registro */
+  .lang-select {
+    display: inline-flex;
+  }
+
+  .lang-select select {
+    max-width: 110px;
+    width: 100%;
+    font-size: 0.68rem;
   }
 }
 
