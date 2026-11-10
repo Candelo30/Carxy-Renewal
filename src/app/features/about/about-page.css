@@ -814,6 +814,32 @@
   height: auto;
 }
 
+.mockup-hotspot {
+  cursor: pointer;
+  outline: none;
+}
+
+.mockup-hotspot:hover > circle,
+.mockup-hotspot:hover > rect,
+.mockup-hotspot:focus-visible > circle,
+.mockup-hotspot:focus-visible > rect {
+  filter: brightness(1.08);
+}
+
+.mockup-hotspot:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+.mockup-status {
+  margin-top: 12px;
+  margin-bottom: 0;
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .mockup-caption {
   margin-top: 12px;
   color: var(--text-muted);

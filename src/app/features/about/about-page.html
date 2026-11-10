@@ -196,17 +196,17 @@
     </div>
 
     <figure class="origin-mockup">
-      <div class="mockup-frame" aria-hidden="true">
-        <svg viewBox="0 0 920 400" xmlns="http://www.w3.org/2000/svg" role="presentation">
+      <div class="mockup-frame">
+        <svg viewBox="0 0 920 400" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="{{ 'Interactive demo of CARXY original vehicle customizer' | translate }}">
           <defs>
             <linearGradient id="originWindow" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stop-color="#1a2138"/>
               <stop offset="1" stop-color="#232c4e"/>
             </linearGradient>
             <linearGradient id="originCarpaint" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="var(--accent-color)"/>
-              <stop offset="0.55" stop-color="#4f6df5"/>
-              <stop offset="1" stop-color="#8b5cf6"/>
+              <stop offset="0" [attr.stop-color]="selectedExterior.paintStart"/>
+              <stop offset="0.55" [attr.stop-color]="selectedExterior.paintEnd"/>
+              <stop offset="1" [attr.stop-color]="selectedExterior.paintStart"/>
             </linearGradient>
             <linearGradient id="originStage" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stop-color="#141b30"/>
@@ -254,32 +254,55 @@
 
           <!-- Color chip -->
           <rect x="46" y="128" width="212" height="30" rx="15" fill="#000000" opacity="0.45"/>
-          <circle cx="66" cy="143" r="8" fill="#2563eb" stroke="#ffffff" stroke-opacity="0.5"/>
-          <text x="82" y="147" font-size="10.5" fill="#e2e8f0" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Midnight Azure · Metalizado</text>
+          <circle cx="66" cy="143" r="8" [attr.fill]="selectedExterior.swatch" stroke="#ffffff" stroke-opacity="0.5"/>
+          <text x="82" y="147" font-size="10.5" fill="#e2e8f0" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ selectedExterior.label }} · {{ selectedExterior.finish }}</text>
 
           <!-- Customizer panel -->
           <rect x="600" y="58" width="296" height="318" rx="12" fill="var(--surface-panel)" stroke="var(--border-color)"/>
           <text x="620" y="86" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">EXTERIOR</text>
-          <circle cx="632" cy="112" r="12" fill="#e5e7eb"/>
-          <circle cx="672" cy="112" r="12" fill="#111827"/>
-          <circle cx="712" cy="112" r="12" fill="#dc2626"/>
-          <circle cx="752" cy="112" r="12" fill="#2563eb" stroke="var(--accent-color)" stroke-width="3"/>
-          <circle cx="792" cy="112" r="12" fill="#f59e0b"/>
-          <circle cx="832" cy="112" r="12" fill="#10b981"/>
-          <text x="620" y="142" font-size="12.5" font-weight="700" fill="var(--text-primary)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Midnight Azure</text>
-          <text x="620" y="158" font-size="9.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Acabado metalizado</text>
+          @for (option of exteriorOptions; track option.id; let i = $index) {
+            <g class="mockup-hotspot" role="button" tabindex="0"
+               [attr.aria-pressed]="selectedExteriorId === option.id"
+               [attr.aria-label]="option.label"
+               (click)="selectExterior(option.id)"
+               (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectExterior(option.id)">
+              <circle [attr.cx]="632 + ($index * 40)" cy="112" r="12" [attr.fill]="option.swatch"
+                      [attr.stroke]="selectedExteriorId === option.id ? 'var(--accent-color)' : 'transparent'"
+                      stroke-width="3" pointer-events="none"/>
+            </g>
+          }
+          <text x="620" y="142" font-size="12.5" font-weight="700" fill="var(--text-primary)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ selectedExterior.label }}</text>
+          <text x="620" y="158" font-size="9.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ selectedExterior.finish }}</text>
 
           <text x="620" y="192" font-size="9.5" letter-spacing="2.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">INTERIOR</text>
-          <rect x="620" y="204" width="124" height="44" rx="8" fill="#7c4a21"/>
-          <rect x="760" y="204" width="112" height="44" rx="8" fill="#111827"/>
-          <text x="682" y="265" text-anchor="middle" font-size="8.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Cuero coñac</text>
-          <text x="816" y="265" text-anchor="middle" font-size="8.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Negro</text>
-
-          <rect x="620" y="292" width="252" height="40" rx="10" fill="var(--accent-color)"/>
-          <path d="M 652 312 l 5 5 l 9 -11" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-          <text x="752" y="317" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Guardar configuración</text>
+          @for (option of interiorOptions; track option.id; let i = $index) {
+            <g class="mockup-hotspot" role="button" tabindex="0"
+               [attr.aria-pressed]="selectedInteriorId === option.id"
+               [attr.aria-label]="option.label"
+               (click)="selectInterior(option.id)"
+               (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectInterior(option.id)">
+              <rect [attr.x]="620 + ($index * 140)" y="204" width="124" height="44" rx="8" [attr.fill]="option.swatch"
+                    [attr.stroke]="selectedInteriorId === option.id ? 'var(--accent-color)' : 'transparent'"
+                    stroke-width="3"/>
+              <text [attr.x]="682 + ($index * 140)" y="265" text-anchor="middle" font-size="8.5" fill="var(--text-muted)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
+            </g>
+          }
+          <rect x="620" y="292" width="252" height="40" rx="10" fill="var(--accent-color)"
+                class="mockup-hotspot" role="button" tabindex="0"
+                aria-label="{{ 'Guardar configuración' | translate }}"
+                (click)="saveConfiguration()"
+                (keydown)="($event.key === 'Enter' || $event.key === ' ') && saveConfiguration()"/>
+          <path d="M 652 312 l 5 5 l 9 -11" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95" class="mockup-hotspot" pointer-events="none"/>
+          <text x="752" y="317" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">Guardar configuración</text>
         </svg>
       </div>
+      <p class="mockup-status" aria-live="polite">
+        @if (savedAt) {
+          {{ 'Configuración guardada a las ' | translate }}{{ savedAt }} · {{ selectedExterior.label }} · {{ selectedInterior.label }}
+        } @else {
+          {{ 'Selecciona un color exterior e interior y guarda tu configuración.' | translate }}
+        }
+      </p>
       <figcaption class="mockup-caption">
         {{ 'Así lucía la idea original: personaliza color, estilo, características y accesorios antes de comprar tu carro.' | translate }}
       </figcaption>
