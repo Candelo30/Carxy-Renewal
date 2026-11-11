@@ -121,10 +121,10 @@ Las reglas de Storage protegen las operaciones normales del SDK. Los enlaces de 
 
 - La publicación en Firebase depende de que exista el bucket y coincida con `storageBucket`; el código puede probarse localmente, pero una publicación remota no se considera validada hasta completar una subida real.
 - La moderación permite revisar y eliminar publicaciones, pero no hay todavía un flujo para reportarlas desde el feed ni una cola de reportes aunque esté reservado el nombre de colección `reports`.
-- El feed filtra, ordena y pagina en el cliente sobre la colección cargada. Para acotar lecturas, el listener de Firestore del feed público carga como máximo los **120 posts más recientes** (`POSTS_FEED_LIMIT` en `src/app/core/services/social.ts`). Para colecciones más grandes convine añadir paginación con cursores de Firestore y consultas por etiqueta/orden en el servidor.
+- El feed pagina de forma incremental en vivo: la consulta de Firestore sólo pide la ventana actual (`FEED_PAGE_SIZE`, que crece al pulsar «Cargar más modelos»). Búsqueda/etiqueta/orden se aplican sobre la ventana cargada. Para colecciones grandes con búsqueda por servidor, considera cursores (`startAfter`) o un servicio de búsqueda gestionada — ver [`docs/FIRESTORE_DATA_MODEL.md`](docs/FIRESTORE_DATA_MODEL.md).
 - No existe edición colaborativa multiusuario, invitación a espacios de trabajo ni historial compartido.
 - Pagos, planes, suscripciones y contenido exclusivo no están habilitados. Antes de implementarlos hay que definir planes, moneda/país y reglas de propiedad; la autorización de equipos y cobros debe validarse en un backend, no en el cliente.
-- Los tests actuales cubren servicios y componentes en local; no sustituyen pruebas de integración contra Firebase. Para validar reglas, índices y flujos remotos, configura y ejecuta Firebase Emulator Suite o un proyecto de staging con credenciales autorizadas.
+- Los tests actuales cubren servicios y componentes en local; no sustituyen pruebas de integración contra Firebase. Para validar reglas, índices y flujos remotos, sigue [`docs/FIREBASE_EMULATOR_TESTING.md`](docs/FIREBASE_EMULATOR_TESTING.md) (el entorno local de desarrollo no tiene Java; ejecuta las pruebas en CI o en una máquina con el emulador).
 
 ## Desarrollo
 
