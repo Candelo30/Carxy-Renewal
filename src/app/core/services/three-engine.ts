@@ -1559,6 +1559,9 @@ export class ThreeEngineService implements OnDestroy {
     );
     ring.renderOrder = 101;
     group.add(sphere, ring);
+    // Oculto hasta el primer evento de cursor/selección: si el colaborador no
+    // ha movido el ratón aún, el marcador estaría anclado al "arriba".
+    group.visible = false;
     this.scene.add(group);
     this.collaboratorObjects.set(uid, group);
   }
@@ -1579,6 +1582,7 @@ export class ThreeEngineService implements OnDestroy {
   private moveCollaboratorMarker(uid: string, x: number, y: number): void {
     const group = this.collaboratorObjects.get(uid);
     if (!group || !this.camera || !this.canvas) return;
+    group.visible = true;
     // Convertir coordenadas de pantalla (0-1) a mundo 3D cerca de la cámara
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(new THREE.Vector2(x * 2 - 1, -(y * 2 - 1)), this.camera);
