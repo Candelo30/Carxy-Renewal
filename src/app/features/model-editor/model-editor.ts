@@ -30,6 +30,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
+import { EditorStatusService } from '../../core/services/editor-status.service';
 import { LayersPanelComponent } from './layers-panel/layers-panel';
 import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform, ProjectMember, ProjectRole } from '../../core/models/social.models';
 import type {
@@ -114,6 +115,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly editorHistory = inject(EditorHistoryService);
   private readonly collaboration = inject(CollaborationService);
   private readonly themeService = inject(ThemeService);
+  private readonly editorStatus = inject(EditorStatusService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -152,6 +154,8 @@ export class ModelEditor implements OnInit, OnDestroy {
   public snapEnabled = false;
 
   public collaborationOpen = false;
+  public showShortcutsHelp = false;
+  private saveResetTimer: ReturnType<typeof setTimeout> | null = null;
   public collaborators: Array<{ uid: string; displayName: string; color: string; objectId: string | null }> = [];
   public remoteCursors: Map<string, RemoteCursor> = new Map();
   public remoteSelections: Map<string, string | null> = new Map();
@@ -266,7 +270,7 @@ export class ModelEditor implements OnInit, OnDestroy {
           if (!this.projectId || this.isApplyingRemote || !this.canWrite) return;
           const json = this.threeEngine.serializeScene();
           this.lastLocalSceneSaveAt = Date.now();
-          void this.collaboration.saveProjectScene(this.projectId, json);
+          this.saveProjectScene(this.projectId, json);
         });
 
       // Suscribirse a presencias remotas en tiempo real
@@ -278,6 +282,7 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.remotePresences = presences.filter(
           (p) => p.uid !== uid && Date.now() - (p.lastSeen ?? 0) < PRESENCE_TTL_MS,
         );
+        this.editorStatus.onlineCount.set(this.remotePresences.length + 1);
         // Sincronizar colaboradores remotos en el motor 3D para cursores/selecciones
         for (const p of this.remotePresences) {
           this.threeEngine.joinCollaboration(p.uid, p.displayName);
@@ -504,12 +509,38 @@ export class ModelEditor implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }),
       );
+
+      // Toasts de presencia: quién se une y quién se va del proyecto
+      this.subscriptions.add(
+        this.threeEngine.collaboratorJoined$.subscribe((collab) => {
+          if (collab.uid === this.auth.currentUser?.uid) return;
+          this.notifications.info(
+            this.i18n.translate('collab.joined', { name: collab.displayName }),
+            this.i18n.translate('collab.title'),
+          );
+        }),
+      );
+      this.subscriptions.add(
+        this.threeEngine.collaboratorLeft$.subscribe((uid) => {
+          const memberName = this.projectMembers.find((m) => m.userId === uid)?.userName
+            ?? this.remotePresences.find((p) => p.uid === uid)?.displayName
+            ?? 'Alguien';
+          this.notifications.info(
+            this.i18n.translate('collab.left', { name: memberName }),
+            this.i18n.translate('collab.title'),
+          );
+        }),
+      );
     } else {
       // Sin proyecto: guardar en borrador local como antes
       this.subscriptions.add(
         merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
           .pipe(auditTime(800))
-          .subscribe(() => this.localState.saveDraft(this.threeEngine.serializeScene())),
+          .subscribe(() => {
+            this.editorStatus.saveState.set('saving');
+            this.localState.saveDraft(this.threeEngine.serializeScene());
+            this.markSaved();
+          }),
       );
       this.sceneObjects = this.threeEngine.getSceneObjects();
       this.selectedObjectId = this.threeEngine.getSceneObjects().at(-1)?.id ?? '';
@@ -517,6 +548,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.refreshSceneNodes();
       this.loadMaterialsFromEngine();
       this.applyAppearance();
+      this.editorStatus.onlineCount.set(null);
     }
   }
 
@@ -1011,16 +1043,20 @@ export class ModelEditor implements OnInit, OnDestroy {
   onKeyDown(event: KeyboardEvent): void {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return;
     const key = event.key.toLowerCase();
-    if (key === 'z' && (event.ctrlKey || event.metaKey) && !event.shiftKey) { event.preventDefault(); this.undo(); }
-    else if (key === 'y' && (event.ctrlKey || event.metaKey) && !event.shiftKey) { event.preventDefault(); this.redo(); }
-    else if (key === 'z' && (event.ctrlKey || event.metaKey) && event.shiftKey) { event.preventDefault(); this.redo(); }
+    const mod = event.ctrlKey || event.metaKey;
+    if (key === 'z' && mod && !event.shiftKey) { event.preventDefault(); this.undo(); }
+    else if (key === 'y' && mod && !event.shiftKey) { event.preventDefault(); this.redo(); }
+    else if (key === 'z' && mod && event.shiftKey) { event.preventDefault(); this.redo(); }
+    else if (key === 's' && mod) { event.preventDefault(); this.manualSave(); }
+    else if (key === '?' || (key === '/' && event.shiftKey)) { event.preventDefault(); this.showShortcutsHelp = !this.showShortcutsHelp; }
+    else if (key === 'escape' && this.showShortcutsHelp) { event.preventDefault(); this.showShortcutsHelp = false; }
     else if (key === 'g') { event.preventDefault(); this.setGizmoMode('translate'); }
     else if (key === 'r') { event.preventDefault(); this.setGizmoMode('rotate'); }
-    else if (key === 's') { event.preventDefault(); this.setGizmoMode('scale'); }
+    else if (key === 's' && !mod) { event.preventDefault(); this.setGizmoMode('scale'); }
     else if (key === 'delete' || key === 'backspace') { event.preventDefault(); this.deleteSelectedObject(); }
-    else if (key === 'c' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); this.copySelectedToClipboard(); }
-    else if (key === 'v' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); this.pasteFromClipboard(); }
-    else if (key === 'd' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); this.duplicateSelectedObject(); }
+    else if (key === 'c' && mod) { event.preventDefault(); this.copySelectedToClipboard(); }
+    else if (key === 'v' && mod) { event.preventDefault(); this.pasteFromClipboard(); }
+    else if (key === 'd' && mod) { event.preventDefault(); this.duplicateSelectedObject(); }
     else if (key === 'f') { event.preventDefault(); this.focusSelectedNode(); }
     else if (key === 'm') { event.preventDefault(); this.toggleMeasureDistance(); }
     else if (key === '1') { event.preventDefault(); this.setCameraView('perspective'); }
@@ -1395,6 +1431,40 @@ export class ModelEditor implements OnInit, OnDestroy {
     }
   }
 
+  private saveProjectScene(projectId: string, sceneJson: string): void {
+    this.editorStatus.saveState.set('saving');
+    void this.collaboration.saveProjectScene(projectId, sceneJson)
+      .then(() => this.markSaved())
+      .catch(() => this.editorStatus.saveState.set('error'));
+  }
+
+  private markSaved(): void {
+    this.editorStatus.lastSavedAt.set(Date.now());
+    this.editorStatus.saveState.set('saved');
+    if (this.saveResetTimer) clearTimeout(this.saveResetTimer);
+    this.saveResetTimer = setTimeout(() => {
+      if (this.editorStatus.saveState() === 'saved') {
+        this.editorStatus.saveState.set('idle');
+      }
+      this.saveResetTimer = null;
+    }, 4000);
+  }
+
+  private manualSave(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const json = this.threeEngine.serializeScene();
+    this.editorStatus.saveState.set('saving');
+    if (this.projectId) {
+      this.lastLocalSceneSaveAt = Date.now();
+      this.saveProjectScene(this.projectId, json);
+      this.notifications.success(this.i18n.translate('Escena guardada.'), this.i18n.translate('Guardado'));
+    } else {
+      this.localState.saveDraft(json);
+      this.markSaved();
+      this.notifications.success(this.i18n.translate('Borrador guardado.'), this.i18n.translate('Guardado'));
+    }
+  }
+
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
       if (this.projectId) {
@@ -1415,6 +1485,11 @@ export class ModelEditor implements OnInit, OnDestroy {
       clearTimeout(this.transformLockTimer);
       this.transformLockTimer = null;
     }
+    if (this.saveResetTimer) {
+      clearTimeout(this.saveResetTimer);
+      this.saveResetTimer = null;
+    }
+    this.editorStatus.onlineCount.set(null);
     this.autoSaveSub?.unsubscribe();
     this.projectLockSub?.unsubscribe();
     this.remoteSceneSub?.unsubscribe();

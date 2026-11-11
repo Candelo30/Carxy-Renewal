@@ -100,6 +100,7 @@
         <button class="icon-action" [disabled]="!selectedObjectId" (click)="copySelectedToClipboard()" [title]="'Copiar al portapapeles' | translate">📋</button>
         <button class="icon-action" (click)="pasteFromClipboard()" [title]="'Pegar desde portapapeles' | translate">📥</button>
         <button class="icon-action" (click)="captureScreenshot()" [title]="'Capturar imagen del viewport' | translate">📸</button>
+        <button class="icon-action" (click)="showShortcutsHelp = true" [title]="'Atajos de teclado' | translate">?</button>
         <label class="icon-action accent-action" [title]="'Importar escena GLB/GLTF' | translate" [attr.aria-label]="'Importar escena GLB/GLTF' | translate">
           <input #sceneFileInput type="file" accept=".glb,.gltf" (change)="importSceneFile($event)" style="display:none" />
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
@@ -443,4 +444,35 @@
       </button>
     </section>
   </ng-template>
+
+  <!-- Atajos de teclado -->
+  @if (showShortcutsHelp) {
+    <div class="shortcuts-backdrop" (click)="showShortcutsHelp = false"></div>
+    <div class="shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+      <header class="shortcuts-header">
+        <h3 id="shortcuts-title">{{ 'Atajos de teclado' | translate }}</h3>
+        <button class="shortcuts-close" type="button" (click)="showShortcutsHelp = false" [attr.aria-label]="'Cerrar' | translate">✕</button>
+      </header>
+      <div class="shortcuts-grid">
+        <kbd>G</kbd><span>{{ 'Gizmo: mover' | translate }}</span>
+        <kbd>R</kbd><span>{{ 'Gizmo: rotar' | translate }}</span>
+        <kbd>S</kbd><span>{{ 'Gizmo: escalar' | translate }}</span>
+        <kbd>F</kbd><span>{{ 'Enfocar pieza seleccionada' | translate }}</span>
+        <kbd>M</kbd><span>{{ 'Medir distancia' | translate }}</span>
+        <kbd>1</kbd><span>{{ 'Vista perspectiva' | translate }}</span>
+        <kbd>2</kbd><span>{{ 'Vista frontal' | translate }}</span>
+        <kbd>3</kbd><span>{{ 'Vista lado' | translate }}</span>
+        <kbd>4</kbd><span>{{ 'Vista superior' | translate }}</span>
+        <kbd>Supr / ⌫</kbd><span>{{ 'Eliminar seleccionado' | translate }}</span>
+        <kbd>Ctrl/⌘ + Z</kbd><span>{{ 'Deshacer' | translate }}</span>
+        <kbd>Ctrl/⌘ + Shift + Z</kbd><span>{{ 'Rehacer' | translate }}</span>
+        <kbd>Ctrl/⌘ + C</kbd><span>{{ 'Copiar objeto' | translate }}</span>
+        <kbd>Ctrl/⌘ + V</kbd><span>{{ 'Pegar objeto' | translate }}</span>
+        <kbd>Ctrl/⌘ + D</kbd><span>{{ 'Duplicar objeto' | translate }}</span>
+        <kbd>Ctrl/⌘ + S</kbd><span>{{ 'Guardar escena' | translate }}</span>
+        <kbd>Ctrl/⌘ + K</kbd><span>{{ 'Paleta de comandos' | translate }}</span>
+        <kbd>?</kbd><span>{{ 'Mostrar/ocultar esta ayuda' | translate }}</span>
+      </div>
+    </div>
+  }
 </div>

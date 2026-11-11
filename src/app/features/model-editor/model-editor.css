@@ -1126,3 +1126,80 @@ input[type='range'] {
 .project-collab-actions .small-button {
   flex: 1 1 auto;
 }
+/* Atajos de teclado modal */
+.shortcuts-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(8, 10, 16, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.shortcuts-modal {
+  position: fixed;
+  z-index: 90;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 92vw);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-panel);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--surface-main) 60%, transparent);
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shortcuts-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.shortcuts-close {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.shortcuts-close:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.shortcuts-grid kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border: 1px solid var(--border-color);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  white-space: nowrap;
+  justify-self: start;
+}

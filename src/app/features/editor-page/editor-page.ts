@@ -11,6 +11,7 @@ import { OnboardingComponent } from '../../shared/components/onboarding/onboardi
 import { OnboardingService } from '../../core/services/onboarding';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { EditorStatusService } from '../../core/services/editor-status.service';
 
 @Component({
   selector: 'app-editor-page',
@@ -41,6 +42,7 @@ export class EditorPage implements OnInit, OnDestroy {
   private readonly onboarding = inject(OnboardingService);
   private readonly threeEngine = inject(ThreeEngineService);
   private readonly subscription = new Subscription();
+  readonly editorStatus = inject(EditorStatusService);
 
   private hasAddedPrimitive = false;
   private hasTransformed = false;

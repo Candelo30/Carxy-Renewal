@@ -224,3 +224,77 @@
     grid-column: 1 / -1;
   }
 }
+
+/* Barra de estado del editor: badge de guardado + chip de colaboradores */
+.editor-status-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 40;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.editor-status-bar > * {
+  pointer-events: auto;
+}
+
+.save-badge,
+.collab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-panel) 90%, transparent);
+  color: var(--text-primary);
+  font-size: 0.73rem;
+  font-weight: 650;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--surface-main) 35%, transparent);
+}
+
+.save-badge-saving {
+  color: var(--accent-color);
+  border-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color));
+}
+
+.save-badge-saved {
+  color: #34d399;
+  border-color: color-mix(in srgb, #34d399 45%, var(--border-color));
+}
+
+.save-badge-error {
+  color: #f87171;
+  border-color: color-mix(in srgb, #f87171 45%, var(--border-color));
+}
+
+.save-check,
+.save-error-icon {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.save-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: save-spin 0.7s linear infinite;
+}
+
+@keyframes save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.collab-chip strong {
+  font-size: 0.8rem;
+  color: var(--accent-color);
+}

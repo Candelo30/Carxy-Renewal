@@ -22,6 +22,29 @@
 
   <section class="viewer-area">
     <app-model-viewer />
+    <div class="editor-status-bar">
+      @if (editorStatus.saveState() !== 'idle') {
+        <div class="save-badge save-badge-{{ editorStatus.saveState() }}" role="status" aria-live="polite">
+          @if (editorStatus.saveState() === 'saving') {
+            <span class="save-spinner" aria-hidden="true"></span>
+            {{ 'Guardando…' | translate }}
+          } @else if (editorStatus.saveState() === 'saved') {
+            <span class="save-check" aria-hidden="true">✓</span>
+            {{ 'Guardado' | translate }}
+          } @else {
+            <span class="save-error-icon" aria-hidden="true">⚠</span>
+            {{ 'Error al guardar' | translate }}
+          }
+        </div>
+      }
+      @if (editorStatus.onlineCount(); as online) {
+        <div class="collab-chip" [title]="'Colaboradores en línea' | translate">
+          <span aria-hidden="true">👥</span>
+          <strong>{{ online }}</strong>
+          {{ 'en línea' | translate }}
+        </div>
+      }
+    </div>
     <button
       type="button"
       class="panel-toggle"
