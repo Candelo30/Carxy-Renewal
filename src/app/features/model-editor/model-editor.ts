@@ -31,7 +31,7 @@ import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
 import { LayersPanelComponent } from './layers-panel/layers-panel';
-import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform } from '../../core/models/social.models';
+import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform, ProjectMember, ProjectRole } from '../../core/models/social.models';
 import type {
   EditableMaterial,
   PrimitiveType,
@@ -162,6 +162,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public projectSceneLoaded = false;
   public canWrite = false;
   public isProjectOwner = false;
+  public projectMembers: ProjectMember[] = [];
   public remotePresences: ProjectPresence[] = [];
   private autoSaveSub: Subscription | null = null;
   private projectLockSub: Subscription | null = null;
@@ -250,6 +251,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.subscriptions.add(
         this.collaboration.getMembers(this.projectId).subscribe((members) => {
           const uid = this.auth.currentUser?.uid;
+          this.projectMembers = members;
           const member = uid ? members.find((m) => m.userId === uid) : undefined;
           this.isProjectOwner = member?.role === 'owner';
           this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
@@ -1304,6 +1306,77 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   toggleCollaborationPanel(): void {
     this.collaborationOpen = !this.collaborationOpen;
+  }
+
+  get selfUid(): string | null {
+    return this.auth.currentUser?.uid ?? null;
+  }
+
+  get selfName(): string {
+    return this.auth.currentUser?.displayName ?? '';
+  }
+
+  get selfRole(): ProjectRole {
+    if (this.isProjectOwner) return 'owner';
+    return this.canWrite ? 'editor' : 'viewer';
+  }
+
+  get selfRoleLabel(): string {
+    return 'projects.role' + (this.selfRole.charAt(0).toUpperCase() + this.selfRole.slice(1));
+  }
+
+  get onlineMembers(): ProjectMember[] {
+    return this.projectMembers.filter((member) =>
+      this.remotePresences.some((p) => p.uid === member.userId),
+    );
+  }
+
+  get otherMembers(): ProjectMember[] {
+    const uid = this.selfUid;
+    return this.projectMembers.filter((member) => member.userId !== uid);
+  }
+
+  get totalMembers(): number {
+    return this.projectMembers.length;
+  }
+
+  get onlineCount(): number {
+    // Remota + tú mismo (siempre en línea mientras trabajas con proyecto abierto)
+    return this.onlineMembers.length + 1;
+  }
+
+  memberPresence(member: ProjectMember): ProjectPresence | undefined {
+    return this.remotePresences.find((p) => p.uid === member.userId);
+  }
+
+  isMemberOnline(member: ProjectMember): boolean {
+    return !!this.memberPresence(member);
+  }
+
+  memberEditingName(member: ProjectMember): string | null {
+    const presence = this.memberPresence(member);
+    if (!presence?.currentObjectId) return null;
+    const match = this.sceneObjects.find((o) => o.id === presence.currentObjectId);
+    return match?.name ?? null;
+  }
+
+  memberRoleLabel(role: ProjectRole): string {
+    return 'projects.role' + (role.charAt(0).toUpperCase() + role.slice(1));
+  }
+
+  avatarInitial(name?: string): string {
+    const trimmed = (name ?? '').trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
+  }
+
+  colorForUid(uid: string): string {
+    const colors = ['#8b5cf6', '#38bdf8', '#f59e0b', '#34d399', '#fb923c', '#a78bfa', '#f472b6', '#60a5fa'];
+    let hash = 0;
+    for (let i = 0; i < uid.length; i++) {
+      hash = (hash << 5) - hash + uid.charCodeAt(i);
+      hash |= 0;
+    }
+    return colors[Math.abs(hash) % colors.length];
   }
 
   openProjectDetails(): void {

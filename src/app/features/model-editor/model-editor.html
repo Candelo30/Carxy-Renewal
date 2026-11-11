@@ -226,42 +226,68 @@
           <span class="eyebrow">{{ 'COLABORACIÓN' | translate }}</span>
           <h2>{{ projectId ? (projectName || ('projects.project' | translate)) : ('Edición en tiempo real' | translate) }}</h2>
         </div>
-        <button class="icon-action" (click)="toggleCollaborationPanel()" [title]="'Panel de colaboradores' | translate">👥</button>
       </div>
 
       @if (projectId) {
         <div class="project-collab-card">
-          <p class="project-collab-meta">
-            <span class="status-dot" [class.online]="canWrite"></span>
-            {{ canWrite ? ('projects.roleEditor' | translate) : ('projects.roleViewer' | translate) }}
-            @if (isProjectOwner) { · {{ 'projects.owner' | translate }} }
-            · {{ remotePresences.length }} {{ 'Colaboradores activos' | translate }}
-          </p>
+          <div class="project-collab-head">
+            <span class="status-dot online"></span>
+            <span class="project-collab-role">{{ selfRoleLabel | translate }}</span>
+            @if (isProjectOwner) {
+              <span class="owner-chip">{{ 'projects.roleOwner' | translate }}</span>
+            }
+            <span class="collab-count">{{ onlineCount }}/{{ totalMembers }} {{ 'projects.online' | translate }}</span>
+          </div>
           <div class="collaborator-actions project-collab-actions">
             <button class="small-button" type="button" (click)="openProjectDetails()">{{ 'projects.viewDetails' | translate }}</button>
             <button class="small-button" type="button" (click)="copyProjectLink()">{{ 'projects.share' | translate }}</button>
           </div>
         </div>
+
+        <div class="collab-members-block">
+          <p class="collab-members-title">{{ 'projects.otherMembers' | translate }}</p>
+          <div class="presence-list">
+            <div class="presence-row self-row">
+              <span class="collab-avatar" [style.background]="colorForUid(selfUid ?? 'me')">{{ avatarInitial(selfName) }}</span>
+              <div class="presence-info">
+                <span class="presence-name">{{ selfName }} <small class="self-tag">({{ 'Tú' | translate }})</small></span>
+                <div class="presence-sub">
+                  <span class="member-role-chip role-{{ selfRole }}">{{ selfRoleLabel | translate }}</span>
+                  <span class="presence-status online">{{ 'projects.online' | translate }}</span>
+                </div>
+              </div>
+              <span class="presence-dot online"></span>
+            </div>
+            @for (member of otherMembers; track member.id) {
+              <div class="presence-row" [class.offline]="!isMemberOnline(member)">
+                <span class="collab-avatar" [style.background]="colorForUid(member.userId)">{{ avatarInitial(member.userName) }}</span>
+                <div class="presence-info">
+                  <span class="presence-name">{{ member.userName }}</span>
+                  <div class="presence-sub">
+                    <span class="member-role-chip role-{{ member.role }}">{{ memberRoleLabel(member.role) | translate }}</span>
+                    @if (isMemberOnline(member)) {
+                      @if (memberEditingName(member); as editingName) {
+                        <span class="editing-chip">{{ 'projects.editing' | translate: { name: editingName } }}</span>
+                      } @else {
+                        <span class="presence-status online">{{ 'projects.online' | translate }}</span>
+                      }
+                    } @else {
+                      <span class="presence-status offline">{{ 'projects.offline' | translate }}</span>
+                    }
+                  </div>
+                </div>
+                <span class="presence-dot" [class.online]="isMemberOnline(member)"></span>
+              </div>
+            }
+          </div>
+          @if (otherMembers.length === 0) {
+            <p class="empty-state">{{ 'Solas en esta escena' | translate }}</p>
+          }
+        </div>
       }
 
-      <div class="collaborator-list" [class.hidden]="!collaborationOpen">
-        @if (projectId) {
-          @if (remotePresences.length) {
-            <div class="presence-list">
-              @for (p of remotePresences; track p.uid) {
-                <div class="presence-row">
-                  <span class="presence-dot online"></span>
-                  <span class="presence-name">{{ p.displayName }}</span>
-                  @if (p.currentObjectId) {
-                    <span class="presence-status">{{ 'projects.editingObject' | translate }}</span>
-                  }
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-state">{{ 'No hay otros colaboradores en línea.' | translate }}</p>
-          }
-        } @else {
+      @if (!projectId) {
+        <div class="collaborator-list" [class.hidden]="!collaborationOpen">
           @if (collaborators.length) {
             @for (c of collaborators; track c.uid) {
               <div class="collaborator-row">
@@ -275,13 +301,13 @@
           } @else {
             <p class="empty-state">{{ 'Solas en esta escena' | translate }}</p>
           }
-        }
-        <div class="collaborator-actions">
-          <button class="small-button" type="button" (click)="toggleCollaborationPanel()">
-            {{ collaborationOpen ? ('Ocultar panel' | translate) : ('Mostrar colaboradores' | translate) }}
-          </button>
+          <div class="collaborator-actions">
+            <button class="small-button" type="button" (click)="toggleCollaborationPanel()">
+              {{ collaborationOpen ? ('Ocultar panel' | translate) : ('Mostrar colaboradores' | translate) }}
+            </button>
+          </div>
         </div>
-      </div>
+      }
     </section>
   </ng-container>
 

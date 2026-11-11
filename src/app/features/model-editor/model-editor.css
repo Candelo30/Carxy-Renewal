@@ -908,6 +908,142 @@ input[type='range'] {
   gap: 8px;
 }
 
+.collab-members-block {
+  margin-top: 10px;
+}
+
+.collab-members-title {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+}
+
+.collab-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.presence-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.presence-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.self-row {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-panel));
+}
+
+.self-tag {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.presence-row.offline {
+  opacity: 0.55;
+}
+
+.member-role-chip {
+  font-size: 0.6rem;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+}
+
+.member-role-chip.role-owner {
+  background: color-mix(in srgb, #f59e0b 20%, transparent);
+  color: #f8c55d;
+  border-color: color-mix(in srgb, #f59e0b 45%, transparent);
+}
+
+.member-role-chip.role-editor {
+  background: color-mix(in srgb, #38bdf8 18%, transparent);
+  color: #7dd3fc;
+  border-color: color-mix(in srgb, #38bdf8 40%, transparent);
+}
+
+.presence-status {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.presence-status.online {
+  color: #34d399;
+}
+
+.presence-status.offline {
+  color: var(--text-muted);
+}
+
+.editing-chip {
+  font-size: 0.66rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: #7dd3fc;
+  background: color-mix(in srgb, #38bdf8 14%, transparent);
+  border: 1px solid color-mix(in srgb, #38bdf8 40%, transparent);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-collab-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-collab-role {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.owner-chip {
+  font-size: 0.58rem;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #f8c55d;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent);
+}
+
+.collab-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 .presence-row {
   display: flex;
   align-items: center;
