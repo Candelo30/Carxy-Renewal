@@ -1,54 +1,47 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# --- Angular / Vite ---
+dist/
+dist-ssr/
+browser/
+.server/
+*.local.ts
+.env
+.env.local
+.env.*.local
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+# --- Dependencias ---
+node_modules/
+.pnp
+.pnp.js
 
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# --- Build / compilado ---
+lib/
+*.tsbuildinfo
 
-# IDEs and editors
+# --- IDE ---
+.vscode/
 .idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+*.swp
+*.swo
+*~
 
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/mcp.json
-.history/*
-
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-__screenshots__/
-
-# System files
+# --- OS ---
 .DS_Store
 Thumbs.db
 
-# Local audit outputs
-/build-output.txt
-/pages-output.txt
-/test-output.txt
-/i18n-audit.txt
-/data-audit.txt
-/help-missing.json
-/missing-keys.json
-/translation-keys.txt
+# --- Firebase / Functions ---
+functions/.env
+functions/lib/
+functions/node_modules/
+functions/.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
+# --- Tests / coverage ---
+coverage/
+.nyc_output/
+
+# --- Misc ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

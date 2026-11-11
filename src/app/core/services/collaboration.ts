@@ -19,6 +19,7 @@ import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError,
 import { SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { I18nService } from './i18n';
 import { AuthService } from './auth';
+import { EmailService } from './email';
 import {
   Project,
   ProjectMember,
@@ -45,6 +46,7 @@ export class CollaborationService implements OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly auth = inject(AuthService, { optional: true });
   private readonly i18n = inject(I18nService);
+  private readonly emailService = inject(EmailService);
 
   private readonly membersStreams = new Map<string, { stream: BehaviorSubject<ProjectMember[]>; unsub: () => void }>();
   private readonly presencesStreams = new Map<string, { stream: BehaviorSubject<ProjectPresence[]>; unsub: () => void }>();
@@ -426,6 +428,26 @@ export class CollaborationService implements OnDestroy {
       invitation.projectName = (projectSnap.data() as Project).name;
     }
     await setDoc(ref, invitation, { merge: true });
+
+    // Envío del correo de invitación decorado y dinámico
+    try {
+      const appUrl =
+        typeof import.meta !== 'undefined' && import.meta.env
+          ? String(import.meta.env['VITE_APP_URL'] ?? 'https://tu-app.web.app')
+          : 'https://tu-app.web.app';
+      await this.emailService.sendProjectInvitation({
+        to: normalizedEmail,
+        displayName: normalizedEmail,
+        invitedByName: user.displayName,
+        projectName: invitation.projectName,
+        role,
+        acceptUrl: `${appUrl}/proyectos/${projectId}/invitaciones/${invitationId}`,
+        expiresIn: '7 días',
+      });
+    } catch (error) {
+      console.warn('No se pudo enviar el correo de invitación.', error);
+    }
+
     return ref.id;
   }
 

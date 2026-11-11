@@ -18,10 +18,11 @@ import {
 } from '@angular/fire/auth';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
 import { BehaviorSubject, Observable, combineLatest, map, of, switchMap, tap } from 'rxjs';
-import { Firestore, doc, docData, setDoc } from '@angular/fire/firestore';
+import { Firestore, collection, doc, docData, getDocs, query, setDoc, where } from '@angular/fire/firestore';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { User as SocialUser, UserProfile, UserRole } from '../models/social.models';
 import { I18nService } from './i18n';
+import { EmailService } from './email';
 
 const DEFAULT_ROLE: UserRole = 'user';
 const MIN_PASSWORD_LENGTH = 8;
@@ -64,6 +65,7 @@ export class AuthService {
   private readonly i18n = inject(I18nService);
   private readonly auth = inject(Auth, { optional: true });
   private readonly firestore = inject(Firestore, { optional: true });
+  private readonly emailService = inject(EmailService);
   private readonly localUser = new BehaviorSubject<UserProfile | null>(this.loadLocalUser());
 
   /** Usuario de Firebase Auth actual (puede ser null si no está autenticado). */
@@ -129,12 +131,41 @@ export class AuthService {
   async register(email: string, password: string, displayName: string): Promise<void> {
     this.assertPasswordPolicy(password);
     if (this.auth) {
+      if (this.firestore) {
+        try {
+          const existing = await getDocs(query(
+            collection(this.firestore, SOCIAL_COLLECTIONS.privateUsers),
+            where('email', '==', email.trim().toLowerCase()),
+          ));
+          if (!existing.empty) {
+            throw new Error(this.i18n.translate('Ya existe una cuenta con ese correo.'));
+          }
+        } catch (error) {
+          const isFirestoreIndexError = error && typeof error === 'object' && 'code' in error
+            && /failed|index|not-found/i.test(String((error as { code?: unknown }).code));
+          if (!isFirestoreIndexError) throw error;
+          // Firestore sin índice para email: se continúa y Firebase Auth rechazará duplicados.
+        }
+      }
       const credential = await createUserWithEmailAndPassword(this.auth, email, password);
       await updateProfile(credential.user, { displayName });
       try {
         await sendEmailVerification(credential.user);
       } catch (error) {
         console.warn('No se pudo enviar el correo de verificación.', error);
+      }
+      try {
+        const appUrl =
+          typeof import.meta !== 'undefined' && import.meta.env
+            ? String(import.meta.env['VITE_APP_URL'] ?? 'https://tu-app.web.app')
+            : 'https://tu-app.web.app';
+        await this.emailService.sendWelcomeEmail({
+          to: email,
+          displayName,
+          dashboardUrl: `${appUrl}/editor`,
+        });
+      } catch (error) {
+        console.warn('No se pudo enviar el correo de bienvenida.', error);
       }
       if (this.firestore) {
         await setDoc(doc(this.firestore, 'users', credential.user.uid), {
