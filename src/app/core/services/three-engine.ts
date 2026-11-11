@@ -1582,6 +1582,7 @@ export class ThreeEngineService implements OnDestroy {
   updateCollaboratorCursor(uid: string, x: number, y: number): void {
     const collab = this.collaborators.get(uid);
     if (!collab) return;
+    if (x < 0 || x > 1 || y < 0 || y > 1) return;
     collab.x = x;
     collab.y = y;
     collab.hasCursor = true;

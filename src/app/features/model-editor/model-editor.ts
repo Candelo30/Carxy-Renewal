@@ -128,8 +128,8 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly router = inject(Router);
 
   /** Última posición conocida del cursor propio en pantalla (0-100 %). */
-  private ownCursorX = 0;
-  private ownCursorY = 0;
+  private ownCursorX = -1;
+  private ownCursorY = -1;
   /** Última transformación propia enviada a los colaboradores. */
   private ownTransform: PresenceTransform | null = null;
   /** Marca de tiempo del último transform remoto aplicado por colaborador (evita reaplicar). */
