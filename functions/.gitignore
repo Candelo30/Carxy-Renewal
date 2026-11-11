@@ -1,0 +1,13 @@
+# --- Functions specific ---
+.env
+.env.local
+.env.*.local
+node_modules/
+lib/
+*.tsbuildinfo
+.tmp/
+
+# --- Firebase ---
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
