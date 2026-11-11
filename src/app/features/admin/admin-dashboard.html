@@ -339,12 +339,17 @@
                   <table>
                     <thead><tr><th>Usuario</th><th>Rol</th><th>Ingreso</th><th>Acciones</th></tr></thead>
                     <tbody>
-                      <tr *ngFor="let m of projectMembers; trackBy: trackMember">
-                        <td><strong>{{ m.userName || m.userId }}</strong><br /><small class="mono">{{ m.userId }}</small></td>
+                      <tr *ngFor="let m of projectMembers; trackBy: trackMember" [class.deleted-member]="isDeletedMember(m)">
                         <td>
-                          <select [ngModel]="m.role" (change)="onRoleChange(selectedProjectId, m.id, $event)">
+                          <strong><span *ngIf="isDeletedMember(m)">Cuenta eliminada</span><span *ngIf="!isDeletedMember(m)">{{ m.userName || m.userId }}</span></strong>
+                          <br /><small class="mono" *ngIf="!isDeletedMember(m)">{{ m.userId }}</small>
+                          <span class="badge deleted-badge" *ngIf="isDeletedMember(m)">DELETADA</span>
+                        </td>
+                        <td>
+                          <select *ngIf="!isDeletedMember(m)" [ngModel]="m.role" (change)="onRoleChange(selectedProjectId, m.id, $event)">
                             <option *ngFor="let r of projectRoles" [value]="r">{{ r }}</option>
                           </select>
+                          <span class="deleted-role" *ngIf="isDeletedMember(m)">—</span>
                         </td>
                         <td>{{ m.joinedAt | date:'mediumDate' }}</td>
                         <td><button class="small-button danger" (click)="removeMember(selectedProjectId, m.id)">Quitar</button></td>

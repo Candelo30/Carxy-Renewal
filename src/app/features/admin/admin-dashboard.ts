@@ -562,6 +562,11 @@ export class AdminDashboardComponent {
     }
   }
 
+  isDeletedMember(member: ProjectMember): boolean {
+    if (member.userName === 'Cuenta eliminada') return true;
+    return !this.vmSubject.value.users.some((user) => user.uid === member.userId);
+  }
+
   trackUser(_index: number, user: UserProfile): string { return user.uid; }
   trackPost(_index: number, post: Post3D): string { return post.id; }
   trackFeedback(_index: number, feedback: FeedbackMessage): string { return feedback.id; }

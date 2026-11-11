@@ -126,6 +126,9 @@ tbody tr { transition: background 120ms ease; }
 tbody tr:hover td { background: color-mix(in srgb, var(--accent-color) 5%, transparent); }
 tbody tr:last-child td { border-bottom: 0; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; color: var(--text-muted); }
+.members-panel tr.deleted-member td { color: var(--text-muted); }
+.deleted-badge { background: color-mix(in srgb, var(--color-danger) 16%, var(--surface-panel)); color: var(--color-danger); margin-left: 8px; }
+.deleted-role { color: var(--text-muted); font-size: 0.82rem; }
 .muted, .muted-cell { color: var(--text-muted); text-align: center; }
 .muted-cell { padding: 28px 14px; }
 .cell-text { margin: 4px 0 0; color: var(--text-muted); font-size: 0.79rem; max-width: 460px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45; }
