@@ -130,6 +130,31 @@ export class SocialService {
       ).pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))))
     : this.localPosts.asObservable().pipe(map((posts) => posts.filter((post) => !post.isPrivate)));
 
+  /**
+   * Ventana en vivo del feed público: emite los `limit` posts más recientes
+   * (isPrivate == false, ordenados por createdAt desc) y se actualiza en tiempo
+   * real con los cambios de Firestore. Usar junto a `feedLimit$` para la paginación
+   * "Cargar más" (el límite crece con cada clic; siempre relee la ventana completa).
+   */
+  getRecentPublicPosts(max: number): Observable<Post3D[]> {
+    if (!this.firestore) {
+      return this.localPosts.asObservable().pipe(
+        map((posts) => posts.filter((post) => !post.isPrivate).slice(0, max)),
+      );
+    }
+    return collectionData(
+      query(
+        collection(this.firestore, SOCIAL_COLLECTIONS.posts),
+        where('isPrivate', '==', false),
+        orderBy('createdAt', 'desc'),
+        limit(Math.max(1, max)),
+      ),
+      { idField: 'id' },
+    ).pipe(
+      map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))),
+    );
+  }
+
   readonly allPosts$: Observable<Post3D[]> = this.firestore
     ? collectionData(query(collection(this.firestore, SOCIAL_COLLECTIONS.posts), orderBy('createdAt', 'desc')), { idField: 'id' })
         .pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))))

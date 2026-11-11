@@ -13,7 +13,9 @@ import {
   firstValueFrom,
   map,
   of,
+  shareReplay,
   startWith,
+  switchMap,
   take,
 } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
@@ -88,8 +90,7 @@ export class FeedPage {
   private readonly search$ = new BehaviorSubject('');
   private readonly tag$ = new BehaviorSubject('');
   private readonly sort$ = new BehaviorSubject<FeedSort>('recent');
-  private readonly visibleCount$ = new BehaviorSubject(FEED_PAGE_SIZE);
-  private readonly urlSync$ = new Subject<void>();
+    private readonly urlSync$ = new Subject<void>();
   private readonly viewedPosts = new Set<string>();
   private pendingScrollPostId: string | null = null;
 
@@ -108,24 +109,34 @@ export class FeedPage {
   error = '';
   mobileMenuOpen = false;
 
-  readonly posts$: Observable<FeedViewModel | null> = combineLatest([
-    this.socialService.posts$.pipe(
-      catchError((error: unknown) => {
-        console.error('No se pudo cargar el feed de la comunidad.', error);
-        const message = error instanceof Error ? error.message : '';
-        this.error = message.includes('The query requires an index')
-          ? this.i18n.translate('Falta desplegar un índice de Firestore para el feed. Ejecuta `firebase deploy --only firestore:indexes`.')
-          : message || this.i18n.translate('No se pudo cargar el feed.');
-        this.notifications.error(this.error, this.i18n.translate('No se pudo cargar la comunidad'));
-        return of([] as Post3D[]);
-      }),
+  /** Número máximo de documentos solicitados en la ventana del feed (crece al pulsar "Cargar más"). */
+  private readonly feedLimit$ = new BehaviorSubject(FEED_PAGE_SIZE);
+  private readonly feedPosts$ = this.feedLimit$.pipe(
+    switchMap((limit) =>
+      this.socialService.getRecentPublicPosts(limit).pipe(
+        catchError((error: unknown) => {
+          console.error('No se pudo cargar el feed de la comunidad.', error);
+          const message = error instanceof Error ? error.message : '';
+          this.error = message.includes('The query requires an index')
+            ? this.i18n.translate('Falta desplegar un índice de Firestore para el feed. Ejecuta `firebase deploy --only firestore:indexes`.')
+            : message || this.i18n.translate('No se pudo cargar el feed.');
+          this.notifications.error(this.error, this.i18n.translate('No se pudo cargar la comunidad'));
+          return of([] as Post3D[]);
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      ),
     ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  readonly posts$: Observable<FeedViewModel | null> = combineLatest([
+    this.feedPosts$,
     this.search$,
     this.tag$,
     this.sort$,
-    this.visibleCount$,
+    this.feedLimit$,
   ]).pipe(
-    map(([posts, query, tag, sort, visible]) => {
+    map(([posts, query, tag, sort, limit]) => {
       const term = query.trim().toLowerCase();
       let filtered = [...(posts ?? [])];
 
@@ -160,9 +171,9 @@ export class FeedPage {
       );
 
       return {
-        items: filtered.slice(0, visible),
+        items: filtered,
         total: filtered.length,
-        hasMore: filtered.length > visible,
+        hasMore: (posts?.length ?? 0) >= limit,
         stats,
       } satisfies FeedViewModel;
     }),
@@ -171,7 +182,7 @@ export class FeedPage {
 
   readonly feed = toSignal(this.posts$, { initialValue: null });
 
-  readonly allTags$ = this.socialService.posts$.pipe(
+  readonly allTags$ = this.feedPosts$.pipe(
     map((posts) => {
       const tags = new Set<string>();
       for (const post of posts ?? []) {
@@ -199,11 +210,11 @@ export class FeedPage {
       this.sort$.next(sort);
 
       if (filtersChanged) {
-        this.visibleCount$.next(FEED_PAGE_SIZE);
+        this.feedLimit$.next(FEED_PAGE_SIZE);
       }
 
       if (postId) {
-        this.visibleCount$.next(200);
+        this.feedLimit$.next(200);
         this.pendingScrollPostId = postId;
         this.highlightedPostId.set(postId);
       }
@@ -382,7 +393,7 @@ export class FeedPage {
   setSearch(term: string): void {
     this.searchTerm = term;
     this.search$.next(term);
-    this.visibleCount$.next(FEED_PAGE_SIZE);
+    this.feedLimit$.next(FEED_PAGE_SIZE);
     this.urlSync$.next();
   }
 
@@ -390,14 +401,14 @@ export class FeedPage {
     const next = this.selectedTag === tag ? '' : tag;
     this.selectedTag = next;
     this.tag$.next(next);
-    this.visibleCount$.next(FEED_PAGE_SIZE);
+    this.feedLimit$.next(FEED_PAGE_SIZE);
     this.urlSync$.next();
   }
 
   setSort(sort: FeedSort): void {
     this.sort = sort;
     this.sort$.next(sort);
-    this.visibleCount$.next(FEED_PAGE_SIZE);
+    this.feedLimit$.next(FEED_PAGE_SIZE);
     this.urlSync$.next();
   }
 
@@ -408,12 +419,12 @@ export class FeedPage {
     this.search$.next('');
     this.tag$.next('');
     this.sort$.next('recent');
-    this.visibleCount$.next(FEED_PAGE_SIZE);
+    this.feedLimit$.next(FEED_PAGE_SIZE);
     this.writeUrl();
   }
 
   loadMore(): void {
-    this.visibleCount$.next(this.visibleCount$.value + FEED_PAGE_SIZE);
+    this.feedLimit$.next(this.feedLimit$.value + FEED_PAGE_SIZE);
   }
 
   hasActiveFilters(): boolean {
