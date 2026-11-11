@@ -975,8 +975,23 @@ export class SocialService {
 
     if (!this.firestore) {
       const ownedPosts = this.localPosts.value.filter((post) => post.authorId === uid || post.author.uid === uid);
-      this.persistLocalPosts(this.localPosts.value.filter((post) => !ownedPosts.includes(post)));
-      const deletedPostIds = new Set(ownedPosts.map((post) => post.id));
+      const likedPostIds = new Set(this.localLikes.value[uid] ?? []);
+      const ownedIds = new Set(ownedPosts.map((post) => post.id));
+
+      // Decrementa los likes de los posts que el usuario haya marcado (no propios)
+      // y filtra los posts propios, antes de persistir.
+      const postsAfterDelete = this.localPosts.value
+        .filter((post) => !ownedIds.has(post.id))
+        .map((item) => {
+          if (!likedPostIds.has(item.id)) return item;
+          const next = Math.max(0, item.likes - 1);
+          return { ...item, likes: next, likesCount: next };
+        });
+      this.persistLocalPosts(postsAfterDelete);
+      this.writeLocal(LOCAL_KEYS.likes, { ...this.localLikes.value, [uid]: [] });
+      this.localLikes.next({ ...this.localLikes.value, [uid]: [] });
+
+      const deletedPostIds = ownedIds;
       const comments = this.readLocal<Record<string, Comment[]>>(LOCAL_KEYS.comments, {});
       for (const [postId, entries] of Object.entries(comments)) {
         const remaining = entries.filter((comment) => comment.author.uid !== uid);
@@ -1033,13 +1048,41 @@ export class SocialService {
       ...ownPostsSnapshot.docs.map((post) => [post.id, post] as const),
       ...publicPostsSnapshot.docs.map((post) => [post.id, post] as const),
     ]);
+
+    // 1) Limpia los likes dados por el usuario sobre posts de otros (y propios).
+    //    `likedPosts` guarda los postIds liked, incluidos los privados, así que
+    //    cubrimos más que solo los públicos. Se decrementa el contador.
+    const likedPostsSnapshot = await getDocs(collection(this.firestore, `users/${uid}/likedPosts`));
+    for (const likeDoc of likedPostsSnapshot.docs) {
+      const postId = likeDoc.id;
+      const postRef = doc(this.firestore, SOCIAL_COLLECTIONS.posts, postId);
+      const likeRef = doc(postRef, 'likes', uid);
+      const [postSnap, existingLike] = await Promise.all([getDoc(postRef), getDoc(likeRef)]);
+      if (postSnap.exists() && existingLike.exists()) {
+        await deleteDoc(likeRef);
+        await updateDoc(postRef, { likes: increment(-1), likesCount: increment(-1) });
+      }
+      await deleteDoc(likeDoc.ref);
+    }
+    // Barrido defensivo: por si `likedPosts` no está sincronizado, revisa likes
+    // del usuario en los posts que ya tenemos cargados (propios y públicos).
+    for (const post of postsById.values()) {
+      const likeRef = doc(post.ref, 'likes', uid);
+      const existingLike = await getDoc(likeRef);
+      if (existingLike.exists()) {
+        await deleteDoc(likeRef);
+        await updateDoc(post.ref, { likes: increment(-1), likesCount: increment(-1) });
+      }
+    }
+
     const commentRefs: DocumentReference[] = [];
     for (const post of postsById.values()) {
       const comments = await getDocs(collection(post.ref, 'comments'));
       const isOwnedPost = post.data()['authorId'] === uid
         || (post.data()['author'] as Record<string, unknown> | undefined)?.['uid'] === uid;
+      if (isOwnedPost) continue; // Los posts propios borran sus subcolecciones completas más abajo.
       for (const comment of comments.docs) {
-        if (isOwnedPost || (comment.data()['author'] as Record<string, unknown> | undefined)?.['uid'] === uid) {
+        if ((comment.data()['author'] as Record<string, unknown> | undefined)?.['uid'] === uid) {
           commentRefs.push(comment.ref);
         }
       }
@@ -1092,6 +1135,20 @@ export class SocialService {
       }
     }));
     await this.deleteFirestoreDocuments(commentRefs);
+
+    // Vacía subcolecciones de los posts propios (comentarios y likes) antes de borrarlos.
+    const ownedSubRefs: DocumentReference[] = [];
+    for (const post of ownPostsSnapshot.docs) {
+      const [comments, likes] = await Promise.all([
+        getDocs(collection(post.ref, 'comments')),
+        getDocs(collection(post.ref, 'likes')),
+      ]);
+      ownedSubRefs.push(...comments.docs.map((doc) => doc.ref), ...likes.docs.map((doc) => doc.ref));
+    }
+    if (ownedSubRefs.length) {
+      await this.deleteFirestoreDocuments(ownedSubRefs);
+    }
+
     await this.deleteFirestoreDocuments(ownPostsSnapshot.docs.map((post) => post.ref));
 
     const relationshipRefs: DocumentReference[] = [
@@ -1101,6 +1158,32 @@ export class SocialService {
       ...followings.docs.map((follow) => doc(userRef, 'followers', follow.id)),
     ];
     await this.deleteFirestoreDocuments(relationshipRefs);
+
+    // Anonimiza o elimina la pertenencia del usuario en proyectos colaborativos.
+    // - En proyectos donde es dueño/a, conserva la fila pero anonimiza el nombre/foto
+    //   para no dejar huérfanos proyectos a medio dueño.
+    // - En el resto, elimina la fila: el usuario ya no tendrá acceso y no
+    //   aparecerá como colaborador.
+    const db = this.firestore;
+    if (!db) throw new Error('Firestore no está disponible.');
+    const memberships = await getDocs(query(
+      collection(db, SOCIAL_COLLECTIONS.projectMembers),
+      where('userId', '==', uid),
+    ));
+    const ownedMemberIds: string[] = [];
+    for (const membership of memberships.docs) {
+      const data = membership.data() as Record<string, unknown>;
+      if (data['role'] === 'owner' || (data['projectId'] && await this.isProjectOwner(String(data['projectId']), uid))) {
+        ownedMemberIds.push(membership.id);
+        continue;
+      }
+      await deleteDoc(membership.ref);
+    }
+    await Promise.all(ownedMemberIds.map((memberId) => updateDoc(
+      doc(db, SOCIAL_COLLECTIONS.projectMembers, memberId),
+      { userName: 'Cuenta eliminada', userPhotoURL: null },
+    )));
+
     await deleteDoc(doc(this.firestore, SOCIAL_COLLECTIONS.privateUsers, uid));
     await deleteDoc(userRef);
   }
@@ -1224,6 +1307,16 @@ export class SocialService {
       if (error && typeof error === 'object' && 'code' in error
         && error.code === 'storage/object-not-found') return;
       throw error;
+    }
+  }
+
+  private async isProjectOwner(projectId: string, uid: string): Promise<boolean> {
+    if (!this.firestore) return false;
+    try {
+      const projectSnap = await getDoc(doc(this.firestore, SOCIAL_COLLECTIONS.projects, projectId));
+      return projectSnap.exists() && projectSnap.data()?.['ownerId'] === uid;
+    } catch {
+      return false;
     }
   }
 

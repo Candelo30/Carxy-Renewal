@@ -907,10 +907,10 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
     'Avec Firebase configuré, le profil public et les publications sont stockés dans Firestore, et les fichiers GLB et miniatures dans Storage. Les règles de sécurité limitent qui peut lire et écrire chaque document.',
     'Com o Firebase configurado, o perfil público e as publicações são armazenados no Firestore, e os arquivos GLB e miniaturas no Storage. As regras de segurança limitam quem pode ler e gravar cada documento.',
   ),
-  'Puedes eliminar tu cuenta desde el menú de cuenta. Se borran tu perfil, tus publicaciones y tus seguimientos; los mensajes se conservan como «Cuenta eliminada» para no romper las conversaciones de otras personas.': t(
-    'You can delete your account from the account menu. Your profile, publications and follows are deleted; messages are kept as “Deleted account” so other people’s conversations are not broken.',
-    'Vous pouvez supprimer votre compte depuis le menu du compte. Votre profil, vos publications et vos abonnements sont supprimés ; les messages sont conservés sous « Compte supprimé » pour ne pas interrompre les conversations des autres.',
-    'Você pode excluir sua conta no menu da conta. Seu perfil, publicações e seguidores são apagados; as mensagens são mantidas como “Conta excluída” para não quebrar as conversas de outras pessoas.',
+  'Puedes eliminar tu cuenta desde el menú de cuenta. Se borran tu perfil, tus publicaciones y tus seguimientos, tus likes y tus guardados. Los mensajes se conservan como «Cuenta eliminada» para no romper las conversaciones de otras personas.': t(
+    'You can delete your account from the account menu. Your profile, publications, follows, likes and saved posts are deleted; messages are kept as "Deleted account" so other people\'s conversations are not broken.',
+    'Vous pouvez supprimer votre compte depuis le menu du compte. Votre profil, vos publications, vos abonnements, vos j\'aimes et vos enregistrements sont supprimés ; les messages sont conservés sous « Compte supprimé » pour ne pas interrompre les conversations des autres.',
+    'Você pode excluir sua conta no menu da conta. Seu perfil, publicações, seguidores, curtidas e salvos são apagados; as mensagens são mantidas como "Conta excluída" para não quebrar as conversas de outras pessoas.',
   ),
   'Desplázate hasta «Eliminar cuenta».': t(
     'Scroll to “Delete account”.',

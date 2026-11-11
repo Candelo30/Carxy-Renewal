@@ -367,7 +367,7 @@ const ARTICLES: HelpArticle[] = [
     body: [
       'En modo local, las cuentas, publicaciones, borradores y preferencias se guardan en el almacenamiento del navegador. Nada se envía a un servidor y borrar los datos del sitio elimina esa información.',
       'Con Firebase configurado, el perfil público y las publicaciones se guardan en Firestore, y los archivos GLB y las miniaturas en Storage. Las reglas de seguridad limitan quién puede leer y escribir cada documento.',
-      'Puedes eliminar tu cuenta desde el menú de cuenta. Se borran tu perfil, tus publicaciones y tus seguimientos; los mensajes se conservan como «Cuenta eliminada» para no romper las conversaciones de otras personas.',
+      'Puedes eliminar tu cuenta desde el menú de cuenta. Se borran tu perfil, tus publicaciones y tus seguimientos, tus likes y tus guardados. Los mensajes se conservan como «Cuenta eliminada» para no romper las conversaciones de otras personas.',
     ],
     steps: [
       'Abre el menú de cuenta y entra en «Seguridad».',
