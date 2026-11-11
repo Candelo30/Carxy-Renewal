@@ -130,7 +130,7 @@ export class ThreeEngineService implements OnDestroy {
   private arHitTestSource?: XRHitTestSource;
   private arReticle?: THREE.Mesh;
   private arReferenceSpace?: XRReferenceSpace;
-  private readonly collaborators = new Map<string, { displayName: string; color: string; objectId: string | null; x: number; y: number }>();
+  private readonly collaborators = new Map<string, { displayName: string; color: string; objectId: string | null; x: number; y: number; hasCursor: boolean }>();
   private readonly collaboratorObjects = new Map<string, THREE.Group>();
   private readonly layers = new Map<string, Set<THREE.Object3D>>();
   private readonly objectLayer = new Map<THREE.Object3D, string>();
@@ -1460,7 +1460,7 @@ export class ThreeEngineService implements OnDestroy {
     // El cursor propio nunca se dibuja como colaborador remoto.
     if (uid === this.ownCursorUid) return;
     const color = this.collaboratorColor(uid);
-    this.collaborators.set(uid, { displayName, color, objectId: null, x: 0, y: 0 });
+    this.collaborators.set(uid, { displayName, color, objectId: null, x: 0, y: 0, hasCursor: false });
     this.collaboratorJoined$.next({ uid, displayName, color });
     this.spawnCollaboratorMarker(uid, color);
   }
@@ -1483,6 +1483,7 @@ export class ThreeEngineService implements OnDestroy {
         objectId: null,
         x: 0,
         y: 0,
+        hasCursor: false,
       });
     }
     this.removeCollaboratorMarker(uid);
@@ -1492,6 +1493,7 @@ export class ThreeEngineService implements OnDestroy {
     if (!this.ownCursorUid || !this.canvas) return;
     const collab = this.collaborators.get(this.ownCursorUid);
     if (!collab) return;
+    collab.hasCursor = true;
     this.moveCollaboratorMarker(this.ownCursorUid, x, y);
     this.remoteCursor$.next({ uid: this.ownCursorUid, x, y, color: collab.color });
   }
@@ -1501,6 +1503,7 @@ export class ThreeEngineService implements OnDestroy {
     if (!collab) return;
     collab.x = x;
     collab.y = y;
+    collab.hasCursor = true;
     this.moveCollaboratorMarker(uid, x, y);
     this.remoteCursor$.next({ uid, x, y, color: collab.color });
   }
@@ -1595,20 +1598,14 @@ export class ThreeEngineService implements OnDestroy {
 
   private updateCollaboratorMarker(uid: string): void {
     const group = this.collaboratorObjects.get(uid);
-    if (!group) return;
     const collab = this.collaborators.get(uid);
-    if (!collab) return;
-    // Si hay un objeto seleccionado, mover el marcador cerca de él
-    if (collab.objectId) {
-      const target = this.objects.find((item) => item.id === collab.objectId)?.object;
-      if (target) {
-        const pos = new THREE.Vector3();
-        target.getWorldPosition(pos);
-        pos.y += 0.5;
-        group.position.copy(pos);
-        return;
-      }
+    if (!group || !collab) return;
+    // El marcador sigue el cursor del colaborador (si aún no lo movió, permanece oculto).
+    if (collab.hasCursor) {
+      this.moveCollaboratorMarker(uid, collab.x, collab.y);
+      return;
     }
+    group.visible = false;
   }
 
   public ngOnDestroy(): void {
