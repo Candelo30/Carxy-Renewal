@@ -270,7 +270,12 @@ export class ModelEditor implements OnInit, OnDestroy {
       // Suscribirse a presencias remotas en tiempo real
       this.presenceSub = this.collaboration.getPresences(this.projectId).subscribe((presences) => {
         const uid = this.auth.currentUser?.uid;
-        this.remotePresences = presences.filter((p) => p.uid !== uid);
+        // Descartar "fantasmas": colaboradores isOnline=true pero lastSeen desactualizado
+        // (pestaña cerrada / navegador matado sin llegar a clearPresence).
+        const PRESENCE_TTL_MS = 45000;
+        this.remotePresences = presences.filter(
+          (p) => p.uid !== uid && Date.now() - (p.lastSeen ?? 0) < PRESENCE_TTL_MS,
+        );
         // Sincronizar colaboradores remotos en el motor 3D para cursores/selecciones
         for (const p of this.remotePresences) {
           this.threeEngine.joinCollaboration(p.uid, p.displayName);
@@ -391,18 +396,10 @@ export class ModelEditor implements OnInit, OnDestroy {
       }));
 
       // Loguear cuando se selecciona un objeto (selectionChanged ya existe arriba)
-      // Loguear transformaciones (movimiento/rotación/escala) de objetos seleccionados
-      this.subscriptions.add(this.threeEngine.transformChanged$.subscribe(() => {
+      // Enviar transform propia a colaboradores (audit 150ms; presencia agregada)
+      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(150)).subscribe(() => {
         const selId = this.threeEngine.getSelectedNodeId();
         if (selId && this.canWrite) {
-          // Bloquear el objeto mientras se transforma (se libera al soltar el ratón)
-          if (this.transformLockTimer) clearTimeout(this.transformLockTimer);
-          void this.collaboration.lockObject(this.projectId!, selId, this.auth.currentUser?.uid ?? '');
-          this.transformLockTimer = setTimeout(() => {
-            void this.collaboration.unlockObject(this.projectId!, selId);
-          }, 3000);
-          logActivityDebounced('object_updated', selId, 'object', this.threeEngine.sceneJson);
-          // Enviar la transformación propia a los colaboradores en tiempo real
           const node = this.threeEngine.getSelectedSceneNodes().find((n) => n.id === selId);
           if (node) {
             this.ownTransform = {
@@ -414,6 +411,26 @@ export class ModelEditor implements OnInit, OnDestroy {
             };
             this.presenceWrite$.next();
           }
+        }
+      }));
+
+      // Bloquear el objeto mientras se transforma (audit 700ms; se libera 3s tras el último cambio)
+      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(700)).subscribe(() => {
+        const selId = this.threeEngine.getSelectedNodeId();
+        if (selId && this.canWrite) {
+          if (this.transformLockTimer) clearTimeout(this.transformLockTimer);
+          void this.collaboration.lockObject(this.projectId!, selId, this.auth.currentUser?.uid ?? '');
+          this.transformLockTimer = setTimeout(() => {
+            void this.collaboration.unlockObject(this.projectId!, selId);
+          }, 3000);
+        }
+      }));
+
+      // Registrar actividad de colaboración (audit 3s; no serializar escena en cada cambio)
+      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(3000)).subscribe(() => {
+        const selId = this.threeEngine.getSelectedNodeId();
+        if (selId && this.canWrite) {
+          logActivityDebounced('object_updated', selId, 'object');
         }
       }));
 
@@ -476,6 +493,15 @@ export class ModelEditor implements OnInit, OnDestroy {
           );
         }
       });
+
+      // Sincronizar los locks del proyecto desde Firestore: marca como bloqueados
+      // para este editor los objetos que otros clientes hayan bloqueado.
+      this.subscriptions.add(
+        this.collaboration.watchProjectLocks(this.projectId).subscribe((entries) => {
+          this.threeEngine.setRemoteLocks(entries);
+          this.cdr.detectChanges();
+        }),
+      );
     } else {
       // Sin proyecto: guardar en borrador local como antes
       this.subscriptions.add(

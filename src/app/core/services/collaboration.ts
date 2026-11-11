@@ -314,6 +314,31 @@ export class CollaborationService implements OnDestroy {
     await deleteDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}/locks/${objectId}`));
   }
 
+  /**
+   * Observa en tiempo real todos los locks del proyecto (projects/{id}/locks).
+   * Permite que los demás clientes sepan qué objetos están bloqueados por otros.
+   */
+  watchProjectLocks(projectId: string): Observable<{ objectId: string; lockedBy: string }[]> {
+    const db = this.firestore;
+    if (!db || !projectId) return of([]);
+    try {
+      const q = collection(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}/locks`);
+      return collectionData(q, { idField: 'objectId' }).pipe(
+        map((items) =>
+          (items as Array<{ objectId: string; lockedBy?: string }>)
+            .filter((item) => typeof item?.lockedBy === 'string' && item.lockedBy.length > 0)
+            .map((item) => ({ objectId: item.objectId, lockedBy: item.lockedBy as string })),
+        ),
+        catchError((err) => {
+          console.warn('No se pudieron observar los bloqueos del proyecto.', err);
+          return of([] as { objectId: string; lockedBy: string }[]);
+        }),
+      );
+    } catch {
+      return of([]);
+    }
+  }
+
   getObjectLock(projectId: string, objectId: string): Observable<{ id: string; lockedBy: string } | undefined> {
     const db = this.firestore;
     if (!db) return of(undefined);

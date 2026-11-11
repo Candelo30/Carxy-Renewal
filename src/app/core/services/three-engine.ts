@@ -146,6 +146,7 @@ export class ThreeEngineService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private sceneInitialized = false;
   private readonly lockedObjects = new Map<string, string>(); // objectId -> uid del bloqueador
+  private readonly remoteLockedObjects = new Map<string, string>(); // locks de otros clientes (sincronizados desde Firestore)
 
   /**
    * Si el usuario suelta el puntero fuera del canvas (header, HUD, otra ventana),
@@ -239,8 +240,8 @@ export class ThreeEngineService implements OnDestroy {
       const rect = this.canvas.getBoundingClientRect();
       const nx = (event.clientX - rect.left) / Math.max(rect.width, 1);
       const ny = (event.clientY - rect.top) / Math.max(rect.height, 1);
-      const x = Math.min(100, Math.max(0, nx * 100));
-      const y = Math.min(100, Math.max(0, ny * 100));
+      const x = Math.min(1, Math.max(0, nx));
+      const y = Math.min(1, Math.max(0, ny));
       this.cursorMoved$.next({ x, y });
       if (this.ownCursorUid) this.updateOwnCursor(x, y);
     };
@@ -384,8 +385,27 @@ export class ThreeEngineService implements OnDestroy {
 
   /** Devuelve true si el objeto está bloqueado por otro usuario. */
   public isObjectLockedByOther(objectId: string, currentUid: string): boolean {
-    const locker = this.lockedObjects.get(objectId);
-    return locker != null && locker !== currentUid;
+    const localLocker = this.lockedObjects.get(objectId);
+    const remoteLocker = this.remoteLockedObjects.get(objectId);
+    return (!!localLocker && localLocker !== currentUid) || (!!remoteLocker && remoteLocker !== currentUid);
+  }
+
+  /**
+   * Sincroniza los bloqueos de objetos que otros clientes tienen en el proyecto.
+   * Se llama cuando el colector de `locks` emite el snapshot más reciente desde Firestore.
+   */
+  public setRemoteLocks(locks: ReadonlyArray<{ objectId: string; lockedBy: string }>): void {
+    this.remoteLockedObjects.clear();
+    for (const lock of locks) {
+      if (lock?.objectId && lock?.lockedBy) {
+        this.remoteLockedObjects.set(lock.objectId, lock.lockedBy);
+      }
+    }
+  }
+
+  /** Bloqueos conocidos (locales y remotos) del editor. */
+  public getRemoteLockedObjects(): ReadonlyMap<string, string> {
+    return this.remoteLockedObjects;
   }
 
   /** Devuelve el mapa de objetos bloqueados. */

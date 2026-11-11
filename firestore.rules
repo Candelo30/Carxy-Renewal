@@ -559,6 +559,25 @@ service cloud.firestore {
           .hasOnly(['name', 'description', 'isPublic', 'updatedAt', 'thumbnailUrl', 'sceneJson']);
 
       allow delete: if signedIn() && (isAdmin() || isProjectOwner(projectId));
+
+      /* Bloqueos de objetos para edición colaborativa:
+         el bloqueador (u owner) puede liberar; cualquier miembro de lectura
+         puede ver quién bloquea cada objeto. */
+      match /locks/{lockId} {
+        allow read: if signedIn()
+          && (isAdmin() || isProjectMember(projectId, request.auth.uid));
+
+        allow create, update: if signedIn()
+          && (isAdmin() || isProjectWriter(projectId))
+          && request.resource.data.keys().hasOnly(['objectId', 'lockedBy', 'lockedAt'])
+          && request.resource.data.objectId is string
+          && request.resource.data.lockedBy == request.auth.uid
+          && request.resource.data.lockedAt is number;
+
+        allow delete: if signedIn()
+          && (isAdmin() || isProjectWriter(projectId))
+          && (resource.data.lockedBy == request.auth.uid || isProjectOwner(projectId));
+      }
     }
 
     match /projectMembers/{memberId} {
