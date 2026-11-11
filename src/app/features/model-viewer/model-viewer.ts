@@ -85,23 +85,23 @@ export class ModelViewer implements OnDestroy {
       });
     });
     // Suscribirse a cambios de estado del motor 3D
-    this.subscription.add(this.threeEngine.transformChanged$.subscribe(() => {
+    this.subscription.add(this.threeEngine.transformChanged$?.subscribe(() => {
       // Sincronizar estado de explosión y otros cambios
-    }));
+    }) ?? new Subscription());
     // Configurar el cursor propio del usuario actual y limpiar cualquier
     // entrada previa que se haya dibujado antes de conocer el UID.
     this.auth.user$.subscribe((user) => {
       if (!user) return;
       this.ownCursorUid = user.uid;
-      this.threeEngine.setOwnCursorUid(user.uid);
+      this.threeEngine.setOwnCursorUid?.(user.uid);
       for (const uid of Array.from(this.remoteCursors.keys())) {
         if (uid === user.uid) this.remoteCursors.delete(uid);
       }
     });
     // Suscribirse a cambios de presentación
-    this.subscription.add(this.threeEngine.presentationChanged$.subscribe((enabled) => {
+    this.subscription.add(this.threeEngine.presentationChanged$?.subscribe((enabled) => {
       // La presentación está activa
-    }));
+    }) ?? new Subscription());
     if (isPlatformBrowser(this.platformId)) {
       // Actualiza la proyección de hotspots con menor frecuencia para reducir trabajo en CPU.
       this.projectionTimer = window.setInterval(() => this.refreshHotspots(), 250);

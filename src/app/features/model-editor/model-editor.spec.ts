@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Subject } from 'rxjs';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
 import { ThreeEngineService } from '../../core/services/three-engine';
@@ -71,6 +72,7 @@ describe('ModelEditor', () => {
     await TestBed.configureTestingModule({
       imports: [ModelEditor],
       providers: [
+        provideRouter([]),
         { provide: ThreeEngineService, useValue: engineMock },
         {
           provide: AudioReactiveService,
