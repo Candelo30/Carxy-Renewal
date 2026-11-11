@@ -228,7 +228,7 @@
 /* Barra de estado del editor: badge de guardado + chip de colaboradores */
 .editor-status-bar {
   position: absolute;
-  top: 12px;
+  top: 62px;
   right: 12px;
   z-index: 40;
   display: flex;
