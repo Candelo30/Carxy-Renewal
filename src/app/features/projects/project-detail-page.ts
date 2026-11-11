@@ -45,6 +45,11 @@ export class ProjectDetailPage implements OnInit {
   canWrite = false;
   isOwner = false;
 
+  /** UID del usuario actual (para permitir auto-eliminación de membresía). */
+  get currentUid(): string | null {
+    return this.auth.currentUser?.uid ?? null;
+  }
+
   editing = false;
   saving = false;
   editName = '';

@@ -84,7 +84,7 @@
                 </div>
               </div>
               <div class="member-actions">
-                @if (canWrite && member.role !== 'owner') {
+                @if (isOwner && member.role !== 'owner') {
                   <select
                     [ngModel]="member.role"
                     (ngModelChange)="changeRole(member.id, $event)"
@@ -93,6 +93,8 @@
                     <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
                     <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
                   </select>
+                }
+                @if ((isOwner && member.role !== 'owner') || member.userId === currentUid) {
                   <button
                     class="btn-remove"
                     (click)="removeMember(member.id)"
@@ -122,7 +124,9 @@
         <select [(ngModel)]="newInviteRole" name="role">
           <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
           <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
-          <option value="owner">{{ 'projects.roleOwner' | translate }}</option>
+          @if (isOwner) {
+            <option value="owner">{{ 'projects.roleOwner' | translate }}</option>
+          }
         </select>
         <button type="submit" [disabled]="inviting || !newInviteEmail.trim()">
           {{ inviting ? ('projects.inviting' | translate) : ('projects.invite' | translate) }}

@@ -71,6 +71,16 @@ export class CollaborationService implements OnDestroy {
     return user?.uid ?? null;
   }
 
+  /** Devuelve true si el usuario actual es admin global (rol 'admin' en su perfil). */
+  private async isGlobalAdmin(): Promise<boolean> {
+    try {
+      const user = await firstValueFrom(this.authService.user$);
+      return user?.role === 'admin';
+    } catch {
+      return false;
+    }
+  }
+
   private async currentUser(): Promise<{ uid: string; displayName: string; photoURL: string | null; email: string } | null> {
     const user = await firstValueFrom(this.authService.user$);
     if (!user) return null;
@@ -430,6 +440,13 @@ export class CollaborationService implements OnDestroy {
     const canWrite = await this.canUserWrite(projectId, user.uid);
     if (!canWrite) throw new Error(this.i18n.translate('No tienes permiso para invitar a este proyecto.'));
 
+    // Solo el dueño (o un admin global) puede invitar a alguien como dueño.
+    const isOwner = await this.isProjectOwnerRole(projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    if (role === 'owner' && !isOwner && !isGlobalAdmin) {
+      throw new Error(this.i18n.translate('Solo el dueño puede invitar a un dueño.'));
+    }
+
     const normalizedEmail = this.normalizeInvitationEmail(invitedEmail);
     if (!normalizedEmail) throw new Error(this.i18n.translate('Indica un correo válido para la invitación.'));
 
@@ -541,8 +558,11 @@ export class CollaborationService implements OnDestroy {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
 
-    const canWrite = await this.canUserWrite(projectId, user.uid);
-    if (!canWrite) throw new Error(this.i18n.translate('No tienes permiso para cambiar roles en este proyecto.'));
+    const isOwner = await this.isProjectOwnerRole(projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    if (!isOwner && !isGlobalAdmin) {
+      throw new Error(this.i18n.translate('Solo el dueño puede cambiar roles en este proyecto.'));
+    }
     await updateDoc(doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`), { role });
   }
 
@@ -551,8 +571,21 @@ export class CollaborationService implements OnDestroy {
     if (!user) throw new Error(this.i18n.translate('Inicia sesión para eliminar miembros.'));
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
-    const canWrite = await this.canUserWrite(projectId, user.uid);
-    if (!canWrite) throw new Error(this.i18n.translate('No tienes permiso para eliminar miembros de este proyecto.'));
+
+    // Se permite eliminar tu propia membresía; para eliminar a otros hace falta ser dueño (o admin global).
+    let targetUserId: string | null = null;
+    try {
+      const snap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`));
+      targetUserId = snap.exists() ? String((snap.data() as { userId?: unknown }).userId ?? '') : null;
+    } catch {
+      targetUserId = null;
+    }
+    const isOwner = await this.isProjectOwnerRole(projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    const isSelf = targetUserId === user.uid;
+    if (!isOwner && !isGlobalAdmin && !isSelf) {
+      throw new Error(this.i18n.translate('Solo el dueño puede eliminar otros miembros.'));
+    }
     await deleteDoc(doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`));
   }
 
@@ -713,17 +746,26 @@ export class CollaborationService implements OnDestroy {
   /* ------------------------------------------------------------------ */
 
   private async canUserWrite(projectId: string, userId: string): Promise<boolean> {
+    return this.getProjectMemberRole(projectId, userId)
+      .then((role) => !!role && hasPermission(role, 'write'));
+  }
+
+  /** Devuelve el rol del usuario dentro del proyecto, o null si no es miembro. */
+  private async getProjectMemberRole(projectId: string, userId: string): Promise<ProjectRole | null> {
     const db = this.firestore;
-    if (!db) return false;
+    if (!db) return null;
     const memberSnap = await getDocs(
       query(
         collection(db, SOCIAL_COLLECTIONS.projectMembers),
         where('projectId', '==', projectId),
-        where('userId', '==', userId)
-      )
+        where('userId', '==', userId),
+      ),
     );
-    if (memberSnap.empty) return false;
-    const member = memberSnap.docs[0].data() as ProjectMember;
-    return hasPermission(member.role, 'write');
+    if (memberSnap.empty) return null;
+    return (memberSnap.docs[0].data() as ProjectMember).role;
+  }
+
+  private async isProjectOwnerRole(projectId: string, userId: string): Promise<boolean> {
+    return (await this.getProjectMemberRole(projectId, userId)) === 'owner';
   }
 }
