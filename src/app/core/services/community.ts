@@ -575,21 +575,17 @@ export class CommunityService {
       try {
         const q = query(
           collection(this.firestore, SOCIAL_COLLECTIONS.helpArticles),
-          orderBy('order', 'asc'),
-          orderBy('createdAt', 'desc'),
+          limit(200)
         );
         return (collectionData(q, { idField: 'id' }) as Observable<Record<string, unknown>[]>).pipe(
-          map((items) => items.map((item) => this.normalizeHelpArticle(item))),
+          map((items) =>
+            items
+              .map((item) => this.normalizeHelpArticle(item))
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.createdAt ?? 0) - (a.createdAt ?? 0))
+          ),
           catchError((err) => {
-            console.warn('Fallback al obtener artículos de ayuda sin doble orderBy:', err);
-            return (collectionData(collection(this.firestore!, SOCIAL_COLLECTIONS.helpArticles), { idField: 'id' }) as Observable<Record<string, unknown>[]>).pipe(
-              map((items) =>
-                items
-                  .map((item) => this.normalizeHelpArticle(item))
-                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.createdAt ?? 0) - (a.createdAt ?? 0))
-              ),
-              catchError(() => of([] as HelpArticle[]))
-            );
+            console.warn('No se pudieron cargar los artículos de ayuda.', err);
+            return of([] as HelpArticle[]);
           })
         );
       } catch {

@@ -13,7 +13,6 @@ import {
   setDoc,
   updateDoc,
   where,
-  orderBy,
   limit,
 } from '@angular/fire/firestore';
 import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map, combineLatest, from } from 'rxjs';
@@ -112,23 +111,17 @@ export class CollaborationService implements OnDestroy {
       switchMap((user) => {
         if (!user) return of([]);
         try {
+          // Evita recrear el listener en `catchError`: una client-side sort es más estable.
           const q = query(
             collection(db, SOCIAL_COLLECTIONS.projects),
             where('ownerId', '==', user.uid),
-            orderBy('updatedAt', 'desc'),
-            limit(50)
+            limit(100)
           );
           return (collectionData(q, { idField: 'id' }) as Observable<Project[]>).pipe(
+            map((projects) => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))),
             catchError((err) => {
-              console.warn('Fallback al obtener proyectos de usuario sin orderBy:', err);
-              const fallbackQ = query(
-                collection(db, SOCIAL_COLLECTIONS.projects),
-                where('ownerId', '==', user.uid)
-              );
-              return (collectionData(fallbackQ, { idField: 'id' }) as Observable<Project[]>).pipe(
-                map((projects) => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))),
-                catchError(() => of([] as Project[]))
-              );
+              console.warn('No se pudieron cargar tus proyectos.', err);
+              return of([] as Project[]);
             })
           );
         } catch {
@@ -209,16 +202,13 @@ export class CollaborationService implements OnDestroy {
     try {
       const q = query(
         collection(db, SOCIAL_COLLECTIONS.projects),
-        orderBy('updatedAt', 'desc'),
         limit(100)
       );
       return (collectionData(q, { idField: 'id' }) as Observable<Project[]>).pipe(
+        map((projects) => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))),
         catchError((err) => {
-          console.warn('Fallback al obtener todos los proyectos sin orderBy:', err);
-          return (collectionData(collection(db, SOCIAL_COLLECTIONS.projects), { idField: 'id' }) as Observable<Project[]>).pipe(
-            map((projects) => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))),
-            catchError(() => of([] as Project[]))
-          );
+          console.warn('No se pudieron cargar los proyectos.', err);
+          return of([] as Project[]);
         })
       );
     } catch {
@@ -277,21 +267,13 @@ export class CollaborationService implements OnDestroy {
       const q = query(
         collection(db, `${SOCIAL_COLLECTIONS.projectActivity}`),
         where('projectId', '==', projectId),
-        orderBy('createdAt', 'desc'),
-        limit(50)
+        limit(100)
       );
       return (collectionData(q, { idField: 'id' }) as Observable<ProjectActivity[]>).pipe(
+        map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 50)),
         catchError((err) => {
-          console.warn('Fallback al obtener actividad sin orderBy:', err);
-          const fallbackQ = query(
-            collection(db, `${SOCIAL_COLLECTIONS.projectActivity}`),
-            where('projectId', '==', projectId),
-            limit(50)
-          );
-          return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectActivity[]>).pipe(
-            map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
-            catchError(() => of([] as ProjectActivity[]))
-          );
+          console.warn('No se pudo cargar el historial de actividad.', err);
+          return of([] as ProjectActivity[]);
         })
       );
     } catch {
@@ -530,20 +512,13 @@ export class CollaborationService implements OnDestroy {
             collection(db, SOCIAL_COLLECTIONS.projectInvitations),
             where('invitedEmail', '==', user.email),
             where('status', '==', 'pending'),
-            orderBy('createdAt', 'desc')
+            limit(100)
           );
           return (collectionData(q, { idField: 'id' }) as Observable<ProjectInvitation[]>).pipe(
+            map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
             catchError((err) => {
-              console.warn('Fallback al obtener invitaciones sin orderBy:', err);
-              const fallbackQ = query(
-                collection(db, SOCIAL_COLLECTIONS.projectInvitations),
-                where('invitedEmail', '==', user.email),
-                where('status', '==', 'pending')
-              );
-              return (collectionData(fallbackQ, { idField: 'id' }) as Observable<ProjectInvitation[]>).pipe(
-                map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
-                catchError(() => of([] as ProjectInvitation[]))
-              );
+              console.warn('No se pudieron cargar tus invitaciones.', err);
+              return of([] as ProjectInvitation[]);
             })
           );
         } catch {

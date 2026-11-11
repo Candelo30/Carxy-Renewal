@@ -13,17 +13,18 @@ import { initializeApp } from 'firebase/app';
 import { getFirebaseRuntimeConfig } from './core/firebase/firebase-runtime-config';
 
 const firebaseConfig = getFirebaseRuntimeConfig();
+const firebaseApp = firebaseConfig ? initializeApp(firebaseConfig) : null;
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideClientHydration(),
-    ...(firebaseConfig ? [
-      provideFirebaseApp(() => initializeApp(firebaseConfig)),
-      provideAuth(() => getAuth()),
-      provideFirestore(() => getFirestore()),
-      provideStorage(() => getStorage()),
+    ...(firebaseApp ? [
+      provideFirebaseApp(() => firebaseApp),
+      provideAuth(() => getAuth(firebaseApp)),
+      provideFirestore(() => getFirestore(firebaseApp)),
+      provideStorage(() => getStorage(firebaseApp)),
     ] : []),
   ]
 };
