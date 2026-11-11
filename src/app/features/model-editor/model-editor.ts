@@ -39,6 +39,18 @@ import type {
 } from '../../core/services/three-engine';
 import * as THREE from 'three';
 
+interface RemoteCursor {
+  uid: string;
+  x: number;
+  y: number;
+  color: string;
+}
+
+interface RemoteSelection {
+  uid: string;
+  objectId: string | null;
+}
+
 @Component({
   selector: 'app-model-editor',
   standalone: true,
@@ -127,6 +139,8 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   public collaborationOpen = false;
   public collaborators: Array<{ uid: string; displayName: string; color: string; objectId: string | null }> = [];
+  public remoteCursors: Map<string, RemoteCursor> = new Map();
+  public remoteSelections: Map<string, string | null> = new Map();
   public myCursor = { x: 0.5, y: 0.5 };
 
   public projectId: string | null = null;
@@ -138,9 +152,16 @@ export class ModelEditor implements OnInit, OnDestroy {
   private autoSaveSub: Subscription | null = null;
   private projectLockSub: Subscription | null = null;
   private remoteSceneSub: Subscription | null = null;
+  private remoteCursorSub: Subscription | null = null;
+  private remoteSelectionSub: Subscription | null = null;
+  private remoteTransformSub: Subscription | null = null;
+  private remoteJoinedSub: Subscription | null = null;
+  private remoteLeftSub: Subscription | null = null;
   private presenceSub: Subscription | null = null;
   private presenceHeartbeat: ReturnType<typeof setInterval> | null = null;
   private isApplyingRemote = false;
+  private transformLockTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastLocalSceneSaveAt = 0;
 
   constructor(
     private threeEngine: ThreeEngineService,
@@ -225,10 +246,11 @@ export class ModelEditor implements OnInit, OnDestroy {
 
       // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales
       this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
-        .pipe(debounceTime(2000), distinctUntilChanged())
+        .pipe(debounceTime(800))
         .subscribe(() => {
           if (!this.projectId || this.isApplyingRemote || !this.canWrite) return;
           const json = this.threeEngine.serializeScene();
+          this.lastLocalSceneSaveAt = Date.now();
           void this.collaboration.saveProjectScene(this.projectId, json);
         });
 
@@ -236,18 +258,36 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.presenceSub = this.collaboration.getPresences(this.projectId).subscribe((presences) => {
         const uid = this.auth.currentUser?.uid;
         this.remotePresences = presences.filter((p) => p.uid !== uid);
+        // Sincronizar colaboradores remotos en el motor 3D para cursores/selecciones
+        for (const p of this.remotePresences) {
+          this.threeEngine.joinCollaboration(p.uid, p.displayName);
+          if (typeof p.cursorX === 'number' && typeof p.cursorY === 'number') {
+            this.threeEngine.updateCollaboratorCursor(p.uid, p.cursorX, p.cursorY);
+          }
+          void this.threeEngine.setCollaboratorSelection(p.uid, p.currentObjectId ?? null);
+        }
+        // Limpiar colaboradores que ya no están presentes
+        const activeUids = new Set(this.remotePresences.map((p) => p.uid));
+        for (const c of this.threeEngine.getCollaborators()) {
+          if (c.uid !== uid && !activeUids.has(c.uid)) {
+            this.threeEngine.leaveCollaboration(c.uid);
+          }
+        }
         this.cdr.detectChanges();
       });
 
-      // Registrar presencia propia al unirse y mantener heartbeat
+      // Registrar presencia propia al unirse y mantener heartbeat (más rápido para tiempo real)
       (async () => {
         const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
         if (user && this.projectId) {
+          // Registrar al usuario actual como colaborador en el motor para poder emitir cursor propio
+          this.threeEngine.joinCollaboration(user.uid, user.displayName ?? user.email ?? 'Usuario');
+          this.threeEngine.setOwnCursorUid(user.uid);
           await this.registerOwnPresence(user);
           if (isPlatformBrowser(this.platformId)) {
             this.presenceHeartbeat = setInterval(() => {
               void this.updateOwnPresence(this.threeEngine.getSelectedNodeId() ?? null);
-            }, 20000);
+            }, 5000);
           }
           this.notifications.success(
             this.i18n.translate('projects.youJoinedProject', { name: this.projectName || this.projectId }),
@@ -269,6 +309,8 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.loadMaterialsFromEngine();
         this.measureDimensions();
         this.updateOwnPresence();
+        const selId = this.threeEngine.getSelectedNodeId();
+        void this.threeEngine.setCollaboratorSelection(this.auth.currentUser?.uid ?? '', selId);
       }));
 
       this.subscriptions.add(this.threeEngine.sceneChanged$.subscribe(() => {
@@ -292,25 +334,80 @@ export class ModelEditor implements OnInit, OnDestroy {
       // Loguear transformaciones (movimiento/rotación/escala) de objetos seleccionados
       this.subscriptions.add(this.threeEngine.transformChanged$.subscribe(() => {
         const selId = this.threeEngine.getSelectedNodeId();
-        if (selId) {
+        if (selId && this.canWrite) {
+          // Bloquear el objeto mientras se transforma (se libera al soltar el ratón)
+          if (this.transformLockTimer) clearTimeout(this.transformLockTimer);
+          void this.collaboration.lockObject(this.projectId!, selId, this.auth.currentUser?.uid ?? '');
+          this.transformLockTimer = setTimeout(() => {
+            void this.collaboration.unlockObject(this.projectId!, selId);
+          }, 3000);
           logActivityDebounced('object_updated', selId, 'object', this.threeEngine.sceneJson);
         }
       }));
-      // Escuchar cambios remotos de la escena y aplicarlos localmente
-      this.remoteSceneSub = this.collaboration.watchProjectScene(this.projectId).subscribe((remoteJson) => {
-        if (!remoteJson || remoteJson === this.threeEngine.serializeScene()) return;
+
+      // --- Colaboración en tiempo real: cursores y selecciones remotas ---
+      this.remoteCursorSub = this.threeEngine.remoteCursor$.subscribe((cursor) => {
+        if (cursor.uid === this.auth.currentUser?.uid) return;
+        this.remoteCursors.set(cursor.uid, cursor);
+        this.cdr.detectChanges();
+      });
+
+      this.remoteSelectionSub = this.threeEngine.collaboratorSelection$.subscribe((sel) => {
+        if (sel.uid === this.auth.currentUser?.uid) return;
+        this.remoteSelections.set(sel.uid, sel.objectId);
+        this.cdr.detectChanges();
+      });
+
+      this.remoteTransformSub = this.threeEngine.collaboratorTransform$.subscribe((t) => {
+        if (t.uid === this.auth.currentUser?.uid) return;
         this.isApplyingRemote = true;
         try {
-          this.threeEngine.loadProjectScene(remoteJson);
+          this.threeEngine.applyRemoteTransform(t.uid, t.objectId, t.position, t.rotation, t.scale);
           this.sceneObjects = this.threeEngine.getSceneObjects();
           this.refreshSceneNodes();
           this.loadMaterialsFromEngine();
           this.cdr.detectChanges();
-          this.notifications.info(this.i18n.translate('projects.sceneUpdatedRemotely'), this.i18n.translate('projects.project'));
         } finally {
           this.isApplyingRemote = false;
         }
       });
+
+      this.remoteJoinedSub = this.threeEngine.collaboratorJoined$.subscribe((c) => {
+        this.notifications.info(
+          this.i18n.translate('projects.youJoinedProject', { name: c.displayName }),
+          this.i18n.translate('projects.colaboracion')
+        );
+        this.cdr.detectChanges();
+      });
+
+      this.remoteLeftSub = this.threeEngine.collaboratorLeft$.subscribe((uid) => {
+        this.remoteCursors.delete(uid);
+        this.remoteSelections.delete(uid);
+        this.cdr.detectChanges();
+      });
+
+      // Escuchar cambios remotos de la escena y aplicarlos localmente
+      this.remoteSceneSub = this.collaboration.watchProjectScene(this.projectId).subscribe((remoteJson) => {
+        if (!remoteJson) return;
+        // Evitar bucle/eco justo después de un guardado local
+        if (Date.now() - this.lastLocalSceneSaveAt < 1500) return;
+        if (this.isApplyingRemote) return;
+        const current = this.threeEngine.serializeScene();
+        if (remoteJson === current) return;
+        this.isApplyingRemote = true;
+        try {
+          const applied = this.threeEngine.loadProjectScene(remoteJson);
+          if (applied) {
+            this.sceneObjects = this.threeEngine.getSceneObjects();
+            this.refreshSceneNodes();
+            this.loadMaterialsFromEngine();
+            this.cdr.detectChanges();
+          }
+        } finally {
+          this.isApplyingRemote = false;
+        }
+      });
+
       // Sincronizar bloqueos de objetos remotos
       this.projectLockSub = this.threeEngine.objectLockChanged$.subscribe((lock) => {
         if (lock.lockedBy && lock.lockedBy !== this.auth.currentUser?.uid) {
@@ -1155,9 +1252,18 @@ export class ModelEditor implements OnInit, OnDestroy {
       clearInterval(this.presenceHeartbeat);
       this.presenceHeartbeat = null;
     }
+    if (this.transformLockTimer) {
+      clearTimeout(this.transformLockTimer);
+      this.transformLockTimer = null;
+    }
     this.autoSaveSub?.unsubscribe();
     this.projectLockSub?.unsubscribe();
     this.remoteSceneSub?.unsubscribe();
+    this.remoteCursorSub?.unsubscribe();
+    this.remoteSelectionSub?.unsubscribe();
+    this.remoteTransformSub?.unsubscribe();
+    this.remoteJoinedSub?.unsubscribe();
+    this.remoteLeftSub?.unsubscribe();
     this.presenceSub?.unsubscribe();
     this.subscriptions.unsubscribe();
     void this.audioReactive.stop();
