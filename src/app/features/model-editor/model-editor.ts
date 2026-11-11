@@ -54,6 +54,14 @@ interface RemoteSelection {
   objectId: string | null;
 }
 
+interface CameraBookmark {
+  id: string;
+  name: string;
+  position: [number, number, number];
+  target: [number, number, number];
+  createdAt: number;
+}
+
 @Component({
   selector: 'app-model-editor',
   standalone: true,
@@ -151,6 +159,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public layers: string[] = [];
   public selectedLayer: string | null = null;
   public layerVisibility: Record<string, boolean> = {};
+  public savedViews: CameraBookmark[] = [];
   public snapEnabled = false;
 
   public collaborationOpen = false;
@@ -451,6 +460,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.remoteSelectionSub = this.threeEngine.collaboratorSelection$.subscribe((sel) => {
         if (sel.uid === this.auth.currentUser?.uid) return;
         this.remoteSelections.set(sel.uid, sel.objectId);
+        this.threeEngine.setRemoteSelectionMarker(sel.uid, sel.objectId, this.colorForUid(sel.uid));
         this.cdr.detectChanges();
       });
 
@@ -466,6 +476,7 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.remoteCursors.delete(uid);
         this.remoteSelections.delete(uid);
         this.lastRemoteTransformAt.delete(uid);
+        this.threeEngine.clearRemoteSelectionMarker(uid);
         this.cdr.detectChanges();
       });
 

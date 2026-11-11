@@ -45,6 +45,19 @@
         </div>
       }
     </div>
+    <div class="saved-views-toolbar" aria-label="Vistas guardadas">
+      <button type="button" class="saved-view-add" (click)="saveViewPrompt()" [title]="'editor.views.save' | translate">＋ {{ 'editor.views.save' | translate }}</button>
+      @if (savedViews().length === 0) {
+        <span class="saved-views-empty">{{ 'editor.views.empty' | translate }}</span>
+      } @else {
+        @for (v of savedViews(); track trackView($index, v)) {
+          <span class="saved-view-chip">
+            <button type="button" class="saved-view-name" (click)="applyView(v)" [title]="v.name">{{ v.name }}</button>
+            <button type="button" class="saved-view-del" (click)="deleteView(v)" [attr.aria-label]="'editor.views.delete' | translate">×</button>
+          </span>
+        }
+      }
+    </div>
     <button
       type="button"
       class="panel-toggle"

@@ -147,6 +147,7 @@ export class ThreeEngineService implements OnDestroy {
   private sceneInitialized = false;
   private readonly lockedObjects = new Map<string, string>(); // objectId -> uid del bloqueador
   private readonly remoteLockedObjects = new Map<string, string>(); // locks de otros clientes (sincronizados desde Firestore)
+  private readonly remoteSelectionMarkers = new Map<string, { objectId: string; group: THREE.Group; offsetY: number; ring: THREE.Mesh }>();
 
   /**
    * Si el usuario suelta el puntero fuera del canvas (header, HUD, otra ventana),
@@ -303,6 +304,7 @@ export class ThreeEngineService implements OnDestroy {
         if (!this.scene || !this.renderer) return;
         this.updateAudioVisualization();
         this.updateHotspotProjection();
+        this.updateRemoteSelectionMarkers();
         if (this.composer && !this.renderer.xr.isPresenting) this.composer.render();
         else this.renderer.render(this.scene, this.camera);
       });
@@ -924,6 +926,85 @@ export class ThreeEngineService implements OnDestroy {
 
   public setExposure(value: number): void {
     if (this.renderer) this.renderer.toneMappingExposure = value;
+  }
+
+  /** Estado de cámara persistible (para vistas guardadas). */
+  public getCameraState(): { position: [number, number, number]; target: [number, number, number] } | null {
+    if (!this.camera) return null;
+    const target = this.controls?.target?.clone() ?? new THREE.Vector3();
+    return {
+      position: [this.camera.position.x, this.camera.position.y, this.camera.position.z],
+      target: [target.x, target.y, target.z],
+    };
+  }
+
+  public restoreCameraState(state: { position: [number, number, number]; target: [number, number, number] }): void {
+    if (!this.controls || !state) return;
+    this.camera.position.set(state.position[0], state.position[1], state.position[2]);
+    this.controls.target.set(state.target[0], state.target[1], state.target[2]);
+    this.camera.lookAt(this.controls.target);
+    this.controls.update();
+  }
+
+  /** Marcador pulsante de color sobre el objeto que un colaborador remoto tiene seleccionado. */
+  public setRemoteSelectionMarker(uid: string, objectId: string | null, color: string): void {
+    this.clearRemoteSelectionMarker(uid);
+    if (!this.scene || !objectId) return;
+    const item = this.objects.find((o) => o.id === objectId);
+    if (!item) return;
+    const box = new THREE.Box3().setFromObject(item.object);
+    const size = box.getSize(new THREE.Vector3());
+    const offsetY = Math.max(Math.abs(size.y) / 2 + 0.32, 0.5);
+    const group = new THREE.Group();
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.26, 0.032, 8, 40),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthTest: false }),
+    );
+    ring.renderOrder = 120;
+    ring.rotation.x = Math.PI / 2;
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.075, 10, 10),
+      new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.95 }),
+    );
+    dot.renderOrder = 121;
+    group.add(ring, dot);
+    this.scene.add(group);
+    this.remoteSelectionMarkers.set(uid, { objectId, group, offsetY, ring });
+    this.updateRemoteSelectionMarkers();
+  }
+
+  public clearRemoteSelectionMarker(uid: string): void {
+    const existing = this.remoteSelectionMarkers.get(uid);
+    if (!existing) return;
+    this.scene?.remove(existing.group);
+    existing.group.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        (child.material as THREE.Material).dispose();
+      }
+    });
+    this.remoteSelectionMarkers.delete(uid);
+  }
+
+  private updateRemoteSelectionMarkers(): void {
+    const t = Date.now() * 0.004;
+    const pulse = 0.55 + 0.45 * (0.5 + 0.5 * Math.sin(t * 2.2));
+    for (const marker of this.remoteSelectionMarkers.values()) {
+      const item = this.objects.find((o) => o.id === marker.objectId);
+      if (!item) {
+        marker.group.visible = false;
+        continue;
+      }
+      const world = new THREE.Vector3();
+      item.object.getWorldPosition(world);
+      marker.group.visible = true;
+      marker.group.position.set(world.x, world.y + marker.offsetY, world.z);
+      marker.ring.rotation.y = (marker.ring.rotation.y + 0.035) % (Math.PI * 2);
+      (marker.ring.material as THREE.MeshBasicMaterial).opacity = pulse;
+      const ringIndex = marker.group.children.indexOf(marker.ring);
+      const dot = marker.group.children[1 - ringIndex] as THREE.Mesh | undefined;
+      if (dot) (dot.material as THREE.MeshBasicMaterial).opacity = pulse;
+    }
   }
 
   public setCameraView(view: 'perspective' | 'front' | 'side' | 'top'): void {
@@ -1609,6 +1690,9 @@ export class ThreeEngineService implements OnDestroy {
   }
 
   public ngOnDestroy(): void {
+    for (const uid of Array.from(this.remoteSelectionMarkers.keys())) {
+      this.clearRemoteSelectionMarker(uid);
+    }
     this.releaseViewport();
     this.timer.dispose();
     this.transformChanged$.complete();

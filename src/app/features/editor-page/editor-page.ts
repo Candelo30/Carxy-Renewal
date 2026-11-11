@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription, take } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
@@ -11,7 +11,16 @@ import { OnboardingComponent } from '../../shared/components/onboarding/onboardi
 import { OnboardingService } from '../../core/services/onboarding';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { I18nService } from '../../core/services/i18n';
 import { EditorStatusService } from '../../core/services/editor-status.service';
+
+interface SavedView {
+  id: string;
+  name: string;
+  position: [number, number, number];
+  target: [number, number, number];
+  createdAt: number;
+}
 
 @Component({
   selector: 'app-editor-page',
@@ -41,8 +50,11 @@ export class EditorPage implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly onboarding = inject(OnboardingService);
   private readonly threeEngine = inject(ThreeEngineService);
+  private readonly i18n = inject(I18nService);
   private readonly subscription = new Subscription();
   readonly editorStatus = inject(EditorStatusService);
+
+  readonly savedViews = signal<SavedView[]>([]);
 
   private hasAddedPrimitive = false;
   private hasTransformed = false;
@@ -75,6 +87,7 @@ export class EditorPage implements OnInit, OnDestroy {
     // Primera visita: abrir el tutorial una sola vez. `start()` marca el estado
     // como visto para que no reaparezca en cada recarga. Solo se decide en el
     // navegador porque el servidor no tiene acceso al almacenamiento local.
+    this.loadSavedViews();
     if (isPlatformBrowser(this.platformId) && !this.tutorialRequested && !this.onboarding.state.value.seen) {
       this.openTutorial();
     }
@@ -118,6 +131,59 @@ export class EditorPage implements OnInit, OnDestroy {
     // orbital se detenga al presentar y vuelva a habilitarse al salir.
     if (this.threeEngine.presentationEnabled !== enabled) {
       this.threeEngine.togglePresentation();
+    }
+  }
+
+  saveViewPrompt(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const state = this.threeEngine.getCameraState();
+    if (!state) return;
+    const name = window.prompt(
+      this.i18n.translate('editor.views.namePrompt'),
+      this.i18n.translate('editor.views.defaultName', { n: this.savedViews().length + 1 }),
+    );
+    if (!name?.trim()) return;
+    const view = {
+      id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      name: name.trim(),
+      position: state.position,
+      target: state.target,
+      createdAt: Date.now(),
+    };
+    this.savedViews.update((views) => [...views, view].slice(-12));
+    this.persistSavedViews();
+  }
+
+  applyView(view: SavedView): void {
+    this.threeEngine.restoreCameraState(view);
+  }
+
+  deleteView(view: SavedView): void {
+    this.savedViews.update((views) => views.filter((v) => v.id !== view.id));
+    this.persistSavedViews();
+  }
+
+  trackView(_index: number, view: SavedView): string {
+    return view.id;
+  }
+
+  private loadSavedViews(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const raw = localStorage.getItem('forma-3d-saved-views');
+      if (raw) this.savedViews.set(JSON.parse(raw));
+    } catch {
+      this.savedViews.set([]);
+    }
+  }
+
+  private persistSavedViews(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      localStorage.setItem('forma-3d-saved-views', JSON.stringify(this.savedViews()));
+    } catch {
+      // Una vista actualizada solo no se persiste si no hay espacio;
+      // seguimos operando con la copia en memoria sin romper la UI.
     }
   }
 

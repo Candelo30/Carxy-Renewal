@@ -298,3 +298,88 @@
   font-size: 0.8rem;
   color: var(--accent-color);
 }
+
+/* Vistas guardadas */
+.saved-views-toolbar {
+  position: absolute;
+  left: 12px;
+  bottom: 86px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  max-width: min(90vw, 480px);
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-panel) 90%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--surface-main) 35%, transparent);
+}
+
+.saved-view-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-color) 18%, var(--surface-raised));
+  color: var(--accent-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.saved-view-add:hover {
+  background: color-mix(in srgb, var(--accent-color) 28%, var(--surface-raised));
+}
+
+.saved-view-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+
+.saved-view-name {
+  min-height: 32px;
+  padding: 0 10px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.saved-view-del {
+  min-width: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-left: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.saved-view-del:hover {
+  color: #f87171;
+  background: color-mix(in srgb, #f87171 10%, transparent);
+}
+
+.saved-views-empty {
+  padding: 0 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
