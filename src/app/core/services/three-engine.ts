@@ -76,7 +76,7 @@ export class ThreeEngineService implements OnDestroy {
   public readonly collaboratorLeft$ = new Subject<string>();
   public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
   public readonly collaboratorSelection$ = new Subject<{ uid: string; objectId: string | null }>();
-  public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string }>();
+  public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string; hasCursor: boolean }>();
   /** Posición del cursor propio sobre el viewport (0-100 %), emitida al mover el ratón. */
   public readonly cursorMoved$ = new Subject<{ x: number; y: number }>();
   public readonly objectLockChanged$ = new Subject<{ objectId: string; lockedBy: string | null }>();
@@ -1576,18 +1576,19 @@ export class ThreeEngineService implements OnDestroy {
     if (!collab) return;
     collab.hasCursor = true;
     this.moveCollaboratorMarker(this.ownCursorUid, x, y);
-    this.remoteCursor$.next({ uid: this.ownCursorUid, x, y, color: collab.color });
+    this.remoteCursor$.next({ uid: this.ownCursorUid, x, y, color: collab.color, hasCursor: true });
   }
 
   updateCollaboratorCursor(uid: string, x: number, y: number): void {
     const collab = this.collaborators.get(uid);
     if (!collab) return;
-    if (x < 0 || x > 1 || y < 0 || y > 1) return;
-    collab.x = x;
-    collab.y = y;
+    const clampedX = Math.min(0.93, Math.max(0.07, x));
+    const clampedY = Math.min(0.93, Math.max(0.07, y));
+    collab.x = clampedX;
+    collab.y = clampedY;
     collab.hasCursor = true;
-    this.moveCollaboratorMarker(uid, x, y);
-    this.remoteCursor$.next({ uid, x, y, color: collab.color });
+    this.moveCollaboratorMarker(uid, clampedX, clampedY);
+    this.remoteCursor$.next({ uid, x: clampedX, y: clampedY, color: collab.color, hasCursor: true });
   }
 
   setCollaboratorSelection(uid: string, objectId: string | null): void {
@@ -1623,32 +1624,9 @@ export class ThreeEngineService implements OnDestroy {
   }
 
   private spawnCollaboratorMarker(uid: string, color: string): void {
-    if (!this.scene) return;
-    const group = new THREE.Group();
-    const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 12, 12),
-      new THREE.MeshBasicMaterial({ color, depthTest: false })
-    );
-    sphere.renderOrder = 100;
-    // Anillo orientado a cámara en lugar del antiguo Sprite sin textura,
-    // que se renderizaba como un cuadro blanco siguiendo el ratón.
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.11, 0.15, 24),
-      new THREE.MeshBasicMaterial({
-        color,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-        depthTest: false,
-      })
-    );
-    ring.renderOrder = 101;
-    group.add(sphere, ring);
-    // Oculto hasta el primer evento de cursor/selección: si el colaborador no
-    // ha movido el ratón aún, el marcador estaría anclado al "arriba".
-    group.visible = false;
-    this.scene.add(group);
-    this.collaboratorObjects.set(uid, group);
+    // No dibujamos un marcador 3D grande; la etiqueta HTML con el nombre
+    // del colaborador y su color es suficiente y evita el "bola flotante".
+    return;
   }
 
   private removeCollaboratorMarker(uid: string): void {
