@@ -30,6 +30,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
+import { LayersPanelComponent } from './layers-panel/layers-panel';
 import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform } from '../../core/models/social.models';
 import type {
   EditableMaterial,
@@ -55,7 +56,7 @@ interface RemoteSelection {
 @Component({
   selector: 'app-model-editor',
   standalone: true,
-  imports: [FormsModule, CommonModule, TranslatePipe],
+  imports: [FormsModule, CommonModule, TranslatePipe, LayersPanelComponent],
   templateUrl: './model-editor.html',
   styleUrl: './model-editor.css',
 })
@@ -147,6 +148,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public distanceMeasurement: { idA: string; idB: string; distance: number } | null = null;
   public layers: string[] = [];
   public selectedLayer: string | null = null;
+  public layerVisibility: Record<string, boolean> = {};
   public snapEnabled = false;
 
   public collaborationOpen = false;
@@ -965,6 +967,11 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   private refreshLayers(): void {
     this.layers = this.threeEngine.getLayers();
+    const nextVisibility: Record<string, boolean> = {};
+    for (const layer of this.layers) {
+      nextVisibility[layer] = this.threeEngine.getLayerVisibility(layer) ?? true;
+    }
+    this.layerVisibility = nextVisibility;
     if (this.selectedLayer && !this.layers.includes(this.selectedLayer)) {
       this.selectedLayer = this.layers.length ? this.layers[0] : null;
     }
@@ -1080,12 +1087,8 @@ export class ModelEditor implements OnInit, OnDestroy {
   toggleLayerVisibility(layerName: string): void {
     const current = this.threeEngine.getLayerVisibility(layerName);
     this.threeEngine.setLayerVisibility(layerName, current !== false);
+    this.layerVisibility = { ...this.layerVisibility, [layerName]: current === false };
     this.cdr.detectChanges();
-  }
-
-  isLayerVisible(layerName: string): boolean {
-    const v = this.threeEngine.getLayerVisibility(layerName);
-    return v ?? true;
   }
 
   assignSelectedToLayer(): void {

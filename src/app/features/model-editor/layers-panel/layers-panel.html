@@ -1,0 +1,29 @@
+<section class="panel-section">
+  <div class="section-heading compact-heading">
+    <div>
+      <span class="eyebrow">{{ 'CAPAS' | translate }}</span>
+      <h2>{{ 'Organizar por capas' | translate }}</h2>
+    </div>
+    <button class="icon-action" type="button" (click)="add.emit()" [title]="'Agregar capa' | translate">＋</button>
+  </div>
+  <div class="layer-list">
+    @for (layer of layers; track layer) {
+      <div class="layer-row" [class.selected]="selectedLayer === layer" [class.visible]="isVisible(layer)">
+        <button class="layer-visibility" type="button" (click)="toggleVisibility.emit(layer)" [attr.aria-label]="((isVisible(layer) ? 'Ocultar capa' : 'Mostrar capa') | translate) + ' ' + layer">
+          {{ isVisible(layer) ? '👁' : '🙈' }}
+        </button>
+        <span class="layer-name">{{ layer }}</span>
+        <button class="layer-assign" type="button" [disabled]="!hasSelectedObject" (click)="assignSelected.emit()" [title]="'Asignar seleccionado' | translate">➤</button>
+        <button class="layer-remove" type="button" (click)="removeSelected.emit()" [title]="'Quitar seleccionado de esta capa' | translate">−</button>
+      </div>
+    }
+    @if (layers.length === 0) {
+      <p class="empty-state">{{ 'No hay capas. Agrega una para organizar objetos.' | translate }}</p>
+    }
+    @if (layers.length) {
+      <div class="layer-actions">
+        <button class="small-button" type="button" [disabled]="!selectedLayer" (click)="remove.emit()">{{ 'Eliminar capa seleccionada' | translate }}</button>
+      </div>
+    }
+  </div>
+</section>
