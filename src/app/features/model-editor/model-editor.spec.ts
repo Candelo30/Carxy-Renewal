@@ -26,6 +26,8 @@ describe('ModelEditor', () => {
       sceneChanged$: new Subject<void>(),
       selectionChanged$: new Subject<void>(),
       hotspotsChanged$: new Subject<void>(),
+      layerChanged$: new Subject<void>(),
+      cursorMoved$: new Subject<{ x: number; y: number }>(),
       currentMaterials: [],
       getSceneObjects: vi.fn(() => []),
       getSelectedSceneNodes: vi.fn(() => []),
@@ -66,6 +68,10 @@ describe('ModelEditor', () => {
       focusSelectedNode: vi.fn(),
       setAudioReactive: vi.fn(),
       setAudioLevels: vi.fn(),
+      getLayers: vi.fn(() => []),
+      getLayerVisibility: vi.fn(() => true),
+      snapToGrid: false,
+      gridStep: 1,
     };
     engine = engineMock;
 

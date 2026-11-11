@@ -41,7 +41,7 @@ describe('AuthPage', () => {
 
     expect(fixture.componentInstance.busy).toBe(false);
     expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent)
-      .toContain('inicializa Authentication');
+      .toContain('Firebase Authentication no está listo');
     expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBe(false);
   });
 });
