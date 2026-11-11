@@ -1,4 +1,5 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import {
   Firestore,
   collection,
@@ -15,6 +16,7 @@ import {
   where,
   limit,
 } from '@angular/fire/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map, combineLatest, from } from 'rxjs';
 import { SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { I18nService } from './i18n';
@@ -46,6 +48,7 @@ export class CollaborationService implements OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly auth = inject(AuthService, { optional: true });
   private readonly i18n = inject(I18nService);
+  private readonly platformId = inject(PLATFORM_ID);
 
   private readonly membersStreams = new Map<string, { stream: BehaviorSubject<ProjectMember[]>; unsub: () => void }>();
   private readonly presencesStreams = new Map<string, { stream: BehaviorSubject<ProjectPresence[]>; unsub: () => void }>();
@@ -393,7 +396,7 @@ export class CollaborationService implements OnDestroy {
     return `${projectId}_${this.normalizeInvitationEmail(invitedEmail)}`;
   }
 
-  async inviteMember(projectId: string, invitedEmail: string, role: ProjectRole): Promise<string> {
+  async inviteMember(projectId: string, invitedEmail: string, role: ProjectRole): Promise<{ id: string; emailSent: boolean }> {
     const user = await this.currentUser();
     if (!user) throw new Error(this.i18n.translate('Inicia sesión para invitar miembros.'));
     const db = this.firestore;
@@ -427,7 +430,37 @@ export class CollaborationService implements OnDestroy {
       invitation.projectName = (projectSnap.data() as Project).name;
     }
     await setDoc(ref, invitation, { merge: true });
-    return ref.id;
+    const emailSent = await this.sendInvitationEmail(invitation, role);
+    return { id: ref.id, emailSent };
+  }
+
+  /**
+   * Envía (best-effort) el correo de invitación vía Cloud Function sendProjectInvitation.
+   * Devuelve true si el envío se completó con éxito. Si el servicio de correo no está
+   * configurado (falta RESEND_API_KEY o las functions no están desplegadas), no bloquea
+   * la invitación: devuelve false y el invitado puede verla en "/projects".
+   */
+  private async sendInvitationEmail(invitation: ProjectInvitation, role: ProjectRole): Promise<boolean> {
+    try {
+      if (typeof getFunctions !== 'function') return false;
+      const functions = getFunctions();
+      const callable = httpsCallable(functions, 'sendProjectInvitation');
+      const baseUrl = isPlatformBrowser(this.platformId)
+        ? new URL('projects', document.baseURI).href
+        : '/projects';
+      await callable({
+        to: invitation.invitedEmail,
+        invitedByName: invitation.invitedByName,
+        projectName: invitation.projectName || 'CARXY',
+        role,
+        acceptUrl: baseUrl,
+        expiresIn: '7 días',
+      });
+      return true;
+    } catch {
+      // No bloquea la invitación si el correo falla o ni siquiera está configurado.
+      return false;
+    }
   }
 
   async acceptInvitation(invitationId: string): Promise<void> {

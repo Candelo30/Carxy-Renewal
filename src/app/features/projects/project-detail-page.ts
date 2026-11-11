@@ -79,9 +79,13 @@ export class ProjectDetailPage implements OnInit {
     if (!email) return;
     this.inviting = true;
     try {
-      await this.collaboration.inviteMember(this.projectId, email, this.newInviteRole);
+      const result = await this.collaboration.inviteMember(this.projectId, email, this.newInviteRole);
       this.newInviteEmail = '';
-      this.notifications.success(this.i18n.translate('projects.inviteSent'));
+      if (result.emailSent) {
+        this.notifications.success(this.i18n.translate('projects.inviteSent'));
+      } else {
+        this.notifications.warning(this.i18n.translate('Invitación creada, pero el correo no se pudo enviar. El invitado la verá en /projects.'));
+      }
     } catch (error) {
       this.notifications.error(
         error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar la invitación.')

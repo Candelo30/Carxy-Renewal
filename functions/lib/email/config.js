@@ -14,7 +14,7 @@ exports.EMAIL_CONFIG = {
     fromName: 'CARXY',
     fromEmail: 'noreply@tu-dominio.com', // <-- CAMBIAR por tu dominio verificado
     // URL base de tu aplicación web (para los enlaces de acción)
-    appUrl: 'https://tu-app.web.app',
+    appUrl: 'https://tu-app.web.app', // <-- CAMBIAR por la URL pública de tu app
     // Colores de marca
     brand: {
         dark: '#0f172a', // azul muy oscuro (fondos, encabezados)
