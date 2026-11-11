@@ -100,11 +100,19 @@
         <button class="icon-action" [disabled]="!selectedObjectId" (click)="copySelectedToClipboard()" [title]="'Copiar al portapapeles' | translate">📋</button>
         <button class="icon-action" (click)="pasteFromClipboard()" [title]="'Pegar desde portapapeles' | translate">📥</button>
         <button class="icon-action" (click)="captureScreenshot()" [title]="'Capturar imagen del viewport' | translate">📸</button>
-        <label class="icon-action" [title]="'Importar escena GLB/GLTF' | translate">
-          <input type="file" accept=".glb,.gltf" (change)="importSceneFile($event)" style="display:none" />
-          ↧
+        <label class="icon-action accent-action" [title]="'Importar escena GLB/GLTF' | translate" [attr.aria-label]="'Importar escena GLB/GLTF' | translate">
+          <input #sceneFileInput type="file" accept=".glb,.gltf" (change)="importSceneFile($event)" style="display:none" />
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 4v11M7.6 10.9L12 15.3l4.4-4.4" />
+            <path d="M4.5 18.5V20a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-1.5" />
+          </svg>
         </label>
-        <button class="icon-action" [disabled]="exportBusy" (click)="exportSceneGLB()" [title]="'Exportar escena a GLB' | translate">💾</button>
+        <button class="icon-action accent-action" [disabled]="exportBusy" (click)="exportSceneGLB()" [title]="'Exportar escena a GLB' | translate" [attr.aria-label]="'Exportar escena a GLB' | translate">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15V4M7.6 8.6L12 4.2l4.4 4.4" />
+            <path d="M4.5 17.5V19a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-1.5" />
+          </svg>
+        </button>
         <button class="icon-action" [class.active]="measuringDistance" (click)="toggleMeasureDistance()" [title]="'Medir distancia entre objetos' | translate">📏</button>
         <button class="icon-action" [class.active]="snapEnabled" (click)="toggleSnapToGrid()" [title]="'Activar/desactivar snap a cuadrícula' | translate">⊗</button>
         <button class="icon-action" [disabled]="shareBusy" (click)="shareScene()" [title]="'Compartir escena (código para colaboradores)' | translate">🔗</button>

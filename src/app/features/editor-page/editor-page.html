@@ -9,12 +9,15 @@
     [showNav]="false"
     [showPublish]="true"
     [showPresentation]="true"
+    [showImportExport]="true"
     (publishClick)="onPublishClick()"
     (presentationChange)="onPresentationChange($event)"
+    (importClick)="modelEditor.triggerImport()"
+    (exportClick)="modelEditor.triggerExport()"
   ></app-shell-header>
 
   <aside class="editor-panel-area">
-    <app-model-editor />
+    <app-model-editor #modelEditor />
   </aside>
 
   <section class="viewer-area">

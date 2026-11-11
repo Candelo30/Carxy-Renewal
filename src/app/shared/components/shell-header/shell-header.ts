@@ -59,12 +59,15 @@ export class ShellHeaderComponent {
   @Input() authMode = false;
   @Input() showPublish = false;
   @Input() showPresentation = false;
+  @Input() showImportExport = false;
   @Input() title = '';
   @Input() subtitle = '';
   @Output() languageChange = new EventEmitter<AppLanguage>();
   @Output() menuToggle = new EventEmitter<void>();
   @Output() publishClick = new EventEmitter<void>();
   @Output() presentationChange = new EventEmitter<boolean>();
+  @Output() importClick = new EventEmitter<void>();
+  @Output() exportClick = new EventEmitter<void>();
 
   @ViewChild(CommandPaletteComponent) commandPalette?: CommandPaletteComponent;
 

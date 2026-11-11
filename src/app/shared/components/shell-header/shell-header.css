@@ -278,6 +278,53 @@
   flex: none;
 }
 
+.btn-import,
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-raised) 75%, transparent);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.btn-import svg,
+.btn-export svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+.btn-import:hover,
+.btn-export:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent-color) 55%, var(--border-color));
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 11%, var(--surface-raised));
+}
+
+@media (max-width: 1500px) {
+  .btn-import .btn-label,
+  .btn-export .btn-label { display: none; }
+  .btn-import,
+  .btn-export { width: 38px; padding: 0; }
+}
+
 .btn-presentation,
 .btn-publish {
   display: inline-flex;

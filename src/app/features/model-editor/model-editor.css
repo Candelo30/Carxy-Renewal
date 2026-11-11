@@ -721,10 +721,21 @@ input[type='range'] {
   flex: none;
 }
 
-.icon-action:hover:not(:disabled) {
-  border-color: var(--accent-color);
+.icon-action svg {
+  width: 18px;
+  height: 18px;
+}
+
+.accent-action {
   color: var(--accent-color);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 8%, var(--surface-raised));
+}
+
+.accent-action:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: #ffffff;
+  background: color-mix(in srgb, var(--accent-color) 22%, var(--surface-raised));
 }
 
 .icon-action:disabled {

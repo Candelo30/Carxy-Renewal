@@ -7,6 +7,8 @@ import {
   ChangeDetectorRef,
   EventEmitter,
   Output,
+  ViewChild,
+  ElementRef,
   inject,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
@@ -99,6 +101,16 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly collaboration = inject(CollaborationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  @ViewChild('sceneFileInput') private sceneFileInput?: ElementRef<HTMLInputElement>;
+
+  public triggerImport(): void {
+    this.sceneFileInput?.nativeElement.click();
+  }
+
+  public triggerExport(): void {
+    void this.exportSceneGLB();
+  }
 
   public canUndo = false;
   public canRedo = false;

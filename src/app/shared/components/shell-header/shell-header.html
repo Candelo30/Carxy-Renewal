@@ -94,8 +94,36 @@
         </nav>
       }
 
-      @if (!authMode && (showPublish || showPresentation)) {
+      @if (!authMode && (showPublish || showPresentation || showImportExport)) {
         <div class="page-actions">
+          @if (showImportExport) {
+            <button
+              class="btn-import"
+              type="button"
+              title="{{ 'Importar modelo GLB/GLTF' | translate }}"
+              [attr.aria-label]="'Importar modelo GLB/GLTF' | translate"
+              (click)="importClick.emit()"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4v10M7.8 11.1L12 15.3l4.2-4.2" />
+                <path d="M4 18.5V20a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5" />
+              </svg>
+              <span class="btn-label">{{ 'Importar' | translate }}</span>
+            </button>
+            <button
+              class="btn-export"
+              type="button"
+              title="{{ 'Exportar escena a GLB' | translate }}"
+              [attr.aria-label]="'Exportar escena a GLB' | translate"
+              (click)="exportClick.emit()"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15V5M7.8 9.1L12 5l4.2 4.1" />
+                <path d="M4 17.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5" />
+              </svg>
+              <span class="btn-label">{{ 'Exportar' | translate }}</span>
+            </button>
+          }
           @if (showPresentation) {
             <button
               class="btn-presentation"
