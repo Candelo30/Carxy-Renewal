@@ -158,7 +158,11 @@
         <!-- USERS -->
         <ng-container *ngIf="isUsers">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Usuarios registrados</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} cuentas · {{ (stats$ | async)?.active30d || 0 }} activas (30d)</span></div><div class="panel-actions"><label class="activity-filter-label">Filtrar<select [(ngModel)]="activityFilterValue" name="activity-filter"><option value="all">Todas</option><option value="active">Activas (30d)</option><option value="inactive">Inactivas (+30d)</option><option value="suspended">Suspendidas</option></select></label></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>Usuarios registrados</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} cuentas · {{ (stats$ | async)?.active30d || 0 }} activas (30d)</span></div><div class="panel-actions"><label class="activity-filter-label">Filtrar<select [(ngModel)]="activityFilterValue" name="activity-filter"><option value="all">Todas</option><option value="active">Activas (30d)</option><option value="inactive">Inactivas (+30d)</option><option value="suspended">Suspendidas</option></select></label><button class="small-button danger" (click)="purgeInactiveUsers()" [disabled]="!(inactiveUsers$ | async)?.length">{{ 'admin.purgeInactive' | translate }} (+{{ inactiveDeleteDays }}d)</button></div></div>
+            <div class="alert alert-warning" *ngIf="duplicateEmails.length">
+              <strong>{{ 'admin.duplicateEmailsTitle' | translate }}</strong>
+              <span *ngFor="let d of duplicateEmails">{{ d.email }} ({{ d.count }} {{ 'admin.duplicateEmailsCount' | translate }}) · </span>
+            </div>
             <div class="table-wrap" *ngIf="filteredUsers$ | async as users">
               <table>
                 <thead><tr><th>Usuario</th><th>Email</th><th>UID</th><th>Rol</th><th>Estado</th><th>Creado</th><th>Última actividad</th><th>Acciones</th></tr></thead>

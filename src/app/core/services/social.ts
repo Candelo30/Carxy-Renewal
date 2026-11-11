@@ -20,6 +20,7 @@ import {
   updateDoc,
   writeBatch,
 } from '@angular/fire/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   Storage,
   deleteObject,
@@ -27,7 +28,7 @@ import {
   ref,
   uploadBytes,
 } from '@angular/fire/storage';
-import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
 import { AuthService } from './auth';
 import { I18nService } from './i18n';
@@ -83,6 +84,7 @@ export function formatStorageError(error: unknown): string {
 export class SocialService {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly storage = inject(Storage, { optional: true });
+  private readonly functions = this.firestore && typeof getFunctions === 'function' ? getFunctions() : null;
   private readonly i18n = inject(I18nService);
   private readonly localPosts = new BehaviorSubject<Post3D[]>(this.readLocal(LOCAL_KEYS.posts, []));
   private readonly commentStreams = new Map<string, BehaviorSubject<Comment[]>>();
@@ -109,6 +111,7 @@ export class SocialService {
   private lastActivityWrite = 0;
   private readonly likeInFlight = new Set<string>();
   private static readonly LIKE_COOLDOWN_MS = 2000;
+  readonly INACTIVE_DELETE_DAYS = 30;
   private readonly likeRateLimit = new Map<string, number>();
   private readonly countedViews = new Set<string>();
   private readonly countedRemixes = new Set<string>();
@@ -216,6 +219,106 @@ export class SocialService {
     ? (collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.accountDeletionAudit))
         .pipe(map((items) => items.map((item) => this.normalizeAudit(item as Record<string, unknown>)))))
     : this.localDeletionAudit.asObservable();
+
+  /**
+   * Usuarios sin actividad registrada en los últimos INACTIVE_DELETE_DAYS días.
+   * Se excluyen admins y cuentas ya suspendidas.
+   */
+  readonly inactiveUsers$: Observable<UserProfile[]> = combineLatest([this.adminUsers$, this.userActivity$]).pipe(
+    map(([users, activity]) => {
+      const now = Date.now();
+      const limitMs = this.INACTIVE_DELETE_DAYS * 24 * 60 * 60 * 1000;
+      const lastSeenByUid = new Map<string, number>();
+      for (const entry of activity ?? []) {
+        const current = lastSeenByUid.get(entry.uid) ?? 0;
+        if (entry.lastSeenAt > current) lastSeenByUid.set(entry.uid, entry.lastSeenAt);
+      }
+      return (users ?? []).filter((u) => {
+        if (u.role === 'admin' || u.isBanned) return false;
+        const lastSeen = lastSeenByUid.get(u.uid);
+        return !!lastSeen && now - lastSeen > limitMs;
+      });
+    }),
+  );
+
+  /**
+   * Detecta emails compartidos por más de una cuenta activa.
+   */
+  findDuplicateEmails(users: UserProfile[]): Array<{ email: string; uids: string[]; users: UserProfile[] }> {
+    const byEmail = new Map<string, UserProfile[]>();
+    for (const user of users ?? []) {
+      const email = (user.email ?? '').trim().toLowerCase();
+      if (!email) continue;
+      const list = byEmail.get(email) ?? [];
+      list.push(user);
+      byEmail.set(email, list);
+    }
+    const duplicates: Array<{ email: string; uids: string[]; users: UserProfile[] }> = [];
+    for (const [email, list] of byEmail) {
+      if (list.length > 1) {
+        duplicates.push({ email, uids: list.map((u) => u.uid), users: list });
+      }
+    }
+    return duplicates.sort((a, b) => b.users.length - a.users.length);
+  }
+
+  /**
+   * Elimina (soft-delete con auditoría) las cuentas inactivas hace más de
+   * INACTIVE_DELETE_DAYS días. Devuelve cuántas se eliminaron y cuáles fallaron.
+   */
+  async deleteInactiveUsers(deletedByUid: string): Promise<{
+    deleted: number;
+    skipped: string[];
+    deletedUids: string[];
+  }> {
+    const [users, activity] = await Promise.all([
+      firstValueFrom(this.adminUsers$),
+      firstValueFrom(this.userActivity$),
+    ]);
+    const now = Date.now();
+    const limitMs = this.INACTIVE_DELETE_DAYS * 24 * 60 * 60 * 1000;
+    const lastSeenByUid = new Map<string, number>();
+    for (const entry of activity ?? []) {
+      const current = lastSeenByUid.get(entry.uid) ?? 0;
+      if (entry.lastSeenAt > current) lastSeenByUid.set(entry.uid, entry.lastSeenAt);
+    }
+    const targets = (users ?? []).filter((u) => {
+      if (u.role === 'admin' || u.isBanned) return false;
+      const lastSeen = lastSeenByUid.get(u.uid);
+      return !!lastSeen && now - lastSeen > limitMs;
+    });
+    let deleted = 0;
+    const skipped: string[] = [];
+    const deletedUids: string[] = [];
+    for (const user of targets) {
+      try {
+        await this.deleteAccountData(user.uid, 'inactivity', deletedByUid);
+        deleted++;
+        deletedUids.push(user.uid);
+      } catch (error) {
+        skipped.push(user.uid);
+        console.warn(`No se pudo eliminar la cuenta inactiva ${user.uid}.`, error);
+      }
+    }
+    this.adminUsersRefresh$.next(undefined);
+    return { deleted, skipped, deletedUids };
+  }
+
+  /**
+   * Borra un usuario de Firebase Authentication mediante la Cloud Function
+   * deleteFirebaseAuthUser (solo admins). Devuelve true si se borró.
+   */
+  async deleteAuthUser(uid: string): Promise<boolean> {
+    if (!this.functions) return false;
+    try {
+      const callable = httpsCallable(this.functions, 'deleteFirebaseAuthUser');
+      await callable({ uid });
+      return true;
+    } catch (error: any) {
+      console.warn(`No se pudo borrar el usuario de Auth ${uid}.`, error);
+      return false;
+    }
+  }
 
   private demoUsers(): UserProfile[] {
     const stored = this.localAccounts();
@@ -991,9 +1094,9 @@ export class SocialService {
     await this.deleteLocalBlob(post.id);
   }
 
-  async deleteAccountData(uid: string): Promise<void> {
+  async deleteAccountData(uid: string, reason: 'self' | 'inactivity' | 'admin' = 'self', deletedBy?: string): Promise<void> {
     if (!uid) throw new Error('No se pudo validar la cuenta que se va a eliminar.');
-    await this.logDeletionAudit(uid);
+    await this.logDeletionAudit(uid, reason, deletedBy);
 
     if (!this.firestore) {
       const ownedPosts = this.localPosts.value.filter((post) => post.authorId === uid || post.author.uid === uid);
@@ -1358,7 +1461,7 @@ export class SocialService {
     }
   }
 
-  private async logDeletionAudit(uid: string): Promise<void> {
+  private async logDeletionAudit(uid: string, reason: 'self' | 'inactivity' | 'admin' = 'self', deletedBy?: string): Promise<void> {
     try {
       const stored = this.readLocal<{ uid?: string; email?: string; displayName?: string }>(LOCAL_KEYS.user, {});
       const current = this.auth?.currentUser;
@@ -1368,8 +1471,8 @@ export class SocialService {
         email: current?.email ?? stored?.email ?? '',
         displayName: current?.displayName ?? stored?.displayName ?? '',
         deletedAt: Date.now(),
-        deletedBy: uid,
-        reason: 'self',
+        deletedBy: deletedBy ?? uid,
+        reason,
       };
       if (this.firestore) {
         await addDoc(collection(this.firestore, SOCIAL_COLLECTIONS.accountDeletionAudit), audit);

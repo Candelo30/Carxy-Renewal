@@ -2,7 +2,7 @@ import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, combineLatest, map, of, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, firstValueFrom, map, of, startWith } from 'rxjs';
 import {
   ContentReport,
   CommunityQuestion,
@@ -112,6 +112,9 @@ export class AdminDashboardComponent {
   readonly vm$ = this.vmSubject.asObservable();
 
   readonly roles: UserRole[] = ['user', 'moderator', 'admin'];
+  readonly inactiveDeleteDays = this.social.INACTIVE_DELETE_DAYS;
+  readonly inactiveUsers$ = this.social.inactiveUsers$;
+  duplicateEmails: { email: string; uids: string[]; count: number }[] = [];
   readonly projectRoles: ProjectRole[] = ['owner', 'editor', 'viewer'];
   readonly helpCategories: HelpArticleCategory[] = [
     'primeros-pasos',
@@ -149,6 +152,13 @@ export class AdminDashboardComponent {
       this._tab = 'reports';
     }
     this.loadData();
+    this.vm$.subscribe((vm) => {
+      this.duplicateEmails = this.social.findDuplicateEmails(vm.users).map((d) => ({
+        email: d.email,
+        uids: d.uids,
+        count: d.users.length,
+      }));
+    });
     // Real-time updates every 10 seconds
     setInterval(() => {
       this.loadData();
@@ -364,6 +374,62 @@ export class AdminDashboardComponent {
     this.loadData();
     if (this.selectedProjectId) {
       this.selectProject(this.selectedProjectId);
+    }
+  }
+
+  async purgeInactiveUsers(): Promise<void> {
+    const currentUser = this.vmSubject.value.user;
+    if (!currentUser || currentUser.role !== 'admin') return;
+    const inactive = await firstValueFrom(this.inactiveUsers$);
+    const count = inactive.length;
+    if (!count) {
+      this.notifications.info(
+        this.i18n.translate('No hay cuentas inactivas desde hace más de {days} días.', { days: this.inactiveDeleteDays }),
+        this.i18n.translate('Cuentas inactivas'),
+      );
+      return;
+    }
+    if (!confirm(this.i18n.translate('¿Eliminar {count} cuenta(s) sin actividad en más de {days} días? Esta acción es irreversible y borra también la cuenta de Firebase Auth.', { count, days: this.inactiveDeleteDays }))) return;
+    try {
+      const result = await this.social.deleteInactiveUsers(currentUser.uid);
+
+      // También borra las cuentas de Firebase Auth (solo se puede desde el servidor)
+      let authDeleted = 0;
+      let authFailed = 0;
+      for (const uid of result.deletedUids) {
+        const ok = await this.social.deleteAuthUser(uid);
+        if (ok) authDeleted++;
+        else authFailed++;
+      }
+
+      this.refresh();
+      this.notifications.success(
+        this.i18n.translate('Se eliminaron {deleted} cuenta(s) inactivas.', { deleted: result.deleted }),
+        this.i18n.translate('Limpieza de inactividad'),
+      );
+      if (authDeleted) {
+        this.notifications.success(
+          this.i18n.translate('Se borraron {deleted} cuenta(s) de Firebase Auth.', { deleted: authDeleted }),
+          this.i18n.translate('Cuentas de Auth eliminadas'),
+        );
+      }
+      if (result.skipped.length) {
+        this.notifications.warning(
+          this.i18n.translate('No se pudo eliminar {count} cuenta(s) de Firestore.', { count: result.skipped.length }),
+          this.i18n.translate('Algunas cuentas no se pudieron eliminar'),
+        );
+      }
+      if (authFailed) {
+        this.notifications.warning(
+          this.i18n.translate('No se pudo borrar {count} cuenta(s) de Firebase Auth. Hágalo desde Firebase Console.', { count: authFailed }),
+          this.i18n.translate('Algunas cuentas de Auth no se pudieron borrar'),
+        );
+      }
+    } catch (error) {
+      this.notifications.error(
+        error instanceof Error ? error.message : this.i18n.translate('No se pudo completar la limpieza de inactividad.'),
+        this.i18n.translate('Error'),
+      );
     }
   }
 

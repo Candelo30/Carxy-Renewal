@@ -25,6 +25,7 @@ import {
   ProjectInvitation,
   ProjectActivity,
   ProjectPresence,
+  PresenceTransform,
   ProjectRole,
 } from '../models/social.models';
 
@@ -415,7 +416,7 @@ export class CollaborationService implements OnDestroy {
       invitedBy: user.uid,
       invitedByName: user.displayName,
       invitedEmail: normalizedEmail,
-      invitedUid: undefined,
+      invitedUid: null,
       role,
       status: 'pending',
       createdAt: now,
@@ -507,10 +508,12 @@ export class CollaborationService implements OnDestroy {
     return this.authService.user$.pipe(
       switchMap((user) => {
         if (!user?.email) return of([]);
+        const invitedEmail = this.normalizeInvitationEmail(user.email);
+        if (!invitedEmail) return of([]);
         try {
           const q = query(
             collection(db, SOCIAL_COLLECTIONS.projectInvitations),
-            where('invitedEmail', '==', user.email),
+            where('invitedEmail', '==', invitedEmail),
             where('status', '==', 'pending'),
             limit(100)
           );
@@ -570,7 +573,8 @@ export class CollaborationService implements OnDestroy {
     isOnline: boolean,
     currentObjectId: string | null,
     cursorX: number,
-    cursorY: number
+    cursorY: number,
+    transform?: PresenceTransform | null
   ): Promise<void> {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
@@ -584,6 +588,7 @@ export class CollaborationService implements OnDestroy {
       currentObjectId,
       cursorX,
       cursorY,
+      transform,
       lastSeen: Date.now(),
     }, { merge: true });
   }

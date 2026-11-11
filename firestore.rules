@@ -731,7 +731,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'lastSeen']);
+          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'transform', 'lastSeen']);
 
       allow delete: if signedIn()
         && request.resource.data.uid == request.auth.uid;

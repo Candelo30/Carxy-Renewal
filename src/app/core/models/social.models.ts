@@ -212,7 +212,7 @@ export interface ProjectInvitation {
   invitedBy: string;
   invitedByName: string;
   invitedEmail: string;
-  invitedUid?: string;       // undefined si el invitado aún no tiene cuenta en CARXY
+  invitedUid?: string | null;   // null si el invitado aún no tiene cuenta en CARXY
   role: ProjectRole;
   status: 'pending' | 'accepted' | 'rejected' | 'revoked' | 'expired';
   createdAt: number;
@@ -241,7 +241,17 @@ export interface ProjectPresence {
   currentObjectId: string | null;
   cursorX: number;
   cursorY: number;
+  /** Transformación del objeto que está moviendo este colaborador (tiempo real). */
+  transform?: PresenceTransform | null;
   lastSeen: number;
+}
+
+export interface PresenceTransform {
+  objectId: string;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  scale: { x: number; y: number; z: number };
+  updatedAt: number;
 }
 
 export type HelpArticleCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'colaboracion' | 'cuenta';

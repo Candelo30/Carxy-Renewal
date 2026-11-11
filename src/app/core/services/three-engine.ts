@@ -77,6 +77,8 @@ export class ThreeEngineService implements OnDestroy {
   public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
   public readonly collaboratorSelection$ = new Subject<{ uid: string; objectId: string | null }>();
   public readonly remoteCursor$ = new Subject<{ uid: string; x: number; y: number; color: string }>();
+  /** Posición del cursor propio sobre el viewport (0-100 %), emitida al mover el ratón. */
+  public readonly cursorMoved$ = new Subject<{ x: number; y: number }>();
   public readonly objectLockChanged$ = new Subject<{ objectId: string; lockedBy: string | null }>();
   public snapToGrid = false;
   public gridStep = 0.5;
@@ -93,6 +95,7 @@ export class ThreeEngineService implements OnDestroy {
   private controls?: OrbitControls;
   private transformControls?: TransformControls;
   private frameId: number | null = null;
+  private _pointerMoveListener?: (event: PointerEvent) => void;
   private ambientLight?: THREE.AmbientLight;
   private directionalLight?: THREE.DirectionalLight;
   private perspectiveCamera?: THREE.PerspectiveCamera;
@@ -229,6 +232,19 @@ export class ThreeEngineService implements OnDestroy {
     window.addEventListener('pointerup', this.handleGlobalPointerUp);
     window.addEventListener('pointercancel', this.handleGlobalPointerUp);
     window.addEventListener('blur', this.handleGlobalPointerUp);
+    // Seguimiento del cursor propio sobre el viewport para colaboradores remotos.
+    const dom = this.renderer!.domElement;
+    this._pointerMoveListener = (event: PointerEvent) => {
+      if (!this.canvas) return;
+      const rect = this.canvas.getBoundingClientRect();
+      const nx = (event.clientX - rect.left) / Math.max(rect.width, 1);
+      const ny = (event.clientY - rect.top) / Math.max(rect.height, 1);
+      const x = Math.min(100, Math.max(0, nx * 100));
+      const y = Math.min(100, Math.max(0, ny * 100));
+      this.cursorMoved$.next({ x, y });
+      if (this.ownCursorUid) this.updateOwnCursor(x, y);
+    };
+    dom.addEventListener('pointermove', this._pointerMoveListener, { passive: true });
     this.initializePostProcessing(width, height);
     this.detectARSupport();
 
@@ -251,6 +267,10 @@ export class ThreeEngineService implements OnDestroy {
       window.removeEventListener('pointercancel', this.handleGlobalPointerUp);
       window.removeEventListener('blur', this.handleGlobalPointerUp);
     }
+    if (this._pointerMoveListener && this.renderer?.domElement) {
+      this.renderer.domElement.removeEventListener('pointermove', this._pointerMoveListener);
+    }
+    this._pointerMoveListener = undefined;
     if (this.transformControls) {
       this.scene?.remove(this.transformControls.getHelper());
       this.transformControls.dispose();
@@ -1479,7 +1499,8 @@ export class ThreeEngineService implements OnDestroy {
     target.position.set(position.x, position.y, position.z);
     target.rotation.set(rotation.x, rotation.y, rotation.z);
     target.scale.set(scale.x, scale.y, scale.z);
-    this.collaboratorTransform$.next({ uid, objectId, position, rotation, scale });
+    // No se re-emite collaboratorTransform$ aquí para evitar bucles;
+    // los transformes remotos se aplican desde la presencia en model-editor.
   }
 
   getCollaborators(): Array<{ uid: string; displayName: string; color: string; objectId: string | null }> {

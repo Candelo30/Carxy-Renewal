@@ -16,7 +16,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { interval, Subscription, firstValueFrom, take } from 'rxjs';
+import { interval, Subscription, Subject, firstValueFrom, take } from 'rxjs';
 import { auditTime, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
@@ -29,7 +29,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
-import type { NotificationPosition, ProjectActivity, ProjectPresence } from '../../core/models/social.models';
+import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform } from '../../core/models/social.models';
 import type {
   EditableMaterial,
   PrimitiveType,
@@ -113,6 +113,16 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly collaboration = inject(CollaborationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /** Última posición conocida del cursor propio en pantalla (0-100 %). */
+  private ownCursorX = 0;
+  private ownCursorY = 0;
+  /** Última transformación propia enviada a los colaboradores. */
+  private ownTransform: PresenceTransform | null = null;
+  /** Marca de tiempo del último transform remoto aplicado por colaborador (evita reaplicar). */
+  private lastRemoteTransformAt = new Map<string, number>();
+  /** Dispara escrituras de presencia agregadas (cursor + transform) con auditable. */
+  private readonly presenceWrite$ = new Subject<void>();
 
   @ViewChild('sceneFileInput') private sceneFileInput?: ElementRef<HTMLInputElement>;
 
@@ -246,7 +256,7 @@ export class ModelEditor implements OnInit, OnDestroy {
 
       // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales
       this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
-        .pipe(debounceTime(800))
+        .pipe(debounceTime(400))
         .subscribe(() => {
           if (!this.projectId || this.isApplyingRemote || !this.canWrite) return;
           const json = this.threeEngine.serializeScene();
@@ -265,6 +275,20 @@ export class ModelEditor implements OnInit, OnDestroy {
             this.threeEngine.updateCollaboratorCursor(p.uid, p.cursorX, p.cursorY);
           }
           void this.threeEngine.setCollaboratorSelection(p.uid, p.currentObjectId ?? null);
+          // Aplicar transformes remotos en tiempo real (objeto moviéndose en otro cliente)
+          const t = p.transform;
+          if (t && p.uid !== uid && t.objectId && typeof t.updatedAt === 'number') {
+            const last = this.lastRemoteTransformAt.get(p.uid) ?? 0;
+            if (t.updatedAt > last) {
+              this.lastRemoteTransformAt.set(p.uid, t.updatedAt);
+              this.isApplyingRemote = true;
+              try {
+                this.threeEngine.applyRemoteTransform(p.uid, t.objectId, t.position, t.rotation, t.scale);
+              } finally {
+                this.isApplyingRemote = false;
+              }
+            }
+          }
         }
         // Limpiar colaboradores que ya no están presentes
         const activeUids = new Set(this.remotePresences.map((p) => p.uid));
@@ -275,6 +299,39 @@ export class ModelEditor implements OnInit, OnDestroy {
         }
         this.cdr.detectChanges();
       });
+
+      // Escritura agregada de la presencia propia (cursor + transform) para colaboradores remotos.
+      this.subscriptions.add(
+        this.presenceWrite$.pipe(auditTime(150)).subscribe(async () => {
+          if (!this.projectId) return;
+          const uid = this.auth.currentUser?.uid;
+          if (!uid) return;
+          try {
+            await this.collaboration.setPresence(
+              this.projectId,
+              uid,
+              this.auth.currentUser?.displayName ?? 'Colaborador',
+              this.auth.currentUser?.photoURL ?? null,
+              true,
+              this.threeEngine.getSelectedNodeId() ?? null,
+              this.ownCursorX,
+              this.ownCursorY,
+              this.ownTransform
+            );
+          } catch {
+            // presencia best-effort
+          }
+        })
+      );
+
+      // Seguir el ratón sobre el viewport y propagar la posición del cursor propio.
+      this.subscriptions.add(
+        this.threeEngine.cursorMoved$.subscribe(({ x, y }) => {
+          this.ownCursorX = x;
+          this.ownCursorY = y;
+          this.presenceWrite$.next();
+        })
+      );
 
       // Registrar presencia propia al unirse y mantener heartbeat (más rápido para tiempo real)
       (async () => {
@@ -287,7 +344,7 @@ export class ModelEditor implements OnInit, OnDestroy {
           if (isPlatformBrowser(this.platformId)) {
             this.presenceHeartbeat = setInterval(() => {
               void this.updateOwnPresence(this.threeEngine.getSelectedNodeId() ?? null);
-            }, 5000);
+            }, 3000);
           }
           this.notifications.success(
             this.i18n.translate('projects.youJoinedProject', { name: this.projectName || this.projectId }),
@@ -342,6 +399,18 @@ export class ModelEditor implements OnInit, OnDestroy {
             void this.collaboration.unlockObject(this.projectId!, selId);
           }, 3000);
           logActivityDebounced('object_updated', selId, 'object', this.threeEngine.sceneJson);
+          // Enviar la transformación propia a los colaboradores en tiempo real
+          const node = this.threeEngine.getSelectedSceneNodes().find((n) => n.id === selId);
+          if (node) {
+            this.ownTransform = {
+              objectId: selId,
+              position: { x: node.object.position.x, y: node.object.position.y, z: node.object.position.z },
+              rotation: { x: node.object.rotation.x, y: node.object.rotation.y, z: node.object.rotation.z },
+              scale: { x: node.object.scale.x, y: node.object.scale.y, z: node.object.scale.z },
+              updatedAt: Date.now(),
+            };
+            this.presenceWrite$.next();
+          }
         }
       }));
 
@@ -358,20 +427,6 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       });
 
-      this.remoteTransformSub = this.threeEngine.collaboratorTransform$.subscribe((t) => {
-        if (t.uid === this.auth.currentUser?.uid) return;
-        this.isApplyingRemote = true;
-        try {
-          this.threeEngine.applyRemoteTransform(t.uid, t.objectId, t.position, t.rotation, t.scale);
-          this.sceneObjects = this.threeEngine.getSceneObjects();
-          this.refreshSceneNodes();
-          this.loadMaterialsFromEngine();
-          this.cdr.detectChanges();
-        } finally {
-          this.isApplyingRemote = false;
-        }
-      });
-
       this.remoteJoinedSub = this.threeEngine.collaboratorJoined$.subscribe((c) => {
         this.notifications.info(
           this.i18n.translate('projects.youJoinedProject', { name: c.displayName }),
@@ -383,6 +438,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.remoteLeftSub = this.threeEngine.collaboratorLeft$.subscribe((uid) => {
         this.remoteCursors.delete(uid);
         this.remoteSelections.delete(uid);
+        this.lastRemoteTransformAt.delete(uid);
         this.cdr.detectChanges();
       });
 
@@ -1191,8 +1247,9 @@ export class ModelEditor implements OnInit, OnDestroy {
       user.photoURL ?? null,
       true,
       null,
-      0,
-      0
+      this.ownCursorX,
+      this.ownCursorY,
+      this.ownTransform
     );
   }
 
@@ -1208,8 +1265,9 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.auth.currentUser?.photoURL ?? null,
         true,
         objectId ?? this.threeEngine.getSelectedNodeId() ?? null,
-        0,
-        0
+        this.ownCursorX,
+        this.ownCursorY,
+        this.ownTransform
       );
     } catch {
       // presencia best-effort

@@ -1745,6 +1745,38 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
     'Entre para perguntar, responder, votar ou aceitar respostas.',
   ),
   'admin.status.reviewing': t('In review', 'En cours d’examen', 'Em análise'),
+  'admin.purgeInactive': t('Delete inactive', 'Supprimer inactifs', 'Excluir inativos'),
+  'admin.duplicateEmailsTitle': t('Duplicate email accounts detected', 'Comptes avec email en double détectés', 'Contas com email duplicado detectadas'),
+  'admin.duplicateEmailsCount': t('accounts', 'comptes', 'contas'),
+
+  'No hay cuentas inactivas desde hace más de {days} días.': t(
+    'No inactive accounts for more than {days} days.',
+    'Aucun compte inactif depuis plus de {days} jours.',
+    'Nenhuma conta inativa há mais de {days} dias.',
+  ),
+  '¿Eliminar {count} cuenta(s) sin actividad en más de {days} días? Esta acción es irreversible.': t(
+    'Delete {count} account(s) inactive for more than {days} days? This action is irreversible.',
+    'Supprimer {count} compte(s) inactif(s) depuis plus de {days} jours ? Cette action est irréversible.',
+    'Excluir {count} conta(s) inativa(s) há mais de {days} dias? Esta ação é irreversível.',
+  ),
+  'Se eliminaron {deleted} cuenta(s) inactivas.': t(
+    '{deleted} inactive account(s) deleted.',
+    '{deleted} compte(s) inactif(s) supprimé(s).',
+    '{deleted} conta(s) inativa(s) excluída(s).',
+  ),
+  'No se pudo eliminar {count} cuenta(s).': t(
+    'Could not delete {count} account(s).',
+    'Impossible de supprimer {count} compte(s).',
+    'Não foi possível excluir {count} conta(s).',
+  ),
+  'Cuentas inactivas': t('Inactive accounts', 'Comptes inactifs', 'Contas inativas'),
+  'Limpieza de inactividad': t('Inactivity cleanup', 'Nettoyage d’inactivité', 'Limpeza de inatividade'),
+  'Algunas cuentas no se pudieron eliminar': t('Some accounts could not be deleted.', 'Algunas cuentas no se pudieron eliminar.', 'Algumas contas não puderam ser excluídas.'),
+  'No se pudo completar la limpieza de inactividad.': t(
+    'Could not complete inactivity cleanup.',
+    'Impossible de terminer le nettoyage d’inactivité.',
+    'Não foi possível concluir a limpeza de inatividade.',
+  ),
 
   // --- Fin de las traducciones de funcionalidades ---
 };
