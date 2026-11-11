@@ -9,31 +9,35 @@ Dos problemas distintos:
 
 Además, el invitado **siempre** ve la invitación pendiente en `/projects` al entrar con el mismo correo (no necesita el correo).
 
-## Paso 1 — Cuenta y dominio en Resend
+## Paso 1 — Elige el remitente (From)
 
+El remitente es lo que aparece en "De:" del correo; Resend solo permite direcciones verificadas.
+
+**Sin dominio propio (recomendado para empezar):** usa `onboarding@resend.dev` (ya configurado por defecto en `functions/lib/email/config.js`). Limitación: en sandbox Resend **solo entrega al correo del dueño de la cuenta**. Perfecto para probar que tus invitaciones llegan.
+
+**Con dominio propio (obligatorio para producción/entrega a terceros):**
 1. Crea cuenta en https://resend.com y genera una API key (`re_...`).
-2. **Verifica tu dominio** (Domains → Add Domain) y publica los registros DNS (SPF/DKIM). Resend no permite enviar desde dominios ajenos en producción.
-3. Mientras uses la cuenta sandbox/gratis sin dominio verificado, Resend **solo entrega al correo del dueño de la cuenta**. Prueba con el correo de tu cuenta Resend primero.
+2. **Domains → Add Domain**: añade tu dominio (p. ej. `tudominio.com`) — en tu app vive en `candelo30.github.io/Carxy-Renewal`, pero `github.io` **no es verificable** (DNS de GitHub), no necesitas asociarlo a Resend.
+3. Publica en el DNS del dominio los registros SPF/DKIM (y DMARC recomendado) que Resend indique. Revisa el estado "Verified".
+4. En `functions/lib/email/config.js` cambia `fromEmail` a `noreply@tudominio-verificado.com`.
 
 ## Paso 2 — Configurar secretos en Firebase (Functions v2)
 
-El transporte lee `process.env.RESEND_API_KEY`. Para functions v2, lo habitual es un archivo `.env` en `functions/` (no se versiona — añadido a `.gitignore`):
+El transporte lee `process.env.RESEND_API_KEY`. Copia la plantilla y rellena tu clave (no se versiona — está en `.gitignore`):
 
+```bash
+cp functions/.env.example functions/.env   # y edita RESEND_API_KEY
 ```
-# functions/.env  (NO subir a git)
-RESEND_API_KEY=re_tu_clave_aqui
-```
 
-o con el gestor de secretos de Google Cloud (Secret Manager + `defineSecret`).
+o, en su lugar, con el gestor de secretos de Google Cloud (Secret Manager + `defineSecret`).
 
-## Paso 3 — Ajustar remitente y URL
+## Paso 3 — Remitente y URL (ya configurados por defecto)
 
-Edita `functions/lib/email/config.js`:
-- `fromEmail`: debe ser del dominio verificado en Resend (p. ej. `noreply@tudominio.com`). `fromName`: `CARXY`.
-- `appUrl`: URL pública de tu app (se usa en enlaces de bienvenida/verificación; el enlace de aceptar invitación lo pasa el cliente derivado de `document.baseURI`).
-- `privacyUrl` / `termsUrl` / `supportEmail`: actualiza igualmente (aún tienen placeholders).
-
-`config.js` es la fuente desplegada hoy (el proyecto no tiene `functions/src`; `lib/` es el código desplegado). Mantén `package.json`/`package-lock.json` como manifiesto.
+`functions/lib/email/config.js` ya trae valores por defecto razonables:
+- `fromEmail`: `onboarding@resend.dev` (solo entrega al correo del dueño de la cuenta). Cámbialo a `noreply@tudominio-verificado.com` cuando verifiques tu dominio.
+- `appUrl`: `https://candelo30.github.io/Carxy-Renewal` (la URL pública actual de la app).
+- `supportEmail` / `privacyUrl` / `termsUrl`: aún tienen placeholders, actualízalos a tus URLs reales.
+- `config.js` es la fuente desplegada hoy (el proyecto no tiene `functions/src`; `lib/` es el código desplegado). Mantén `package.json`/`package-lock.json` como manifiesto.
 
 ## Paso 4 — Desplegar las Cloud Functions
 
