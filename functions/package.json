@@ -1,5 +1,5 @@
 {
-  "name": "carxy-functions",
+  "name": "functions",
   "description": "Cloud Functions for CARXY 3D Studio",
   "scripts": {
     "serve": "firebase emulators:start --only functions",

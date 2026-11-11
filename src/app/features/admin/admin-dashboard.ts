@@ -83,7 +83,6 @@ export class AdminDashboardComponent {
 
   readonly user$: Observable<UserProfile | null> = this.auth.user$;
   mobileMenuOpen = false;
-  readonly now = Date.now();
 
   private readonly vmSubject = new BehaviorSubject<{
     user: UserProfile | null;
