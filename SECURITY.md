@@ -37,7 +37,7 @@ No incluyas contraseñas, tokens, claves de servicio ni datos personales de terc
   - `Strict-Transport-Security` cuando la petición llega por HTTPS
   - `X-Powered-By` deshabilitado
 - **Secretos**: las claves de servicio y credenciales privadas nunca deben estar en `environment.ts`, `public/` ni en el bundle del cliente. La configuración web de Firebase son identificadores públicos, no secretos.
-- **Almacenamiento local**: el modo de demostración guarda datos solo en el navegador. No se usa para cuentas reales.
+- **Almacenamiento local**: el modo de demostración guarda datos solo en el navegador en texto plano (`localStorage`/IndexedDB), sin cifrado. No se usa para cuentas reales ni datos sensibles, ya que un XSS u otro acceso al contexto del navegador podría exponerlos.
 
 ## Buenas prácticas para colaboradores
 

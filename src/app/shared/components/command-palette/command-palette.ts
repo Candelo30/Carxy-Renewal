@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/services/auth';
 import { I18nService } from '../../../core/services/i18n';
 import { LocalStateService } from '../../../core/services/local-state';
 import { NotificationService } from '../../../core/services/notifications';
+import { ThemeService } from '../../../core/services/theme.service';
 import { copyText } from '../../../core/utils/share';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
@@ -44,6 +45,7 @@ export class CommandPaletteComponent {
   private readonly i18n = inject(I18nService);
   private readonly localState = inject(LocalStateService);
   private readonly notifications = inject(NotificationService);
+  private readonly themeService = inject(ThemeService);
   private readonly document = inject(DOCUMENT);
 
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
@@ -387,20 +389,13 @@ export class CommandPaletteComponent {
     const currentIndex = themeOrder.indexOf(preferences.theme);
     const theme = themeOrder[(currentIndex + 1) % themeOrder.length];
     this.localState.savePreferences({ ...preferences, theme });
-    this.document.documentElement.dataset['theme'] = theme === 'system'
-      ? (this.matchSystemTheme() ? 'dark' : 'light')
-      : theme;
+    this.themeService.apply({ theme, accentColor: preferences.accentColor });
     this.notifications.success(
       this.i18n.translate('Tema {theme} activado.', {
         theme: this.i18n.translate(theme === 'dark' ? 'oscuro' : theme === 'light' ? 'claro' : 'sistema'),
       }),
       this.i18n.translate('Apariencia actualizada'),
     );
-  }
-
-  private matchSystemTheme(): boolean {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
   private async copyCurrentLink(): Promise<void> {

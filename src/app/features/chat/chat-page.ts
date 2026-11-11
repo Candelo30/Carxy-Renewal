@@ -325,15 +325,40 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  /**
+   * Valida que una URL sea segura para renderizar como enlace.
+   * Solo permite protocolos http:// o https://. Rechaza javascript:, data:,
+   * vbscript:, file:, ftp: y cualquier otro esquema potencialmente peligroso.
+   */
+  private isSafeUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
   highlightedHtml(text: string): SafeHtml {
     const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     let html = text.replace(/[&<>"']/g, (char) => map[char] ?? char);
-    html = html.replace(/\b(https?:\/\/[^\s<]+)\b/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    // Solo convertir a enlace URLs que empiecen estrictamente con http:// o https://.
+    // Se valida cada URL con el constructor URL() para evitar esquemas peligrosos.
+    html = html.replace(/\b(https?:\/\/[^\s<"']+)/gi, (match) => {
+      if (!this.isSafeUrl(match)) {
+        return match;
+      }
+      const escapedUrl = match.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>`;
+    });
+
     const query = this.messageQuery.trim();
     if (query) {
       const pattern = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
       html = html.replace(pattern, '<mark>$1</mark>');
     }
+
     return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 

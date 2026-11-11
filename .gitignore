@@ -52,3 +52,6 @@ Thumbs.db
 /help-missing.json
 /missing-keys.json
 /translation-keys.txt
+
+# Firebase config (no versionar credenciales del cliente)
+public/firebase-config.js

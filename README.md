@@ -86,6 +86,7 @@ Sin configuración, el acceso y los datos sociales funcionan en el navegador loc
 
 - **Persistencia local**: el estado se guarda en el navegador (`localStorage`/IndexedDB) y puede variar entre pestañas, navegadores o dispositivos.
 - **Sin seguridad de servidor**: no reemplaza autenticación/autorización ni reglas de `firestore.rules`/`storage.rules`.
+- **Sin cifrado**: los datos locales (sesión, cuentas demo, borradores, chats y preferencias) se almacenan en texto plano en el navegador. Un ataque XSS u otra extensión/malware con acceso al perfil del navegador podría leerlos.
 - **Datos de demostración**: algunas vistas pueden mostrar contenido/usuarios de ejemplo cuando no hay datos locales previos.
 - **Paridad funcional limitada**: ciertos flujos y garantías (tiempo real multiusuario, permisos, consistencia entre servicios) pueden comportarse distinto a Firebase.
 - **Uso recomendado**: desarrollo, pruebas manuales y exploración de la UI; no para cuentas, datos sensibles ni operación real.

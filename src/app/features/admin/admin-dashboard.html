@@ -9,72 +9,72 @@
 
   <div class="sidebar-backdrop" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
 
-  <aside class="admin-sidebar" [class.open]="mobileMenuOpen">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <span class="sidebar-brand-icon">🛡</span>
-        <span class="sidebar-brand-name">CARXY Admin</span>
-      </div>
-      <button class="sidebar-close" type="button" (click)="closeMobileMenu()" [attr.aria-label]="'admin.closeMenu' | translate">✕</button>
-    </div>
-    <nav class="sidebar-nav" *ngIf="vm$ | async as vm">
-      <button class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
-        <span class="sidebar-icon">📊</span><span class="sidebar-label">{{ 'admin.dashboard' | translate }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')" [disabled]="moderationOnly">
-        <span class="sidebar-icon">👥</span><span class="sidebar-label">{{ 'admin.users' | translate }}</span>
-        <span class="sidebar-badge">{{ vm.users.length }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
-        <span class="sidebar-icon">📦</span><span class="sidebar-label">{{ 'admin.content' | translate }}</span>
-        <span class="sidebar-badge">{{ vm.posts.length }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isReports" (click)="setTab('reports')">
-        <span class="sidebar-icon">🚩</span><span class="sidebar-label">{{ 'admin.reports' | translate }}</span>
-        <span class="sidebar-badge warn" *ngIf="(stats$ | async)?.openReports">{{ (stats$ | async)?.openReports }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
-        <span class="sidebar-icon">💬</span><span class="sidebar-label">{{ 'admin.feedback' | translate }}</span>
-        <span class="sidebar-badge">{{ vm.feedback.length }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
-        <span class="sidebar-icon">❓</span><span class="sidebar-label">{{ 'admin.questions' | translate }}</span>
-        <span class="sidebar-badge">{{ vm.questions.length }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isProjects" (click)="setTab('projects')" [disabled]="moderationOnly">
-        <span class="sidebar-icon">🗂</span><span class="sidebar-label">{{ 'admin.projects' | translate }}</span>
-        <span class="sidebar-badge">{{ vm.projects.length }}</span>
-      </button>
-      <button class="sidebar-item" [class.active]="isHelpArticles" (click)="setTab('helpArticles')" [disabled]="moderationOnly">
-        <span class="sidebar-icon">📚</span><span class="sidebar-label">{{ 'admin.help' | translate }}</span>
-        <span class="sidebar-badge">{{ vm.helpArticles.length }}</span>
-      </button>
-    </nav>
-    <div class="sidebar-footer">
-      <button class="sidebar-logout" type="button" (click)="auth.logout()">{{ 'admin.logout' | translate }}</button>
-    </div>
-  </aside>
-
-  <div class="admin-content">
-    <header class="admin-header">
-      <div class="admin-header-left">
-        <button class="mobile-menu-toggle" type="button" (click)="toggleMobileMenu()" [attr.aria-label]="'admin.openMenu' | translate">☰</button>
-        <div>
-          <h1 class="admin-page-title">{{ pageTitle }}</h1>
-          <p class="admin-page-subtitle" *ngIf="moderationOnly">{{ 'admin.moderationMode' | translate }}</p>
+  <ng-container *ngIf="vm$ | async as vm; else loadingState">
+    <aside class="admin-sidebar" [class.open]="mobileMenuOpen">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <span class="sidebar-brand-icon">🛡</span>
+          <span class="sidebar-brand-name">CARXY Admin</span>
         </div>
+        <button class="sidebar-close" type="button" (click)="closeMobileMenu()" [attr.aria-label]="'admin.closeMenu' | translate">✕</button>
       </div>
-      <div class="admin-header-right">
-        <div class="admin-search">
-          <input type="search" class="search-input" [(ngModel)]="searchQuery" [placeholder]="'admin.searchPlaceholder' | translate" />
-        </div>
-        <button class="btn-refresh" type="button" (click)="refresh()" [title]="'admin.refresh' | translate">↻</button>
-        <button class="btn-user" type="button" [title]="'admin.currentUser' | translate">{{ (vm$ | async)?.user?.displayName?.charAt(0) || 'A' }}</button>
+      <nav class="sidebar-nav">
+        <button class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
+          <span class="sidebar-icon">📊</span><span class="sidebar-label">{{ 'admin.dashboard' | translate }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')" [disabled]="moderationOnly">
+          <span class="sidebar-icon">👥</span><span class="sidebar-label">{{ 'admin.users' | translate }}</span>
+          <span class="sidebar-badge">{{ vm.users.length }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
+          <span class="sidebar-icon">📦</span><span class="sidebar-label">{{ 'admin.content' | translate }}</span>
+          <span class="sidebar-badge">{{ vm.posts.length }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isReports" (click)="setTab('reports')">
+          <span class="sidebar-icon">🚩</span><span class="sidebar-label">{{ 'admin.reports' | translate }}</span>
+          <span class="sidebar-badge warn" *ngIf="openReportsCount(vm.reports)">{{ openReportsCount(vm.reports) }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
+          <span class="sidebar-icon">💬</span><span class="sidebar-label">{{ 'admin.feedback' | translate }}</span>
+          <span class="sidebar-badge">{{ vm.feedback.length }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
+          <span class="sidebar-icon">❓</span><span class="sidebar-label">{{ 'admin.questions' | translate }}</span>
+          <span class="sidebar-badge">{{ vm.questions.length }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isProjects" (click)="setTab('projects')" [disabled]="moderationOnly">
+          <span class="sidebar-icon">🗂</span><span class="sidebar-label">{{ 'admin.projects' | translate }}</span>
+          <span class="sidebar-badge">{{ vm.projects.length }}</span>
+        </button>
+        <button class="sidebar-item" [class.active]="isHelpArticles" (click)="setTab('helpArticles')" [disabled]="moderationOnly">
+          <span class="sidebar-icon">📚</span><span class="sidebar-label">{{ 'admin.help' | translate }}</span>
+          <span class="sidebar-badge">{{ vm.helpArticles.length }}</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="sidebar-logout" type="button" (click)="auth.logout()">{{ 'admin.logout' | translate }}</button>
       </div>
-    </header>
+    </aside>
 
-    <section class="admin-body">
-      <ng-container *ngIf="vm$ | async as vm; else loadingState">
+    <div class="admin-content">
+      <header class="admin-header">
+        <div class="admin-header-left">
+          <button class="mobile-menu-toggle" type="button" (click)="toggleMobileMenu()" [attr.aria-label]="'admin.openMenu' | translate">☰</button>
+          <div>
+            <h1 class="admin-page-title">{{ pageTitle }}</h1>
+            <p class="admin-page-subtitle" *ngIf="moderationOnly">{{ 'admin.moderationMode' | translate }}</p>
+          </div>
+        </div>
+        <div class="admin-header-right">
+          <div class="admin-search">
+            <input type="search" class="search-input" [(ngModel)]="searchQuery" [placeholder]="'admin.searchPlaceholder' | translate" />
+          </div>
+          <button class="btn-refresh" type="button" (click)="refresh()" [title]="'admin.refresh' | translate">↻</button>
+          <button class="btn-user" type="button" [title]="'admin.currentUser' | translate">{{ vm.user?.displayName?.charAt(0) || 'A' }}</button>
+        </div>
+      </header>
+
+      <section class="admin-body">
 
         <!-- DASHBOARD -->
         <ng-container *ngIf="isDashboard">
@@ -467,12 +467,13 @@
           </section>
         </ng-container>
 
-      </ng-container>
-      <ng-template #loadingState>
-        <app-loading-spinner [label]="'admin.loadingPanel' | translate"></app-loading-spinner>
-      </ng-template>
-    </section>
-  </div>
+      </section>
+    </div>
+  </ng-container>
+
+  <ng-template #loadingState>
+    <app-loading-spinner [label]="'admin.loadingPanel' | translate"></app-loading-spinner>
+  </ng-template>
 
   <!-- Confirm delete modal -->
   <div class="modal-backdrop" *ngIf="postToDelete" (click)="cancelDelete()"></div>

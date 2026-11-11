@@ -39,31 +39,31 @@
         } @else if (step === 'add-primitive') {
           <div class="guide-add">
             <div class="guide-icon">📦</div>
-            <p [innerHTML]="'Haz clic en <strong>Cubo</strong>, <strong>Esfera</strong>, <strong>Cilindro</strong> o cualquier forma para añadirla a la escena.' | translate"></p>
+            <p>{{ 'Haz clic en Cubo, Esfera, Cilindro o cualquier forma para añadirla a la escena.' | translate }}</p>
             <div class="guide-hint">{{ 'Atajo: usa los botones del panel izquierdo' | translate }}</div>
           </div>
         } @else if (step === 'transform') {
           <div class="guide-transform">
             <div class="guide-icon">↔</div>
-            <p [innerHTML]="'Selecciona el objeto y usa los controles de <strong>Posición</strong>, <strong>Rotación</strong> y <strong>Escala</strong> para manipularlo.' | translate"></p>
+            <p>{{ 'Selecciona el objeto y usa los controles de Posición, Rotación y Escala para manipularlo.' | translate }}</p>
             <div class="guide-hint">{{ 'Atajos: G = Mover · R = Rotar · S = Escalar' | translate }}</div>
           </div>
         } @else if (step === 'material') {
           <div class="guide-material">
             <div class="guide-icon">🎨</div>
-            <p [innerHTML]="'Selecciona el objeto y edita su <strong>color</strong>, <strong>rugosidad</strong> y <strong>opacidad</strong> en el panel de materiales.' | translate"></p>
+            <p>{{ 'Selecciona el objeto y edita su color, rugosidad y opacidad en el panel de materiales.' | translate }}</p>
             <div class="guide-hint">{{ 'Haz clic en el objeto para ver sus materiales' | translate }}</div>
           </div>
         } @else if (step === 'publish') {
           <div class="guide-publish">
             <div class="guide-icon">🚀</div>
-            <p [innerHTML]="'Cuando estés listo, haz clic en <strong>Publicar</strong> para compartir tu modelo con la comunidad CARXY.' | translate"></p>
+            <p>{{ 'Cuando estés listo, haz clic en Publicar para compartir tu modelo con la comunidad CARXY.' | translate }}</p>
             <div class="guide-hint">{{ 'Tu modelo se publicará con una vista previa y archivo GLB' | translate }}</div>
           </div>
         } @else if (step === 'collaborate') {
           <div class="guide-collaborate">
             <div class="guide-icon">🤝</div>
-            <p [innerHTML]="'Crea un proyecto desde Proyectos e invita a otros creadores a editar juntos. Usa el candado 🔒 para bloquear objetos mientras trabajas en ellos.' | translate"></p>
+            <p>{{ 'Crea un proyecto desde Proyectos e invita a otros creadores a editar juntos. Usa el candado para bloquear objetos mientras trabajas en ellos.' | translate }}</p>
             <div class="guide-hint">{{ 'Cada miembro puede tener rol de dueño, editor o visor' | translate }}</div>
             <a class="btn-help" routerLink="/projects">{{ 'Ir a Proyectos' | translate }}</a>
           </div>

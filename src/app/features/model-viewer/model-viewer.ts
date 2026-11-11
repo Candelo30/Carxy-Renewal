@@ -103,7 +103,8 @@ export class ModelViewer implements OnDestroy {
       // La presentación está activa
     }));
     if (isPlatformBrowser(this.platformId)) {
-      this.projectionTimer = window.setInterval(() => this.refreshHotspots(), 100);
+      // Actualiza la proyección de hotspots con menor frecuencia para reducir trabajo en CPU.
+      this.projectionTimer = window.setInterval(() => this.refreshHotspots(), 250);
     }
   }
 

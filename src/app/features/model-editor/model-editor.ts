@@ -22,6 +22,7 @@ import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
 import { LocalStateService } from '../../core/services/local-state';
 import { NotificationService } from '../../core/services/notifications';
+import { ThemeService } from '../../core/services/theme.service';
 import { AuthService } from '../../core/services/auth';
 import { FileHandler } from '../../core/services/file-handler';
 import { EditorHistoryService } from '../../core/services/editor-history';
@@ -111,6 +112,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly fileHandler = inject(FileHandler);
   private readonly editorHistory = inject(EditorHistoryService);
   private readonly collaboration = inject(CollaborationService);
+  private readonly themeService = inject(ThemeService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -164,7 +166,6 @@ export class ModelEditor implements OnInit, OnDestroy {
   private remoteSceneSub: Subscription | null = null;
   private remoteCursorSub: Subscription | null = null;
   private remoteSelectionSub: Subscription | null = null;
-  private remoteTransformSub: Subscription | null = null;
   private remoteJoinedSub: Subscription | null = null;
   private remoteLeftSub: Subscription | null = null;
   private presenceSub: Subscription | null = null;
@@ -567,8 +568,7 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   applyAppearance(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    document.documentElement.dataset['theme'] = this.theme;
-    document.documentElement.style.setProperty('--accent-color', this.accentColor);
+    this.themeService.apply({ theme: this.theme, accentColor: this.accentColor });
     this.persistPreferences();
   }
 
@@ -609,7 +609,6 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.threeEngine.updateScale(this.scale);
   }
 
-  // [FALTABA ESTE MÉTODO]
   onPositionChange(axis: 'x' | 'y' | 'z', value: number): void {
     this.threeEngine.updatePosition(axis, value);
   }
@@ -1319,7 +1318,6 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.remoteSceneSub?.unsubscribe();
     this.remoteCursorSub?.unsubscribe();
     this.remoteSelectionSub?.unsubscribe();
-    this.remoteTransformSub?.unsubscribe();
     this.remoteJoinedSub?.unsubscribe();
     this.remoteLeftSub?.unsubscribe();
     this.presenceSub?.unsubscribe();

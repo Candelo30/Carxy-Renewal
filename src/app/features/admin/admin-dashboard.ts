@@ -2,7 +2,7 @@ import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, combineLatest, firstValueFrom, map, of, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, firstValueFrom, map, of, shareReplay, startWith } from 'rxjs';
 import {
   ContentReport,
   CommunityQuestion,
@@ -159,13 +159,8 @@ export class AdminDashboardComponent {
         count: d.users.length,
       }));
     });
-    // Real-time updates every 10 seconds
-    setInterval(() => {
-      this.loadData();
-      if (this.selectedProjectId) {
-        this.selectProject(this.selectedProjectId);
-      }
-    }, 10000);
+    // Los datos se mantienen reactivos mediante los observables de Firestore
+    // (collectionData). El botón "Refrescar" permite actualización manual bajo demanda.
   }
 
   private emptyArticle(): Partial<HelpArticle> & { id?: string } {
@@ -295,6 +290,7 @@ export class AdminDashboardComponent {
         unpublishedArticles: helpArticles.filter((a) => !a.isPublished).length,
       };
     }),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly chartUsersByRole$ = this.vm$.pipe(
@@ -303,6 +299,7 @@ export class AdminDashboardComponent {
       { label: 'Moderadores', value: vm.users.filter((u) => u.role === 'moderator').length, color: '#a78bfa' },
       { label: 'Admins', value: vm.users.filter((u) => u.role === 'admin').length, color: '#f59e0b' },
     ])),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly chartPostsVisibility$ = this.vm$.pipe(
@@ -310,6 +307,7 @@ export class AdminDashboardComponent {
       { label: 'Públicos', value: vm.posts.filter((p) => !p.isPrivate).length, color: '#34d399' },
       { label: 'Privados', value: vm.posts.filter((p) => p.isPrivate).length, color: '#f87171' },
     ])),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly chartReports$ = this.vm$.pipe(
@@ -318,6 +316,7 @@ export class AdminDashboardComponent {
       { label: 'Resueltos', value: vm.reports.filter((r) => r.status === 'resolved').length, color: '#34d399' },
       { label: 'Descartados', value: vm.reports.filter((r) => r.status === 'dismissed').length, color: '#94a3b8' },
     ])),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly chartFeedback$ = this.vm$.pipe(
@@ -326,6 +325,7 @@ export class AdminDashboardComponent {
       { label: 'En revisión', value: vm.feedback.filter((f) => f.status === 'reviewing').length, color: '#f59e0b' },
       { label: 'Resueltos', value: vm.feedback.filter((f) => f.status === 'resolved').length, color: '#34d399' },
     ])),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly chartQuestions$ = this.vm$.pipe(
@@ -334,6 +334,7 @@ export class AdminDashboardComponent {
       { label: 'Resueltas', value: vm.questions.filter((q) => q.resolved).length, color: '#34d399' },
       { label: 'Fijadas', value: vm.questions.filter((q) => q.pinned).length, color: '#f59e0b' },
     ])),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   private toBars(items: { label: string; value: number; color: string }[]): ChartBar[] {
@@ -713,6 +714,10 @@ export class AdminDashboardComponent {
   get isReports(): boolean { return this._tab === 'reports'; }
   get isHelpArticles(): boolean { return this._tab === 'helpArticles'; }
 
+  openReportsCount(reports: ContentReport[]): number {
+    return (reports ?? []).filter((report) => report.status === 'open').length;
+  }
+
   resetNewArticle(): void {
     this.articleToEdit = null;
     this.articleBodyText = '';
@@ -872,6 +877,7 @@ export class AdminDashboardComponent {
       );
     }),
     startWith([] as UserProfile[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly filteredPosts$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
@@ -883,6 +889,7 @@ export class AdminDashboardComponent {
       );
     }),
     startWith([] as Post3D[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly filteredProjects$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
@@ -892,6 +899,7 @@ export class AdminDashboardComponent {
       return vm.projects.filter((p) => p.name.toLowerCase().includes(query) || (p.description || '').toLowerCase().includes(query) || p.id.toLowerCase().includes(query));
     }),
     startWith([] as Project[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly filteredFeedback$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
@@ -901,6 +909,7 @@ export class AdminDashboardComponent {
       return vm.feedback.filter((f) => f.subject.toLowerCase().includes(query) || f.message.toLowerCase().includes(query) || f.name.toLowerCase().includes(query) || (f.email || '').toLowerCase().includes(query));
     }),
     startWith([] as FeedbackMessage[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly filteredQuestions$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
@@ -910,6 +919,7 @@ export class AdminDashboardComponent {
       return vm.questions.filter((item) => item.title.toLowerCase().includes(query) || item.body.toLowerCase().includes(query) || item.authorName.toLowerCase().includes(query) || (item.tags || []).some((t) => t.toLowerCase().includes(query)));
     }),
     startWith([] as CommunityQuestion[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   private readonly helpArticleFilter$ = new BehaviorSubject<'all' | 'published' | 'draft'>('all');
@@ -941,6 +951,7 @@ export class AdminDashboardComponent {
       );
     }),
     startWith([] as HelpArticle[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readonly filteredReports$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
@@ -953,5 +964,6 @@ export class AdminDashboardComponent {
       );
     }),
     startWith([] as ContentReport[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 }

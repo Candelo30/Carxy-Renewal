@@ -1,6 +1,5 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -13,6 +12,7 @@ import { AppLanguage } from '../../../core/i18n/languages';
 import { I18nService } from '../../../core/services/i18n';
 import { LocalStateService } from '../../../core/services/local-state';
 import { NotificationService } from '../../../core/services/notifications';
+import { ThemeService } from '../../../core/services/theme.service';
 import { EditorPreferences } from '../../../core/models/social.models';
 import { SocialService } from '../../../core/services/social';
 import { TranslatePipe } from '../../pipes/translate.pipe';
@@ -37,7 +37,7 @@ export class AccountMenuComponent {
   private readonly social = inject(SocialService);
   private readonly state = inject(LocalStateService);
   private readonly notifications = inject(NotificationService);
-  private readonly document = inject(DOCUMENT);
+  private readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   accountDeletionOpen = false;
   deleteConfirmation = '';
@@ -76,12 +76,8 @@ export class AccountMenuComponent {
   }
 
   saveAppearance(): void {
-    const theme = this.preferences.theme === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : this.preferences.theme;
-    this.document.documentElement.dataset['theme'] = theme;
-    this.document.documentElement.style.setProperty('--accent-color', this.preferences.accentColor);
     this.state.savePreferences(this.preferences);
+    this.themeService.apply({ theme: this.preferences.theme, accentColor: this.preferences.accentColor });
   }
 
   setLanguage(language: AppLanguage): void {
