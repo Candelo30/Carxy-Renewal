@@ -30,13 +30,17 @@ describe('PublishModalComponent', () => {
     }).compileComponents();
 
     const fixture = TestBed.createComponent(PublishModalComponent);
-    expect(fixture.componentInstance.preview).toBeNull();
-
     fixture.detectChanges();
     await fixture.whenStable();
+
+    // La vista previa se muestra en el paso 3 (Vista previa)
+    fixture.componentInstance.currentStep = 3;
     fixture.detectChanges();
 
     expect(engine.captureImageDataUrl).toHaveBeenCalledOnce();
-    expect(fixture.nativeElement.querySelector('.preview')?.getAttribute('src')).toBe(preview);
+    expect(fixture.componentInstance.preview).toBe(preview);
+    const previewImg = fixture.nativeElement.querySelector('.preview-img') as HTMLImageElement | null;
+    expect(previewImg).not.toBeNull();
+    expect(previewImg?.src).toBe(preview);
   });
 });
