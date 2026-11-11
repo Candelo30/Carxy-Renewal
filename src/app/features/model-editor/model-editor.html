@@ -167,13 +167,15 @@
       </div>
     </section>
 
-    <section class="panel-section">
-      <div class="section-heading compact-heading">
+    <details class="panel-section panel-collapsible" open>
+      <summary class="section-heading compact-heading summary-button">
         <div>
           <span class="eyebrow">{{ 'APARIENCIA' | translate }}</span>
           <h2>{{ 'Materiales' | translate }}</h2>
         </div>
-      </div>
+        <span class="collapse-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-collapsible-body">
       <div class="material-card" *ngFor="let mat of materials; trackBy: trackByUuid">
         <div class="material-row">
           <span class="material-dot" [style.background]="mat.color ?? '#8290a5'"></span>
@@ -207,8 +209,18 @@
       <p class="empty-state" *ngIf="materials.length === 0">
         {{ 'Selecciona un objeto para editar sus materiales.' | translate }}
       </p>
-    </section>
+      </div>
+    </details>
 
+    <details class="panel-section panel-collapsible layers-collapsible">
+      <summary class="section-heading compact-heading summary-button">
+        <div>
+          <span class="eyebrow">{{ 'CAPAS' | translate }}</span>
+          <h2>{{ 'Organizar por capas' | translate }}</h2>
+        </div>
+        <span class="collapse-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-collapsible-body">
     <app-layers-panel
       [layers]="layers"
       [selectedLayer]="selectedLayer"
@@ -220,14 +232,18 @@
       (assignSelected)="assignSelectedToLayer()"
       (removeSelected)="removeSelectedFromLayer()"
     ></app-layers-panel>
+      </div>
+    </details>
 
-    <section class="panel-section collaboration-section">
-      <div class="section-heading compact-heading">
+    <details class="panel-section panel-collapsible collaboration-section" open>
+      <summary class="section-heading compact-heading summary-button">
         <div>
           <span class="eyebrow">{{ 'COLABORACIÓN' | translate }}</span>
           <h2>{{ projectId ? (projectName || ('projects.project' | translate)) : ('Edición en tiempo real' | translate) }}</h2>
         </div>
-      </div>
+        <span class="collapse-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-collapsible-body">
 
       @if (projectId) {
         <div class="project-collab-card">
@@ -309,7 +325,8 @@
           </div>
         </div>
       }
-    </section>
+      </div>
+    </details>
   </ng-container>
 
   <ng-template #settingsPanel>
