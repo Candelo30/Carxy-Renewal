@@ -18,7 +18,13 @@
         <span>WebGL</span>
         <span>Three.js</span>
         <span>Angular</span>
+        <span>Firebase</span>
+        <span>TypeScript</span>
       </div>
+      <p class="footer-made">
+        <span aria-hidden="true">🌎</span>
+        {{ 'Hecho en Colombia, para el mundo.' | translate }}
+      </p>
     </div>
 
     <nav class="footer-columns" [attr.aria-label]="'nav.footerLinks' | translate">
@@ -27,27 +33,49 @@
         <a routerLink="/editor">{{ 'nav.editor' | translate }}</a>
         <a routerLink="/feed">{{ 'nav.community' | translate }}</a>
         <a routerLink="/my-models">{{ 'nav.myModels' | translate }}</a>
+        <a routerLink="/favorites">{{ 'nav.favorites' | translate }}</a>
+        <a routerLink="/projects">{{ 'nav.projects' | translate }}</a>
       </div>
       <div class="footer-col">
         <h3>{{ 'nav.resources' | translate }}</h3>
         <a routerLink="/getting-started">{{ 'nav.gettingStarted' | translate }}</a>
         <a routerLink="/help">{{ 'nav.help' | translate }}</a>
+        <a routerLink="/documentacion">{{ 'Documentación' | translate }}</a>
         <a routerLink="/community-help">{{ 'nav.communityHelp' | translate }}</a>
-        <a routerLink="/contact">{{ 'nav.contact' | translate }}</a>
         <a routerLink="/about">{{ 'nav.about' | translate }}</a>
+        <a routerLink="/contact">{{ 'nav.contact' | translate }}</a>
       </div>
       <div class="footer-col">
-        <h3>{{ 'nav.security' | translate }}</h3>
+        <h3>{{ 'Legal' | translate }}</h3>
+        <a routerLink="/terminos">{{ 'Términos y condiciones' | translate }}</a>
+        <a routerLink="/privacidad">{{ 'Política de privacidad' | translate }}</a>
+        <a routerLink="/politicas">{{ 'Políticas de la comunidad' | translate }}</a>
         <a routerLink="/help" fragment="seguridad">{{ 'nav.accountSecurity' | translate }}</a>
-        <a routerLink="/help" fragment="privacidad">{{ 'nav.privacyData' | translate }}</a>
-        <a routerLink="/help" fragment="atajos">{{ 'nav.keyboardShortcuts' | translate }}</a>
+        <a [href]="securityPolicyUrl" target="_blank" rel="noopener noreferrer">{{ 'Seguridad del código' | translate }} ↗</a>
+      </div>
+      <div class="footer-col">
+        <h3>{{ 'Proyecto' | translate }}</h3>
         <a [href]="repositoryUrl" target="_blank" rel="noopener noreferrer">{{ 'nav.github' | translate }} ↗</a>
+        <a [href]="issuesUrl" target="_blank" rel="noopener noreferrer">{{ 'Reportar un problema' | translate }} ↗</a>
+        <a [href]="discussionsUrl" target="_blank" rel="noopener noreferrer">{{ 'Discusiones en GitHub' | translate }} ↗</a>
+        <a routerLink="/help" fragment="roles-plataforma">{{ 'Roles: usuario, moderador y admin' | translate }}</a>
       </div>
     </nav>
   </div>
 
   <div class="footer-bottom">
-    <span>© {{ year }} CARXY 3D STUDIO</span>
-    <span class="footer-note">{{ 'nav.footerCopy' | translate }}</span>
+    <div class="footer-bottom-left">
+      <span>© {{ year }} CARXY 3D STUDIO</span>
+      <span class="footer-note">{{ 'nav.footerCopy' | translate }}</span>
+    </div>
+    <nav class="footer-legal" [attr.aria-label]="'Enlaces legales' | translate">
+      <a routerLink="/terminos">{{ 'Términos' | translate }}</a>
+      <span aria-hidden="true">·</span>
+      <a routerLink="/privacidad">{{ 'Privacidad' | translate }}</a>
+      <span aria-hidden="true">·</span>
+      <a routerLink="/politicas">{{ 'Políticas' | translate }}</a>
+      <span aria-hidden="true">·</span>
+      <a routerLink="/documentacion">{{ 'Documentación' | translate }}</a>
+    </nav>
   </div>
 </footer>

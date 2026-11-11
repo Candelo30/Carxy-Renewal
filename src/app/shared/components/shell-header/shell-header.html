@@ -278,6 +278,26 @@
         <span>{{ 'nav.about' | translate }}</span
         ><span class="menu-arrow">→</span>
       </a>
+      <a routerLink="/documentacion" class="menu-link" (click)="closeMobileMenu()">
+        <span>{{ 'Documentación' | translate }}</span
+        ><span class="menu-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="menu-section">
+      <p class="menu-section-title">{{ 'Legal' | translate }}</p>
+      <a routerLink="/terminos" class="menu-link" (click)="closeMobileMenu()">
+        <span>{{ 'Términos y condiciones' | translate }}</span
+        ><span class="menu-arrow">→</span>
+      </a>
+      <a routerLink="/privacidad" class="menu-link" (click)="closeMobileMenu()">
+        <span>{{ 'Política de privacidad' | translate }}</span
+        ><span class="menu-arrow">→</span>
+      </a>
+      <a routerLink="/politicas" class="menu-link" (click)="closeMobileMenu()">
+        <span>{{ 'Políticas de la comunidad' | translate }}</span
+        ><span class="menu-arrow">→</span>
+      </a>
     </div>
 
     @if (user$ | async; as user) {

@@ -15,5 +15,7 @@ export class SiteFooterComponent {
   readonly i18n = inject(I18nService);
   readonly year = new Date().getFullYear();
   readonly repositoryUrl = environment.links.repository;
+  readonly issuesUrl = environment.links.issues;
   readonly discussionsUrl = environment.links.discussions;
+  readonly securityPolicyUrl = `${environment.links.repository}/security/policy`;
 }

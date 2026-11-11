@@ -708,6 +708,7 @@ export class I18nService {
       'admin.usersEmpty': 'No se encontraron usuarios.',
       'admin.postsEmpty': 'No se encontraron publicaciones.',
       'admin.reportsEmpty': 'No se encontraron reportes.',
+      'Proyectos, miembros e invitaciones': 'Proyectos, miembros e invitaciones',
     };
     return spanish[key];
   }

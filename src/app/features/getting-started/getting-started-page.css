@@ -480,6 +480,86 @@
 }
 
 /* ==========================================================================
+   Roles
+   ========================================================================== */
+
+.role-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-panel) 78%, transparent);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.role-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-color) 48%, var(--border-color));
+  background: var(--surface-panel);
+}
+
+.role-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.role-card h3 {
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+
+.role-card > p {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.role-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.role-card li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.role-card li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent-color);
+  font-weight: 800;
+}
+
+.role-link {
+  margin-top: auto;
+  width: fit-content;
+  color: var(--accent-color);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.role-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
    Recursos
    ========================================================================== */
 
@@ -562,6 +642,10 @@
 
   .resource-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .role-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

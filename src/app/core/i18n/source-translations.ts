@@ -1,5 +1,6 @@
 import type { AppLanguage } from './languages';
 import { FEATURE_TRANSLATIONS } from './feature-translations';
+import { LEGAL_TRANSLATIONS } from './legal-translations';
 import { PAGE_TRANSLATIONS } from './page-translations';
 
 export type SourceTranslation = Partial<Record<Exclude<AppLanguage, 'es'>, string>>;
@@ -12,6 +13,7 @@ export type SourceTranslation = Partial<Record<Exclude<AppLanguage, 'es'>, strin
 export const SOURCE_TRANSLATIONS: Record<string, SourceTranslation> = {
   ...PAGE_TRANSLATIONS,
   ...FEATURE_TRANSLATIONS,
+  ...LEGAL_TRANSLATIONS,
   '− Eliminar modelo seleccionado': {
     en: '− Delete selected model',
     fr: '− Supprimer le modèle sélectionné',

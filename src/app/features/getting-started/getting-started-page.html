@@ -118,11 +118,62 @@
 
   <section class="guide-section">
     <div class="section-head">
+      <p class="eyebrow">{{ 'SEGÚN TU ROL' | translate }}</p>
+      <h2>{{ 'CARXY crece contigo' | translate }}</h2>
+      <p>{{ 'Lo básico es lo mismo para todos; lo que cambia es lo que puedes hacer con cada rol.' | translate }}</p>
+    </div>
+
+    <div class="role-grid">
+      <article class="role-card">
+        <span class="role-icon" aria-hidden="true">🙋</span>
+        <h3>{{ 'Usuario o usuaria' | translate }}</h3>
+        <p>{{ 'Tu punto de partida: crea y publica modelos, comenta, da likes, sigue a otros creadores y colabora en proyectos.' | translate }}</p>
+        <ul>
+          <li>{{ 'Publicar y remixear modelos' | translate }}</li>
+          <li>{{ 'Participar en la ayuda comunitaria' | translate }}</li>
+          <li>{{ 'Colaborar en proyectos con roles de dueño, editor y visor' | translate }}</li>
+        </ul>
+        <a class="role-link" routerLink="/help">{{ 'Ver el centro de ayuda' | translate }} →</a>
+      </article>
+
+      <article class="role-card">
+        <span class="role-icon" aria-hidden="true">🛡️</span>
+        <h3>{{ 'Moderador' | translate }}</h3>
+        <p>{{ 'Además de lo anterior, velas por la convivencia: revisas reportes, fijas y bloqueas hilos y retiras contenido que infrinja las normas.' | translate }}</p>
+        <ul>
+          <li>{{ 'Revisar la cola de reportes' | translate }}</li>
+          <li>{{ 'Fijar, bloquear o retirar contenido' | translate }}</li>
+          <li>{{ 'Aplicar advertencias y escalar a administración' | translate }}</li>
+        </ul>
+        <a class="role-link" routerLink="/help" fragment="guia-moderadores">{{ 'Guía para moderadores' | translate }} →</a>
+      </article>
+
+      <article class="role-card">
+        <span class="role-icon" aria-hidden="true">⚙️</span>
+        <h3>{{ 'Administrador' | translate }}</h3>
+        <p>{{ 'El siguiente nivel: gestionas roles, suspensiones y apelaciones, y supervisas la salud y la seguridad de la plataforma.' | translate }}</p>
+        <ul>
+          <li>{{ 'Asignar y revocar roles' | translate }}</li>
+          <li>{{ 'Suspender o reactivar cuentas' | translate }}</li>
+          <li>{{ 'Consultar métricas y resolver apelaciones' | translate }}</li>
+        </ul>
+        <a class="role-link" routerLink="/help" fragment="guia-administradores">{{ 'Guía para administradores' | translate }} →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="guide-section">
+    <div class="section-head">
       <p class="eyebrow">{{ 'RECURSOS ÚTILES' | translate }}</p>
       <h2>{{ 'Cuando necesites profundizar' | translate }}</h2>
     </div>
 
     <div class="resource-grid">
+      <a routerLink="/documentacion" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">📚</span>
+        <strong>{{ 'Documentación' | translate }}</strong>
+        <small>{{ 'Todas las guías y documentos, organizados por rol.' | translate }}</small>
+      </a>
       <a routerLink="/help" fragment="atajos" class="resource-card">
         <span class="resource-icon" aria-hidden="true">⌨️</span>
         <strong>{{ 'Atajos de teclado' | translate }}</strong>
@@ -132,6 +183,31 @@
         <span class="resource-icon" aria-hidden="true">📤</span>
         <strong>{{ 'Cómo publicar' | translate }}</strong>
         <small>{{ 'Título, descripción, etiquetas y visibilidad.' | translate }}</small>
+      </a>
+      <a routerLink="/help" fragment="proyectos-colaborativos" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">🤝</span>
+        <strong>{{ 'Colaboración 3D' | translate }}</strong>
+        <small>{{ 'Proyectos compartidos, miembros, roles e invitaciones.' | translate }}</small>
+      </a>
+      <a routerLink="/community-help" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">💬</span>
+        <strong>{{ 'Ayuda comunitaria' | translate }}</strong>
+        <small>{{ 'Pregunta a otros creadores y responde las de la comunidad.' | translate }}</small>
+      </a>
+      <a routerLink="/terminos" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">📜</span>
+        <strong>{{ 'Términos y condiciones' | translate }}</strong>
+        <small>{{ 'Las reglas de uso del servicio y tu cuenta.' | translate }}</small>
+      </a>
+      <a routerLink="/privacidad" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">🔒</span>
+        <strong>{{ 'Política de privacidad' | translate }}</strong>
+        <small>{{ 'Qué datos tratamos y cómo ejercer tus derechos.' | translate }}</small>
+      </a>
+      <a routerLink="/politicas" class="resource-card">
+        <span class="resource-icon" aria-hidden="true">🧭</span>
+        <strong>{{ 'Políticas de la comunidad' | translate }}</strong>
+        <small>{{ 'Normas de convivencia y cómo funciona la moderación.' | translate }}</small>
       </a>
       <a routerLink="/help" fragment="seguridad" class="resource-card">
         <span class="resource-icon" aria-hidden="true">🛡</span>

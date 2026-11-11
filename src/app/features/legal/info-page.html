@@ -1,0 +1,76 @@
+<main class="legal-shell page-with-header">
+  <app-shell-header
+    [showSearch]="false"
+    [showNav]="true"
+  ></app-shell-header>
+
+  @let current = doc();
+
+  <section class="legal-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <p class="eyebrow">{{ current.eyebrow | translate }}</p>
+    <h1>{{ current.title | translate }}</h1>
+    <p class="hero-copy">{{ current.intro | translate }}</p>
+    <p class="legal-updated">{{ current.updated | translate }}</p>
+
+    <nav class="legal-toc" [attr.aria-label]="'Índice del documento' | translate">
+      <span class="toc-label">{{ 'Índice' | translate }}</span>
+      @for (section of current.sections; track section.id) {
+        <a [href]="'#' + section.id">{{ section.title | translate }}</a>
+      }
+    </nav>
+  </section>
+
+  <section class="legal-body">
+    @for (section of current.sections; track section.id) {
+      <article class="legal-section" [id]="section.id">
+        <h2>{{ section.title | translate }}</h2>
+        @for (paragraph of section.paragraphs; track $index) {
+          <p>{{ paragraph | translate }}</p>
+        }
+        @if (section.list?.length) {
+          <ul>
+            @for (item of section.list; track $index) {
+              <li>{{ item | translate }}</li>
+            }
+          </ul>
+        }
+      </article>
+    }
+
+    <aside class="legal-footnote">
+      <span aria-hidden="true">ℹ️</span>
+      <p>{{ current.footnote | translate }}</p>
+    </aside>
+
+    <div class="legal-related">
+      <p class="eyebrow">{{ 'Documentos relacionados' | translate }}</p>
+      <div class="related-links">
+        @if (current.docId !== 'terminos') {
+          <a routerLink="/terminos" class="related-card">
+            <strong>{{ 'Términos y condiciones' | translate }}</strong>
+            <small>{{ 'Las reglas de uso del servicio y tu cuenta.' | translate }}</small>
+          </a>
+        }
+        @if (current.docId !== 'privacidad') {
+          <a routerLink="/privacidad" class="related-card">
+            <strong>{{ 'Política de privacidad' | translate }}</strong>
+            <small>{{ 'Qué datos tratamos y cómo ejercer tus derechos.' | translate }}</small>
+          </a>
+        }
+        @if (current.docId !== 'politicas') {
+          <a routerLink="/politicas" class="related-card">
+            <strong>{{ 'Políticas de la comunidad' | translate }}</strong>
+            <small>{{ 'Normas de convivencia y cómo funciona la moderación.' | translate }}</small>
+          </a>
+        }
+        <a routerLink="/documentacion" class="related-card">
+          <strong>{{ 'Documentación' | translate }}</strong>
+          <small>{{ 'Guías, centro de ayuda y recursos para cada rol.' | translate }}</small>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <app-site-footer />
+</main>

@@ -64,6 +64,29 @@ export const routes: Routes = [
     loadComponent: () => import('./features/help/help-page').then((module) => module.HelpPage),
   },
   {
+    path: 'terminos',
+    data: { doc: 'terminos' },
+    loadComponent: () => import('./features/legal/info-page').then((module) => module.InfoPageComponent),
+  },
+  {
+    path: 'privacidad',
+    data: { doc: 'privacidad' },
+    loadComponent: () => import('./features/legal/info-page').then((module) => module.InfoPageComponent),
+  },
+  {
+    path: 'politicas',
+    data: { doc: 'politicas' },
+    loadComponent: () => import('./features/legal/info-page').then((module) => module.InfoPageComponent),
+  },
+  {
+    path: 'documentacion',
+    loadComponent: () => import('./features/legal/documentation-page').then((module) => module.DocumentationPageComponent),
+  },
+  { path: 'terms', pathMatch: 'full', redirectTo: 'terminos' },
+  { path: 'privacy', pathMatch: 'full', redirectTo: 'privacidad' },
+  { path: 'policies', pathMatch: 'full', redirectTo: 'politicas' },
+  { path: 'docs', pathMatch: 'full', redirectTo: 'documentacion' },
+  {
     path: 'getting-started',
     loadComponent: () => import('./features/getting-started/getting-started-page').then((module) => module.GettingStartedPage),
   },

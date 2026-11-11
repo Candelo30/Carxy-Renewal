@@ -8,7 +8,7 @@ import { ShellHeaderComponent } from '../../shared/components/shell-header/shell
 import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 
-type HelpCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'colaboracion' | 'cuenta';
+type HelpCategory = 'primeros-pasos' | 'editor' | 'publicacion' | 'comunidad' | 'colaboracion' | 'cuenta' | 'moderacion';
 type HelpCategoryFilter = HelpCategory | 'todas';
 
 interface HelpCategoryInfo {
@@ -38,6 +38,7 @@ const CATEGORIES: HelpCategoryInfo[] = [
   { id: 'comunidad', label: 'Comunidad', icon: '🌐' },
   { id: 'colaboracion', label: 'Colaboración', icon: '🤝' },
   { id: 'cuenta', label: 'Cuenta y seguridad', icon: '🛡' },
+  { id: 'moderacion', label: 'Moderación y administración', icon: '⚖️' },
 ];
 
 const ARTICLES: HelpArticle[] = [
@@ -496,6 +497,116 @@ const ARTICLES: HelpArticle[] = [
     ],
     tip: 'El historial se actualiza en tiempo real a medida que los colaboradores hacen cambios en la escena.',
     action: { label: 'Ir a Proyectos', route: '/projects' },
+  },
+  {
+    id: 'roles-plataforma',
+    category: 'moderacion',
+    title: 'Usuarios, moderadores y administradores',
+    summary: 'Qué puede hacer cada rol en CARXY y cómo se asignan.',
+    icon: '👥',
+    keywords: 'rol roles usuario moderador administrador admin permisos permiso plataforma',
+    body: [
+      'CARXY tiene tres roles de plataforma. Todas las personas empiezan como usuarias y el equipo eleva roles cuando corresponde.',
+      '- **Usuario**: crea y publica modelos, comenta, da likes, sigue creadores, participa en proyectos colaborativos y en la ayuda comunitaria.',
+      '- **Moderador**: todo lo anterior, más revisar reportes de contenido, fijar y bloquear hilos de la ayuda comunitaria, retirar publicaciones que incumplen las normas y aplicar advertencias.',
+      '- **Administrador**: todo lo anterior, más gestionar roles, suspender y reactivar cuentas, configurar la plataforma, consultar métricas globales y resolver apelaciones.',
+      'Los permisos se aplican en el servidor (reglas de Firestore y Storage), no solo en la interfaz: un rol elevado no da acceso a datos privados ajenos salvo necesidad operativa.',
+    ],
+    steps: [
+      'Entra en tu perfil y revisa el rol que aparece bajo tu nombre.',
+      'Si crees que mereces el rol de moderador, escríbenos desde la página de contacto con tu trayectoria en la comunidad.',
+      'Los administradores asignan y revocan roles desde el panel de administración.',
+    ],
+    tip: 'Los roles de proyecto (dueño, editor, visor) y los roles de plataforma (usuario, moderador, administrador) son distintos; un dueño de proyecto no es moderador de la plataforma.',
+    action: { label: 'Ver las políticas de la comunidad', route: '/politicas' },
+  },
+  {
+    id: 'guia-moderadores',
+    category: 'moderacion',
+    title: 'Guía para moderadores',
+    summary: 'Cómo revisar reportes y actuar con criterio y consistencia.',
+    icon: '⚖️',
+    keywords: 'moderador moderacion reportes revisar fijar bloquear eliminar sancion advertencia',
+    body: [
+      'La moderación empieza en la cola de reportes. Cada reporte indica el contenido señalado, el motivo y el contexto; tu trabajo es verificar si infringe las políticas de la comunidad.',
+      'Principios: evidencia antes de actuar, proporcionalidad de la medida, y registro de lo que decides y por qué. En caso de duda, escala a un administrador antes de aplicar una suspensión.',
+      'Medidas habituales, de menor a mayor gravedad: advertencia privada, retirada del contenido, bloqueo temporal de publicación o chat, suspensión temporal y, en casos graves, suspensión definitiva.',
+      'Nunca reveles quién reportó ni compartas datos personales fuera del equipo de moderación.',
+    ],
+    steps: [
+      'Abre el panel de moderación desde el menú de cuenta (o /moderation).',
+      'Filtra la cola por tipo de contenido o por estado (pendiente, en revisión, resuelto).',
+      'Abre el reporte, revisa el contexto completo y el historial de la cuenta.',
+      'Aplica la medida proporcional: aviso, retirada, bloqueo o escalado a administración.',
+      'Marca el reporte como resuelto; queda registro para auditoría del equipo.',
+      'En la ayuda comunitaria puedes fijar, bloquear o eliminar preguntas y marcar respuestas como aceptadas.',
+    ],
+    tip: 'La regla de oro: si no estás seguro, pide una segunda opinión a otro moderador o a un administrador antes de sancionar.',
+    action: { label: 'Ir al panel de moderación', route: '/moderation' },
+  },
+  {
+    id: 'guia-administradores',
+    category: 'moderacion',
+    title: 'Guía para administradores',
+    summary: 'Gestión de roles, cuentas, configuración y estado de la plataforma.',
+    icon: '⚙️',
+    keywords: 'administrador admin panel gestionar roles suspender reactivar metricas configuracion auditoria',
+    body: [
+      'Los administradores responden por la salud de la plataforma: accesos, roles, seguridad y disponibilidad.',
+      'El panel de administración (/admin) concentra usuarios, reportes, métricas y configuración. Toda acción queda registrada; la auditoría no se puede borrar.',
+      'Asignar o revocar roles requiere justificación. Suspende cuentas solo con evidencia clara; el usuario puede apelar y la decisión la revisa otro administrador.',
+      'Mantén al menos dos administradores activos para evitar puntos únicos de fallo, y revisa periódicamente las cuentas con rol elevado.',
+    ],
+    steps: [
+      'Abre el panel de administración desde el menú de cuenta (solo visible con rol de administrador).',
+      'Revisa las métricas: altas, publicaciones, reportes pendientes y errores.',
+      'Gestiona roles desde la ficha de cada usuario, con el motivo por escrito.',
+      'Atiende apelaciones en un plazo máximo de 14 días y documenta la resolución.',
+      'Verifica el despliegue de firestore.rules y storage.rules tras cada cambio de permisos.',
+    ],
+    tip: 'La configuración de Firebase (rules, indexes, CORS) vive en el repositorio: cualquier cambio debe pasar por revisión y desplegarse desde una máquina autorizada.',
+    action: { label: 'Abrir el panel de administración', route: '/admin' },
+  },
+  {
+    id: 'normas-comunidad',
+    category: 'moderacion',
+    title: 'Normas de la comunidad y contenido prohibido',
+    summary: 'Qué se permite en el feed, los comentarios y el chat.',
+    icon: '📜',
+    keywords: 'normas reglas prohibido contenido odio acoso spam politicas comunidad nsfw',
+    body: [
+      'CARXY tolera la crítica creativa y el debate técnico; no tolera el odio, el acoso, el spam, el contenido ilegal ni la suplantación.',
+      'Publicar con etiquetas engañosas, robar atribución o redistribuir modelos sin derecho también infringe las normas, aunque el contenido sea legal.',
+      'Las medidas van de una advertencia privada a la suspensión definitiva, según gravedad y reincidencia. Los reportes son confidenciales.',
+    ],
+    steps: [
+      'Lee las políticas de la comunidad completas antes de moderar o apelar.',
+      'Si detectas contenido infractor, repórtalo desde la propia publicación o comentario.',
+      'Si tu contenido fue retirado, apela por el aviso o escríbenos con el asunto «Apelación».',
+    ],
+    tip: 'El abuso del sistema de reportes (usarlo como represalia) también se modera.',
+    action: { label: 'Leer las políticas de la comunidad', route: '/politicas' },
+  },
+  {
+    id: 'apelar-sancion',
+    category: 'moderacion',
+    title: 'Apelar una sanción o retirada de contenido',
+    summary: 'Cómo pedir la revisión de una decisión de moderación.',
+    icon: '📨',
+    keywords: 'apelacion apelar sancion retirada suspension revision injusticia recurso',
+    body: [
+      'Si consideras que una moderación fue un error, tienes derecho a apelar. Las apelaciones las revisa un administrador distinto de quien aplicó la medida.',
+      'Incluye en tu apelación: qué contenido o acción fue sancionado, por qué crees que fue un error y cualquier contexto que ayude a la revisión.',
+      'El plazo máximo de respuesta es de 14 días. Si la apelación se estima, se restaura el contenido y se anota la corrección; si se desestima, la medida se mantiene.',
+    ],
+    steps: [
+      'Localiza el aviso de moderación en tus notificaciones o correo.',
+      'Responde al aviso o escribe a contacto@carxy.app con el asunto «Apelación».',
+      'Adjunta capturas o enlaces que respalden tu versión.',
+      'Espera la revisión; no crees cuentas nuevas para eludir la suspensión mientras tanto.',
+    ],
+    tip: 'Las apelaciones respetuosas y con evidencia se resuelven más rápido que los mensajes agresivos.',
+    action: { label: 'Escribir a contacto', route: '/contact' },
   },
 ];
 

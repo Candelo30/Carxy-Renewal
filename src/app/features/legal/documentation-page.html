@@ -1,0 +1,46 @@
+<main class="legal-shell page-with-header">
+  <app-shell-header
+    [showSearch]="false"
+    [showNav]="true"
+  ></app-shell-header>
+
+  <section class="docs-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <p class="eyebrow">{{ 'DOCUMENTACIÓN' | translate }}</p>
+    <h1>{{ 'Toda la documentación de CARXY, en un solo lugar.' | translate }}</h1>
+    <p class="hero-copy">
+      {{ 'Guías para crear, recursos para moderar y administrar, y los documentos legales del servicio. Elige tu rol o tu tema y empieza.' | translate }}
+    </p>
+  </section>
+
+  <section class="docs-grid">
+    @for (section of sections; track section.id) {
+      <article class="docs-section" [id]="section.id">
+        <div class="docs-section-head">
+          <span class="docs-icon" aria-hidden="true">{{ section.icon }}</span>
+          <div>
+            <h2>{{ section.title | translate }}</h2>
+            <p>{{ section.subtitle | translate }}</p>
+          </div>
+        </div>
+        <div class="docs-links">
+          @for (link of section.links; track link.label) {
+            @if (link.external) {
+              <a class="docs-link" [href]="link.external" target="_blank" rel="noopener noreferrer">
+                <strong>{{ link.label | translate }} ↗</strong>
+                <small>{{ link.description | translate }}</small>
+              </a>
+            } @else {
+              <a class="docs-link" [routerLink]="link.route" [fragment]="link.fragment">
+                <strong>{{ link.label | translate }}</strong>
+                <small>{{ link.description | translate }}</small>
+              </a>
+            }
+          }
+        </div>
+      </article>
+    }
+  </section>
+
+  <app-site-footer />
+</main>
