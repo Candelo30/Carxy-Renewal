@@ -564,7 +564,11 @@ export class AdminDashboardComponent {
 
   isDeletedMember(member: ProjectMember): boolean {
     if (member.userName === 'Cuenta eliminada') return true;
-    return !this.vmSubject.value.users.some((user) => user.uid === member.userId);
+    const vm = this.vmSubject.value;
+    // Solo para admins (ven la lista completa de usuarios). Moderadores no la cargan.
+    if (vm.user?.role !== 'admin') return false;
+    if (!vm.users.length) return false;
+    return !vm.users.some((user) => user.uid === member.userId);
   }
 
   trackUser(_index: number, user: UserProfile): string { return user.uid; }
