@@ -561,6 +561,29 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.applyAppearance();
       this.editorStatus.onlineCount.set(null);
     }
+
+    // Soporte de acciones rápidas desde la paleta de comandos (?action=...)
+    this.subscriptions.add(
+      this.route.queryParamMap.subscribe((params) => {
+        const action = params.get('action');
+        if (!action) return;
+        switch (action) {
+          case 'save': this.manualSave(); break;
+          case 'capture': this.captureScreenshot(); break;
+          case 'duplicate': this.duplicateSelectedObject(); break;
+          case 'present': this.togglePresentation(); break;
+          case 'gizmo-translate': this.setGizmoMode('translate'); break;
+          case 'gizmo-rotate': this.setGizmoMode('rotate'); break;
+          case 'gizmo-scale': this.setGizmoMode('scale'); break;
+        }
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { action: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      }),
+    );
   }
 
   trackById(_index: number, item: { id: string }): string {

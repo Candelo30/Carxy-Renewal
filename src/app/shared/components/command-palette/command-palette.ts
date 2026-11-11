@@ -19,7 +19,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { copyText } from '../../../core/utils/share';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
-type CommandGroup = 'Navegación' | 'Recursos' | 'Acciones';
+type CommandGroup = 'Navegación' | 'Recursos' | 'Acciones' | 'Editor';
 type Theme = 'dark' | 'light' | 'system';
 
 interface CommandItem {
@@ -124,6 +124,69 @@ export class CommandPaletteComponent {
         icon: '✉',
         keywords: 'contacto soporte escribir mensaje contact support write message',
         run: () => this.go('/contact'),
+      },
+      {
+        id: 'editor-save',
+        label: tr('Guardar escena'),
+        description: tr('Guarda el progreso actual en el editor'),
+        group: 'Editor',
+        icon: '💾',
+        keywords: 'guardar salvar escena save guardar escena save scene guardar proyecto',
+        run: () => this.go('/editor', { queryParams: { action: 'save' } }),
+      },
+      {
+        id: 'editor-capture',
+        label: tr('Capturar imagen'),
+        description: tr('Descarga una captura PNG del viewport'),
+        group: 'Editor',
+        icon: '📷',
+        keywords: 'captura screenshot imagen png exportar captura capture screenshot',
+        run: () => this.go('/editor', { queryParams: { action: 'capture' } }),
+      },
+      {
+        id: 'editor-duplicate',
+        label: tr('Duplicar objeto'),
+        description: tr('Duplica la selección actual del editor'),
+        group: 'Editor',
+        icon: '⇲',
+        keywords: 'duplicar copiar objeto duplicar duplicate copy objeto en editor',
+        run: () => this.go('/editor', { queryParams: { action: 'duplicate' } }),
+      },
+      {
+        id: 'editor-present',
+        label: tr('Activar modo presentación'),
+        description: tr('Inicia un turntable automático'),
+        group: 'Editor',
+        icon: '🎬',
+        keywords: 'presentacion presentation turntable auto orbitar cine present',
+        run: () => this.go('/editor', { queryParams: { action: 'present' } }),
+      },
+      {
+        id: 'gizmo-translate',
+        label: tr('Gizmo: mover'),
+        description: tr('Cambia el gizmo a modo Mover'),
+        group: 'Editor',
+        icon: '↕',
+        keywords: 'gizmo mover translate mover objeto move gizmo mover',
+        run: () => this.go('/editor', { queryParams: { action: 'gizmo-translate' } }),
+      },
+      {
+        id: 'gizmo-rotate',
+        label: tr('Gizmo: rotar'),
+        description: tr('Cambia el gizmo a modo Rotar'),
+        group: 'Editor',
+        icon: '↻',
+        keywords: 'gizmo rotar rotate rotar objeto rotate gizmo rotar',
+        run: () => this.go('/editor', { queryParams: { action: 'gizmo-rotate' } }),
+      },
+      {
+        id: 'gizmo-scale',
+        label: tr('Gizmo: escalar'),
+        description: tr('Cambia el gizmo a modo Escalar'),
+        group: 'Editor',
+        icon: '⤡',
+        keywords: 'gizmo escalar scale escalar objeto resize scale gizmo escalar',
+        run: () => this.go('/editor', { queryParams: { action: 'gizmo-scale' } }),
       },
       {
         id: 'shortcuts',
@@ -380,7 +443,10 @@ export class CommandPaletteComponent {
     path: string | string[],
     extras?: { queryParams?: Record<string, string>; fragment?: string },
   ): void {
-    void this.router.navigate(Array.isArray(path) ? path : [path], extras);
+    void this.router.navigate(Array.isArray(path) ? path : [path], {
+      ...extras,
+      queryParamsHandling: 'merge',
+    });
   }
 
   private toggleTheme(): void {
