@@ -568,6 +568,8 @@ export class ModelEditor implements OnInit, OnDestroy {
         const action = params.get('action');
         if (!action) return;
         switch (action) {
+          case 'undo': this.undo(); break;
+          case 'redo': this.redo(); break;
           case 'save': this.manualSave(); break;
           case 'capture': this.captureScreenshot(); break;
           case 'duplicate': this.duplicateSelectedObject(); break;
