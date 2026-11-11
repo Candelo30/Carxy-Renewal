@@ -112,13 +112,20 @@ export class SocialService {
   private readonly likeInFlight = new Set<string>();
   private static readonly LIKE_COOLDOWN_MS = 2000;
   readonly INACTIVE_DELETE_DAYS = 30;
+  /** Máx. documentos del feed público que el listener de Firestore carga de golpe (con orden por createdAt desc). */
+  readonly POSTS_FEED_LIMIT = 120;
   private readonly likeRateLimit = new Map<string, number>();
   private readonly countedViews = new Set<string>();
   private readonly countedRemixes = new Set<string>();
 
   readonly posts$: Observable<Post3D[]> = this.firestore
     ? collectionData(
-        query(collection(this.firestore, SOCIAL_COLLECTIONS.posts), where('isPrivate', '==', false), orderBy('createdAt', 'desc')),
+        query(
+          collection(this.firestore, SOCIAL_COLLECTIONS.posts),
+          where('isPrivate', '==', false),
+          orderBy('createdAt', 'desc'),
+          limit(this.POSTS_FEED_LIMIT),
+        ),
         { idField: 'id' },
       ).pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))))
     : this.localPosts.asObservable().pipe(map((posts) => posts.filter((post) => !post.isPrivate)));
