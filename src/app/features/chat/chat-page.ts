@@ -8,8 +8,9 @@ import {
   ElementRef,
   AfterViewChecked,
 } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import {
   Observable,
   Subscription,
@@ -20,7 +21,7 @@ import {
   switchMap,
   take,
 } from 'rxjs';
-import { ChatConversation, ChatMessage, User } from '../../core/models/social.models';
+import { ChatConversation, ChatMessage, User, UserActivity } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
@@ -54,6 +55,7 @@ export interface ConversationWithPartner extends ChatConversation {
     DatePipe,
     FormsModule,
     LoadingSpinner,
+    RouterLink,
   ],
   templateUrl: './chat-page.html',
   styleUrl: './chat-page.css',
@@ -65,6 +67,9 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
+  private readonly sanitizer = inject(DomSanitizer);
+  readonly activities$ = this.social.userActivity$;
+  readonly emojis = ['😀', '😂', '😉', '😍', '🤝', '👍', '🙏', '🔥', '🎉', '❤️', '😢', '😎', '💡', '✅'];
   private readonly subscription = new Subscription();
   private readonly storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null;
   private readonly seenChats: Record<string, number> = this.loadSeenChats();
@@ -100,6 +105,10 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   copiedId = '';
   messages$?: Observable<MessageGroup[]>;
   partnerProfile$?: Observable<User | null>;
+  messageQuery = '';
+  messageSearchOpen = false;
+  copiedMessageId = '';
+  readonly pinned = new Set<string>(this.loadPinned());
   private nearBottom = true;
 
   ngOnInit(): void {
@@ -221,6 +230,133 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       setTimeout(() => (this.copiedId = ''), 1800);
     } catch {
       this.notifications.warning(this.i18n.translate('No se pudo copiar.'));
+    }
+  }
+
+  togglePin(conversation: ConversationWithPartner, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    const id = conversation.id;
+    if (this.pinned.has(id)) {
+      this.pinned.delete(id);
+    } else {
+      this.pinned.add(id);
+    }
+    this.persistPinned();
+  }
+
+  isPinned(id: string): boolean {
+    return this.pinned.has(id);
+  }
+
+  sortedConversations(list: ConversationWithPartner[]): ConversationWithPartner[] {
+    return [...list].sort((a, b) => {
+      const aPin = this.pinned.has(a.id) ? 1 : 0;
+      const bPin = this.pinned.has(b.id) ? 1 : 0;
+      if (aPin !== bPin) return bPin - aPin;
+      return (b.updatedAt ?? 0) - (a.updatedAt ?? 0);
+    });
+  }
+
+  toggleMessageSearch(): void {
+    this.messageSearchOpen = !this.messageSearchOpen;
+    if (!this.messageSearchOpen) this.messageQuery = '';
+  }
+
+  clearMessageSearch(): void {
+    this.messageQuery = '';
+  }
+
+  filteredGroups(groups: MessageGroup[]): MessageGroup[] {
+    const query = this.messageQuery.trim().toLowerCase();
+    if (!query) return groups;
+    return groups
+      .map((group) => ({
+        ...group,
+        messages: group.messages.filter((item) => item.message.text.toLowerCase().includes(query)),
+      }))
+      .filter((group) => group.messages.length > 0);
+  }
+
+  matchCount(groups: MessageGroup[]): number {
+    const query = this.messageQuery.trim().toLowerCase();
+    if (!query) return 0;
+    return groups.reduce(
+      (sum, group) =>
+        sum + group.messages.filter((item) => item.message.text.toLowerCase().includes(query)).length,
+      0,
+    );
+  }
+
+  activityFor(uid: string, activities: UserActivity[] | null): UserActivity | null {
+    if (!activities) return null;
+    return activities.find((entry) => entry.uid === uid) ?? null;
+  }
+
+  activityLabel(entry: UserActivity | null): string {
+    if (!entry) return '';
+    const diff = Date.now() - entry.lastSeenAt;
+    if (diff < 2 * 60 * 1000) return this.i18n.translate('En línea');
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 60) return this.i18n.translate('Visto hace') + ` ${Math.max(1, minutes)} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return this.i18n.translate('Visto hace') + ` ${hours} h`;
+    const days = Math.floor(hours / 24);
+    return this.i18n.translate('Visto hace') + ` ${days} d`;
+  }
+
+  activityClass(entry: UserActivity | null): 'online' | 'seen' {
+    if (entry && Date.now() - entry.lastSeenAt < 2 * 60 * 1000) return 'online';
+    return 'seen';
+  }
+
+  insertEmoji(emoji: string): void {
+    this.message = `${this.message}${emoji}`;
+  }
+
+  async copyMessage(message: ChatMessage): Promise<void> {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(message.text);
+      this.copiedMessageId = message.id;
+      setTimeout(() => (this.copiedMessageId = ''), 1600);
+    } catch {
+      this.notifications.warning(this.i18n.translate('No se pudo copiar.'));
+    }
+  }
+
+  highlightedHtml(text: string): SafeHtml {
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    let html = text.replace(/[&<>"']/g, (char) => map[char] ?? char);
+    html = html.replace(/\b(https?:\/\/[^\s<]+)\b/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+    const query = this.messageQuery.trim();
+    if (query) {
+      const pattern = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
+      html = html.replace(pattern, '<mark>$1</mark>');
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  private persistPinned(): void {
+    if (!this.storage) return;
+    try {
+      this.storage.setItem('carxy:chat:pinned', JSON.stringify([...this.pinned]));
+    } catch {
+      /* almacenamiento lleno: ignorar */
+    }
+  }
+
+  private loadPinned(): string[] {
+    if (!this.storage) return [];
+    try {
+      const parsed = JSON.parse(this.storage.getItem('carxy:chat:pinned') ?? '[]') as unknown;
+      return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+    } catch {
+      return [];
     }
   }
 

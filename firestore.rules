@@ -782,7 +782,7 @@ service cloud.firestore {
           .hasOnly(['email', 'displayName', 'lastSeenAt', 'lastSeenPath', 'updatedAt'])
         && request.resource.data.lastSeenAt is number
         && request.resource.data.updatedAt is number;
-      allow get: if signedIn() && (isAdmin() || request.auth.uid == uid);
+      allow get: if signedIn();
       allow list: if isAdmin();
       allow delete: if isAdmin();
     }
