@@ -29,6 +29,7 @@ import {
 } from '@angular/fire/storage';
 import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
+import { AuthService } from './auth';
 import { I18nService } from './i18n';
 import {
   ActivityNotification,
@@ -43,6 +44,8 @@ import {
   User,
   UserProfile,
   UserRole,
+  AccountDeletionAudit,
+  UserActivity,
 } from '../models/social.models';
 import { environment } from '../../../environments/environment';
 
@@ -96,6 +99,14 @@ export class SocialService {
   private readonly localActivityNotifications = new BehaviorSubject<ActivityNotification[]>(
     this.readLocal(LOCAL_KEYS.activityNotifications, []),
   );
+  private readonly localUserActivity = new BehaviorSubject<UserActivity[]>(
+    this.readLocal(LOCAL_KEYS.userActivity, []),
+  );
+  private readonly localDeletionAudit = new BehaviorSubject<AccountDeletionAudit[]>(
+    this.readLocal(LOCAL_KEYS.accountDeletionAudit, []),
+  );
+  private readonly auth = inject(AuthService, { optional: true });
+  private lastActivityWrite = 0;
   private readonly likeInFlight = new Set<string>();
   private static readonly LIKE_COOLDOWN_MS = 2000;
   private readonly likeRateLimit = new Map<string, number>();
@@ -195,6 +206,16 @@ export class SocialService {
         ));
       }))
     : of(this.demoUsers());
+
+  readonly userActivity$: Observable<UserActivity[]> = this.firestore
+    ? (collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.userActivity))
+        .pipe(map((items) => items.map((item) => this.normalizeActivity(item as Record<string, unknown>)))))
+    : this.localUserActivity.asObservable();
+
+  readonly deletionAudit$: Observable<AccountDeletionAudit[]> = this.firestore
+    ? (collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.accountDeletionAudit))
+        .pipe(map((items) => items.map((item) => this.normalizeAudit(item as Record<string, unknown>)))))
+    : this.localDeletionAudit.asObservable();
 
   private demoUsers(): UserProfile[] {
     const stored = this.localAccounts();
@@ -972,6 +993,7 @@ export class SocialService {
 
   async deleteAccountData(uid: string): Promise<void> {
     if (!uid) throw new Error('No se pudo validar la cuenta que se va a eliminar.');
+    await this.logDeletionAudit(uid);
 
     if (!this.firestore) {
       const ownedPosts = this.localPosts.value.filter((post) => post.authorId === uid || post.author.uid === uid);
@@ -1281,6 +1303,84 @@ export class SocialService {
       role: 'user',
       createdAt: account.createdAt ?? Date.now(),
     }));
+  }
+
+  private normalizeActivity(item: Record<string, unknown>): UserActivity {
+    return {
+      uid: String(item['uid'] ?? ''),
+      email: String(item['email'] ?? ''),
+      displayName: String(item['displayName'] ?? ''),
+      lastSeenAt: Number(item['lastSeenAt'] ?? 0),
+      lastSeenPath: String(item['lastSeenPath'] ?? ''),
+      updatedAt: Number(item['updatedAt'] ?? 0),
+    };
+  }
+
+  private normalizeAudit(item: Record<string, unknown>): AccountDeletionAudit {
+    return {
+      id: String(item['id'] ?? ''),
+      uid: String(item['uid'] ?? ''),
+      email: String(item['email'] ?? ''),
+      displayName: String(item['displayName'] ?? ''),
+      deletedAt: Number(item['deletedAt'] ?? 0),
+      deletedBy: String(item['deletedBy'] ?? ''),
+      reason: String(item['reason'] ?? ''),
+    };
+  }
+
+  async recordActivity(lastSeenPath: string = ''): Promise<void> {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const stored = this.readLocal<{ uid?: string; email?: string; displayName?: string }>(LOCAL_KEYS.user, {});
+      const current = this.auth?.currentUser;
+      const uid = current?.uid ?? stored?.uid ?? '';
+      if (!uid) return;
+      const now = Date.now();
+      if (this.lastActivityWrite && now - this.lastActivityWrite < 5 * 60 * 1000) return;
+      this.lastActivityWrite = now;
+      const entry: UserActivity = {
+        uid,
+        email: current?.email ?? stored?.email ?? '',
+        displayName: current?.displayName ?? stored?.displayName ?? '',
+        lastSeenAt: now,
+        lastSeenPath,
+        updatedAt: now,
+      };
+      if (this.firestore) {
+        await setDoc(doc(this.firestore, SOCIAL_COLLECTIONS.userActivity, uid), entry, { merge: true });
+      } else {
+        const next = [...this.localUserActivity.value.filter((item) => item.uid !== uid), entry];
+        this.localUserActivity.next(next);
+        this.writeLocal(LOCAL_KEYS.userActivity, next);
+      }
+    } catch (error) {
+      console.warn('No se pudo registrar la actividad del usuario.', error);
+    }
+  }
+
+  private async logDeletionAudit(uid: string): Promise<void> {
+    try {
+      const stored = this.readLocal<{ uid?: string; email?: string; displayName?: string }>(LOCAL_KEYS.user, {});
+      const current = this.auth?.currentUser;
+      const audit: AccountDeletionAudit = {
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        uid,
+        email: current?.email ?? stored?.email ?? '',
+        displayName: current?.displayName ?? stored?.displayName ?? '',
+        deletedAt: Date.now(),
+        deletedBy: uid,
+        reason: 'self',
+      };
+      if (this.firestore) {
+        await addDoc(collection(this.firestore, SOCIAL_COLLECTIONS.accountDeletionAudit), audit);
+      } else {
+        const next = [...this.localDeletionAudit.value, audit];
+        this.localDeletionAudit.next(next);
+        this.writeLocal(LOCAL_KEYS.accountDeletionAudit, next);
+      }
+    } catch (error) {
+      console.warn('No se pudo registrar la auditoría de eliminación.', error);
+    }
   }
 
   private normalizeAdminUser(

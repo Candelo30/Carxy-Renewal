@@ -30,6 +30,8 @@ export const SOCIAL_COLLECTIONS = {
   projectActivity: 'projectActivity',
   projectPresences: 'projectPresences',
   helpArticles: 'helpArticles',
+  userActivity: 'userActivity',
+  accountDeletionAudit: 'accountDeletionAudit',
 } as const;
 
 export const SOCIAL_STORAGE_PATHS = {
@@ -51,6 +53,8 @@ export const LOCAL_KEYS = {
   communityAnswers: 'forma-social-community-answers',
   activityNotifications: 'forma-social-activity-notifications',
   modelDatabase: 'forma-social-models',
+  userActivity: 'forma-social-user-activity',
+  accountDeletionAudit: 'forma-social-account-deletion-audit',
   preferences: 'forma-3d-preferences',
   draft: 'forma-3d-draft',
   onboarding: 'forma-3d-onboarding',

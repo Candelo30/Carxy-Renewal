@@ -4,6 +4,7 @@ import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Rout
 import { Subscription } from 'rxjs';
 import { LocalStateService } from './core/services/local-state';
 import { I18nService } from './core/services/i18n';
+import { SocialService } from './core/services/social';
 import { NotificationCenterComponent } from './shared/components/notification-center/notification-center';
 import { NotificationService } from './core/services/notifications';
 import { TranslatePipe } from './shared/pipes/translate.pipe';
@@ -25,6 +26,7 @@ export class App implements OnDestroy {
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly routerSubscription = new Subscription();
+  private readonly social = inject(SocialService);
   private navigationTimer: ReturnType<typeof setTimeout> | undefined;
   private themeMediaQuery: MediaQueryList | null = null;
   private themeMediaListener: ((event: MediaQueryListEvent) => void) | null = null;
@@ -42,6 +44,7 @@ export class App implements OnDestroy {
       ) {
         this.clearNavigationTimer();
         this.navigationLoading.set(false);
+        if (event instanceof NavigationEnd) void this.social.recordActivity(event.url);
       }
     }));
 

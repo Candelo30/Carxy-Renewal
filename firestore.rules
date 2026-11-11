@@ -763,5 +763,44 @@ service cloud.firestore {
           .hasOnly(['category', 'title', 'subtitle', 'icon', 'keywords', 'body', 'steps', 'tip', 'order', 'isPublished', 'updatedAt']);
       allow delete: if isAdmin();
     }
+
+    match /userActivity/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'lastSeenAt', 'lastSeenPath', 'updatedAt',
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.email is string
+        && request.resource.data.displayName is string
+        && request.resource.data.lastSeenPath is string
+        && request.resource.data.lastSeenAt is number
+        && request.resource.data.updatedAt is number;
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['email', 'displayName', 'lastSeenAt', 'lastSeenPath', 'updatedAt'])
+        && request.resource.data.lastSeenAt is number
+        && request.resource.data.updatedAt is number;
+      allow get: if signedIn() && (isAdmin() || request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /accountDeletionAudit/{auditId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'id', 'uid', 'email', 'displayName', 'deletedAt', 'deletedBy', 'reason',
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.deletedBy == request.auth.uid
+        && request.resource.data.email is string
+        && request.resource.data.displayName is string
+        && request.resource.data.deletedAt is number
+        && request.resource.data.reason == 'self';
+      allow get, list: if canModerate();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -154,7 +154,12 @@ select, input, textarea {
 .badge { display: inline-flex; padding: 3px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; background: color-mix(in srgb, var(--accent-color) 14%, var(--surface-panel)); color: var(--accent-color); }
 .state { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; background: color-mix(in srgb, #34d399 14%, var(--surface-panel)); color: #34d399; }
 .state.banned { background: color-mix(in srgb, var(--color-danger) 14%, var(--surface-panel)); color: var(--color-danger); }
-.state.open { background: color-mix(in srgb, #f59e0b 14%, var(--surface-panel)); color: #f59e0b; }
+.state.active { background: color-mix(in srgb, #34d399 14%, var(--surface-panel)); color: #34d399; }
+.activity-filter-label { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.78rem; }
+.state.activity-active { background: color-mix(in srgb, #34d399 14%, var(--surface-panel)); color: #34d399; }
+.state.activity-inactive { background: color-mix(in srgb, #f59e0b 14%, var(--surface-panel)); color: #f59e0b; }
+.state.activity-suspended { background: color-mix(in srgb, var(--color-danger) 14%, var(--surface-panel)); color: var(--color-danger); }
+.state.activity-unknown { background: color-mix(in srgb, #94a3b8 14%, var(--surface-panel)); color: #94a3b8; }
 .state.resolved { background: color-mix(in srgb, #34d399 14%, var(--surface-panel)); color: #34d399; }
 .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border-color); color: var(--text-muted); }

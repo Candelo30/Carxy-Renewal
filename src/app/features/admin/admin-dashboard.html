@@ -158,10 +158,10 @@
         <!-- USERS -->
         <ng-container *ngIf="isUsers">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Usuarios registrados</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} cuentas</span></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>Usuarios registrados</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} cuentas · {{ (stats$ | async)?.active30d || 0 }} activas (30d)</span></div><div class="panel-actions"><label class="activity-filter-label">Filtrar<select [(ngModel)]="activityFilterValue" name="activity-filter"><option value="all">Todas</option><option value="active">Activas (30d)</option><option value="inactive">Inactivas (+30d)</option><option value="suspended">Suspendidas</option></select></label></div></div>
             <div class="table-wrap" *ngIf="filteredUsers$ | async as users">
               <table>
-                <thead><tr><th>Usuario</th><th>Email</th><th>UID</th><th>Rol</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Usuario</th><th>Email</th><th>UID</th><th>Rol</th><th>Estado</th><th>Creado</th><th>Última actividad</th><th>Acciones</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let user of users; trackBy: trackUser">
                     <td><strong>{{ user.displayName }}</strong></td>
@@ -174,16 +174,31 @@
                     </td>
                     <td><span class="state" [class.banned]="user.isBanned">{{ user.isBanned ? 'Suspendida' : 'Activa' }}</span></td>
                     <td>{{ user.createdAt | date:'mediumDate' }}</td>
+                    <td><span class="state activity-{{ activityClass(user) }}">{{ activityLabel(user) }}</span></td>
                     <td>
                       <button class="small-button" [class.danger]="!user.isBanned" (click)="toggleBan(user, vm.user)" [disabled]="user.uid === vm.user?.uid">
                         {{ user.isBanned ? 'Restaurar' : 'Suspender' }}
                       </button>
                     </td>
                   </tr>
-                  <tr *ngIf="!users.length"><td colspan="7" class="muted-cell">No hay usuarios para mostrar.</td></tr>
+                  <tr *ngIf="!users.length"><td colspan="8" class="muted-cell">No hay usuarios para mostrar.</td></tr>
                 </tbody>
               </table>
             </div>
+            <section class="admin-panel" *ngIf="deletionAudit.length" style="margin-top:16px;">
+              <div class="panel-header"><div class="panel-title-row"><h3>Cuentas eliminadas (auditoría)</h3><span>{{ deletionAudit.length }} registros</span></div></div>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Cuenta</th><th>Email</th><th>UID</th><th>Eliminada</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let item of deletionAudit; trackBy: trackAudit">
+                    <td><strong>{{ item.displayName || 'Cuenta eliminada' }}</strong></td>
+                    <td>{{ item.email || '-' }}</td>
+                    <td><small class="mono">{{ item.uid }}</small></td>
+                    <td>{{ item.deletedAt | date:'mediumDate' }}</td>
+                  </tr>
+                </tbody>
+              </table></div>
+            </section>
           </section>
         </ng-container>
 

@@ -22,6 +22,25 @@ export interface UserProfile extends User {
   createdAt: number;
 }
 
+export interface UserActivity {
+  uid: string;
+  email: string;
+  displayName: string;
+  lastSeenAt: number;
+  lastSeenPath: string;
+  updatedAt: number;
+}
+
+export interface AccountDeletionAudit {
+  id: string;
+  uid: string;
+  email: string;
+  displayName: string;
+  deletedAt: number;
+  deletedBy: string;
+  reason: string;
+}
+
 export type ReportReason = 'spam' | 'inappropriate' | 'copyright' | 'other';
 export type ReportStatus = 'open' | 'resolved' | 'dismissed';
 

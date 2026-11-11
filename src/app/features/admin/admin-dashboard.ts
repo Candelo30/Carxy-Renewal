@@ -17,6 +17,8 @@ import {
   Project,
   ProjectMember,
   ProjectRole,
+  UserActivity,
+  AccountDeletionAudit,
 } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
 import { CommunityService } from '../../core/services/community';
@@ -92,6 +94,8 @@ export class AdminDashboardComponent {
     questions: CommunityQuestion[];
     projects: Project[];
     helpArticles: HelpArticle[];
+    activity: UserActivity[];
+    audit: AccountDeletionAudit[];
   }>({
     user: null,
     users: [],
@@ -101,6 +105,8 @@ export class AdminDashboardComponent {
     questions: [],
     projects: [],
     helpArticles: [],
+    activity: [],
+    audit: [],
   });
 
   readonly vm$ = this.vmSubject.asObservable();
@@ -182,6 +188,8 @@ export class AdminDashboardComponent {
           questions: [],
           projects: [],
           helpArticles: [],
+          activity: [],
+          audit: [],
         });
         return;
       }
@@ -197,9 +205,11 @@ export class AdminDashboardComponent {
         catchError(() => of([] as Project[])),
       );
       const helpArticles$ = this.community.getHelpArticles().pipe(catchError(() => of([] as HelpArticle[])));
+      const activity$ = (isAdmin ? this.social.userActivity$ : of([] as UserActivity[])).pipe(catchError(() => of([] as UserActivity[])));
+      const audit$ = (isAdmin ? this.social.deletionAudit$ : of([] as AccountDeletionAudit[])).pipe(catchError(() => of([] as AccountDeletionAudit[])));
 
-      combineLatest([users$, posts$, reports$, feedback$, questions$, projects$, helpArticles$]).subscribe(
-        ([users, posts, reports, feedback, questions, projects, helpArticles]) => {
+      combineLatest([users$, posts$, reports$, feedback$, questions$, projects$, helpArticles$, activity$, audit$]).subscribe(
+        ([users, posts, reports, feedback, questions, projects, helpArticles, activity, audit]) => {
           this.vmSubject.next({
             user,
             users: users ?? [],
@@ -209,6 +219,8 @@ export class AdminDashboardComponent {
             questions: questions ?? [],
             projects: projects ?? [],
             helpArticles: helpArticles ?? [],
+            activity: activity ?? [],
+            audit: audit ?? [],
           });
           if (this._tab === 'projects' && !this.selectedProjectId && projects?.length) {
             this.selectProject(projects[0].id);
@@ -227,12 +239,30 @@ export class AdminDashboardComponent {
       const questions = vm.questions ?? [];
       const projects = vm.projects ?? [];
       const helpArticles = vm.helpArticles ?? [];
+      const activity = vm.activity ?? [];
+      const audit = vm.audit ?? [];
+      const DAY = 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const lastSeenByUid = new Map<string, number>();
+      for (const entry of activity) {
+        const current = lastSeenByUid.get(entry.uid) ?? 0;
+        if (entry.lastSeenAt > current) lastSeenByUid.set(entry.uid, entry.lastSeenAt);
+      }
+      const activeToday = users.filter((u) => now - (lastSeenByUid.get(u.uid) ?? 0) <= DAY).length;
+      const active7d = users.filter((u) => now - (lastSeenByUid.get(u.uid) ?? 0) <= 7 * DAY).length;
+      const active30d = users.filter((u) => now - (lastSeenByUid.get(u.uid) ?? 0) <= 30 * DAY).length;
+      const inactive30d = users.filter((u) => now - (lastSeenByUid.get(u.uid) ?? 0) > 30 * DAY).length;
       return {
         totalUsers: users.length,
         activeUsers: users.filter((u) => !u.isBanned).length,
         suspendedUsers: users.filter((u) => u.isBanned).length,
         adminUsers: users.filter((u) => u.role === 'admin').length,
         moderatorUsers: users.filter((u) => u.role === 'moderator').length,
+        activeToday: activeToday,
+        active7d,
+        active30d,
+        inactive30d,
+        deletedAudit: audit.length,
         totalPosts: posts.length,
         publicPosts: posts.filter((p) => !p.isPrivate).length,
         privatePosts: posts.filter((p) => p.isPrivate).length,
@@ -571,7 +601,34 @@ export class AdminDashboardComponent {
     return !vm.users.some((user) => user.uid === member.userId);
   }
 
+  activityFor(uid: string): UserActivity | null {
+    return this.vmSubject.value.activity.find((entry) => entry.uid === uid) ?? null;
+  }
+
+  activityLabel(user: UserProfile): string {
+    if (user.isBanned) return 'Suspendida';
+    const entry = this.activityFor(user.uid);
+    if (!entry) return 'Sin actividad';
+    const DAY = 24 * 60 * 60 * 1000;
+    const days = Math.floor((Date.now() - entry.lastSeenAt) / DAY);
+    if (days <= 30) return days <= 1 ? 'Hoy' : `Hace ${days} días`;
+    return `${days} días sin actividad`;
+  }
+
+  activityClass(user: UserProfile): 'active' | 'inactive' | 'suspended' | 'unknown' {
+    if (user.isBanned) return 'suspended';
+    const entry = this.activityFor(user.uid);
+    if (!entry) return 'unknown';
+    const DAY = 24 * 60 * 60 * 1000;
+    return Date.now() - entry.lastSeenAt <= 30 * DAY ? 'active' : 'inactive';
+  }
+
+  get deletionAudit(): AccountDeletionAudit[] {
+    return [...(this.vmSubject.value.audit ?? [])].sort((a, b) => b.deletedAt - a.deletedAt);
+  }
+
   trackUser(_index: number, user: UserProfile): string { return user.uid; }
+  trackAudit(_index: number, item: AccountDeletionAudit): string { return item.id; }
   trackPost(_index: number, post: Post3D): string { return post.id; }
   trackFeedback(_index: number, feedback: FeedbackMessage): string { return feedback.id; }
   trackQuestion(_index: number, question: CommunityQuestion): string { return question.id; }
@@ -718,11 +775,33 @@ export class AdminDashboardComponent {
   set searchQuery(value: string) { this.searchQuery$.next(value); }
   get searchQuery(): string { return this.searchQuery$.value; }
 
-  readonly filteredUsers$ = combineLatest([this.vm$, this.searchQuery$]).pipe(
-    map(([vm, q]) => {
-      if (!q) return vm.users;
+  activityFilter: 'all' | 'active' | 'inactive' | 'suspended' = 'all';
+  private readonly activityFilter$ = new BehaviorSubject<'all' | 'active' | 'inactive' | 'suspended'>('all');
+
+  get activityFilterValue(): 'all' | 'active' | 'inactive' | 'suspended' { return this.activityFilter$.value; }
+  set activityFilterValue(value: 'all' | 'active' | 'inactive' | 'suspended') { this.activityFilter = value; this.activityFilter$.next(value); }
+
+  readonly filteredUsers$ = combineLatest([this.vm$, this.searchQuery$, this.activityFilter$]).pipe(
+    map(([vm, q, filter]) => {
+      let list = vm.users;
+      if (filter === 'suspended') {
+        list = list.filter((u) => u.isBanned);
+      } else if (filter === 'active') {
+        const now = Date.now();
+        const DAY = 24 * 60 * 60 * 1000;
+        const lastSeenByUid = new Map<string, number>();
+        for (const entry of (vm.activity ?? [])) lastSeenByUid.set(entry.uid, Math.max(lastSeenByUid.get(entry.uid) ?? 0, entry.lastSeenAt));
+        list = list.filter((u) => now - (lastSeenByUid.get(u.uid) ?? 0) <= 30 * DAY && !u.isBanned);
+      } else if (filter === 'inactive') {
+        const now = Date.now();
+        const DAY = 24 * 60 * 60 * 1000;
+        const lastSeenByUid = new Map<string, number>();
+        for (const entry of (vm.activity ?? [])) lastSeenByUid.set(entry.uid, Math.max(lastSeenByUid.get(entry.uid) ?? 0, entry.lastSeenAt));
+        list = list.filter((u) => now - (lastSeenByUid.get(u.uid) ?? 0) > 30 * DAY);
+      }
+      if (!q) return list;
       const query = q.toLowerCase();
-      return vm.users.filter((u) =>
+      return list.filter((u) =>
         u.displayName.toLowerCase().includes(query) || u.email.toLowerCase().includes(query) || u.uid.toLowerCase().includes(query),
       );
     }),
