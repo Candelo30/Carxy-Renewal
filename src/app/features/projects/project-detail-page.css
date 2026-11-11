@@ -314,6 +314,13 @@
   max-width: 420px;
 }
 
+.invite-link {
+  margin-top: 12px;
+  max-width: 420px;
+  width: 100%;
+  justify-content: center;
+}
+
 .invite-form input,
 .invite-form select {
   padding: 10px 14px;

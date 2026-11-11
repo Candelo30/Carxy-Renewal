@@ -128,6 +128,9 @@
           {{ inviting ? ('projects.inviting' | translate) : ('projects.invite' | translate) }}
         </button>
       </form>
+      <button type="button" class="btn-secondary invite-link" (click)="shareProject()">
+        🔗 {{ 'projects.share' | translate }}
+      </button>
     </section>
   }
 

@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe, DOCUMENT } from '@angular/common';
 import { combineLatest, tap } from 'rxjs';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
@@ -11,7 +11,7 @@ import { CollaborationService, hasPermission, type ProjectPermission } from '../
 import { I18nService } from '../../core/services/i18n';
 import { AuthService } from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notifications';
-import { copyText } from '../../core/utils/share';
+import { absoluteAppUrl, shareOrCopy } from '../../core/utils/share';
 
 @Component({
   selector: 'app-project-detail-page',
@@ -28,6 +28,7 @@ export class ProjectDetailPage implements OnInit {
   readonly i18n = inject(I18nService);
   readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
+  private readonly document = inject(DOCUMENT);
 
   projectId = '';
   projectName = '';
@@ -159,10 +160,13 @@ export class ProjectDetailPage implements OnInit {
   }
 
   async shareProject(): Promise<void> {
-    if (typeof window === 'undefined') return;
-    const url = `${window.location.origin}/projects/${encodeURIComponent(this.projectId)}`;
+    const url = absoluteAppUrl(`projects/${encodeURIComponent(this.projectId)}`, this.document.baseURI);
     try {
-      await copyText(url);
+      await shareOrCopy(
+        url,
+        this.projectName || this.i18n.translate('projects.shareTitle'),
+        this.i18n.translate('projects.shareHint'),
+      );
       this.notifications.success(
         this.i18n.translate('projects.shareCopied'),
         this.i18n.translate('projects.shareTitle')
