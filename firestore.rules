@@ -6,12 +6,17 @@ service cloud.firestore {
     }
 
     function roleOf(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data.role;
+      return exists(/databases/$(database)/documents/users/$(uid))
+        ? get(/databases/$(database)/documents/users/$(uid)).data.get('role', 'user')
+        : 'user';
     }
 
     function isActiveUser() {
       return signedIn()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBanned != true;
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isBanned', false) != true
+        );
     }
 
     function isAdmin() {
@@ -31,7 +36,8 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if (
+        signedIn()
         && request.auth.uid == uid
         && request.resource.data.uid == uid
         && request.resource.data.role == 'user'
@@ -43,7 +49,20 @@ service cloud.firestore {
         && request.resource.data.isBanned == false
         && request.resource.data.keys().hasOnly([
           'uid', 'displayName', 'photoURL', 'bio', 'role', 'isBanned', 'createdAt'
-        ]);
+        ])
+      ) || (
+        // Un usuario puede guardar su perfil antes de que exista el documento
+        // completo (p. ej. justo después de autenticarse por primera vez).
+        signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() <= 500
+        && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'bio'])
+      );
       allow update: if (
           signedIn()
           && request.auth.uid == uid
@@ -125,7 +144,7 @@ service cloud.firestore {
           allow read: if signedIn() && request.auth.uid == uid;
           allow create: if isActiveUser()
             && request.resource.data.keys().hasOnly([
-              'recipientId', 'actorId', 'actorName', 'actorPhotoURL', 'kind', 'targetId', 'createdAt', 'read'
+              'id', 'recipientId', 'actorId', 'actorName', 'actorPhotoURL', 'kind', 'targetId', 'createdAt', 'read'
             ])
             && request.resource.data.recipientId == uid
             && request.resource.data.actorId == request.auth.uid
@@ -142,9 +161,24 @@ service cloud.firestore {
               || (request.resource.data.kind == 'comment' && request.resource.data.targetId is string)
             );
           allow update: if signedIn()
-            && request.auth.uid == uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
-            && request.resource.data.read == true;
+            && (
+              (
+                request.auth.uid == uid
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+                && request.resource.data.read == true
+              ) || (
+                // El autor de la notificación puede actualizarla (p. ej. al repetir un like).
+                isActiveUser()
+                && resource.data.actorId == request.auth.uid
+                && resource.data.recipientId == uid
+                && request.resource.data.actorId == request.auth.uid
+                && request.resource.data.recipientId == uid
+                && request.resource.data.kind in ['follow', 'like', 'comment']
+                && request.resource.data.actorName is string
+                && request.resource.data.createdAt is number
+                && request.resource.data.read is bool
+              )
+            );
           allow delete: if signedIn() && request.auth.uid == uid;
         }
 
@@ -178,8 +212,11 @@ service cloud.firestore {
       allow create: if isActiveUser()
         && request.resource.data.author.uid == request.auth.uid
         && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.author.displayName
-          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || request.resource.data.author.displayName
+            == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        )
         && request.resource.data.modelPath
           == 'models/' + request.auth.uid + '/' + postId + '.glb'
         && request.resource.data.thumbnailPath
@@ -241,7 +278,9 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
           && request.resource.data.uid == likerUid
           && request.resource.data.createdAt is number;
-        allow delete: if isActiveUser() && request.auth.uid == likerUid;
+        allow delete: if isActiveUser() && request.auth.uid == likerUid
+          || (signedIn()
+            && get(/databases/$(database)/documents/posts/$(postId)).data.author.uid == request.auth.uid);
         allow update: if false;
       }
 
@@ -272,8 +311,11 @@ service cloud.firestore {
           'postId', 'postTitle', 'reporterId', 'reporterName', 'reason', 'details', 'status', 'createdAt'
         ])
         && request.resource.data.reporterId == request.auth.uid
-        && request.resource.data.reporterName
-          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || request.resource.data.reporterName
+            == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        )
         && request.resource.data.postId is string
         && request.resource.data.postTitle is string
         && request.resource.data.reason in ['spam', 'inappropriate', 'copyright', 'other']
@@ -327,9 +369,13 @@ service cloud.firestore {
           'locked', 'acceptedAnswerId'
         ])
         && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.authorName
-          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || request.resource.data.authorName
+            == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+        )
         && (request.resource.data.authorPhotoURL == null
+          || !exists(/databases/$(database)/documents/users/$(request.auth.uid))
           || request.resource.data.authorPhotoURL
             == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoURL)
         && request.resource.data.title is string
@@ -414,9 +460,13 @@ service cloud.firestore {
             'authorId', 'authorName', 'authorPhotoURL', 'body', 'createdAt', 'votes', 'voterIds', 'accepted'
           ])
           && request.resource.data.authorId == request.auth.uid
-          && request.resource.data.authorName
-            == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+          && (
+            !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            || request.resource.data.authorName
+              == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
+          )
           && (request.resource.data.authorPhotoURL == null
+            || !exists(/databases/$(database)/documents/users/$(request.auth.uid))
             || request.resource.data.authorPhotoURL
               == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoURL)
           && request.resource.data.body is string
@@ -631,7 +681,7 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/projects/$(request.resource.data.projectId)).data.ownerId == request.auth.uid)
           || (isProjectWriter(request.resource.data.projectId) && request.resource.data.role in ['editor', 'viewer'])
           || (request.resource.data.userId == request.auth.uid
-            && request.resource.data.role in ['viewer', 'editor']
+            && request.resource.data.role in ['viewer', 'editor', 'owner']
             && request.auth.token.email is string
             && existsAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email))
             && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.projectId == request.resource.data.projectId
@@ -667,6 +717,18 @@ service cloud.firestore {
             && request.resource.data.userName.size() > 0
             && request.resource.data.userName.size() <= 120
             && (request.resource.data.userPhotoURL == null || request.resource.data.userPhotoURL is string)
+          )
+          || (
+            // Subida de rol al volver a unirte con un enlace de acceso.
+            request.auth.uid == resource.data.userId
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['role', 'joinedViaShareLink'])
+            && request.resource.data.role in ['viewer', 'editor']
+            && request.resource.data.joinedViaShareLink is string
+            && exists(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink))
+            && get(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink)).data.projectId == resource.data.projectId
+            && get(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink)).data.enabled == true
+            && get(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink)).data.role == request.resource.data.role
           )
         );
 
@@ -816,7 +878,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'transform', 'lastSeen']);
+          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'transform', 'lastSeen', 'displayName', 'photoURL']);
 
       allow delete: if signedIn()
         && request.resource.data.uid == request.auth.uid;
@@ -877,12 +939,20 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly([
           'id', 'uid', 'email', 'displayName', 'deletedAt', 'deletedBy', 'reason',
         ])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.deletedBy == request.auth.uid
         && request.resource.data.email is string
         && request.resource.data.displayName is string
         && request.resource.data.deletedAt is number
-        && request.resource.data.reason == 'self';
+        && (
+          (
+            request.resource.data.reason == 'self'
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.deletedBy == request.auth.uid
+          ) || (
+            request.resource.data.reason in ['inactivity', 'admin']
+            && request.resource.data.deletedBy == request.auth.uid
+            && canModerate()
+          )
+        );
       allow get, list: if canModerate();
       allow update: if false;
       allow delete: if isAdmin();
