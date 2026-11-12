@@ -463,6 +463,35 @@
   font-size: 0.73rem;
 }
 
+.background-select {
+  background: var(--surface-control);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  max-width: 180px;
+}
+
+.global-background {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.global-background-label {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.background-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 25%, transparent);
+}
+
 /* ==========================================================================
    Conversation area
    ========================================================================== */

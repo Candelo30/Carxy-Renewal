@@ -105,6 +105,20 @@
           }
         </section>
       }
+      <section class="global-background" aria-labelledby="global-background-title">
+        <h2 id="global-background-title">{{ 'Fondo del chat' | translate }}</h2>
+        <label class="global-background-label" for="global-chat-background">{{ 'Fondo global' | translate }}</label>
+        <select
+          id="global-chat-background"
+          class="background-select"
+          [ngModel]="globalChatBackgroundId"
+          (ngModelChange)="onGlobalBackgroundChange($event)"
+        >
+          @for (background of chatBackgrounds; track background.id) {
+            <option [value]="background.id">{{ background.label }}</option>
+          }
+        </select>
+      </section>
       <h2 class="new-conversation-title">{{ 'Nuevo chat' | translate }}</h2>
       <form (ngSubmit)="openConversation()">
         <label for="peer">{{ 'UID del creador' | translate }}</label>
@@ -126,7 +140,7 @@
       }
     </aside>
 
-    <section class="conversation">
+    <section class="conversation" [style.background]="conversationBackground(chatId)">
       @if (messages$; as stream) {
         @let peer = partnerProfile$ | async;
         @let acts = activities$ | async;
@@ -161,6 +175,17 @@
             </small>
           </div>
           <div class="conversation-actions">
+            <select
+              class="background-select"
+              [ngModel]="chatBackgroundId"
+              (ngModelChange)="onConversationBackgroundChange($event)"
+              [attr.aria-label="'Fondo de conversación'"
+              [title]="'Fondo de conversación'"
+            >
+              @for (background of chatBackgrounds; track background.id) {
+                <option [value]="background.id">{{ background.label }}</option>
+              }
+            </select>
             <button type="button" class="icon-button" [class.active]="messageSearchOpen" (click)="toggleMessageSearch()" [attr.aria-pressed]="messageSearchOpen" [title]="'Buscar en la conversación' | translate" [attr.aria-label]="'Buscar en la conversación' | translate">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.3" y2="16.3"/></svg>
             </button>

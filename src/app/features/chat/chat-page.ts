@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import {
   Observable,
   Subscription,
+  catchError,
   combineLatest,
   firstValueFrom,
   map,
@@ -82,6 +83,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
         ? this.social
             .chatConversations$(user.uid)
             .pipe(
+              catchError(() => of([])),
               switchMap((conversations) =>
                 conversations.length
                   ? combineLatest(
@@ -110,6 +112,35 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   copiedMessageId = '';
   readonly pinned = new Set<string>(this.loadPinned());
   private nearBottom = true;
+  chatBackgroundId = 'default';
+  globalChatBackgroundId = 'default';
+  readonly chatBackgrounds: { id: string; label: string; css: string }[] = [
+    {
+      id: 'default',
+      label: 'Predeterminado',
+      css: 'radial-gradient(80% 55% at 50% 0%, color-mix(in srgb, var(--accent-color) 5%, transparent), transparent 55%), var(--surface-main)',
+    },
+    {
+      id: 'aurora',
+      label: 'Aurora',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(139, 92, 246, 0.22), transparent 60%), radial-gradient(60% 50% at 80% 100%, rgba(56, 189, 248, 0.16), transparent 60%), #0d0a1a',
+    },
+    {
+      id: 'ocean',
+      label: 'Océano',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(14, 165, 233, 0.18), transparent 60%), #0a1622',
+    },
+    {
+      id: 'sunset',
+      label: 'Atardecer',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(245, 158, 11, 0.16), transparent 60%), #171006',
+    },
+    {
+      id: 'forest',
+      label: 'Bosque',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(16, 185, 129, 0.14), transparent 60%), #07130f',
+    },
+  ];
 
   ngOnInit(): void {
     this.subscription.add(
@@ -141,10 +172,14 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     const nextChatId = [this.currentUser.uid, peer].sort().join('__');
     if (this.chatId === nextChatId) return;
     this.chatId = nextChatId;
+    this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId);
     this.messages$ = this.social.chatMessages$(this.chatId).pipe(
+      catchError(() => of([])),
       map((messages) => this.groupByDay(messages)),
     );
-    this.partnerProfile$ = this.social.profile$(peer);
+    this.partnerProfile$ = this.social.profile$(peer).pipe(
+      catchError(() => of(null)),
+    );
     this.nearBottom = true;
     this.markSeen(this.chatId);
     void this.social.ensureChatConversation(this.chatId).catch((error: unknown) => {
@@ -187,6 +222,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   deselectChat(): void {
     this.chatId = '';
     this.partnerId = '';
+    this.chatBackgroundId = this.effectiveChatBackgroundId('');
     this.messages$ = undefined;
     this.partnerProfile$ = undefined;
     this.error = '';
@@ -364,6 +400,63 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
 
   private escapeRegExp(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  effectiveChatBackgroundId(chatId: string): string {
+    const override = this.storage ? this.readStoredChatBackground(chatId) : null;
+    return override ?? this.globalChatBackgroundId;
+  }
+
+  conversationBackground(chatId: string): string {
+    const id = this.effectiveChatBackgroundId(chatId);
+    const background = this.chatBackgrounds.find((item) => item.id === id);
+    return background?.css ?? this.chatBackgrounds[0].css;
+  }
+
+  setConversationBackground(chatId: string, id: string): void {
+    if (this.storage) {
+      try {
+        this.storage.setItem(`carxy:chat:bg:${chatId}`, id);
+      } catch {
+        /* almacenamiento no disponible */
+      }
+    }
+  }
+
+  setGlobalChatBackground(id: string): void {
+    this.globalChatBackgroundId = id;
+    if (this.storage) {
+      try {
+        this.storage.setItem('carxy:chat:bg', id);
+      } catch {
+        /* almacenamiento no disponible */
+      }
+    }
+  }
+
+  private readStoredChatBackground(chatId: string): string | null {
+    if (!this.storage) return null;
+    try {
+      return this.storage.getItem(`carxy:chat:bg:${chatId}`);
+    } catch {
+      return null;
+    }
+  }
+
+  onConversationBackgroundChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    const id = value || this.chatBackgrounds[0].id;
+    if (this.chatId) {
+      this.setConversationBackground(this.chatId, id);
+    } else {
+      this.setGlobalChatBackground(id);
+    }
+  }
+
+  onGlobalBackgroundChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    const id = value || this.chatBackgrounds[0].id;
+    this.setGlobalChatBackground(id);
   }
 
   private persistPinned(): void {
