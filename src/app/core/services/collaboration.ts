@@ -481,9 +481,8 @@ export class CollaborationService implements OnDestroy {
 
   /**
    * Envía (best-effort) el correo de invitación vía Cloud Function sendProjectInvitation.
-   * Devuelve true si el envío se completó con éxito. Si el servicio de correo no está
-   * configurado (falta RESEND_API_KEY o las functions no están desplegadas), no bloquea
-   * la invitación: devuelve false y el invitado puede verla en "/projects".
+   * Devuelve true si el envío se completó con éxito. Si las functions no están
+   * desplegadas, no bloquea la invitación: devuelve false y el invitado puede verla en "/projects".
    */
   private async sendInvitationEmail(invitation: ProjectInvitation, role: ProjectRole): Promise<boolean> {
     try {

@@ -10,11 +10,9 @@ exports.EMAIL_CONFIG = void 0;
 exports.EMAIL_CONFIG = {
     // Nombre de la app que se muestra en los correos
     appName: 'CARXY 3D Editor',
-    // Dirección remite:
-    // - Sin dominio propio: usa onboarding@resend.dev (solo entrega al correo del dueño de la cuenta Resend).
-    // - Con dominio propio verificado en Resend: cámbialo a noreply@tudominio.com.
+    // Dirección remitente (en modo dev no se envía correo real, solo se registra)
     fromName: 'CARXY',
-    fromEmail: 'onboarding@resend.dev',
+    fromEmail: 'no-reply@carxy.app',
     // URL base de tu aplicación web (para los enlaces de acción)
     appUrl: 'https://candelo30.github.io/Carxy-Renewal', // URL pública de la app
     // Colores de marca
