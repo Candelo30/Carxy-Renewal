@@ -114,6 +114,7 @@ service cloud.firestore {
 
         match /followers/{followerUid} {
           allow read: if true;
+          allow list: if true;
           allow create: if isActiveUser()
             && request.auth.uid == followerUid
             && uid != followerUid
