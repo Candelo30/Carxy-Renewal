@@ -533,14 +533,6 @@ service cloud.firestore {
       }
     }
 
-    match /chats {
-      // Lista de conversaciones: cualquier usuario autenticado puede ver
-      // los chats donde es participante. La validación detallada por documento
-      // la manejan las reglas anidadas en `match /chats/{chatId}`.
-      allow list: if signedIn();
-      allow get: if signedIn();
-    }
-
     match /chats/{chatId} {
       function isParticipant(participants) {
         return signedIn()
@@ -548,15 +540,22 @@ service cloud.firestore {
           && participants.size() == 2
           && participants.hasAny([request.auth.uid]);
       }
-      // Versión para consultas (list). No puede comprobar `participants.size() == 2`
-      // porque Firestore no puede demostrar el tamaño de un array en el contexto de
-      // una consulta y rechazaría la consulta con "Missing or insufficient
-      // permissions". El invariante de dos participantes se sigue validando en
-      // `validConversation()` al crear el chat.
+      // Versión para consultas (list). Una consulta es todo o nada: Firestore
+      // solo la acepta si puede DEMOSTRAR que todas las filas que podría
+      // devolver cumplen la regla. La consulta del cliente es
+      // `where('participantIds', 'array-contains', uid)`, y la demostración de
+      // pertenencia a un array solo funciona con el operador `in`; la forma
+      // `hasAny([uid])` no se acepta como prueba y la consulta entera se
+      // rechaza ("Missing or insufficient permissions"), lo que dejaba el
+      // panel lateral en "Aún no tienes conversaciones" aunque el documento
+      // exista y el usuario sea participante. Tampoco se puede comprobar
+      // `participants.size() == 2` en contexto de consulta. El invariante de
+      // dos participantes se sigue validando en `validConversation()` al
+      // crear el chat.
       function isParticipantQuery(participants) {
         return signedIn()
           && participants is list
-          && participants.hasAny([request.auth.uid]);
+          && request.auth.uid in participants;
       }
       function validConversation(participants) {
         return participants is list
