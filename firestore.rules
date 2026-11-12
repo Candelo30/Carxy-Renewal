@@ -605,10 +605,11 @@ service cloud.firestore {
         && request.resource.data.joinedAt is number
         && memberId == request.resource.data.projectId + '_' + request.resource.data.userId
         && request.resource.data.keys().hasOnly([
-          'id', 'projectId', 'userId', 'userName', 'userPhotoURL', 'role', 'joinedAt'
+          'id', 'projectId', 'userId', 'userName', 'userPhotoURL', 'role', 'joinedAt', 'joinedViaShareLink'
         ])
         && request.resource.data.id == memberId
         && (request.resource.data.userPhotoURL == null || request.resource.data.userPhotoURL is string)
+        && (!('joinedViaShareLink' in request.resource.data) || request.resource.data.joinedViaShareLink == null || request.resource.data.joinedViaShareLink is string)
         && (
           isAdmin()
           || (request.resource.data.userId == request.auth.uid
@@ -627,6 +628,13 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.respondedAt is number
             && request.resource.data.joinedAt >= request.time.toMillis() - 300000
             && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
+          || (request.resource.data.userId == request.auth.uid
+            && request.resource.data.role in ['viewer', 'editor']
+            && request.resource.data.joinedViaShareLink is string
+            && exists(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink))
+            && get(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink)).data.projectId == request.resource.data.projectId
+            && get(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink)).data.enabled == true
+            && get(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink)).data.role == request.resource.data.role)
         );
 
       allow update: if signedIn()

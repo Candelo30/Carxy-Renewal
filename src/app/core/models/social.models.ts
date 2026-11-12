@@ -206,6 +206,8 @@ export interface ProjectMember {
   userPhotoURL: string | null;
   role: ProjectRole;
   joinedAt: number;
+  /** ID del enlace compartido usado para unirse (si aplica). */
+  joinedViaShareLink?: string | null;
 }
 
 export interface ProjectInvitation {

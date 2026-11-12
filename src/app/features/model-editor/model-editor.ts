@@ -1501,21 +1501,47 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   private async resolveShareAccess(token: string): Promise<void> {
     try {
-      const link = await this.collaboration.resolveShareLink(token);
+      let link = await this.collaboration.resolveShareLink(token);
       if (!link || (this.projectId && link.projectId !== this.projectId)) {
         this.shareAccessRole = null;
         if (token) {
           this.notifications.warning(this.i18n.translate('El enlace de acceso no es válido o fue desactivado.'));
         }
-      } else {
-        this.shareAccessRole = link.role;
-        const roleLabel = link.role === 'editor'
-          ? this.i18n.translate('projects.roleEditor')
-          : this.i18n.translate('projects.roleViewer');
-        this.notifications.info(this.i18n.translate('Acceso por enlace: {role}', { role: roleLabel }));
+        this.applyEffectiveAccess();
+        this.cdr.detectChanges();
+        return;
       }
+
+      const uid = this.auth.currentUser?.uid ?? null;
+      const wasMember = !!uid && this.projectMembers.some((m) => m.userId === uid);
+      let joinedNow = false;
+
+      // Intenta unirse al proyecto con el rol del enlace para obtener acceso real en Firestore.
+      if (uid) {
+        try {
+          const joined = await this.collaboration.joinViaShareLink(token);
+          if (joined) {
+            link = joined;
+            joinedNow = !wasMember;
+          }
+        } catch {
+          // Sin permisos/reglas antiguas o sin sesión válida: seguimos con acceso por enlace best-effort.
+        }
+      }
+
+      this.shareAccessRole = link.role;
+      const roleLabel = link.role === 'editor'
+        ? this.i18n.translate('projects.roleEditor')
+        : this.i18n.translate('projects.roleViewer');
+      this.notifications.info(this.i18n.translate('Acceso por enlace: {role}', { role: roleLabel }));
+
       this.applyEffectiveAccess();
       this.cdr.detectChanges();
+
+      // Si acabamos de unirnos por enlace, recarga para reabrir listeners/lecturas con permisos de miembro.
+      if (joinedNow && isPlatformBrowser(this.platformId)) {
+        window.setTimeout(() => window.location.reload(), 400);
+      }
     } catch {
       this.shareAccessRole = null;
       this.applyEffectiveAccess();
@@ -1524,11 +1550,9 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   private applyEffectiveAccess(): void {
     if (this.shareAccessRole) {
-      this.canWrite = this.shareAccessRole === 'editor' && this.memberCanWrite;
-      // Si el enlace es de diseño pero el usuario no es miembro con escritura, queda en solo lectura local.
-      if (this.shareAccessRole === 'editor' && !this.memberCanWrite) {
-        this.canWrite = false;
-      }
+      // Un enlace de lectura fuerza sesión de solo lectura aunque el usuario sea editor/miembro.
+      // Un enlace de diseño permite editar si el usuario tiene (o acaba de obtener) permisos de escritura.
+      this.canWrite = this.shareAccessRole === 'editor' ? this.memberCanWrite : false;
     } else {
       this.canWrite = this.memberCanWrite;
     }

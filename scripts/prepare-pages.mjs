@@ -57,6 +57,7 @@ const routes = [
   'chat',
   'my-models',
   'favorites',
+  'projects',
   'dashboard',
   'admin',
   'moderation',

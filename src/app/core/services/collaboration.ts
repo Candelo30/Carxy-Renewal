@@ -860,6 +860,43 @@ export class CollaborationService implements OnDestroy {
     }
   }
 
+  async joinViaShareLink(token: string): Promise<ProjectShareLink | null> {
+    const user = await this.currentUser();
+    if (!user) throw new Error(this.i18n.translate('Inicia sesión para usar el enlace de acceso.'));
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+
+    const link = await this.resolveShareLink(token);
+    if (!link) return null;
+
+    const memberId = `${link.projectId}_${user.uid}`;
+    const memberRef = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
+    const existing = await getDoc(memberRef);
+    if (existing.exists()) {
+      const current = existing.data() as ProjectMember;
+      const rolePriority: Record<ProjectRole, number> = { viewer: 0, editor: 1, owner: 2 };
+      // No degradar owners/roles superiores; elevar si el enlace da más acceso.
+      if ((rolePriority[link.role] ?? 0) > (rolePriority[current.role] ?? 0)) {
+        await updateDoc(memberRef, { role: link.role, joinedViaShareLink: link.id });
+      }
+      return link;
+    }
+
+    const now = Date.now();
+    const member: ProjectMember = {
+      id: memberId,
+      projectId: link.projectId,
+      userId: user.uid,
+      userName: user.displayName || user.email || 'Usuario',
+      userPhotoURL: user.photoURL ?? null,
+      role: link.role,
+      joinedAt: now,
+      joinedViaShareLink: link.id,
+    };
+    await setDoc(memberRef, member);
+    return link;
+  }
+
   /* ------------------------------------------------------------------ */
   /*  Utilidades internas                                               */
   /* ------------------------------------------------------------------ */
