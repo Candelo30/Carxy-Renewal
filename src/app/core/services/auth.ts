@@ -232,12 +232,19 @@ export class AuthService {
       case 'auth/requires-recent-login':
         return this.i18n.translate('Por seguridad, vuelve a iniciar sesión e inténtalo de nuevo.');
       case 'auth/network-request-failed':
+        // Suele ser un bloqueador de anuncios o una extensión de privacidad que
+        // cancela el script de reCAPTCHA que carga Firebase Auth al acceder.
+        return this.i18n.translate('No se pudo contactar con el servidor de acceso. Si usas un bloqueador de anuncios o una extensión de privacidad, permite www.google.com/recaptcha y www.gstatic.com/recaptcha, o prueba en incógnito sin extensiones.');
       case 'auth/operation-not-allowed':
         return this.i18n.translate('Firebase Authentication no está listo. En Firebase Console, habilita Email/Password (y Google si lo usas).');
+      case 'auth/popup-blocked':
+        return this.i18n.translate('El navegador bloqueó la ventana de acceso de Google. Permite las ventanas emergentes para este sitio o accede con correo y contraseña.');
       case 'auth/popup-closed-by-user':
         return this.i18n.translate('Se cerró la ventana de Google antes de completar el acceso.');
+      case 'auth/unauthorized-domain':
+        return this.i18n.translate('Este dominio no está autorizado. Añádelo en Firebase Console > Authentication > Settings > Authorized domains.');
       default:
-        return error instanceof Error ? error.message : this.i18n.translate('No se pudo completar la autenticación.');
+        return this.i18n.firebaseError(error, 'No se pudo completar la autenticación.');
     }
   }
 

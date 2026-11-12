@@ -4,6 +4,7 @@ import { APP_LANGUAGES, AppLanguage, DEFAULT_LANGUAGE, isAppLanguage } from '../
 import { LOCALE_OVERLAYS } from '../i18n/locales';
 import { MESSAGES, MessageTranslations } from '../i18n/messages';
 import { SOURCE_TRANSLATIONS, SourceTranslation } from '../i18n/source-translations';
+import { firebaseErrorMessage } from '../utils/firebase-error';
 import { LocalStateService } from './local-state';
 
 export type TranslationParams = Record<string, string | number>;
@@ -119,6 +120,21 @@ export class I18nService {
   /** Alias explícito para textos que ya están escritos en español. */
   source(spanish: string, params?: TranslationParams): string {
     return this.translate(spanish, params);
+  }
+
+  /**
+   * Mensaje de error listo para la interfaz.
+   *
+   * Los errores de Firebase (Firestore, Storage) llegan con textos crudos como
+   * "Missing or insufficient permissions."; aquí se traducen a un mensaje
+   * comprensible. Si el error no es de Firebase se mantiene el mensaje original
+   * y, si no hay ninguno, se usa el texto de reserva indicado.
+   */
+  firebaseError(error: unknown, fallback = ''): string {
+    const known = firebaseErrorMessage(error);
+    if (known) return this.translate(known);
+    const raw = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+    return this.translate(raw || fallback);
   }
 
   localize<T>(values: Partial<Record<AppLanguage, T>>): T | undefined {

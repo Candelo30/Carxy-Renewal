@@ -24,7 +24,13 @@ export interface UserProfile extends User {
 
 export interface UserActivity {
   uid: string;
-  email: string;
+  /**
+   * Correo del usuario. Ya no se escribe: la colección `userActivity` es
+   * legible por cualquier usuario autenticado (el chat muestra "visto hace"),
+   * así que no debe contener datos personales. El panel de administración
+   * obtiene el correo de `userPrivate`, que es solo de administradores.
+   */
+  email?: string;
   displayName: string;
   lastSeenAt: number;
   lastSeenPath: string;

@@ -37,7 +37,10 @@ app.use((req, res, next) => {
       "base-uri 'self'",
       "object-src 'none'",
       "frame-ancestors 'none'",
-      "script-src 'self' 'unsafe-inline' blob: https://apis.google.com https://apis.gstatic.com https://accounts.google.com https://*.googleapis.com https://*.google.com",
+      // `www.gstatic.com` sirve el runtime de reCAPTCHA, que Firebase Auth carga
+      // al iniciar sesión con email. Sin esta entrada el navegador lo bloquea
+      // por CSP además de por el bloqueador de anuncios.
+      "script-src 'self' 'unsafe-inline' blob: https://apis.google.com https://apis.gstatic.com https://www.gstatic.com https://accounts.google.com https://*.googleapis.com https://*.google.com",
       "style-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https:",
@@ -45,7 +48,7 @@ app.use((req, res, next) => {
       "worker-src 'self' blob:",
       "manifest-src 'self'",
       "media-src 'self' blob: data: https:",
-      "frame-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://apis.google.com",
+      "frame-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://apis.google.com https://www.google.com",
       "form-action 'self'",
     ].join('; '),
   );

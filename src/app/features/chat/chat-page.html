@@ -16,8 +16,8 @@
         <section class="recent-conversations" aria-labelledby="recent-conversations-title">
           <h2 id="recent-conversations-title">{{ 'Recientes' | translate }}</h2>
           <div class="recent-heading-row">
-            @let activeCount = (activities$ | async)?.length || 0;
-            <p><strong>{{ activeCount }}</strong> {{ 'en actividad reciente' | translate }}</p>
+            @let activeCount = (activities$ | async)?.size || 0;
+            <p><strong>{{ activeCount }}</strong> {{ 'contactos en actividad reciente' | translate }}</p>
           </div>
 
           <label class="search-box" for="conversation-search">

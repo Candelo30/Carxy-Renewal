@@ -427,7 +427,7 @@ export class AdminDashboardComponent {
       }
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo completar la limpieza de inactividad.'),
+        this.i18n.firebaseError(error, 'No se pudo completar la limpieza de inactividad.'),
         this.i18n.translate('Error'),
       );
     }
@@ -461,7 +461,7 @@ export class AdminDashboardComponent {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el rol.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar el rol.'),
       );
       (event.target as HTMLSelectElement).value = user.role;
     }
@@ -479,7 +479,7 @@ export class AdminDashboardComponent {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el estado de la cuenta.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar el estado de la cuenta.'),
       );
     }
   }
@@ -495,7 +495,7 @@ export class AdminDashboardComponent {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar la visibilidad.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar la visibilidad.'),
       );
     }
   }
@@ -516,7 +516,7 @@ export class AdminDashboardComponent {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el reporte.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar el reporte.'),
       );
     }
   }
@@ -528,7 +528,7 @@ export class AdminDashboardComponent {
       this.notifications.success(this.i18n.translate('Estado del mensaje actualizado.'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el mensaje.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar el mensaje.'),
       );
     }
   }
@@ -541,7 +541,7 @@ export class AdminDashboardComponent {
       this.notifications.success(this.i18n.translate('Mensaje de feedback eliminado.'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el mensaje.'),
+        this.i18n.firebaseError(error, 'No se pudo eliminar el mensaje.'),
       );
     }
   }
@@ -551,7 +551,7 @@ export class AdminDashboardComponent {
       await this.community.setQuestionPinned(question.id, !question.pinned);
       this.refresh();
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar la pregunta.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la pregunta.'));
     }
   }
 
@@ -560,7 +560,7 @@ export class AdminDashboardComponent {
       await this.community.setQuestionLocked(question.id, !question.locked);
       this.refresh();
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar la pregunta.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la pregunta.'));
     }
   }
 
@@ -569,7 +569,7 @@ export class AdminDashboardComponent {
       await this.community.setQuestionResolved(question.id, !question.resolved);
       this.refresh();
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar la pregunta.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la pregunta.'));
     }
   }
 
@@ -580,7 +580,7 @@ export class AdminDashboardComponent {
       this.refresh();
       this.notifications.success(this.i18n.translate('Pregunta eliminada.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar la pregunta.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar la pregunta.'));
     }
   }
 
@@ -604,7 +604,7 @@ export class AdminDashboardComponent {
       this.refresh();
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el modelo.'),
+        this.i18n.firebaseError(error, 'No se pudo eliminar el modelo.'),
       );
     }
   }
@@ -630,7 +630,7 @@ export class AdminDashboardComponent {
       this.notifications.success(this.i18n.translate('Rol actualizado.'));
       this.selectProject(projectId);
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el rol.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el rol.'));
     }
   }
 
@@ -641,7 +641,7 @@ export class AdminDashboardComponent {
       this.notifications.success(this.i18n.translate('Miembro eliminado.'));
       this.selectProject(projectId);
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el miembro.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el miembro.'));
     }
   }
 
@@ -654,7 +654,7 @@ export class AdminDashboardComponent {
       this.refresh();
       this.notifications.success(this.i18n.translate('Proyecto eliminado.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el proyecto.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el proyecto.'));
     }
   }
 
@@ -788,7 +788,7 @@ export class AdminDashboardComponent {
       this.resetNewArticle();
       this.refresh();
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo guardar el artículo.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo guardar el artículo.'));
     }
   }
 
@@ -800,7 +800,7 @@ export class AdminDashboardComponent {
       this.refresh();
       this.notifications.success(this.i18n.translate('Artículo eliminado.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el artículo.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el artículo.'));
     }
   }
 
@@ -810,7 +810,7 @@ export class AdminDashboardComponent {
       this.refresh();
       this.notifications.success(article.isPublished ? this.i18n.translate('Artículo despublicado.') : this.i18n.translate('Artículo publicado.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el artículo.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el artículo.'));
     }
   }
 

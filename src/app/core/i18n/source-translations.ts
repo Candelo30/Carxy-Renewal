@@ -136,6 +136,11 @@ export const SOURCE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Lado': { en: 'Side', fr: 'Côté', pt: 'Lado' },
   'Materiales': { en: 'Materials', fr: 'Matériaux', pt: 'Materiais' },
   'Mensajes': { en: 'Messages', fr: 'Messages', pt: 'Mensagens' },
+  'contactos en actividad reciente': {
+    en: 'contacts recently active',
+    fr: 'contacts récemment actifs',
+    pt: 'contactos ativos recentemente',
+  },
   'Menú': { en: 'Menu', fr: 'Menu', pt: 'Menu' },
   'Metal': { en: 'Metalness', fr: 'Métallicité', pt: 'Metalicidade' },
   'Micrófono': { en: 'Microphone', fr: 'Microphone', pt: 'Microfone' },

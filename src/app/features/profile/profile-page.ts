@@ -42,10 +42,7 @@ export class ProfilePage {
   readonly posts$ = this.social.posts$.pipe(
     catchError((error: unknown) => {
       console.error('No se pudo cargar el portafolio del creador.', error);
-      const message = error instanceof Error ? error.message : '';
-      this.error = message.includes('The query requires an index')
-        ? this.i18n.translate('Falta desplegar un índice de Firestore para cargar los modelos. Ejecuta `firebase deploy --only firestore:indexes`.')
-        : message || this.i18n.translate('No se pudo cargar el portafolio.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo cargar el portafolio.');
       this.notifications.error(this.error, this.i18n.translate('No se pudo cargar el perfil'));
       return of([]);
     }),
@@ -68,8 +65,7 @@ export class ProfilePage {
       startWith(null),
       catchError((error: unknown) => {
         console.error('No se pudo cargar el perfil.', error);
-        const message = error instanceof Error ? error.message : '';
-        this.error = message || this.i18n.translate('No se pudo cargar el perfil.');
+        this.error = this.i18n.firebaseError(error, 'No se pudo cargar el perfil.');
         this.notifications.error(this.error, this.i18n.translate('No se pudo cargar el perfil'));
         return of({ uid, profile: null, posts: [] as Post3D[], currentUser: null as unknown as User, followCounts: { followers: 0, following: 0 } });
       }),
@@ -107,7 +103,7 @@ export class ProfilePage {
       this.notifications.success(this.status, this.i18n.translate('Perfil actualizado'));
       dialog.close();
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el perfil.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo actualizar el perfil.');
       this.notifications.error(this.error);
     }
   }
@@ -138,7 +134,7 @@ export class ProfilePage {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el seguimiento.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar el seguimiento.'),
       );
     }
   }

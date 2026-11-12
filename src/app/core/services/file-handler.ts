@@ -40,7 +40,7 @@ export class FileHandler {
         console.error('Error al cargar el modelo 3D:', error);
         URL.revokeObjectURL(objectUrl);
         this.ngZone.run(() => this.notifications.error(
-          error instanceof Error ? error.message : this.i18n.translate('Revisa que el archivo GLB o glTF sea válido.'),
+          this.i18n.firebaseError(error, 'Revisa que el archivo GLB o glTF sea válido.'),
           this.i18n.translate('No se pudo importar el modelo'),
         ));
       },
@@ -57,7 +57,7 @@ export class FileHandler {
       .catch((error: unknown) => {
         console.error('Error al exportar a GLB:', error);
         this.notifications.error(
-          error instanceof Error ? error.message : 'No se pudo exportar la escena.',
+          this.i18n.firebaseError(error, 'No se pudo exportar la escena.'),
           'Error de exportación',
         );
       });

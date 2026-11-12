@@ -14,6 +14,8 @@ import {
   limit,
   orderBy,
   query,
+  Query,
+  QueryDocumentSnapshot,
   runTransaction,
   setDoc,
   where,
@@ -28,8 +30,9 @@ import {
   ref,
   uploadBytes,
 } from '@angular/fire/storage';
-import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
+import { firebaseErrorMessage } from '../utils/firebase-error';
 import { AuthService } from './auth';
 import { I18nService } from './i18n';
 import {
@@ -66,7 +69,8 @@ export function formatStorageError(error: unknown): string {
   if (code === 'storage/retry-limit-exceeded' || code === 'storage/unknown') {
     return 'Firebase Storage no pudo completar la subida. Comprueba que el bucket de public/firebase-config.js existe y revisa la respuesta HTTP en DevTools > Network antes de cambiar CORS.';
   }
-  return error instanceof Error ? error.message : 'No se pudo subir el modelo o la miniatura a Firebase Storage.';
+  return firebaseErrorMessage(error)
+    ?? (error instanceof Error ? error.message : 'No se pudo subir el modelo o la miniatura a Firebase Storage.');
 }
 
 /**
@@ -157,9 +161,38 @@ export class SocialService {
     );
   }
 
+  /**
+   * Todos los posts visibles para el usuario actual.
+   *
+   * Una consulta sin filtros sobre `posts` no se puede demostrar contra la regla
+   * de lectura (Firestore la rechaza con "Missing or insufficient permissions"
+   * si la regla no se cumple para todos los documentos posibles). Por eso se
+   * separa: los públicos siempre, y los privados solo para moderadores/admins,
+   * que sí pueden demostrar la regla a través de `canModerate()`.
+   */
   readonly allPosts$: Observable<Post3D[]> = this.firestore
-    ? collectionData(query(collection(this.firestore, SOCIAL_COLLECTIONS.posts), orderBy('createdAt', 'desc')), { idField: 'id' })
-        .pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))))
+    ? (this.auth?.role$ ?? of(null)).pipe(
+        distinctUntilChanged(),
+        switchMap((role) => {
+          const postsRef = collection(this.firestore!, SOCIAL_COLLECTIONS.posts);
+          const public$ = collectionData(
+            query(postsRef, where('isPrivate', '==', false), orderBy('createdAt', 'desc')),
+            { idField: 'id' },
+          );
+          if (role !== 'admin' && role !== 'moderator') return public$;
+          const private$ = collectionData(
+            query(postsRef, where('isPrivate', '==', true), orderBy('createdAt', 'desc')),
+            { idField: 'id' },
+          );
+          return combineLatest([public$, private$]).pipe(
+            map(([pub, priv]) => [...pub, ...priv].sort(
+              (a, b) => Number(b['createdAt'] ?? 0) - Number(a['createdAt'] ?? 0),
+            )),
+          );
+        }),
+        map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))),
+        catchError(() => of([] as Post3D[])),
+      )
     : this.demoPosts();
 
   private demoPosts(): Observable<Post3D[]> {
@@ -246,13 +279,36 @@ export class SocialService {
 
   readonly userActivity$: Observable<UserActivity[]> = this.firestore
     ? (collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.userActivity))
-        .pipe(map((items) => items.map((item) => this.normalizeActivity(item as Record<string, unknown>)))))
+        .pipe(
+          map((items) => items.map((item) => this.normalizeActivity(item as Record<string, unknown>))),
+          catchError(() => of([] as UserActivity[])),
+        ))
     : this.localUserActivity.asObservable();
 
   readonly deletionAudit$: Observable<AccountDeletionAudit[]> = this.firestore
     ? (collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.accountDeletionAudit))
-        .pipe(map((items) => items.map((item) => this.normalizeAudit(item as Record<string, unknown>)))))
+        .pipe(
+          map((items) => items.map((item) => this.normalizeAudit(item as Record<string, unknown>))),
+          catchError(() => of([] as AccountDeletionAudit[])),
+        ))
     : this.localDeletionAudit.asObservable();
+
+  /**
+   * Presencia (última actividad) de un usuario concreto.
+   *
+   * La colección `userActivity` solo se puede LISTAR por administradores, pero
+   * leer el documento de un interlocutor sí está permitido para cualquier
+   * usuario autenticado. El chat usa esto para mostrar "visto hace" sin pedir
+   * un permiso que no tiene (y así evitar "Missing or insufficient
+   * permissions" en usuarios y moderadores).
+   */
+  userActivityOf$(uid: string): Observable<UserActivity | null> {
+    if (!this.firestore || !uid) return of(null);
+    return docData(doc(this.firestore, SOCIAL_COLLECTIONS.userActivity, uid)).pipe(
+      map((data) => (data ? this.normalizeActivity(data as Record<string, unknown>) : null)),
+      catchError(() => of(null)),
+    );
+  }
 
   /**
    * Usuarios sin actividad registrada en los últimos INACTIVE_DELETE_DAYS días.
@@ -793,7 +849,10 @@ export class SocialService {
     if (this.firestore) {
       const comments = collection(this.firestore, 'posts', postId, 'comments');
       const stream = collectionData(query(comments, orderBy('createdAt', 'asc')), { idField: 'id' })
-        .pipe(map((items) => items.map((item) => this.normalizeComment(item as Record<string, unknown>))));
+        .pipe(
+          map((items) => items.map((item) => this.normalizeComment(item as Record<string, unknown>))),
+          catchError(() => of([] as Comment[])),
+        );
       this.commentObservables.set(postId, stream);
       return stream;
     }
@@ -856,7 +915,10 @@ export class SocialService {
       return combineLatest([
         collectionData(collection(this.firestore, 'users', uid, 'followers')),
         collectionData(collection(this.firestore, 'users', uid, 'following')),
-      ]).pipe(map(([followers, following]) => ({ followers: followers.length, following: following.length })));
+      ]).pipe(
+        map(([followers, following]) => ({ followers: followers.length, following: following.length })),
+        catchError(() => of({ followers: 0, following: 0 })),
+      );
     }
     return this.localFollows.pipe(map((follows) => ({
       followers: follows.filter((follow) => follow.followingId === uid).length,
@@ -910,7 +972,10 @@ export class SocialService {
       return collectionData(
         query(collection(this.firestore, 'users', uid, 'notifications'), orderBy('createdAt', 'desc'), limit(30)),
         { idField: 'id' },
-      ).pipe(map((items) => items.map((item) => this.normalizeActivityNotification(item as Record<string, unknown>))));
+      ).pipe(
+        map((items) => items.map((item) => this.normalizeActivityNotification(item as Record<string, unknown>))),
+        catchError(() => of([] as ActivityNotification[])),
+      );
     }
     return this.localActivityNotifications.pipe(
       map((items) => items.filter((item) => item.recipientId === uid).slice(0, 30)),
@@ -1109,7 +1174,10 @@ export class SocialService {
       return collectionData(
         query(collection(this.firestore, SOCIAL_COLLECTIONS.posts), ...constraints),
         { idField: 'id' },
-      ).pipe(map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))));
+      ).pipe(
+        map((items) => items.map((item) => this.normalizePost(item as Record<string, unknown>))),
+        catchError(() => of([] as Post3D[])),
+      );
     }
     return this.localPosts.asObservable().pipe(map((posts) => posts.filter((post) =>
       (post.authorId === uid || post.author.uid === uid) && (includePrivate || !post.isPrivate),
@@ -1291,17 +1359,21 @@ export class SocialService {
       }
     }
 
-    const followings = await getDocs(collection(userRef, 'following'));
-    const followers = await getDocs(collection(userRef, 'followers'));
-    const notifications = await getDocs(collection(userRef, 'notifications'));
-    const conversations = await getDocs(query(
+    // Cada lectura se aísla: si Firestore rechaza una de estas consultas
+    // (p. ej. un admin limpiando la cuenta de otro usuario), el borrado debe
+    // continuar con el resto en lugar de abortar con
+    // "Missing or insufficient permissions".
+    const followings = await this.safeDocs(collection(userRef, 'following'));
+    const followers = await this.safeDocs(collection(userRef, 'followers'));
+    const notifications = await this.safeDocs(collection(userRef, 'notifications'));
+    const conversations = await this.safeDocs(query(
       collection(this.firestore, SOCIAL_COLLECTIONS.chats),
       where('participantIds', 'array-contains', uid),
     ));
 
-    for (const conversation of conversations.docs) {
-      const messages = await getDocs(collection(conversation.ref, 'messages'));
-      const authoredMessages = messages.docs.filter((message) => message.data()['senderId'] === uid);
+    for (const conversation of conversations) {
+      const messages = await this.safeDocs(collection(conversation.ref, 'messages'));
+      const authoredMessages = messages.filter((message) => message.data()['senderId'] === uid);
       await Promise.all(authoredMessages.map((message) => updateDoc(message.ref, {
         senderId: 'deleted-account',
         senderName: 'Cuenta eliminada',
@@ -1343,10 +1415,10 @@ export class SocialService {
     const ownedSubRefs: DocumentReference[] = [];
     for (const post of ownPostsSnapshot.docs) {
       const [comments, likes] = await Promise.all([
-        getDocs(collection(post.ref, 'comments')),
-        getDocs(collection(post.ref, 'likes')),
+        this.safeDocs(collection(post.ref, 'comments')),
+        this.safeDocs(collection(post.ref, 'likes')),
       ]);
-      ownedSubRefs.push(...comments.docs.map((doc) => doc.ref), ...likes.docs.map((doc) => doc.ref));
+      ownedSubRefs.push(...comments.map((doc) => doc.ref), ...likes.map((doc) => doc.ref));
     }
     if (ownedSubRefs.length) {
       await this.deleteFirestoreDocuments(ownedSubRefs);
@@ -1355,10 +1427,10 @@ export class SocialService {
     await this.deleteFirestoreDocuments(ownPostsSnapshot.docs.map((post) => post.ref));
 
     const relationshipRefs: DocumentReference[] = [
-      ...followers.docs.map((follow) => follow.ref),
-      ...followings.docs.map((follow) => follow.ref),
-      ...notifications.docs.map((notification) => notification.ref),
-      ...followings.docs.map((follow) => doc(userRef, 'followers', follow.id)),
+      ...followers.map((follow) => follow.ref),
+      ...followings.map((follow) => follow.ref),
+      ...notifications.map((notification) => notification.ref),
+      ...followings.map((follow) => doc(userRef, 'followers', follow.id)),
     ];
     await this.deleteFirestoreDocuments(relationshipRefs);
 
@@ -1369,12 +1441,12 @@ export class SocialService {
     //   aparecerá como colaborador.
     const db = this.firestore;
     if (!db) throw new Error('Firestore no está disponible.');
-    const memberships = await getDocs(query(
+    const memberships = await this.safeDocs(query(
       collection(db, SOCIAL_COLLECTIONS.projectMembers),
       where('userId', '==', uid),
     ));
     const ownedMemberIds: string[] = [];
-    for (const membership of memberships.docs) {
+    for (const membership of memberships) {
       const data = membership.data() as Record<string, unknown>;
       if (data['role'] === 'owner' || (data['projectId'] && await this.isProjectOwner(String(data['projectId']), uid))) {
         ownedMemberIds.push(membership.id);
@@ -1386,6 +1458,14 @@ export class SocialService {
       doc(db, SOCIAL_COLLECTIONS.projectMembers, memberId),
       { userName: 'Cuenta eliminada', userPhotoURL: null },
     )));
+
+    // La ficha de actividad (presencia) también debe desaparecer, o la cuenta
+    // borrada seguiría apareciendo como activa en el panel y en el chat.
+    try {
+      await deleteDoc(doc(this.firestore, SOCIAL_COLLECTIONS.userActivity, uid));
+    } catch (error) {
+      console.warn('No se pudo eliminar el registro de actividad de la cuenta.', error);
+    }
 
     await deleteDoc(doc(this.firestore, SOCIAL_COLLECTIONS.privateUsers, uid));
     await deleteDoc(userRef);
@@ -1519,16 +1599,18 @@ export class SocialService {
       const now = Date.now();
       if (this.lastActivityWrite && now - this.lastActivityWrite < 5 * 60 * 1000) return;
       this.lastActivityWrite = now;
+      // No se guarda el correo: `userActivity` es legible por cualquier usuario
+      // autenticado. Se escribe el documento completo (sin `merge`) para que los
+      // documentos antiguos que aún guardaban el correo se limpien solos.
       const entry: UserActivity = {
         uid,
-        email: current?.email ?? stored?.email ?? '',
         displayName: current?.displayName ?? stored?.displayName ?? '',
         lastSeenAt: now,
         lastSeenPath,
         updatedAt: now,
       };
       if (this.firestore) {
-        await setDoc(doc(this.firestore, SOCIAL_COLLECTIONS.userActivity, uid), entry, { merge: true });
+        await setDoc(doc(this.firestore, SOCIAL_COLLECTIONS.userActivity, uid), entry);
       } else {
         const next = [...this.localUserActivity.value.filter((item) => item.uid !== uid), entry];
         this.localUserActivity.next(next);
@@ -1598,6 +1680,21 @@ export class SocialService {
       return projectSnap.exists() && projectSnap.data()?.['ownerId'] === uid;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Lee una colección devolviendo una lista vacía si Firestore rechaza la
+   * consulta. Evita que un único "Missing or insufficient permissions" aborta
+   * un flujo de limpieza completo (p. ej. eliminar la cuenta).
+   */
+  private async safeDocs(queryRef: Query): Promise<QueryDocumentSnapshot[]> {
+    try {
+      const snapshot = await getDocs(queryRef);
+      return snapshot.docs;
+    } catch (error) {
+      console.warn('No se pudo leer una colección de Firestore.', error);
+      return [];
     }
   }
 

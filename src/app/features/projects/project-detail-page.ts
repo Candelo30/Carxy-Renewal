@@ -106,7 +106,7 @@ export class ProjectDetailPage implements OnInit {
       }
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar la invitación.')
+        this.i18n.firebaseError(error, 'No se pudo enviar la invitación.')
       );
     } finally {
       this.inviting = false;
@@ -120,7 +120,7 @@ export class ProjectDetailPage implements OnInit {
       void this.router.navigate(['/projects', this.projectId]);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo aceptar la invitación.')
+        this.i18n.firebaseError(error, 'No se pudo aceptar la invitación.')
       );
     }
   }
@@ -131,7 +131,7 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.info(this.i18n.translate('projects.invitationRejected'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo rechazar la invitación.')
+        this.i18n.firebaseError(error, 'No se pudo rechazar la invitación.')
       );
     }
   }
@@ -142,7 +142,7 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.success(this.i18n.translate('projects.roleUpdated'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo cambiar el rol.')
+        this.i18n.firebaseError(error, 'No se pudo cambiar el rol.')
       );
     }
   }
@@ -154,7 +154,7 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.success(this.i18n.translate('projects.memberRemoved'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el miembro.')
+        this.i18n.firebaseError(error, 'No se pudo eliminar el miembro.')
       );
     }
   }
@@ -167,7 +167,7 @@ export class ProjectDetailPage implements OnInit {
       void this.router.navigate(['/projects']);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el proyecto.')
+        this.i18n.firebaseError(error, 'No se pudo eliminar el proyecto.')
       );
     }
   }
@@ -190,7 +190,7 @@ export class ProjectDetailPage implements OnInit {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('projects.shareError')
+        this.i18n.firebaseError(error, 'projects.shareError')
       );
     }
   }
@@ -213,7 +213,7 @@ export class ProjectDetailPage implements OnInit {
       await this.collaboration.createShareLink(this.projectId, this.newShareRole);
       this.notifications.success(this.i18n.translate('Enlace de acceso creado.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo crear el enlace.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo crear el enlace.'));
     } finally {
       this.creatingShareLink = false;
     }
@@ -234,7 +234,7 @@ export class ProjectDetailPage implements OnInit {
       await this.collaboration.updateShareLink(link.id, { enabled: !link.enabled });
       this.notifications.success(link.enabled ? this.i18n.translate('Enlace desactivado.') : this.i18n.translate('Enlace activado.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el enlace.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el enlace.'));
     } finally {
       this.busyShareLinkId = null;
     }
@@ -247,7 +247,7 @@ export class ProjectDetailPage implements OnInit {
       await this.collaboration.updateShareLink(link.id, { role: role as ProjectShareLinkRole });
       this.notifications.success(this.i18n.translate('Permisos del enlace actualizados.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el enlace.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el enlace.'));
     } finally {
       this.busyShareLinkId = null;
     }
@@ -260,7 +260,7 @@ export class ProjectDetailPage implements OnInit {
       await this.collaboration.deleteShareLink(link.id);
       this.notifications.success(this.i18n.translate('Enlace eliminado.'));
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el enlace.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el enlace.'));
     } finally {
       this.busyShareLinkId = null;
     }
@@ -296,7 +296,7 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.success(this.i18n.translate('projects.updatedSuccess'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('projects.updateError')
+        this.i18n.firebaseError(error, 'projects.updateError')
       );
     } finally {
       this.saving = false;

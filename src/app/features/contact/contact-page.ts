@@ -95,7 +95,7 @@ export class ContactPage {
       );
     } catch (error) {
       this.error =
-        error instanceof Error ? error.message : this.i18n.translate('contact.error');
+        this.i18n.firebaseError(error, 'contact.error');
       this.notifications.error(this.error);
     } finally {
       this.busy = false;

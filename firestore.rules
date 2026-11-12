@@ -27,11 +27,21 @@ service cloud.firestore {
       return isActiveUser() && roleOf(request.auth.uid) in ['admin', 'moderator'];
     }
 
+    // El cliente guarda los correos en minúsculas, así que el token también se
+    // normaliza con `lower()`. Sin esto, una cuenta con mayúsculas en el correo
+    // no puede ver ni aceptar sus invitaciones y la consulta se rechaza con
+    // "Missing or insufficient permissions".
+    function tokenEmailLower() {
+      return request.auth.token.email is string
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
     function pendingInvitationForRequester(projectId) {
       return signedIn()
         && request.auth.token.email is string
-        && exists(/databases/$(database)/documents/projectInvitations/$(projectId + '_' + request.auth.token.email))
-        && get(/databases/$(database)/documents/projectInvitations/$(projectId + '_' + request.auth.token.email)).data.status == 'pending';
+        && exists(/databases/$(database)/documents/projectInvitations/$(projectId + '_' + tokenEmailLower()))
+        && get(/databases/$(database)/documents/projectInvitations/$(projectId + '_' + tokenEmailLower())).data.status == 'pending';
     }
 
     match /users/{uid} {
@@ -129,8 +139,12 @@ service cloud.firestore {
         }
 
         match /following/{followingUid} {
-          allow read: if signedIn() && request.auth.uid == uid;
-          allow list: if signedIn() && request.auth.uid == uid;
+          // Igual que `followers`: la lista de a quién sigue un usuario es pública.
+          // Si fuera privada, la consulta que cuenta seguidores/seguidores de otro
+          // perfil no se podría demostrar y Firestore la rechazaría con
+          // "Missing or insufficient permissions".
+          allow read: if true;
+          allow list: if true;
           allow create: if isActiveUser()
             && request.auth.uid == uid
             && followingUid != uid
@@ -213,8 +227,16 @@ service cloud.firestore {
     }
 
     match /posts/{postId} {
+      // Se compara con `authorId` (campo plano) y no con
+      // `resource.data.author.uid` porque el cliente consulta con
+      // `where('authorId','==',uid)`. Firestore solo acepta una consulta si
+      // puede DEMOSTRAR que la regla se cumple para todos los documentos que
+      // podrían salir; con `author.uid` no se puede demostrar y la consulta
+      // entera falla con "Missing or insufficient permissions".
+      // `authorId` es obligatorio al crear el post (regla de `create` de más
+      // abajo), así que ambos campos son equivalentes.
       allow read: if resource.data.get('isPrivate', false) != true
-        || (signedIn() && resource.data.author.uid == request.auth.uid)
+        || (signedIn() && resource.data.get('authorId', '') == request.auth.uid)
         || canModerate();
       allow create: if isActiveUser()
         && request.resource.data.author.uid == request.auth.uid
@@ -512,6 +534,16 @@ service cloud.firestore {
           && participants.size() == 2
           && participants.hasAny([request.auth.uid]);
       }
+      // Versión para consultas (list). No puede comprobar `participants.size() == 2`
+      // porque Firestore no puede demostrar el tamaño de un array en el contexto de
+      // una consulta y rechazaría la consulta con "Missing or insufficient
+      // permissions". El invariante de dos participantes se sigue validando en
+      // `validConversation()` al crear el chat.
+      function isParticipantQuery(participants) {
+        return signedIn()
+          && participants is list
+          && participants.hasAny([request.auth.uid]);
+      }
       function validConversation(participants) {
         return participants is list
           && participants.size() == 2
@@ -524,7 +556,7 @@ service cloud.firestore {
         && chatId.split('__').hasAny([request.auth.uid])
         && (!exists(/databases/$(database)/documents/chats/$(chatId))
           || isParticipant(resource.data.participantIds));
-      allow list: if isParticipant(resource.data.participantIds);
+      allow list: if isParticipantQuery(resource.data.participantIds);
       allow create: if isActiveUser()
         && validConversation(request.resource.data.participantIds)
         && isParticipant(request.resource.data.participantIds)
@@ -660,8 +692,13 @@ service cloud.firestore {
     }
 
     match /projectMembers/{memberId} {
+      // La rama `resource.data.userId == request.auth.uid` permite demostrar la
+      // regla para consultas `where('userId','==',uid)` (proyectos compartidos) y
+      // deja leer la propia ficha de miembro. Sin ella, esas consultas se
+      // rechazan con "Missing or insufficient permissions".
       allow read: if signedIn()
         && (isAdmin()
+          || (resource.data.get('userId', '') == request.auth.uid)
           || (resource.data.projectId is string && isProjectMember(resource.data.projectId, request.auth.uid))
           || (resource.data.projectId is string
             && get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid));
@@ -690,13 +727,13 @@ service cloud.firestore {
           || (request.resource.data.userId == request.auth.uid
             && request.resource.data.role in ['viewer', 'editor', 'owner']
             && request.auth.token.email is string
-            && existsAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email))
-            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.projectId == request.resource.data.projectId
-            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.invitedEmail == request.auth.token.email
-            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.invitedUid == request.auth.uid
-            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.status == 'accepted'
-            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.role == request.resource.data.role
-            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.token.email)).data.respondedAt is number
+            && existsAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower()))
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.projectId == request.resource.data.projectId
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.invitedEmail == tokenEmailLower()
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.invitedUid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.status == 'accepted'
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.role == request.resource.data.role
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.respondedAt is number
             && request.resource.data.joinedAt >= request.time.toMillis() - 300000
             && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
           || (request.resource.data.userId == request.auth.uid
@@ -779,7 +816,7 @@ service cloud.firestore {
     match /projectInvitations/{invitationId} {
       allow read: if signedIn()
         && (resource.data.invitedBy == request.auth.uid
-          || (request.auth.token.email is string && resource.data.invitedEmail == request.auth.token.email)
+          || (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower())
           || isProjectWriter(resource.data.projectId));
 
       allow create: if signedIn()
@@ -823,7 +860,7 @@ service cloud.firestore {
           ) || (
             // Aceptación/rechazo por la persona invitada, o revocación/expiración por quien invitó.
             (resource.data.invitedBy == request.auth.uid
-              || (request.auth.token.email is string && resource.data.invitedEmail == request.auth.token.email))
+              || (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower()))
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['status', 'respondedAt', 'invitedUid'])
             && request.resource.data.status in ['pending', 'accepted', 'rejected', 'revoked', 'expired']
@@ -835,7 +872,7 @@ service cloud.firestore {
                 && (
                   (
                     request.auth.token.email is string
-                    && resource.data.invitedEmail == request.auth.token.email
+                    && resource.data.invitedEmail == tokenEmailLower()
                     && request.resource.data.status in ['accepted', 'rejected']
                     && request.resource.data.invitedUid == request.auth.uid
                   ) || (
@@ -894,6 +931,9 @@ service cloud.firestore {
     }
 
     match /helpArticles/{articleId} {
+      // La pestaña de artículos de ayuda es solo de administradores
+      // (`/admin`); los moderadores entran por `/moderation`, donde la pestaña
+      // está deshabilitada. Se mantiene el mismo límite en las reglas.
       allow read: if true;
       allow create: if isAdmin()
         && request.resource.data.keys().hasOnly([
@@ -921,26 +961,37 @@ service cloud.firestore {
     }
 
     match /userActivity/{uid} {
+      // Esta colección NO guarda el correo: cada documento se puede leer
+      // individualmente (`get`) desde cualquier usuario autenticado, porque el
+      // chat muestra "visto hace" a los interlocutores. El panel de
+      // administración obtiene el correo de `userPrivate`.
       allow create: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.keys().hasOnly([
-          'uid', 'email', 'displayName', 'lastSeenAt', 'lastSeenPath', 'updatedAt',
+          'uid', 'displayName', 'lastSeenAt', 'lastSeenPath', 'updatedAt',
         ])
         && request.resource.data.uid == uid
-        && request.resource.data.email is string
         && request.resource.data.displayName is string
         && request.resource.data.lastSeenPath is string
         && request.resource.data.lastSeenAt is number
         && request.resource.data.updatedAt is number;
+      // 'email' se permite en `affectedKeys` solo para poder eliminar el campo
+      // de los documentos antiguos; el documento nuevo no puede contenerlo.
       allow update: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['email', 'displayName', 'lastSeenAt', 'lastSeenPath', 'updatedAt'])
+        && !('email' in request.resource.data)
         && request.resource.data.lastSeenAt is number
         && request.resource.data.updatedAt is number;
       allow get: if signedIn();
+      // La lista completa de actividad es EXCLUSIVA de administradores (la usa
+      // el panel de administración). El chat lee el documento de cada
+      // interlocutor con `get`, que sí está permitido para cualquier usuario
+      // autenticado. Así la lista global nunca se expone a usuarios ni
+      // moderadores.
       allow list: if isAdmin();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
 
     match /accountDeletionAudit/{auditId} {

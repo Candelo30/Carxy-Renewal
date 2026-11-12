@@ -10,6 +10,7 @@
     "build:pages": "node scripts/build-pages.mjs",
     "prepare:pages": "node scripts/prepare-pages.mjs",
     "preview:pages": "node scripts/preview-pages.mjs",
+    "check:rules": "node scripts/check-rules.mjs carxy-f3e27 firestore.rules && node scripts/check-rules.mjs carxy-f3e27 storage.rules",
     "serve:ssr:angular-3d-editor": "node dist/angular-3d-editor/server/server.mjs"
   },
   "private": true,

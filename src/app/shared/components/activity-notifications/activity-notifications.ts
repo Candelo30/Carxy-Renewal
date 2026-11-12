@@ -60,7 +60,7 @@ export class ActivityNotificationsComponent {
     try {
       await this.social.markActivityNotificationRead(uid, item.id);
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar la notificación.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la notificación.'));
     }
   }
 
@@ -80,7 +80,7 @@ export class ActivityNotificationsComponent {
         this.i18n.translate('Todo al día'),
       );
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudieron actualizar las notificaciones.'));
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudieron actualizar las notificaciones.'));
     }
   }
 }

@@ -81,7 +81,6 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
-  readonly activities$ = this.social.userActivity$;
   readonly emojis = ['😀', '😂', '😉', '😍', '🤝', '👍', '🙏', '🔥', '🎉', '❤️', '😢', '😎', '💡', '✅'];
   private readonly subscription = new Subscription();
   private readonly storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null;
@@ -111,6 +110,32 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
             )
         : of([]),
     ),
+  );
+  /**
+   * Presencia (última actividad) de los interlocutores.
+   *
+   * La lista completa de `userActivity` es exclusiva de administradores, así
+   * que el chat lee el documento de cada interlocutor (permiso de lectura
+   * individual). Así el chat funciona igual para usuarios, moderadores y
+   * administradores sin pedir permisos que no corresponden al rol.
+   */
+  readonly activities$ = this.conversations$.pipe(
+    switchMap((conversations) => {
+      const peers = [...new Set(
+        conversations.map((conversation) => conversation.partner?.uid ?? '').filter(Boolean),
+      )];
+      if (!peers.length) return of(new Map<string, UserActivity>());
+      return combineLatest(
+        peers.map((peerUid) => this.social.userActivityOf$(peerUid).pipe(
+          map((activity) => [peerUid, activity] as const),
+        )),
+      ).pipe(
+        map((entries) => new Map(
+          entries.filter((entry): entry is readonly [string, UserActivity] => !!entry[1]),
+        )),
+      );
+    }),
+    catchError(() => of(new Map<string, UserActivity>())),
   );
   partnerId = '';
   /**
@@ -213,7 +238,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.nearBottom = true;
     this.markSeen(this.chatId);
     void this.social.ensureChatConversation(this.chatId).catch((error: unknown) => {
-      this.error.set(error instanceof Error ? error.message : this.i18n.translate('No se pudo abrir la conversación.'));
+      this.error.set(this.i18n.firebaseError(error, 'No se pudo abrir la conversación.'));
       this.notifications.error(this.error());
     });
   }
@@ -355,9 +380,9 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     );
   }
 
-  activityFor(uid: string, activities: UserActivity[] | null): UserActivity | null {
+  activityFor(uid: string, activities: Map<string, UserActivity> | null): UserActivity | null {
     if (!activities) return null;
-    return activities.find((entry) => entry.uid === uid) ?? null;
+    return activities.get(uid) ?? null;
   }
 
   activityLabel(entry: UserActivity | null): string {
@@ -648,7 +673,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       this.markSeen(this.chatId);
       setTimeout(() => this.scrollToBottom());
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar el mensaje.'));
+      this.error.set(this.i18n.firebaseError(error, 'No se pudo enviar el mensaje.'));
       this.notifications.error(this.error(), this.i18n.translate('No se pudo enviar el mensaje'));
     } finally {
       this.sending.set(false);

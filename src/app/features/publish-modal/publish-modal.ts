@@ -126,7 +126,7 @@ export class PublishModalComponent {
       this.published.emit({ title: post.title, id: post.id });
     } catch (error) {
       console.error('No se pudo publicar el modelo.', error);
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo publicar el modelo.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo publicar el modelo.');
       this.notifications.error(this.error, this.i18n.translate('No se pudo publicar'));
     } finally {
       this.busy = false;

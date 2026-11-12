@@ -451,7 +451,7 @@ export class CommandPaletteComponent {
       await item.run();
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo ejecutar el comando.'),
+        this.i18n.firebaseError(error, 'No se pudo ejecutar el comando.'),
         this.i18n.translate('Acción no completada'),
       );
     }

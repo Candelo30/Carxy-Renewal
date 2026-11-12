@@ -115,10 +115,7 @@ export class FeedPage {
       this.socialService.getRecentPublicPosts(limit).pipe(
         catchError((error: unknown) => {
           console.error('No se pudo cargar el feed de la comunidad.', error);
-          const message = error instanceof Error ? error.message : '';
-          this.error = message.includes('The query requires an index')
-            ? this.i18n.translate('Falta desplegar un índice de Firestore para el feed. Ejecuta `firebase deploy --only firestore:indexes`.')
-            : message || this.i18n.translate('No se pudo cargar el feed.');
+          this.error = this.i18n.firebaseError(error, 'No se pudo cargar el feed.');
           this.notifications.error(this.error, this.i18n.translate('No se pudo cargar la comunidad'));
           return of([] as Post3D[]);
         }),
@@ -258,7 +255,7 @@ export class FeedPage {
         liked ? this.i18n.translate('Favorito guardado') : this.i18n.translate('Favorito quitado'),
       );
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el favorito.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo actualizar el favorito.');
       this.notifications.error(this.error);
     } finally {
       this.likeBusy[post.id] = false;
@@ -284,7 +281,7 @@ export class FeedPage {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo compartir el modelo.'),
+        this.i18n.firebaseError(error, 'No se pudo compartir el modelo.'),
       );
     }
   }
@@ -315,7 +312,7 @@ export class FeedPage {
       dialog.close();
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar el reporte.'),
+        this.i18n.firebaseError(error, 'No se pudo enviar el reporte.'),
       );
     } finally {
       this.reporting = false;
@@ -339,7 +336,7 @@ export class FeedPage {
       this.commentDrafts[post.id] = '';
       this.notifications.success(this.i18n.translate('Tu comentario se publicó.'));
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar el comentario.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo enviar el comentario.');
       this.notifications.error(this.error);
     }
   }
@@ -355,7 +352,7 @@ export class FeedPage {
       await this.router.navigate(['/editor']);
       await this.files.loadGLBBlob(blob, `Remix · ${post.title}`);
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo abrir el modelo.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo abrir el modelo.');
       this.notifications.error(this.error, this.i18n.translate('No se pudo abrir el modelo'));
     }
   }
@@ -384,7 +381,7 @@ export class FeedPage {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el seguimiento.'),
+        this.i18n.firebaseError(error, 'No se pudo actualizar el seguimiento.'),
       );
     }
   }

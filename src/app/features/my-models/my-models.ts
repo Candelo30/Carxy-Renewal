@@ -2,7 +2,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Observable, map, of, startWith, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { Post3D, UserProfile } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
 import { FileHandler } from '../../core/services/file-handler';
@@ -39,6 +39,12 @@ export class MyModelsComponent {
         ? this.social.userPosts$(user.uid, true).pipe(map((posts) => ({ user, posts })))
         : of({ user: null, posts: [] });
       return viewModel$.pipe(startWith(null));
+    }),
+    // Si Firestore rechaza la consulta de tus modelos se muestra la página
+    // vacía en lugar de dejar el spinner y un error sin gestionar.
+    catchError((error: unknown) => {
+      console.error('No se pudieron cargar tus modelos.', error);
+      return of(null);
     }),
   );
   title = '';
@@ -97,7 +103,7 @@ export class MyModelsComponent {
       dialog.close();
       this.editingPost = null;
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudieron guardar los cambios.');
+      this.error = this.i18n.firebaseError(error, 'No se pudieron guardar los cambios.');
       this.notifications.error(this.error);
     } finally {
       this.busy = false;
@@ -119,7 +125,7 @@ export class MyModelsComponent {
         : this.i18n.translate('El modelo ahora es privado.');
       this.notifications.success(this.status, this.i18n.translate('Visibilidad actualizada'));
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo cambiar la privacidad.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo cambiar la privacidad.');
       this.notifications.error(this.error);
     }
   }
@@ -142,7 +148,7 @@ export class MyModelsComponent {
       dialog.close();
     } catch (error) {
       console.error('No se pudo eliminar la creación.', error);
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el modelo.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo eliminar el modelo.');
       this.notifications.error(this.error, this.i18n.translate('No se pudo eliminar'));
     } finally {
       this.busy = false;
@@ -161,7 +167,7 @@ export class MyModelsComponent {
         this.i18n.translate('Modelo cargado'),
       );
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo cargar el modelo en el editor.');
+      this.error = this.i18n.firebaseError(error, 'No se pudo cargar el modelo en el editor.');
       this.notifications.error(this.error, this.i18n.translate('No se pudo cargar el modelo'));
     } finally {
       this.busy = false;

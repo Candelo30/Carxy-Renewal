@@ -16,6 +16,7 @@ const CURRENT_USER = {
 function createSocialStub(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
   return {
     userActivity$: of([]),
+    userActivityOf$: vi.fn(() => of(null)),
     activityNotifications$: vi.fn(() => of([])),
     chatConversations$: vi.fn(() => of([])),
     chatMessages$: vi.fn(() => of([])),

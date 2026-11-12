@@ -60,10 +60,7 @@ export class FavoritesPage {
     map((posts) => posts ?? []),
     catchError((error: unknown) => {
       console.error('No se pudieron cargar los favoritos.', error);
-      this.error =
-        error instanceof Error
-          ? error.message
-          : this.i18n.translate('No se pudieron cargar tus modelos favoritos.');
+      this.error = this.i18n.firebaseError(error, 'No se pudieron cargar tus modelos favoritos.');
       this.notifications.error(this.error, this.i18n.translate('Favoritos no disponibles'));
       return of([] as Post3D[]);
     }),
@@ -99,7 +96,7 @@ export class FavoritesPage {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo quitar el favorito.'),
+        this.i18n.firebaseError(error, 'No se pudo quitar el favorito.'),
       );
     } finally {
       this.likeBusy[post.id] = false;
@@ -118,7 +115,7 @@ export class FavoritesPage {
       await this.files.loadGLBBlob(blob, `Remix · ${post.title}`);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo abrir el modelo.'),
+        this.i18n.firebaseError(error, 'No se pudo abrir el modelo.'),
         this.i18n.translate('No se pudo abrir el modelo'),
       );
     }
@@ -141,7 +138,7 @@ export class FavoritesPage {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo compartir el modelo.'),
+        this.i18n.firebaseError(error, 'No se pudo compartir el modelo.'),
       );
     }
   }

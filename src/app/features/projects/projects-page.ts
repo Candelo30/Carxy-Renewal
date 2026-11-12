@@ -97,7 +97,7 @@ export class ProjectsPage {
       takeUntilDestroyed(this.destroyRef),
       catchError((error: unknown) => {
         this.projectsLoading.set(false);
-        const message = error instanceof Error ? error.message : this.i18n.translate('No se pudieron cargar los proyectos.');
+        const message = this.i18n.firebaseError(error, 'No se pudieron cargar los proyectos.');
         this.projectsError.set(message);
         return of([] as Project[]);
       })
@@ -154,7 +154,7 @@ export class ProjectsPage {
       this.newProjectPublic = false;
       void this.router.navigate(['/projects', id]);
     } catch (error) {
-      const message = error instanceof Error ? error.message : this.i18n.translate('No se pudo crear el proyecto.');
+      const message = this.i18n.firebaseError(error, 'No se pudo crear el proyecto.');
       this.createError = message;
       this.notifications.error(message, this.i18n.translate('projects.createErrorTitle'));
     } finally {
@@ -170,7 +170,7 @@ export class ProjectsPage {
       void this.router.navigate(['/projects', invitation.projectId]);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo aceptar la invitación.')
+        this.i18n.firebaseError(error, 'No se pudo aceptar la invitación.')
       );
     } finally {
       this.busyInvitationId.set(null);
@@ -184,7 +184,7 @@ export class ProjectsPage {
       this.notifications.info(this.i18n.translate('projects.invitationRejected'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo rechazar la invitación.')
+        this.i18n.firebaseError(error, 'No se pudo rechazar la invitación.')
       );
     } finally {
       this.busyInvitationId.set(null);
@@ -202,7 +202,7 @@ export class ProjectsPage {
       this.notifications.success(this.i18n.translate('projects.deletedSuccess'));
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el proyecto.')
+        this.i18n.firebaseError(error, 'No se pudo eliminar el proyecto.')
       );
     } finally {
       this.busyProjectId.set(null);

@@ -7,6 +7,7 @@ import {
   doc,
   docData,
   deleteDoc,
+  DocumentSnapshot,
   getDoc,
   getDocs,
   query,
@@ -267,7 +268,13 @@ export class CollaborationService implements OnDestroy {
     const db = this.firestore;
     if (!db) return of(undefined);
     return docData(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`), { idField: 'id' }).pipe(
-      switchMap((p) => of((p as Project)?.sceneJson))
+      switchMap((p) => of((p as Project)?.sceneJson)),
+      // Un usuario sin acceso al proyecto recibe "Missing or insufficient
+      // permissions"; se resuelve con `undefined` para no romper la vista.
+      catchError((error: unknown) => {
+        console.warn('No se pudo cargar la escena del proyecto.', error);
+        return of(undefined);
+      }),
     );
   }
 
@@ -696,9 +703,16 @@ export class CollaborationService implements OnDestroy {
         where('isOnline', '==', true)
       );
       const stream = new BehaviorSubject<ProjectPresence[]>([]);
-      const subscription = collectionData(q, { idField: 'id' }).subscribe((presences) =>
-        stream.next(presences as ProjectPresence[])
-      );
+      const subscription = collectionData(q, { idField: 'id' }).subscribe({
+        next: (presences) => stream.next(presences as ProjectPresence[]),
+        // Un usuario que no es miembro del proyecto no puede leer las
+        // presencias; se deja la lista vacía en vez de propagar
+        // "Missing or insufficient permissions" a la consola en cada cambio.
+        error: (error: unknown) => {
+          console.warn('No se pudieron cargar las presencias del proyecto.', error);
+          stream.next([]);
+        },
+      });
       const unsub = () => subscription.unsubscribe();
       this.presencesStreams.set(projectId, { stream, unsub });
     }
@@ -870,8 +884,18 @@ export class CollaborationService implements OnDestroy {
 
     const memberId = `${link.projectId}_${user.uid}`;
     const memberRef = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
-    const existing = await getDoc(memberRef);
-    if (existing.exists()) {
+    // Si la ficha todavía no existe, Firestore responde con "Missing or
+    // insufficient permissions" en lugar de "no existe" (la regla de lectura no
+    // puede evaluar `resource.data` sobre un documento inexistente). Se
+    // interpreta como "todavía no es miembro" y se continúa con el alta.
+    let existing: DocumentSnapshot | null = null;
+    try {
+      const snapshot = await getDoc(memberRef);
+      existing = snapshot.exists() ? snapshot : null;
+    } catch {
+      existing = null;
+    }
+    if (existing) {
       const current = existing.data() as ProjectMember;
       const rolePriority: Record<ProjectRole, number> = { viewer: 0, editor: 1, owner: 2 };
       // No degradar owners/roles superiores; elevar si el enlace da más acceso.

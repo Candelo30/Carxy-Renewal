@@ -14,9 +14,11 @@ const mapping = {
   authDomain: 'FIREBASE_AUTH_DOMAIN',
   projectId: 'FIREBASE_PROJECT_ID',
   storageBucket: 'FIREBASE_STORAGE_BUCKET',
-  messagingSenderId: 'FIREBASE_MESSAGING_SENDER_ID',
   appId: 'FIREBASE_APP_ID',
-  measurementId: 'FIREBASE_MEASUREMENT_ID',
+  // `messagingSenderId` (FCM) y `measurementId` (Google Analytics) se omiten a
+  // propósito: la app no inicializa ninguno de los dos servicios y declararlos
+  // solo provoca peticiones a endpoints que los bloqueadores de anuncios
+  // cancelan (ERR_BLOCKED_BY_CLIENT).
 };
 
 const config = {};

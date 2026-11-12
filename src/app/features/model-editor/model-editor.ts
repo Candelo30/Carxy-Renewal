@@ -1011,7 +1011,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.fileHandler.exportCurrentModelGLB();
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo exportar la escena.'),
+        this.i18n.firebaseError(error, 'No se pudo exportar la escena.'),
         this.i18n.translate('Exportar'),
       );
     } finally {
@@ -1034,7 +1034,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.fileHandler.loadLocalGLTF(file);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo importar el modelo.'),
+        this.i18n.firebaseError(error, 'No se pudo importar el modelo.'),
         this.i18n.translate('Importar'),
       );
     } finally {
@@ -1075,7 +1075,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.threeEngine.recordTurntable(10);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error ? error.message : this.i18n.translate('No se pudo grabar el video.'),
+        this.i18n.firebaseError(error, 'No se pudo grabar el video.'),
         this.i18n.translate('Turntable'),
       );
     } finally {

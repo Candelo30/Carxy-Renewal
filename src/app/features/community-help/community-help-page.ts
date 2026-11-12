@@ -291,7 +291,7 @@ export class CommunityHelpPage {
   }
 
   private handleError(error: unknown, fallback: string): void {
-    this.error = error instanceof Error ? error.message : this.i18n.translate(fallback);
+    this.error = this.i18n.firebaseError(error, fallback);
     this.notifications.error(this.error);
   }
 }
