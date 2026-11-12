@@ -129,6 +129,7 @@ service cloud.firestore {
 
         match /following/{followingUid} {
           allow read: if signedIn() && request.auth.uid == uid;
+          allow list: if signedIn() && request.auth.uid == uid;
           allow create: if isActiveUser()
             && request.auth.uid == uid
             && followingUid != uid
@@ -188,6 +189,7 @@ service cloud.firestore {
 
         match /likedPosts/{postId} {
           allow read: if signedIn() && request.auth.uid == uid;
+          allow list: if signedIn() && request.auth.uid == uid;
           allow create: if isActiveUser()
             && request.auth.uid == uid
             && postId != request.auth.uid
@@ -870,6 +872,8 @@ service cloud.firestore {
 
     match /projectPresences/{presenceId} {
       allow read: if signedIn()
+        && isProjectMember(resource.data.projectId, request.auth.uid);
+      allow list: if signedIn()
         && isProjectMember(resource.data.projectId, request.auth.uid);
 
       allow create: if signedIn()
