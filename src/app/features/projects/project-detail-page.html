@@ -93,7 +93,13 @@
           @for (member of membersList; track member.id) {
             <div class="member-row">
               <div class="member-info">
-                <span class="member-avatar">{{ member.userName.charAt(0) }}</span>
+                <span class="member-avatar">
+                  @if (member.userPhotoURL) {
+                    <img [src]="member.userPhotoURL" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
+                  } @else {
+                    {{ member.userName.charAt(0) }}
+                  }
+                </span>
                 <div>
                   <div class="member-name">{{ member.userName }}</div>
                   <div class="member-role">{{ ('projects.role' + (member.role.charAt(0).toUpperCase() + member.role.slice(1))) | translate }}</div>

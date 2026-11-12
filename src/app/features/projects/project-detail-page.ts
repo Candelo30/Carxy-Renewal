@@ -50,6 +50,11 @@ export class ProjectDetailPage implements OnInit {
     return this.auth.currentUser?.uid ?? null;
   }
 
+  useFallbackAvatar(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (image) image.src = 'user-avatar.svg';
+  }
+
   editing = false;
   saving = false;
   editName = '';

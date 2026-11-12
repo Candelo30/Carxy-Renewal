@@ -265,7 +265,13 @@
           <p class="collab-members-title">{{ 'projects.otherMembers' | translate }}</p>
           <div class="presence-list">
             <div class="presence-row self-row">
-              <span class="collab-avatar" [style.background]="colorForUid(selfUid ?? 'me')">{{ avatarInitial(selfName) }}</span>
+              <span class="collab-avatar" [style.background]="colorForUid(selfUid ?? 'me')">
+                @if (selfPhotoURL) {
+                  <img [src]="selfPhotoURL" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
+                } @else {
+                  {{ avatarInitial(selfName) }}
+                }
+              </span>
               <div class="presence-info">
                 <span class="presence-name">{{ selfName }} <small class="self-tag">({{ 'Tú' | translate }})</small></span>
                 <div class="presence-sub">
@@ -277,7 +283,13 @@
             </div>
             @for (member of otherMembers; track member.id) {
               <div class="presence-row" [class.offline]="!isMemberOnline(member)">
-                <span class="collab-avatar" [style.background]="colorForUid(member.userId)">{{ avatarInitial(member.userName) }}</span>
+                <span class="collab-avatar" [style.background]="colorForUid(member.userId)">
+                  @if (member.userPhotoURL) {
+                    <img [src]="member.userPhotoURL" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
+                  } @else {
+                    {{ avatarInitial(member.userName) }}
+                  }
+                </span>
                 <div class="presence-info">
                   <span class="presence-name">{{ member.userName }}</span>
                   <div class="presence-sub">

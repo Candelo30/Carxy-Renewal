@@ -1386,6 +1386,10 @@ export class ModelEditor implements OnInit, OnDestroy {
     return this.auth.currentUser?.uid ?? null;
   }
 
+  get selfPhotoURL(): string | null {
+    return this.auth.currentUser?.photoURL ?? null;
+  }
+
   get selfName(): string {
     return this.auth.currentUser?.displayName ?? '';
   }
@@ -1436,6 +1440,11 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   memberRoleLabel(role: ProjectRole): string {
     return 'projects.role' + (role.charAt(0).toUpperCase() + role.slice(1));
+  }
+
+  useFallbackAvatar(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (image) image.src = 'user-avatar.svg';
   }
 
   avatarInitial(name?: string): string {

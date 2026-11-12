@@ -17,7 +17,7 @@ import {
   limit,
 } from '@angular/fire/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map, combineLatest, from } from 'rxjs';
+import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map, combineLatest, from, shareReplay } from 'rxjs';
 import { SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { I18nService } from './i18n';
 import { AuthService } from './auth';
@@ -237,7 +237,8 @@ export class CollaborationService implements OnDestroy {
       catchError((err) => {
         console.warn('No se pudo cargar el proyecto.', err);
         return of(undefined);
-      })
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
   }
 
