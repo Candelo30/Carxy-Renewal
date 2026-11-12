@@ -140,8 +140,12 @@ service cloud.firestore {
           allow update: if false;
         }
 
-        match /notifications/{notificationId} {
+        match /users/{uid}/notifications {
           allow read: if signedIn() && request.auth.uid == uid;
+          allow list: if signedIn() && request.auth.uid == uid;
+        }
+
+        match /users/{uid}/notifications/{notificationId} {
           allow create: if isActiveUser()
             && request.resource.data.keys().hasOnly([
               'id', 'recipientId', 'actorId', 'actorName', 'actorPhotoURL', 'kind', 'targetId', 'createdAt', 'read'
