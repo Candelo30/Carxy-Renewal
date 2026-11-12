@@ -1435,6 +1435,11 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
     'Vous n’avez aucune notification en attente.',
     'Você não tem notificações pendentes.',
   ),
+  'Marcaste {count} notificaciones como leídas.': t(
+    'You marked {count} notifications as read.',
+    'Vous avez marqué {count} notifications comme lues.',
+    'Você marcou {count} notificações como lidas.',
+  ),
   'Operación exitosa': t('Operation successful', 'Opération réussie', 'Operação bem-sucedida'),
   'Perfil actualizado': t('Profile updated', 'Profil mis à jour', 'Perfil atualizado'),
   'Perfil actualizado.': t('Profile updated.', 'Profil mis à jour.', 'Perfil atualizado.'),

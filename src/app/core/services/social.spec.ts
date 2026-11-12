@@ -74,6 +74,41 @@ describe('SocialService local mode', () => {
     await expect(service.followUser(follower, follower.uid)).rejects.toThrow('No puedes seguirte a ti mismo.');
   });
 
+  it('validates chat messages before storing them', async () => {
+    const author = {
+      uid: 'creator-1',
+      displayName: 'Creator',
+      email: '',
+      photoURL: null,
+      bio: '',
+    };
+
+    await expect(
+      service.sendMessage('creator-1__creator-2', {
+        text: '   ',
+        senderId: author.uid,
+        senderName: author.displayName,
+      }),
+    ).rejects.toThrow('No se pudo validar la conversación');
+
+    await expect(
+      service.sendMessage('creator-1__creator-2', {
+        text: 'x'.repeat(SocialService.MAX_MESSAGE_LENGTH + 1),
+        senderId: author.uid,
+        senderName: author.displayName,
+      }),
+    ).rejects.toThrow('límite');
+
+    await service.sendMessage('creator-1__creator-2', {
+      text: '  hola  ',
+      senderId: author.uid,
+      senderName: author.displayName,
+    });
+
+    const [message] = await firstValueFrom(service.chatMessages$('creator-1__creator-2'));
+    expect(message.text).toBe('hola');
+  });
+
   it('keeps private creations out of public creator lists and supports local metric updates', async () => {
     TestBed.resetTestingModule();
     localStorage.clear();

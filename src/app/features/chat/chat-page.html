@@ -73,7 +73,7 @@
                     </span>
                     <small>{{
                       conversation.lastMessage
-                        ? (conversation.lastMessage.senderId === user.uid ? ('Tú: ' | translate) : '') +
+                        ? (conversation.lastMessage.senderId === user.uid ? (('Tú' | translate) + ': ') : '') +
                           conversation.lastMessage.text
                         : ('Conversación abierta' | translate)
                     }}</small>
@@ -132,8 +132,8 @@
         />
         <button type="submit">{{ 'Abrir conversación' | translate }}</button>
       </form>
-      @if (error) {
-        <p class="error" role="alert">{{ error }}</p>
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
       }
       @if (!auth.isConfigured) {
         <p class="notice">{{ 'Modo local: los mensajes solo se sincronizan en este navegador.' | translate }}</p>
@@ -166,7 +166,7 @@
             <small class="uid-line">
               <span class="uid-text">{{ partnerId }}</span>
               <button type="button" class="copy-uid" (click)="copyPartnerId()" [attr.aria-label]="'Copiar UID' | translate">
-                @if (copiedId === 'copied') {
+                @if (copiedId() === 'copied') {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                 } @else {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
@@ -179,8 +179,8 @@
               class="background-select"
               [ngModel]="chatBackgroundId"
               (ngModelChange)="onConversationBackgroundChange($event)"
-              [attr.aria-label="'Fondo de conversación'"
-              [title]="'Fondo de conversación'"
+              [attr.aria-label]="'Fondo de conversación' | translate"
+              [title]="'Fondo de conversación' | translate"
             >
               @for (background of chatBackgrounds; track background.id) {
                 <option [value]="background.id">{{ background.label }}</option>
@@ -227,14 +227,14 @@
                         }
                       </span>
                     }
-                    <div class="bubble" [class.copied]="copiedMessageId === item.message.id">
+                    <div class="bubble" [class.copied]="copiedMessageId() === item.message.id">
                       @if (item.firstOfRun) {
                         <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName || ('Usuario' | translate)) }}</b>
                       }
                       <p [innerHTML]="highlightedHtml(item.message.text)"></p>
                       <span class="bubble-actions">
-                        <button type="button" class="copy-message" (click)="copyMessage(item.message)" [attr.aria-label]="'Copiar mensaje' | translate" [title]="copiedMessageId === item.message.id ? ('Copiado' | translate) : ('Copiar mensaje' | translate)">
-                          @if (copiedMessageId === item.message.id) {
+                        <button type="button" class="copy-message" (click)="copyMessage(item.message)" [attr.aria-label]="'Copiar mensaje' | translate" [title]="copiedMessageId() === item.message.id ? ('Copiado' | translate) : ('Copiar mensaje' | translate)">
+                          @if (copiedMessageId() === item.message.id) {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                           } @else {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
@@ -263,7 +263,7 @@
                 <button type="button" class="emoji-btn" (click)="insertEmoji(emoji)">{{ emoji }}</button>
               }
             </div>
-            <span class="char-count" [class.near-limit]="message.length > 1800">{{ message.length }}/2000</span>
+            <span class="char-count" [class.near-limit]="message().length > 1800">{{ message().length }}/2000</span>
           </div>
           <div class="composer-input-row">
             <textarea
@@ -271,14 +271,15 @@
               name="message"
               rows="1"
               maxlength="2000"
-              [(ngModel)]="message"
+              [ngModel]="message()"
+              (ngModelChange)="message.set($event)"
               (keydown)="onComposerKeydown($event)"
               (input)="autoGrow($event)"
               [placeholder]="'Escribe un mensaje.' | translate"
               [attr.aria-label]="'Escribe un mensaje.' | translate"
               required
             ></textarea>
-            <button type="submit" class="send-button" [disabled]="!message.trim()" [attr.aria-label]="'Enviar' | translate">
+            <button type="submit" class="send-button" [disabled]="!message().trim() || sending()" [attr.aria-label]="'Enviar' | translate">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M22 2L11 13"/>
                 <path d="M22 2l-7 20-4-9-9-4 20-7z"/>

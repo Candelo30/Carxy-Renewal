@@ -1,11 +1,11 @@
 @if (user$ | async; as user) {
   @let items = (activities$ | async) ?? [];
   <div class="activity-menu">
-    <button class="activity-trigger" type="button" [attr.aria-expanded]="open" [aria-label]="'Notificaciones' | translate" [title]="'Notificaciones' | translate" (click)="open = !open">
+    <button class="activity-trigger" type="button" [attr.aria-expanded]="open()" [aria-label]="'Notificaciones' | translate" [title]="'Notificaciones' | translate" (click)="open.set(!open())">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
       @if (unreadCount(items); as unread) { <span class="badge">{{ unread > 9 ? '9+' : unread }}</span> }
     </button>
-    @if (open) {
+    @if (open()) {
       <section class="activity-popover" [aria-label]="'Actividad reciente' | translate">
         <header><div><strong>{{ 'Notificaciones' | translate }}</strong><small>{{ '{count} sin leer' | translate: { count: unreadCount(items) } }}</small></div>
           <button type="button" [disabled]="unreadCount(items) === 0" (click)="markAllRead(items, user.uid)">{{ 'Marcar todas' | translate }}</button>

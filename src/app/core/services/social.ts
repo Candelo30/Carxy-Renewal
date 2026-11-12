@@ -111,6 +111,8 @@ export class SocialService {
   private lastActivityWrite = 0;
   private readonly likeInFlight = new Set<string>();
   private static readonly LIKE_COOLDOWN_MS = 2000;
+  /** Límite de caracteres por mensaje de chat (debe coincidir con `firestore.rules`). */
+  static readonly MAX_MESSAGE_LENGTH = 2000;
   readonly INACTIVE_DELETE_DAYS = 30;
   /** Máx. documentos del feed público que el listener de Firestore carga de golpe (con orden por createdAt desc). */
   readonly POSTS_FEED_LIMIT = 120;
@@ -908,7 +910,7 @@ export class SocialService {
       return collectionData(
         query(collection(this.firestore, 'users', uid, 'notifications'), orderBy('createdAt', 'desc'), limit(30)),
         { idField: 'id' },
-      ).pipe(map((items) => items as ActivityNotification[]));
+      ).pipe(map((items) => items.map((item) => this.normalizeActivityNotification(item as Record<string, unknown>))));
     }
     return this.localActivityNotifications.pipe(
       map((items) => items.filter((item) => item.recipientId === uid).slice(0, 30)),
@@ -917,7 +919,13 @@ export class SocialService {
 
   async markActivityNotificationRead(uid: string, notificationId: string): Promise<void> {
     if (this.firestore) {
-      await updateDoc(doc(this.firestore, 'users', uid, 'notifications', notificationId), { read: true });
+      try {
+        await updateDoc(doc(this.firestore, 'users', uid, 'notifications', notificationId), { read: true });
+      } catch (error) {
+        // La notificación pudo eliminarse entre la lectura y la escritura:
+        // para la interfaz ya está leída, así que no es un error real.
+        if (!this.isNotFoundError(error)) throw error;
+      }
       return;
     }
     const next = this.localActivityNotifications.value.map((item) =>
@@ -925,6 +933,28 @@ export class SocialService {
     );
     this.localActivityNotifications.next(next);
     this.writeLocal(LOCAL_KEYS.activityNotifications, next);
+  }
+
+  private isNotFoundError(error: unknown): boolean {
+    return !!error
+      && typeof error === 'object'
+      && 'code' in error
+      && String((error as { code: unknown }).code).includes('not-found');
+  }
+
+  private normalizeActivityNotification(data: Record<string, unknown>): ActivityNotification {
+    const kind = data['kind'];
+    return {
+      id: String(data['id'] ?? ''),
+      recipientId: String(data['recipientId'] ?? ''),
+      actorId: String(data['actorId'] ?? ''),
+      actorName: String(data['actorName'] ?? ''),
+      actorPhotoURL: typeof data['actorPhotoURL'] === 'string' ? data['actorPhotoURL'] : null,
+      kind: kind === 'follow' || kind === 'like' || kind === 'comment' ? kind : 'follow',
+      ...(typeof data['targetId'] === 'string' ? { targetId: data['targetId'] } : {}),
+      createdAt: this.normalizeTimestamp(data['createdAt']),
+      read: data['read'] === true,
+    };
   }
 
   chatMessages$(chatId: string): Observable<ChatMessage[]> {
@@ -978,7 +1008,6 @@ export class SocialService {
     if (!this.firestore) return;
 
     const chatRef = doc(this.firestore, SOCIAL_COLLECTIONS.chats, chatId);
-    const conversation = await getDoc(chatRef);
     const latestMessageSnapshot = await getDocs(query(
       collection(chatRef, 'messages'),
       orderBy('createdAt', 'desc'),
@@ -988,34 +1017,51 @@ export class SocialService {
     const latestMessage = latestMessageDoc
       ? this.normalizeMessage({ ...latestMessageDoc.data(), id: latestMessageDoc.id })
       : undefined;
-    if (conversation.exists()) {
-      if (!conversation.data()['lastMessage'] && latestMessage) {
-        await updateDoc(chatRef, {
-          lastMessage: latestMessage,
-          updatedAt: latestMessage.createdAt,
-        });
-      }
-      return;
-    }
 
-    await setDoc(chatRef, {
-      participantIds,
-      updatedAt: latestMessage?.createdAt ?? Date.now(),
-      ...(latestMessage ? { lastMessage: latestMessage } : {}),
+    // La escritura va dentro de una transacción para no pisar un `lastMessage`
+    // o un `updatedAt` más reciente que haya escrito `sendMessage` en paralelo.
+    await runTransaction(this.firestore, async (transaction) => {
+      const conversation = await transaction.get(chatRef);
+      if (conversation.exists()) {
+        const data = conversation.data();
+        if (!data['lastMessage'] && latestMessage) {
+          transaction.update(chatRef, {
+            lastMessage: latestMessage,
+            updatedAt: latestMessage.createdAt,
+          });
+        }
+        return;
+      }
+      transaction.set(chatRef, {
+        participantIds,
+        updatedAt: latestMessage?.createdAt ?? Date.now(),
+        ...(latestMessage ? { lastMessage: latestMessage } : {}),
+      });
     });
   }
 
   async sendMessage(chatId: string, message: Omit<ChatMessage, 'id' | 'createdAt'>): Promise<void> {
     const participantIds = chatId.split('__');
+    const text = (message.text ?? '').trim();
     if (
       participantIds.length !== 2
       || participantIds[0] >= participantIds[1]
       || !participantIds.includes(message.senderId)
-      || !message.text.trim()
+      || !text
     ) {
       throw new Error('No se pudo validar la conversación y el remitente del mensaje.');
     }
-    const entry: ChatMessage = { ...message, id: crypto.randomUUID(), createdAt: Date.now() };
+    if (text.length > SocialService.MAX_MESSAGE_LENGTH) {
+      throw new Error(
+        `El mensaje supera el límite de ${SocialService.MAX_MESSAGE_LENGTH} caracteres.`,
+      );
+    }
+    const entry: ChatMessage = {
+      ...message,
+      text,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+    };
     if (this.firestore) {
       const chatRef = doc(this.firestore, SOCIAL_COLLECTIONS.chats, chatId);
       const messageRef = doc(collection(chatRef, 'messages'));

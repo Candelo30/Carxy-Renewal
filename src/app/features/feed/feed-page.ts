@@ -28,7 +28,6 @@ import { absoluteAppUrl, shareOrCopy } from '../../core/utils/share';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { AccountMenuComponent } from '../../shared/components/account-menu/account-menu';
 import { ModelPreviewComponent } from '../../shared/components/model-preview/model-preview';
-import { ActivityNotificationsComponent } from '../../shared/components/activity-notifications/activity-notifications';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';

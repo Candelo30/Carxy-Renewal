@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { ModelViewer } from './model-viewer';
@@ -10,23 +11,29 @@ describe('ModelViewer', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ModelViewer],
-      providers: [{
-        provide: ThreeEngineService,
-        useValue: {
-          initialize: () => undefined,
-          updateBackgroundColor: () => undefined,
-          updateLightIntensity: () => undefined,
-          setGizmoMode: () => undefined,
-          restoreScene: () => false,
-          releaseViewport: () => undefined,
-          resize: () => undefined,
-          hotspotsChanged$: new Subject<void>(),
-          remoteCursor$: new Subject<void>(),
-          getHotspots: () => [],
-          addHotspotFromPointer: () => false,
-          placeCurrentModelOnARSurface: () => false,
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: new Map<string, string>() } },
         },
-      }],
+        {
+          provide: ThreeEngineService,
+          useValue: {
+            initialize: () => undefined,
+            updateBackgroundColor: () => undefined,
+            updateLightIntensity: () => undefined,
+            setGizmoMode: () => undefined,
+            restoreScene: () => false,
+            releaseViewport: () => undefined,
+            resize: () => undefined,
+            hotspotsChanged$: new Subject<void>(),
+            remoteCursor$: new Subject<void>(),
+            getHotspots: () => [],
+            addHotspotFromPointer: () => false,
+            placeCurrentModelOnARSurface: () => false,
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ModelViewer);

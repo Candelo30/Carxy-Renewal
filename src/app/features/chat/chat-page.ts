@@ -5,6 +5,7 @@ import {
   OnInit,
   ViewChild,
   inject,
+  signal,
   ElementRef,
   AfterViewChecked,
 } from '@angular/core';
@@ -30,6 +31,17 @@ import { I18nService } from '../../core/services/i18n';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
+/** Claves de preferencias del chat guardadas en `localStorage`. */
+const CHAT_BACKGROUND_KEY = 'carxy:chat:bg';
+const CHAT_BACKGROUND_PREFIX = 'carxy:chat:bg:';
+const CHAT_PINNED_KEY = 'carxy:chat:pinned';
+const CHAT_SEEN_KEY = 'carxy:chat:seen';
+/**
+ * Evita reescribir `localStorage` en cada ciclo de detección de cambios:
+ * `markSeen` se invoca desde `ngAfterViewChecked`.
+ */
+const SEEN_THROTTLE_MS = 5000;
 
 export interface GroupedMessage {
   message: ChatMessage;
@@ -73,10 +85,11 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly emojis = ['😀', '😂', '😉', '😍', '🤝', '👍', '🙏', '🔥', '🎉', '❤️', '😢', '😎', '💡', '✅'];
   private readonly subscription = new Subscription();
   private readonly storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null;
-  private readonly seenChats: Record<string, number> = this.loadSeenChats();
+  private readonly seenChats = signal<Record<string, number>>(this.loadSeenChats());
   private currentUser: User | null = null;
   mobileMenuOpen = false;
   @ViewChild('messageList') private messageListContainer?: ElementRef<HTMLElement>;
+  @ViewChild('composer') private composer?: ElementRef<HTMLTextAreaElement>;
   readonly conversations$ = this.user$.pipe(
     switchMap((user) =>
       user
@@ -100,20 +113,25 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     ),
   );
   partnerId = '';
-  message = '';
+  /**
+   * Estado del chat expresado con signals: la aplicación usa detección de cambios
+   * zoneless, así que las propiedades simples mutadas tras un `await` (por ejemplo
+   * al vaciar el compositor tras enviar) no redibujarían la vista.
+   */
+  readonly message = signal('');
+  readonly error = signal('');
+  readonly copiedId = signal('');
+  readonly copiedMessageId = signal('');
   search = '';
-  error = '';
   chatId = '';
-  copiedId = '';
   messages$?: Observable<MessageGroup[]>;
   partnerProfile$?: Observable<User | null>;
   messageQuery = '';
   messageSearchOpen = false;
-  copiedMessageId = '';
   readonly pinned = new Set<string>(this.loadPinned());
   private nearBottom = true;
-  chatBackgroundId = 'default';
-  globalChatBackgroundId = 'default';
+  /** Evita envíos duplicados por doble clic o Enter repetido. */
+  readonly sending = signal(false);
   readonly chatBackgrounds: { id: string; label: string; css: string }[] = [
     {
       id: 'default',
@@ -141,6 +159,14 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       css: 'radial-gradient(90% 60% at 50% 0%, rgba(16, 185, 129, 0.14), transparent 60%), #07130f',
     },
   ];
+  /** Caché de los fondos por conversación (evita leer `localStorage` en cada render). */
+  private readonly backgroundOverrides = new Map<string, string>();
+  /** Fondo efectivo de la conversación abierta. */
+  chatBackgroundId = 'default';
+  /** Fondo global por defecto; se restaura desde `localStorage`. */
+  globalChatBackgroundId = this.loadGlobalChatBackground();
+  private copyIdTimer?: ReturnType<typeof setTimeout>;
+  private copyMessageTimer?: ReturnType<typeof setTimeout>;
 
   ngOnInit(): void {
     this.subscription.add(
@@ -164,13 +190,17 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   openConversation(): void {
     const peer = this.partnerId.trim();
     if (!this.currentUser || !peer || peer === this.currentUser.uid || /[/.#$/\[\]]/.test(peer)) {
-      this.error = this.i18n.translate('Ingresa un UID válido de otro creador.');
-      this.notifications.warning(this.error);
+      this.error.set(this.i18n.translate('Ingresa un UID válido de otro creador.'));
+      this.notifications.warning(this.error());
       return;
     }
-    this.error = '';
+    this.error.set('');
     const nextChatId = [this.currentUser.uid, peer].sort().join('__');
-    if (this.chatId === nextChatId) return;
+    if (this.chatId === nextChatId) {
+      // Misma conversación: no se recrea el stream, pero se refresca el estado visual.
+      this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId);
+      return;
+    }
     this.chatId = nextChatId;
     this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId);
     this.messages$ = this.social.chatMessages$(this.chatId).pipe(
@@ -183,8 +213,8 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.nearBottom = true;
     this.markSeen(this.chatId);
     void this.social.ensureChatConversation(this.chatId).catch((error: unknown) => {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo abrir la conversación.');
-      this.notifications.error(this.error);
+      this.error.set(error instanceof Error ? error.message : this.i18n.translate('No se pudo abrir la conversación.'));
+      this.notifications.error(this.error());
     });
   }
 
@@ -225,8 +255,8 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.chatBackgroundId = this.effectiveChatBackgroundId('');
     this.messages$ = undefined;
     this.partnerProfile$ = undefined;
-    this.error = '';
-    this.copiedId = '';
+    this.error.set('');
+    this.copiedId.set('');
   }
 
   peerId(conversation: ChatConversation, uid: string): string {
@@ -254,7 +284,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   hasUnread(conversation: ChatConversation): boolean {
-    return conversation.updatedAt > (this.seenChats[conversation.id] ?? 0);
+    return conversation.updatedAt > (this.seenChats()[conversation.id] ?? 0);
   }
 
   async copyPartnerId(): Promise<void> {
@@ -262,8 +292,9 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     if (!target || typeof navigator === 'undefined' || !navigator.clipboard) return;
     try {
       await navigator.clipboard.writeText(target);
-      this.copiedId = 'copied';
-      setTimeout(() => (this.copiedId = ''), 1800);
+      this.copiedId.set('copied');
+      if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
+      this.copyIdTimer = setTimeout(() => this.copiedId.set(''), 1800);
     } catch {
       this.notifications.warning(this.i18n.translate('No se pudo copiar.'));
     }
@@ -346,16 +377,43 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     return 'seen';
   }
 
+  /**
+   * Inserta el emoji en la posición del cursor (no siempre al final del texto)
+   * y devuelve el foco al campo de escritura.
+   */
   insertEmoji(emoji: string): void {
-    this.message = `${this.message}${emoji}`;
+    const textarea = this.composer?.nativeElement;
+    if (!textarea) {
+      this.message.set(`${this.message()}${emoji}`);
+      return;
+    }
+    const current = textarea.value ?? this.message();
+    const start = textarea.selectionStart ?? current.length;
+    const end = textarea.selectionEnd ?? start;
+    const next = `${current.slice(0, start)}${emoji}${current.slice(end)}`;
+    textarea.value = next;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    const caret = start + emoji.length;
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        textarea.focus();
+        textarea.setSelectionRange(caret, caret);
+      });
+    } else {
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(caret, caret);
+      });
+    }
   }
 
   async copyMessage(message: ChatMessage): Promise<void> {
     if (typeof navigator === 'undefined' || !navigator.clipboard) return;
     try {
       await navigator.clipboard.writeText(message.text);
-      this.copiedMessageId = message.id;
-      setTimeout(() => (this.copiedMessageId = ''), 1600);
+      this.copiedMessageId.set(message.id);
+      if (this.copyMessageTimer) clearTimeout(this.copyMessageTimer);
+      this.copyMessageTimer = setTimeout(() => this.copiedMessageId.set(''), 1600);
     } catch {
       this.notifications.warning(this.i18n.translate('No se pudo copiar.'));
     }
@@ -375,35 +433,113 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  /**
+   * Escapa el mensaje y convierte las URLs en enlaces.
+   *
+   * El resaltado de la búsqueda se aplica únicamente sobre el texto plano:
+   * antes se aplicaba sobre el HTML completo, lo que insertaba `<mark>` dentro
+   * de las etiquetas `<a>` y rompía los enlaces. Además las URLs ya escapadas
+   * se escapaban dos veces, dejando `&amp;amp;` en el `href`.
+   */
   highlightedHtml(text: string): SafeHtml {
-    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-    let html = text.replace(/[&<>"']/g, (char) => map[char] ?? char);
-
-    // Solo convertir a enlace URLs que empiecen estrictamente con http:// o https://.
-    // Se valida cada URL con el constructor URL() para evitar esquemas peligrosos.
-    html = html.replace(/\b(https?:\/\/[^\s<"']+)/gi, (match) => {
-      if (!this.isSafeUrl(match)) {
-        return match;
-      }
-      const escapedUrl = match.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      return `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>`;
-    });
-
     const query = this.messageQuery.trim();
-    if (query) {
-      const pattern = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
-      html = html.replace(pattern, '<mark>$1</mark>');
-    }
-
+    const highlight = query ? new RegExp(this.escapeRegExp(query), 'gi') : null;
+    const html = this.splitLinks(text)
+      .map((segment) =>
+        segment.kind === 'link'
+          ? this.renderLink(segment.value)
+          : this.highlightSegment(segment.value, highlight),
+      )
+      .join('');
     return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  /** Divide el texto plano en fragmentos de enlace y de texto normal. */
+  private splitLinks(text: string): Array<{ kind: 'text' | 'link'; value: string }> {
+    const segments: Array<{ kind: 'text' | 'link'; value: string }> = [];
+    // Solo http:// y https://; el resto de esquemas se mantiene como texto.
+    const pattern = /\bhttps?:\/\/[^\s<>"']+/gi;
+    let cursor = 0;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text)) !== null) {
+      const raw = match[0];
+      const trailing = raw.match(/[.,;:!?)\]}]+$/)?.[0] ?? '';
+      const url = trailing ? raw.slice(0, raw.length - trailing.length) : raw;
+      if (!url) break;
+      if (match.index > cursor) {
+        segments.push({ kind: 'text', value: text.slice(cursor, match.index) });
+      }
+      segments.push({ kind: 'link', value: url });
+      cursor = match.index + url.length;
+      if (trailing) {
+        segments.push({ kind: 'text', value: trailing });
+        cursor += trailing.length;
+      }
+      pattern.lastIndex = cursor;
+    }
+    if (cursor < text.length) segments.push({ kind: 'text', value: text.slice(cursor) });
+    return segments;
+  }
+
+  private renderLink(url: string): string {
+    if (!this.isSafeUrl(url)) return this.escapeHtml(url);
+    const escaped = this.escapeHtml(url);
+    return `<a href="${escaped}" target="_blank" rel="noopener noreferrer">${escaped}</a>`;
+  }
+
+  private highlightSegment(value: string, highlight: RegExp | null): string {
+    if (!highlight) return this.escapeHtml(value);
+    let result = '';
+    let cursor = 0;
+    highlight.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = highlight.exec(value)) !== null) {
+      if (!match[0].length) {
+        highlight.lastIndex += 1;
+        continue;
+      }
+      result += this.escapeHtml(value.slice(cursor, match.index));
+      result += `<mark>${this.escapeHtml(match[0])}</mark>`;
+      cursor = match.index + match[0].length;
+    }
+    return result + this.escapeHtml(value.slice(cursor));
+  }
+
+  private escapeHtml(value: string): string {
+    const map: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return value.replace(/[&<>"']/g, (char) => map[char] ?? char);
   }
 
   private escapeRegExp(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  /**
+   * `ngModelChange` emite el valor del modelo (un `string`), no el evento DOM.
+   * Leer `event.target` aquí lanzaba un `TypeError` y rompía el selector de fondo.
+   */
+  onConversationBackgroundChange(id: string): void {
+    const next = this.normalizeBackgroundId(id);
+    if (!this.chatId) {
+      this.setGlobalChatBackground(next);
+      return;
+    }
+    this.chatBackgroundId = next;
+    this.setConversationBackground(this.chatId, next);
+  }
+
+  onGlobalBackgroundChange(id: string): void {
+    this.setGlobalChatBackground(this.normalizeBackgroundId(id));
+  }
+
   effectiveChatBackgroundId(chatId: string): string {
-    const override = this.storage ? this.readStoredChatBackground(chatId) : null;
+    const override = this.readStoredChatBackground(chatId);
     return override ?? this.globalChatBackgroundId;
   }
 
@@ -414,64 +550,69 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   setConversationBackground(chatId: string, id: string): void {
-    if (this.storage) {
-      try {
-        this.storage.setItem(`carxy:chat:bg:${chatId}`, id);
-      } catch {
-        /* almacenamiento no disponible */
-      }
-    }
+    if (!chatId) return;
+    this.backgroundOverrides.set(chatId, id);
+    this.writeStoredValue(`${CHAT_BACKGROUND_PREFIX}${chatId}`, id);
   }
 
   setGlobalChatBackground(id: string): void {
     this.globalChatBackgroundId = id;
-    if (this.storage) {
-      try {
-        this.storage.setItem('carxy:chat:bg', id);
-      } catch {
-        /* almacenamiento no disponible */
-      }
+    this.writeStoredValue(CHAT_BACKGROUND_KEY, id);
+    // Si la conversación abierta no tiene un fondo propio, sigue al global.
+    if (this.chatId && !this.readStoredChatBackground(this.chatId)) {
+      this.chatBackgroundId = id;
     }
   }
 
   private readStoredChatBackground(chatId: string): string | null {
+    if (!chatId) return null;
+    const cached = this.backgroundOverrides.get(chatId);
+    if (cached) return cached;
+    const stored = this.readStoredValue(`${CHAT_BACKGROUND_PREFIX}${chatId}`);
+    if (!stored) return null;
+    this.backgroundOverrides.set(chatId, stored);
+    return stored;
+  }
+
+  private loadGlobalChatBackground(): string {
+    const stored = this.readStoredValue(CHAT_BACKGROUND_KEY);
+    return stored && this.isKnownBackground(stored) ? stored : this.chatBackgrounds[0].id;
+  }
+
+  private isKnownBackground(id: string): boolean {
+    return this.chatBackgrounds.some((background) => background.id === id);
+  }
+
+  private normalizeBackgroundId(id: string): string {
+    return this.isKnownBackground(id) ? id : this.chatBackgrounds[0].id;
+  }
+
+  private readStoredValue(key: string): string | null {
     if (!this.storage) return null;
     try {
-      return this.storage.getItem(`carxy:chat:bg:${chatId}`);
+      return this.storage.getItem(key);
     } catch {
       return null;
     }
   }
 
-  onConversationBackgroundChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    const id = value || this.chatBackgrounds[0].id;
-    if (this.chatId) {
-      this.setConversationBackground(this.chatId, id);
-    } else {
-      this.setGlobalChatBackground(id);
+  private writeStoredValue(key: string, value: string): void {
+    if (!this.storage) return;
+    try {
+      this.storage.setItem(key, value);
+    } catch {
+      /* almacenamiento no disponible */
     }
-  }
-
-  onGlobalBackgroundChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    const id = value || this.chatBackgrounds[0].id;
-    this.setGlobalChatBackground(id);
   }
 
   private persistPinned(): void {
-    if (!this.storage) return;
-    try {
-      this.storage.setItem('carxy:chat:pinned', JSON.stringify([...this.pinned]));
-    } catch {
-      /* almacenamiento lleno: ignorar */
-    }
+    this.writeStoredValue(CHAT_PINNED_KEY, JSON.stringify([...this.pinned]));
   }
 
   private loadPinned(): string[] {
     if (!this.storage) return [];
     try {
-      const parsed = JSON.parse(this.storage.getItem('carxy:chat:pinned') ?? '[]') as unknown;
+      const parsed = JSON.parse(this.storage.getItem(CHAT_PINNED_KEY) ?? '[]') as unknown;
       return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
     } catch {
       return [];
@@ -489,44 +630,56 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   async send(): Promise<void> {
-    const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
-    const text = this.message.trim();
-    if (!user || !this.chatId || !text) return;
+    if (this.sending()) return;
+    const text = this.message().trim();
+    if (!this.chatId || !text) return;
+    this.sending.set(true);
     try {
+      const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
+      if (!user) return;
       await this.social.sendMessage(this.chatId, {
         text,
         senderId: user.uid,
         senderName: user.displayName || user.email || 'Usuario',
       });
-      this.message = '';
-      this.error = '';
+      this.message.set('');
+      this.error.set('');
       this.nearBottom = true;
       this.markSeen(this.chatId);
       setTimeout(() => this.scrollToBottom());
     } catch (error) {
-      this.error = error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar el mensaje.');
-      this.notifications.error(this.error, this.i18n.translate('No se pudo enviar el mensaje'));
+      this.error.set(error instanceof Error ? error.message : this.i18n.translate('No se pudo enviar el mensaje.'));
+      this.notifications.error(this.error(), this.i18n.translate('No se pudo enviar el mensaje'));
+    } finally {
+      this.sending.set(false);
     }
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
+    if (this.copyMessageTimer) clearTimeout(this.copyMessageTimer);
   }
 
+  /**
+   * Marca la conversación como vista. El valor en memoria se actualiza siempre
+   * (para el indicador de no leídos) pero la escritura en `localStorage` se
+   * limita a una vez cada {@link SEEN_THROTTLE_MS} porque este método se
+   * invoca desde `ngAfterViewChecked`.
+   */
   private markSeen(chatId: string): void {
     if (!chatId || !this.storage) return;
-    this.seenChats[chatId] = Date.now();
-    try {
-      this.storage.setItem('carxy:chat:seen', JSON.stringify(this.seenChats));
-    } catch {
-      /* almacenamiento lleno: ignorar */
-    }
+    const now = Date.now();
+    const previous = this.seenChats()[chatId] ?? 0;
+    if (now - previous < SEEN_THROTTLE_MS) return;
+    this.seenChats.update((chats) => ({ ...chats, [chatId]: now }));
+    this.writeStoredValue(CHAT_SEEN_KEY, JSON.stringify(this.seenChats()));
   }
 
   private loadSeenChats(): Record<string, number> {
     if (!this.storage) return {};
     try {
-      return JSON.parse(this.storage.getItem('carxy:chat:seen') ?? '{}') as Record<string, number>;
+      return JSON.parse(this.storage.getItem(CHAT_SEEN_KEY) ?? '{}') as Record<string, number>;
     } catch {
       return {};
     }

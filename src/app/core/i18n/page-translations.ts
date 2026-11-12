@@ -107,6 +107,13 @@ export const PAGE_TRANSLATIONS: Record<string, SourceTranslation> = {
   },
   'Mensajes nuevos': { en: 'New messages', fr: 'Nouveaux messages', pt: 'Mensagens novas' },
   'Copiar UID': { en: 'Copy UID', fr: "Copier l'UID", pt: 'Copiar UID' },
+  'Fondo de conversación': {
+    en: 'Conversation background',
+    fr: 'Arrière-plan de la conversation',
+    pt: 'Fundo da conversa',
+  },
+  'Fondo global': { en: 'Global background', fr: 'Arrière-plan global', pt: 'Fundo global' },
+  'Fondo del chat': { en: 'Chat background', fr: 'Arrière-plan du chat', pt: 'Fundo do chat' },
   'Hoy': { en: 'Today', fr: "Aujourd'hui", pt: 'Hoje' },
   'Ayer': { en: 'Yesterday', fr: 'Hier', pt: 'Ontem' },
   'Tú': { en: 'You', fr: 'Vous', pt: 'Você' },
