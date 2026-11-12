@@ -156,12 +156,17 @@ service cloud.firestore {
           allow update: if false;
         }
 
-        match /users/{uid}/notifications {
+        // Las rutas de un `match` anidado son RELATIVAS al `match` padre.
+        // Escribir aquí `/users/{uid}/notifications` resolvería a
+        // `/users/{uid}/users/{uid}/notifications`, una ruta que no existe:
+        // la regla quedaba muerta y las notificaciones nunca se creaban ni se
+        // leían ("Missing or insufficient permissions").
+        match /notifications {
           allow read: if signedIn() && request.auth.uid == uid;
           allow list: if signedIn() && request.auth.uid == uid;
         }
 
-        match /users/{uid}/notifications/{notificationId} {
+        match /notifications/{notificationId} {
           allow create: if isActiveUser()
             && request.resource.data.keys().hasOnly([
               'id', 'recipientId', 'actorId', 'actorName', 'actorPhotoURL', 'kind', 'targetId', 'createdAt', 'read'
@@ -172,13 +177,14 @@ service cloud.firestore {
             && request.resource.data.actorName is string
             && request.resource.data.actorName.size() <= 120
             && (request.resource.data.actorPhotoURL == null || request.resource.data.actorPhotoURL is string)
-            && request.resource.data.kind in ['follow', 'like', 'comment']
+            && request.resource.data.kind in ['follow', 'like', 'comment', 'message']
             && request.resource.data.createdAt is number
             && request.resource.data.read == false
             && (
               request.resource.data.kind == 'follow'
               || (request.resource.data.kind == 'like' && request.resource.data.targetId is string)
               || (request.resource.data.kind == 'comment' && request.resource.data.targetId is string)
+              || (request.resource.data.kind == 'message' && request.resource.data.targetId is string)
             );
           allow update: if signedIn()
             && (
@@ -193,7 +199,7 @@ service cloud.firestore {
                 && resource.data.recipientId == uid
                 && request.resource.data.actorId == request.auth.uid
                 && request.resource.data.recipientId == uid
-                && request.resource.data.kind in ['follow', 'like', 'comment']
+                && request.resource.data.kind in ['follow', 'like', 'comment', 'message']
                 && request.resource.data.actorName is string
                 && request.resource.data.createdAt is number
                 && request.resource.data.read is bool
@@ -527,6 +533,14 @@ service cloud.firestore {
       }
     }
 
+    match /chats {
+      // Lista de conversaciones: cualquier usuario autenticado puede ver
+      // los chats donde es participante. La validación detallada por documento
+      // la manejan las reglas anidadas en `match /chats/{chatId}`.
+      allow list: if signedIn();
+      allow get: if signedIn();
+    }
+
     match /chats/{chatId} {
       function isParticipant(participants) {
         return signedIn()
@@ -573,9 +587,11 @@ service cloud.firestore {
           && request.resource.data.participantIds == resource.data.participantIds
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'lastMessage'])
           && request.resource.data.updatedAt is number
-          && (request.resource.data.lastMessage.senderId == request.auth.uid
-            || (!('lastMessage' in resource.data)
-              && resource.data.participantIds.hasAny([request.resource.data.lastMessage.senderId])))
+          // El `lastMessage` puede ser de cualquiera de los dos participantes
+          // (igual que en `create`): si no, no se puede rellenar la vista
+          // previa de una conversación cuyo último mensaje escribió el
+          // interlocutor.
+          && request.resource.data.lastMessage.senderId in resource.data.participantIds
           && request.resource.data.lastMessage.text is string
           && request.resource.data.lastMessage.text.size() > 0
           && request.resource.data.lastMessage.text.size() <= 2000
