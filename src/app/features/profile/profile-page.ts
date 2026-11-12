@@ -66,6 +66,13 @@ export class ProfilePage {
         );
       }),
       startWith(null),
+      catchError((error: unknown) => {
+        console.error('No se pudo cargar el perfil.', error);
+        const message = error instanceof Error ? error.message : '';
+        this.error = message || this.i18n.translate('No se pudo cargar el perfil.');
+        this.notifications.error(this.error, this.i18n.translate('No se pudo cargar el perfil'));
+        return of({ uid, profile: null, posts: [] as Post3D[], currentUser: null as unknown as User, followCounts: { followers: 0, following: 0 } });
+      }),
     );
   }));
   name = '';
