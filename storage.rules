@@ -34,7 +34,9 @@ service firebase.storage {
       allow create, update: if signedIn()
         && request.auth.uid == uid
         && request.resource.size <= 100 * 1024 * 1024
-        && request.resource.contentType == 'model/gltf-binary';
+        && (request.resource.contentType == 'model/gltf-binary'
+          || request.resource.contentType == 'application/octet-stream'
+          || request.resource.contentType.matches('model/gltf-binary;.*'));
       allow delete: if (signedIn() && request.auth.uid == uid) || isModerator();
     }
 
@@ -46,7 +48,9 @@ service firebase.storage {
       allow create, update: if signedIn()
         && request.auth.uid == uid
         && request.resource.size <= 8 * 1024 * 1024
-        && request.resource.contentType == 'image/png';
+        && (request.resource.contentType == 'image/png'
+          || request.resource.contentType == 'application/octet-stream'
+          || request.resource.contentType.matches('image/png;.*'));
       allow delete: if (signedIn() && request.auth.uid == uid) || isModerator();
     }
   }

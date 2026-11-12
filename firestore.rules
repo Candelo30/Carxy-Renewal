@@ -50,6 +50,26 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['displayName', 'photoURL', 'bio'])
           && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() > 0
+          && request.resource.data.displayName.size() <= 80
+          && request.resource.data.bio is string
+          && request.resource.data.bio.size() <= 500
+          && (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['photoURL'])
+            || request.resource.data.photoURL == null
+            || request.resource.data.photoURL is string
+          )
+        ) || (
+          signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.isBanned == resource.data.isBanned
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName', 'photoURL', 'bio'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() > 0
           && request.resource.data.displayName.size() <= 80
           && request.resource.data.bio is string
           && request.resource.data.bio.size() <= 500
@@ -110,23 +130,16 @@ service cloud.firestore {
             && request.resource.data.recipientId == uid
             && request.resource.data.actorId == request.auth.uid
             && request.resource.data.actorId != uid
-            && request.resource.data.actorName
-              == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
-            && request.resource.data.actorPhotoURL
-              == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoURL
+            && request.resource.data.actorName is string
+            && request.resource.data.actorName.size() <= 120
+            && (request.resource.data.actorPhotoURL == null || request.resource.data.actorPhotoURL is string)
             && request.resource.data.kind in ['follow', 'like', 'comment']
             && request.resource.data.createdAt is number
             && request.resource.data.read == false
             && (
-              (request.resource.data.kind == 'follow'
-                && existsAfter(/databases/$(database)/documents/users/$(uid)/followers/$(request.auth.uid)))
-              || (request.resource.data.kind == 'like'
-                && request.resource.data.targetId is string
-                && get(/databases/$(database)/documents/posts/$(request.resource.data.targetId)).data.author.uid == uid
-                && exists(/databases/$(database)/documents/posts/$(request.resource.data.targetId)/likes/$(request.auth.uid)))
-              || (request.resource.data.kind == 'comment'
-                && request.resource.data.targetId is string
-                && get(/databases/$(database)/documents/posts/$(request.resource.data.targetId)).data.author.uid == uid)
+              request.resource.data.kind == 'follow'
+              || (request.resource.data.kind == 'like' && request.resource.data.targetId is string)
+              || (request.resource.data.kind == 'comment' && request.resource.data.targetId is string)
             );
           allow update: if signedIn()
             && request.auth.uid == uid
@@ -241,7 +254,8 @@ service cloud.firestore {
           && request.resource.data.author.uid == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 500;
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.id is string         && request.resource.data.createdAt is number         && request.resource.data.author is map;
         allow update: if signedIn()
           && resource.data.author.uid == request.auth.uid;
         allow delete: if (signedIn() && resource.data.author.uid == request.auth.uid)
