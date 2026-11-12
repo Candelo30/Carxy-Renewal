@@ -11,8 +11,8 @@ import {
   ElementRef,
   inject,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -30,6 +30,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
+import { absoluteAppUrl } from '../../core/utils/share';
 import { EditorStatusService } from '../../core/services/editor-status.service';
 import { LayersPanelComponent } from './layers-panel/layers-panel';
 import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform, ProjectMember, ProjectRole } from '../../core/models/social.models';
@@ -123,6 +124,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   private readonly editorHistory = inject(EditorHistoryService);
   private readonly collaboration = inject(CollaborationService);
   private readonly themeService = inject(ThemeService);
+  private readonly document = inject(DOCUMENT);
   private readonly editorStatus = inject(EditorStatusService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -1458,7 +1460,7 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   async copyProjectLink(): Promise<void> {
     if (!this.projectId || !isPlatformBrowser(this.platformId)) return;
-    const url = `${window.location.origin}/projects/${encodeURIComponent(this.projectId)}`;
+    const url = absoluteAppUrl(`projects/${encodeURIComponent(this.projectId)}`, this.document.baseURI);
     try {
       await navigator.clipboard.writeText(url);
       this.notifications.success(this.i18n.translate('projects.shareCopied'), this.i18n.translate('projects.shareTitle'));
