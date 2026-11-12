@@ -22,6 +22,13 @@ service cloud.firestore {
       return isActiveUser() && roleOf(request.auth.uid) in ['admin', 'moderator'];
     }
 
+    function pendingInvitationForRequester(projectId) {
+      return signedIn()
+        && request.auth.token.email is string
+        && exists(/databases/$(database)/documents/projectInvitations/$(projectId + '_' + request.auth.token.email))
+        && get(/databases/$(database)/documents/projectInvitations/$(projectId + '_' + request.auth.token.email)).data.status == 'pending';
+    }
+
     match /users/{uid} {
       allow read: if true;
       allow create: if signedIn()
@@ -543,7 +550,8 @@ service cloud.firestore {
         && (isAdmin()
           || resource.data.isPublic == true
           || isProjectMember(projectId, request.auth.uid)
-          || resource.data.ownerId == request.auth.uid);
+          || resource.data.ownerId == request.auth.uid
+          || pendingInvitationForRequester(projectId));
 
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid

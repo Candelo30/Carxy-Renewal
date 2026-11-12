@@ -2,6 +2,22 @@
   <app-shell-header [title]="projectName || ('projects.project' | translate)" [showSearch]="false" [showNav]="true"></app-shell-header>
 
   <div class="project-detail-page">
+    @if (invitations | async; as pendingInvitations) {
+      @let pending = pendingInvitations.find(inv => inv.projectId === projectId);
+      @if (pending) {
+        <section class="pending-invitation-banner" role="status" aria-live="polite">
+          <div class="pending-invitation-text">
+            <strong>{{ 'projects.invitedToProject' | translate: { name: pending.projectName || ('projects.project' | translate) } }}</strong>
+            <span>{{ 'projects.invitedBy' | translate: { name: pending.invitedByName } }}</span>
+          </div>
+          <div class="pending-invitation-actions">
+            <button type="button" class="btn-accept" (click)="acceptInvitation(pending.id)" [disabled]="false">{{ 'projects.accept' | translate }}</button>
+            <button type="button" class="btn-reject" (click)="rejectInvitation(pending.id)" [disabled]="false">{{ 'projects.reject' | translate }}</button>
+          </div>
+        </section>
+      }
+    }
+
   @if (project$ | async; as project) {
     <section class="project-header">
       <div class="project-info">

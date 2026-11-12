@@ -602,6 +602,7 @@ export const MESSAGES: Record<string, MessageTranslations> = {
   'collab.joined': { en: '{name} joined the project', fr: '{name} a rejoint le projet', pt: '{name} entrou no projeto' },
   'collab.left': { en: '{name} left the project', fr: '{name} a quitté le projet', pt: '{name} saiu do projeto' },
   'collab.title': { en: 'Collaboration', fr: 'Collaboration', pt: 'Colaboração' },
+  'projects.invitedToProject': { en: 'You have been invited to {name}', fr: 'Vous avez été invité au projet {name}', pt: 'Você foi convidado para {name}' },
   'editor.views.save': { en: 'Save view', fr: 'Sauvegarder vue', pt: 'Salvar vista' },
   'editor.views.empty': { en: 'No views saved', fr: 'Aucune vue enregistrée', pt: 'Nenhuma vista salva' },
   'editor.views.delete': { en: 'Delete view', fr: 'Supprimer la vue', pt: 'Remover vista' },
