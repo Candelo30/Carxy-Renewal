@@ -652,6 +652,39 @@ service cloud.firestore {
         && (isAdmin() || isProjectOwner(resource.data.projectId) || request.auth.uid == resource.data.userId);
     }
 
+    match /projectShareLinks/{linkId} {
+      allow get: if signedIn();
+      allow list: if signedIn() && (isAdmin() || (resource.data.projectId is string && isProjectOwner(resource.data.projectId)));
+      allow create: if signedIn()
+        && request.resource.data.projectId is string
+        && isProjectOwner(request.resource.data.projectId)
+        && request.resource.data.id == linkId
+        && request.resource.data.role in ['viewer', 'editor']
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdByName is string
+        && request.resource.data.enabled == true
+        && request.resource.data.createdAt is number
+        && request.resource.data.updatedAt is number
+        && request.resource.data.keys().hasOnly([
+          'id', 'projectId', 'role', 'label', 'createdBy', 'createdByName', 'createdAt', 'updatedAt', 'enabled'
+        ])
+        && (!('label' in request.resource.data) || request.resource.data.label is string);
+      allow update: if signedIn()
+        && resource.data.projectId is string
+        && isProjectOwner(resource.data.projectId)
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'label', 'enabled', 'updatedAt'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || request.resource.data.role in ['viewer', 'editor'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['label']) || request.resource.data.label is string)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['enabled']) || request.resource.data.enabled is bool)
+        && request.resource.data.updatedAt is number;
+      allow delete: if signedIn()
+        && resource.data.projectId is string
+        && isProjectOwner(resource.data.projectId);
+    }
+
     match /projectInvitations/{invitationId} {
       allow read: if signedIn()
         && (resource.data.invitedBy == request.auth.uid

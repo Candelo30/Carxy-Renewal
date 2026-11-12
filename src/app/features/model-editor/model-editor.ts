@@ -31,6 +31,7 @@ import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
 import { absoluteAppUrl } from '../../core/utils/share';
+import type { ProjectShareLink } from '../../core/models/social.models';
 import { EditorStatusService } from '../../core/services/editor-status.service';
 import { LayersPanelComponent } from './layers-panel/layers-panel';
 import type { NotificationPosition, ProjectActivity, ProjectPresence, PresenceTransform, ProjectMember, ProjectRole } from '../../core/models/social.models';
@@ -179,6 +180,9 @@ export class ModelEditor implements OnInit, OnDestroy {
   public isProjectOwner = false;
   public projectMembers: ProjectMember[] = [];
   public remotePresences: ProjectPresence[] = [];
+  public shareToken: string | null = null;
+  public shareAccessRole: ProjectRole | null = null;
+  private memberCanWrite = false;
   private autoSaveSub: Subscription | null = null;
   private projectLockSub: Subscription | null = null;
   private remoteSceneSub: Subscription | null = null;
@@ -238,6 +242,8 @@ export class ModelEditor implements OnInit, OnDestroy {
 
     // --- Proyecto: detectar ?project=<id> y cargar escena ---
     const qp = this.route.snapshot.queryParamMap.get('project');
+    const share = this.route.snapshot.queryParamMap.get('share');
+    this.shareToken = share;
     if (qp) {
       this.projectId = qp;
 
@@ -269,10 +275,15 @@ export class ModelEditor implements OnInit, OnDestroy {
           this.projectMembers = members;
           const member = uid ? members.find((m) => m.userId === uid) : undefined;
           this.isProjectOwner = member?.role === 'owner';
-          this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
+          this.memberCanWrite = hasPermission(member?.role ?? 'viewer', 'write');
+          this.applyEffectiveAccess();
           this.cdr.detectChanges();
         })
       );
+
+      if (this.shareToken) {
+        void this.resolveShareAccess(this.shareToken);
+      }
 
       // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales
       this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
@@ -619,6 +630,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   addPrimitive(type: PrimitiveType): void {
+    if (this.shareLinkBlocksEditing) return;
     const id = this.threeEngine.addPrimitive(type);
     if (id && this.projectId && this.canWrite) {
       const obj = this.threeEngine.getSceneObjects().find((o) => o.id === id);
@@ -654,6 +666,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   deleteSelectedObject(): void {
+    if (this.shareLinkBlocksEditing) return;
     const id = this.threeEngine.deleteCurrentModel();
     if (id && this.projectId && this.canWrite) {
       void this.collaboration.logActivity(
@@ -706,14 +719,17 @@ export class ModelEditor implements OnInit, OnDestroy {
   // --- MÉTODOS DE TRANSFORMACIÓN ---
 
   onScaleChange(): void {
+    if (this.shareLinkBlocksEditing) return;
     this.threeEngine.updateScale(this.scale);
   }
 
   onPositionChange(axis: 'x' | 'y' | 'z', value: number): void {
+    if (this.shareLinkBlocksEditing) return;
     this.threeEngine.updatePosition(axis, value);
   }
 
   onRotationChange(axis: 'x' | 'y' | 'z', value: number): void {
+    if (this.shareLinkBlocksEditing) return;
     this.threeEngine.updateRotation(axis, value);
   }
 
@@ -725,6 +741,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   // --- MÉTODOS DE MATERIALES ---
 
   onMaterialColorChange(uuid: string, newColor: string): void {
+    if (this.shareLinkBlocksEditing) return;
     this.threeEngine.updateMaterialColor(uuid, newColor);
   }
 
@@ -733,6 +750,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     property: 'roughness' | 'metalness' | 'opacity',
     value: number,
   ): void {
+    if (this.shareLinkBlocksEditing) return;
     this.threeEngine.updateMaterialProperty(uuid, property, value);
   }
 
@@ -938,6 +956,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   // --- Duplicar / copiar / pegar ---
 
   duplicateSelectedObject(): void {
+    if (this.shareLinkBlocksEditing) return;
     const newId = this.threeEngine.duplicateSelected();
     if (!newId) {
       this.notifications.warning(this.i18n.translate('Selecciona un objeto para duplicar.'));
@@ -1001,6 +1020,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   async importSceneFile(event: Event): Promise<void> {
+    if (this.shareLinkBlocksEditing) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
@@ -1082,19 +1102,20 @@ export class ModelEditor implements OnInit, OnDestroy {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return;
     const key = event.key.toLowerCase();
     const mod = event.ctrlKey || event.metaKey;
-    if (key === 'z' && mod && !event.shiftKey) { event.preventDefault(); this.undo(); }
-    else if (key === 'y' && mod && !event.shiftKey) { event.preventDefault(); this.redo(); }
-    else if (key === 'z' && mod && event.shiftKey) { event.preventDefault(); this.redo(); }
-    else if (key === 's' && mod) { event.preventDefault(); this.manualSave(); }
+    const ro = this.shareLinkBlocksEditing;
+    if (key === 'z' && mod && !event.shiftKey) { event.preventDefault(); if (!ro) this.undo(); }
+    else if (key === 'y' && mod && !event.shiftKey) { event.preventDefault(); if (!ro) this.redo(); }
+    else if (key === 'z' && mod && event.shiftKey) { event.preventDefault(); if (!ro) this.redo(); }
+    else if (key === 's' && mod) { event.preventDefault(); if (!ro) this.manualSave(); }
     else if (key === '?' || (key === '/' && event.shiftKey)) { event.preventDefault(); this.showShortcutsHelp = !this.showShortcutsHelp; }
     else if (key === 'escape' && this.showShortcutsHelp) { event.preventDefault(); this.showShortcutsHelp = false; }
     else if (key === 'g') { event.preventDefault(); this.setGizmoMode('translate'); }
     else if (key === 'r') { event.preventDefault(); this.setGizmoMode('rotate'); }
     else if (key === 's' && !mod) { event.preventDefault(); this.setGizmoMode('scale'); }
-    else if (key === 'delete' || key === 'backspace') { event.preventDefault(); this.deleteSelectedObject(); }
+    else if (key === 'delete' || key === 'backspace') { event.preventDefault(); if (!ro) this.deleteSelectedObject(); }
     else if (key === 'c' && mod) { event.preventDefault(); this.copySelectedToClipboard(); }
-    else if (key === 'v' && mod) { event.preventDefault(); this.pasteFromClipboard(); }
-    else if (key === 'd' && mod) { event.preventDefault(); this.duplicateSelectedObject(); }
+    else if (key === 'v' && mod) { event.preventDefault(); if (!ro) this.pasteFromClipboard(); }
+    else if (key === 'd' && mod) { event.preventDefault(); if (!ro) this.duplicateSelectedObject(); }
     else if (key === 'f') { event.preventDefault(); this.focusSelectedNode(); }
     else if (key === 'm') { event.preventDefault(); this.toggleMeasureDistance(); }
     else if (key === '1') { event.preventDefault(); this.setCameraView('perspective'); }
@@ -1478,7 +1499,51 @@ export class ModelEditor implements OnInit, OnDestroy {
     }
   }
 
+  private async resolveShareAccess(token: string): Promise<void> {
+    try {
+      const link = await this.collaboration.resolveShareLink(token);
+      if (!link || (this.projectId && link.projectId !== this.projectId)) {
+        this.shareAccessRole = null;
+        if (token) {
+          this.notifications.warning(this.i18n.translate('El enlace de acceso no es válido o fue desactivado.'));
+        }
+      } else {
+        this.shareAccessRole = link.role;
+        const roleLabel = link.role === 'editor'
+          ? this.i18n.translate('projects.roleEditor')
+          : this.i18n.translate('projects.roleViewer');
+        this.notifications.info(this.i18n.translate('Acceso por enlace: {role}', { role: roleLabel }));
+      }
+      this.applyEffectiveAccess();
+      this.cdr.detectChanges();
+    } catch {
+      this.shareAccessRole = null;
+      this.applyEffectiveAccess();
+    }
+  }
+
+  private applyEffectiveAccess(): void {
+    if (this.shareAccessRole) {
+      this.canWrite = this.shareAccessRole === 'editor' && this.memberCanWrite;
+      // Si el enlace es de diseño pero el usuario no es miembro con escritura, queda en solo lectura local.
+      if (this.shareAccessRole === 'editor' && !this.memberCanWrite) {
+        this.canWrite = false;
+      }
+    } else {
+      this.canWrite = this.memberCanWrite;
+    }
+  }
+
+  get readOnlyByShareLink(): boolean {
+    return this.shareAccessRole === 'viewer';
+  }
+
+  get shareLinkBlocksEditing(): boolean {
+    return !!this.projectId && !!this.shareAccessRole && !this.canWrite;
+  }
+
   private saveProjectScene(projectId: string, sceneJson: string): void {
+    if (!this.canWrite) return;
     this.editorStatus.saveState.set('saving');
     void this.collaboration.saveProjectScene(projectId, sceneJson)
       .then(() => this.markSaved())

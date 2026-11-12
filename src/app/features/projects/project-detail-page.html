@@ -160,6 +160,57 @@
     </section>
   }
 
+  @if (isOwner) {
+    <section class="share-links-section">
+      <h2>{{ 'Enlaces de acceso' | translate }}</h2>
+      <p class="share-links-hint">{{ 'Crea enlaces de lectura o de diseño. Puedes cambiar sus permisos o desactivarlos en cualquier momento.' | translate }}</p>
+      <div class="share-link-create">
+        <label class="share-link-role">
+          <span>{{ 'Tipo de enlace' | translate }}</span>
+          <select [(ngModel)]="newShareRole" name="newShareRole" [disabled]="creatingShareLink">
+            <option value="viewer">{{ 'Lectura (solo ver)' | translate }}</option>
+            <option value="editor">{{ 'Diseño (puede editar)' | translate }}</option>
+          </select>
+        </label>
+        <button type="button" class="btn-primary" (click)="createShareLink()" [disabled]="creatingShareLink">
+          {{ creatingShareLink ? ('common.loading' | translate) : ('Crear enlace' | translate) }}
+        </button>
+      </div>
+
+      @if (shareLinks | async; as links) {
+        <div class="share-links-list">
+          @for (link of links; track link.id) {
+            <article class="share-link-row" [class.disabled]="!link.enabled">
+              <div class="share-link-main">
+                <div class="share-link-top">
+                  <span class="share-link-badge" [class.edit]="link.role === 'editor'">
+                    {{ link.role === 'editor' ? ('Diseño' | translate) : ('Lectura' | translate) }}
+                  </span>
+                  <span class="share-link-status" [class.off]="!link.enabled">{{ link.enabled ? ('Activo' | translate) : ('Desactivado' | translate) }}</span>
+                </div>
+                <code class="share-link-url">{{ shareLinkUrl(link) }}</code>
+                <div class="share-link-meta">{{ 'Creado' | translate }}: {{ link.createdAt | date:'short' }}</div>
+              </div>
+              <div class="share-link-actions">
+                <select [ngModel]="link.role" (ngModelChange)="changeShareLinkRole(link, $event)" [disabled]="busyShareLinkId === link.id">
+                  <option value="viewer">{{ 'Lectura' | translate }}</option>
+                  <option value="editor">{{ 'Diseño' | translate }}</option>
+                </select>
+                <button type="button" class="btn-secondary" (click)="copyShareLink(link)" [disabled]="busyShareLinkId === link.id">{{ 'Copiar' | translate }}</button>
+                <button type="button" class="btn-secondary" (click)="toggleShareLink(link)" [disabled]="busyShareLinkId === link.id">
+                  {{ link.enabled ? ('Desactivar' | translate) : ('Activar' | translate) }}
+                </button>
+                <button type="button" class="btn-danger" (click)="deleteShareLink(link)" [disabled]="busyShareLinkId === link.id">{{ 'Eliminar' | translate }}</button>
+              </div>
+            </article>
+          } @empty {
+            <p class="empty-share-links">{{ 'Aún no hay enlaces de acceso. Crea uno para compartir el proyecto sin invitar por correo.' | translate }}</p>
+          }
+        </div>
+      }
+    </section>
+  }
+
   @if (invitations | async; as pendingInvitations) {
     <section class="pending-invitations">
       <h2>{{ 'projects.pendingInvitations' | translate }}</h2>

@@ -12,6 +12,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AuthService } from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notifications';
 import { absoluteAppUrl, shareOrCopy } from '../../core/utils/share';
+import type { ProjectShareLink, ProjectShareLinkRole } from '../../core/models/social.models';
 
 @Component({
   selector: 'app-project-detail-page',
@@ -37,6 +38,7 @@ export class ProjectDetailPage implements OnInit {
   members = this.collaboration.getMembers('');
   invitations = this.collaboration.getMyInvitations();
   activity = this.collaboration.getProjectActivity('');
+  shareLinks = this.collaboration.getShareLinks('');
 
   newInviteEmail = '';
   newInviteRole: 'owner' | 'editor' | 'viewer' = 'editor';
@@ -44,6 +46,10 @@ export class ProjectDetailPage implements OnInit {
 
   canWrite = false;
   isOwner = false;
+
+  newShareRole: ProjectShareLinkRole = 'viewer';
+  creatingShareLink = false;
+  busyShareLinkId: string | null = null;
 
   /** UID del usuario actual (para permitir auto-eliminación de membresía). */
   get currentUid(): string | null {
@@ -74,6 +80,7 @@ export class ProjectDetailPage implements OnInit {
     this.members = this.collaboration.getMembers(this.projectId);
     this.invitations = this.collaboration.getMyInvitations();
     this.activity = this.collaboration.getProjectActivity(this.projectId);
+    this.shareLinks = this.collaboration.getShareLinks(this.projectId);
 
     combineLatest([this.auth.user$, this.members])
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -185,6 +192,77 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.error(
         error instanceof Error ? error.message : this.i18n.translate('projects.shareError')
       );
+    }
+  }
+
+  shareLinkUrl(link: ProjectShareLink): string {
+    return absoluteAppUrl(
+      `editor?project=${encodeURIComponent(this.projectId)}&share=${encodeURIComponent(link.id)}`,
+      this.document.baseURI,
+    );
+  }
+
+  shareLinkRoleLabel(link: ProjectShareLink): string {
+    return link.role === 'editor' ? this.i18n.translate('projects.roleEditor') : this.i18n.translate('projects.roleViewer');
+  }
+
+  async createShareLink(): Promise<void> {
+    if (!this.isOwner) return;
+    this.creatingShareLink = true;
+    try {
+      await this.collaboration.createShareLink(this.projectId, this.newShareRole);
+      this.notifications.success(this.i18n.translate('Enlace de acceso creado.'));
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo crear el enlace.'));
+    } finally {
+      this.creatingShareLink = false;
+    }
+  }
+
+  async copyShareLink(link: ProjectShareLink): Promise<void> {
+    try {
+      await shareOrCopy(this.shareLinkUrl(link), this.projectName || this.i18n.translate('projects.shareTitle'));
+      this.notifications.success(this.i18n.translate('projects.shareCopied'));
+    } catch {
+      this.notifications.error(this.i18n.translate('projects.shareError'));
+    }
+  }
+
+  async toggleShareLink(link: ProjectShareLink): Promise<void> {
+    this.busyShareLinkId = link.id;
+    try {
+      await this.collaboration.updateShareLink(link.id, { enabled: !link.enabled });
+      this.notifications.success(link.enabled ? this.i18n.translate('Enlace desactivado.') : this.i18n.translate('Enlace activado.'));
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el enlace.'));
+    } finally {
+      this.busyShareLinkId = null;
+    }
+  }
+
+  async changeShareLinkRole(link: ProjectShareLink, role: string): Promise<void> {
+    if (role !== 'editor' && role !== 'viewer') return;
+    this.busyShareLinkId = link.id;
+    try {
+      await this.collaboration.updateShareLink(link.id, { role: role as ProjectShareLinkRole });
+      this.notifications.success(this.i18n.translate('Permisos del enlace actualizados.'));
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo actualizar el enlace.'));
+    } finally {
+      this.busyShareLinkId = null;
+    }
+  }
+
+  async deleteShareLink(link: ProjectShareLink): Promise<void> {
+    if (!confirm(this.i18n.translate('¿Eliminar este enlace de acceso?'))) return;
+    this.busyShareLinkId = link.id;
+    try {
+      await this.collaboration.deleteShareLink(link.id);
+      this.notifications.success(this.i18n.translate('Enlace eliminado.'));
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : this.i18n.translate('No se pudo eliminar el enlace.'));
+    } finally {
+      this.busyShareLinkId = null;
     }
   }
 

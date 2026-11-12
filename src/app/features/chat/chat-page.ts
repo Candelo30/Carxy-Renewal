@@ -403,7 +403,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       await this.social.sendMessage(this.chatId, {
         text,
         senderId: user.uid,
-        senderName: user.displayName,
+        senderName: user.displayName || user.email || 'Usuario',
       });
       this.message = '';
       this.error = '';

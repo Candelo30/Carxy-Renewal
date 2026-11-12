@@ -9,6 +9,7 @@ import {
   PLATFORM_ID,
   ViewChild,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { LocalStateService } from '../../core/services/local-state';
@@ -58,6 +59,7 @@ export class ModelViewer implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly localState = inject(LocalStateService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   constructor(private threeEngine: ThreeEngineService) {}
 
@@ -67,8 +69,11 @@ export class ModelViewer implements OnDestroy {
     this.threeEngine.updateBackgroundColor(preferences.backgroundColor);
     this.threeEngine.updateLightIntensity(preferences.lightIntensity);
     this.threeEngine.setGizmoMode(preferences.gizmoMode);
-    const draft = this.localState.loadDraft();
-    if (draft) this.threeEngine.restoreScene(draft);
+    const inProject = !!this.route.snapshot.queryParamMap.get('project');
+    if (!inProject) {
+      const draft = this.localState.loadDraft();
+      if (draft) this.threeEngine.restoreScene(draft);
+    }
     this.hotspotSubscription = this.threeEngine.hotspotsChanged$.subscribe(() => this.refreshHotspots());
     this.cursorSubscription = this.threeEngine.remoteCursor$.subscribe((c) => {
       // El motor emite también el cursor propio: nunca debe dibujarse como remoto.

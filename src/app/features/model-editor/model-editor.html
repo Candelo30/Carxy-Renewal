@@ -1,4 +1,4 @@
-﻿<div class="editor-shell">
+<div class="editor-shell">
   <nav class="panel-tabs" [attr.aria-label]="'Navegación del panel' | translate">
     <button [class.active]="activePanel === 'scene'" (click)="activePanel = 'scene'">
       <span class="tab-icon">◈</span>{{ 'Escena' | translate }}
@@ -18,10 +18,10 @@
         <span class="count-badge">{{ sceneObjects.length }}</span>
       </div>
       <div class="primitive-grid">
-        <button [title]="'Agregar cubo' | translate" (click)="addPrimitive('box')"><span>▧</span>{{ 'Cubo' | translate }}</button>
-        <button [title]="'Agregar esfera' | translate" (click)="addPrimitive('sphere')"><span>●</span>{{ 'Esfera' | translate }}</button>
-        <button [title]="'Agregar cilindro' | translate" (click)="addPrimitive('cylinder')"><span>⬭</span>{{ 'Cilindro' | translate }}</button>
-        <button [title]="'Agregar toro' | translate" (click)="addPrimitive('torus')"><span>◎</span>{{ 'Toro' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar cubo' | translate" (click)="addPrimitive('box')"><span>▧</span>{{ 'Cubo' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar esfera' | translate" (click)="addPrimitive('sphere')"><span>●</span>{{ 'Esfera' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar cilindro' | translate" (click)="addPrimitive('cylinder')"><span>⬭</span>{{ 'Cilindro' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar toro' | translate" (click)="addPrimitive('torus')"><span>◎</span>{{ 'Toro' | translate }}</button>
         <button [title]="'Agregar cono' | translate" (click)="addCone()"><span>△</span>{{ 'Cono' | translate }}</button>
         <button [title]="'Agregar plano' | translate" (click)="addPlane()"><span>▱</span>{{ 'Plano' | translate }}</button>
         <button [title]="'Agregar anillo' | translate" (click)="addRing()"><span>◊</span>{{ 'Anillo' | translate }}</button>
@@ -89,8 +89,8 @@
           {{ 'No hay piezas con ese nombre.' | translate }}
         </p>
       </div>
-      <button class="delete-button" [disabled]="!selectedObjectId" (click)="deleteSelectedObject()">
-        {{ '− Eliminar modelo seleccionado' | translate }}
+      <button class="delete-button" [disabled]="!selectedObjectId || shareLinkBlocksEditing" (click)="deleteSelectedObject()">
+        {{ '- Eliminar modelo seleccionado' | translate }}
       </button>
 
       <div class="scene-actions">
@@ -244,6 +244,15 @@
         <span class="collapse-arrow" aria-hidden="true"></span>
       </summary>
       <div class="panel-collapsible-body">
+
+      @if (shareAccessRole) {
+        <div class="access-link-banner" [class.readonly]="shareLinkBlocksEditing">
+          <strong>{{ shareAccessRole === "editor" ? ("Enlace de diseño" | translate) : ("Enlace de lectura" | translate) }}</strong>
+          <span>
+            {{ shareLinkBlocksEditing ? ("Las herramientas de edición están bloqueadas por los permisos de este enlace." | translate) : ("Tienes acceso de edición a través de este enlace." | translate) }}
+          </span>
+        </div>
+      }
 
       @if (projectId) {
         <div class="project-collab-card">
@@ -505,3 +514,5 @@
     </div>
   }
 </div>
+
+

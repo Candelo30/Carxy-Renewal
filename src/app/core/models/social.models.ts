@@ -183,6 +183,9 @@ export interface EditorPreferences {
 
 export type ProjectRole = 'owner' | 'editor' | 'viewer';
 
+/** Rol que otorga un enlace compartido. No incluye owner para evitar escalado accidental. */
+export type ProjectShareLinkRole = 'editor' | 'viewer';
+
 export interface Project {
   id: string;
   ownerId: string;
@@ -218,6 +221,19 @@ export interface ProjectInvitation {
   createdAt: number;
   expiresAt: number;
   respondedAt?: number;
+}
+
+export interface ProjectShareLink {
+  /** Token usado en la URL (?share=<id>). También es el ID del documento. */
+  id: string;
+  projectId: string;
+  role: ProjectShareLinkRole;
+  label?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: number;
+  updatedAt: number;
+  enabled: boolean;
 }
 
 export interface ProjectActivity {

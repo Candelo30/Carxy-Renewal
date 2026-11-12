@@ -147,7 +147,7 @@
             <span class="presence-dot header-presence" [class.online]="activity && activityClass(activity) === 'online'" aria-hidden="true"></span>
           </span>
           <div class="header-copy">
-            <strong>{{ peer?.displayName || 'Conversación directa' | translate }}</strong>
+            <strong>{{ peer?.displayName || ('Conversación directa' | translate) }}</strong>
             <small class="presence-line"><span class="presence-text" [class.online]="activity && activityClass(activity) === 'online'">{{ activity ? activityLabel(activity) : ('Sin actividad' | translate) }}</span></small>
             <small class="uid-line">
               <span class="uid-text">{{ partnerId }}</span>
@@ -204,7 +204,7 @@
                     }
                     <div class="bubble" [class.copied]="copiedMessageId === item.message.id">
                       @if (item.firstOfRun) {
-                        <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName) }}</b>
+                        <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName || ('Usuario' | translate)) }}</b>
                       }
                       <p [innerHTML]="highlightedHtml(item.message.text)"></p>
                       <span class="bubble-actions">

@@ -27,6 +27,7 @@ export const SOCIAL_COLLECTIONS = {
   projects: 'projects',
   projectMembers: 'projectMembers',
   projectInvitations: 'projectInvitations',
+  projectShareLinks: 'projectShareLinks',
   projectActivity: 'projectActivity',
   projectPresences: 'projectPresences',
   helpArticles: 'helpArticles',

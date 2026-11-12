@@ -3,6 +3,36 @@
   height: 100%;
 }
 
+.access-link-banner {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #38bdf8 35%, var(--border-color));
+  background: color-mix(in srgb, #38bdf8 10%, var(--surface-control));
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+.access-link-banner.readonly {
+  border-color: color-mix(in srgb, #f59e0b 40%, var(--border-color));
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface-control));
+}
+
+.access-link-banner span {
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.primitive-grid button:disabled,
+.scene-actions button:disabled,
+.delete-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .editor-shell {
   min-height: 100%;
   color: var(--text-primary);

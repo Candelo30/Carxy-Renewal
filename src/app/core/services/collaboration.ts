@@ -29,6 +29,8 @@ import {
   ProjectPresence,
   PresenceTransform,
   ProjectRole,
+  ProjectShareLink,
+  ProjectShareLinkRole,
 } from '../models/social.models';
 
 export type ProjectPermission = 'read' | 'write' | 'owner';
@@ -739,6 +741,122 @@ export class CollaborationService implements OnDestroy {
     } finally {
       entry.stream.complete();
       cache.delete(projectId);
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Enlaces compartidos                                               */
+  /* ------------------------------------------------------------------ */
+
+  private randomShareToken(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID().replace(/-/g, '').slice(0, 20);
+    }
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 14)}`.slice(0, 20);
+  }
+
+  getShareLinks(projectId: string): Observable<ProjectShareLink[]> {
+    const db = this.firestore;
+    if (!db || !projectId) return of([]);
+    try {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projectShareLinks),
+        where('projectId', '==', projectId),
+      );
+      return (collectionData(q, { idField: 'id' }) as Observable<ProjectShareLink[]>).pipe(
+        map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
+        catchError((err) => {
+          console.warn('No se pudieron cargar los enlaces compartidos.', err);
+          return of([] as ProjectShareLink[]);
+        }),
+      );
+    } catch {
+      return of([] as ProjectShareLink[]);
+    }
+  }
+
+  async createShareLink(projectId: string, role: ProjectShareLinkRole, label = ''): Promise<ProjectShareLink> {
+    const user = await this.currentUser();
+    if (!user) throw new Error(this.i18n.translate('Inicia sesión para crear un enlace.'));
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+
+    const isOwner = await this.isProjectOwnerRole(projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    if (!isOwner && !isGlobalAdmin) {
+      throw new Error(this.i18n.translate('Solo el dueño puede crear enlaces de acceso.'));
+    }
+
+    const now = Date.now();
+    const id = this.randomShareToken();
+    const link: ProjectShareLink = {
+      id,
+      projectId,
+      role,
+      label: label.trim().slice(0, 60),
+      createdBy: user.uid,
+      createdByName: user.displayName || user.email || 'Usuario',
+      createdAt: now,
+      updatedAt: now,
+      enabled: true,
+    };
+    await setDoc(doc(db, `${SOCIAL_COLLECTIONS.projectShareLinks}/${id}`), link);
+    return link;
+  }
+
+  async updateShareLink(linkId: string, patch: { role?: ProjectShareLinkRole; enabled?: boolean; label?: string }): Promise<void> {
+    const user = await this.currentUser();
+    if (!user) throw new Error(this.i18n.translate('Inicia sesión para modificar el enlace.'));
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectShareLinks}/${linkId}`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error(this.i18n.translate('El enlace no existe.'));
+    const current = snap.data() as ProjectShareLink;
+
+    const isOwner = await this.isProjectOwnerRole(current.projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    if (!isOwner && !isGlobalAdmin) {
+      throw new Error(this.i18n.translate('Solo el dueño puede modificar este enlace.'));
+    }
+
+    const next: Partial<ProjectShareLink> = { updatedAt: Date.now() };
+    if (patch.role === 'viewer' || patch.role === 'editor') next.role = patch.role;
+    if (typeof patch.enabled === 'boolean') next.enabled = patch.enabled;
+    if (typeof patch.label === 'string') next.label = patch.label.trim().slice(0, 60);
+    await updateDoc(ref, next);
+  }
+
+  async deleteShareLink(linkId: string): Promise<void> {
+    const user = await this.currentUser();
+    if (!user) throw new Error(this.i18n.translate('Inicia sesión para eliminar el enlace.'));
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectShareLinks}/${linkId}`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const current = snap.data() as ProjectShareLink;
+
+    const isOwner = await this.isProjectOwnerRole(current.projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    if (!isOwner && !isGlobalAdmin) {
+      throw new Error(this.i18n.translate('Solo el dueño puede eliminar este enlace.'));
+    }
+    await deleteDoc(ref);
+  }
+
+  async resolveShareLink(token: string): Promise<ProjectShareLink | null> {
+    const db = this.firestore;
+    if (!db || !token) return null;
+    try {
+      const snap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projectShareLinks}/${token}`));
+      if (!snap.exists()) return null;
+      const link = { ...(snap.data() as ProjectShareLink), id: snap.id };
+      return link.enabled ? link : null;
+    } catch {
+      return null;
     }
   }
 
