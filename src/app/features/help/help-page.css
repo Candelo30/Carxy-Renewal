@@ -1013,21 +1013,28 @@ kbd {
 @keyframes assistant-spin { to { transform: rotate(360deg); } }
 
 .assistant-answer {
-  padding: 12px 14px; border-radius: 12px; font-size: 0.86rem; line-height: 1.55;
+  padding: 12px 14px; border-radius: 12px; font-size: 0.86rem; line-height: 1.6;
   color: var(--text-primary);
-  background: color-mix(in srgb, var(--accent-color) 6%, var(--surface-raised));
-  border: 1px solid color-mix(in srgb, var(--accent-color) 22%, var(--border-color));
+  background:
+    radial-gradient(640px 200px at 0% 0%, color-mix(in srgb, var(--accent-color) 10%, transparent), transparent 70%),
+    color-mix(in srgb, var(--accent-color) 5%, var(--surface-raised));
+  border: 1px solid color-mix(in srgb, var(--accent-color) 24%, var(--border-color));
 }
-.assistant-answer p { margin: 0 0 8px; }
+.assistant-answer p { margin: 0 0 10px; }
 .assistant-answer p:last-child { margin-bottom: 0; }
-.assistant-answer ul, .assistant-answer ol { margin: 0 0 8px; padding-left: 18px; display: grid; gap: 4px; }
+.assistant-answer ul, .assistant-answer ol { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
 .assistant-answer li > p { margin: 0; }
-.assistant-answer strong { color: var(--text-primary); }
-.assistant-answer a { color: var(--accent-color); text-decoration: underline; word-break: break-word; }
-.assistant-answer code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8em; padding: 1px 5px; border-radius: 5px; background: var(--surface-control); border: 1px solid var(--border-color); }
-.assistant-answer h1, .assistant-answer h2, .assistant-answer h3 { font-size: 0.92rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+.assistant-answer li::marker { color: var(--accent-color); font-weight: 800; font-variant-numeric: tabular-nums; }
+.assistant-answer strong { color: var(--text-primary); background: color-mix(in srgb, var(--accent-color) 14%, transparent); padding: 0 4px; border-radius: 4px; }
+.assistant-answer em { color: var(--text-muted); font-style: italic; }
+.assistant-answer a { color: var(--accent-color); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; font-weight: 650; word-break: break-word; transition: color 120ms ease, text-decoration-color 120ms ease; }
+.assistant-answer a:hover { color: color-mix(in srgb, var(--accent-color) 72%, #fff); text-decoration-color: currentColor; }
+.assistant-answer code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82em; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-control)); border: 1px solid color-mix(in srgb, var(--accent-color) 30%, var(--border-color)); color: var(--text-primary); }
+.assistant-answer h1, .assistant-answer h2, .assistant-answer h3 { font-size: 0.95rem; margin: 0 0 8px; letter-spacing: -0.015em; color: var(--accent-color); }
+.assistant-answer blockquote { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid var(--accent-color); border-radius: 8px; color: var(--text-muted); background: color-mix(in srgb, var(--accent-color) 5%, transparent); }
+.assistant-answer hr { border: none; border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent); margin: 12px 0; }
 .assistant-qa { display: grid; gap: 6px; padding-top: 4px; border-top: 1px dashed color-mix(in srgb, var(--border-color) 70%, transparent); }
-.assistant-q { margin: 0; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); }
+.assistant-q { margin: 0; font-size: 0.82rem; font-weight: 750; color: color-mix(in srgb, var(--accent-color) 65%, var(--text-primary)); letter-spacing: -0.01em; }
 .assistant-error { margin: 0; font-size: 0.8rem; color: var(--color-danger); }
 .assistant-note { margin: 0; color: var(--text-muted); font-size: 0.66rem; }
 

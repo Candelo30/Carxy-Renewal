@@ -49,12 +49,10 @@
   }
 </div>
 
-@if (settingsOpen) {
-  <div class="settings-backdrop" (click)="settingsOpen = false">
-    <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title" (click)="$event.stopPropagation()">
-      <button class="settings-close" type="button" [attr.aria-label]="'common.close' | translate" (click)="settingsOpen = false">×</button>
-      <p class="eyebrow">CARXY STUDIO</p>
-      <h2 id="settings-title">{{ (settingsTab === 'security' ? 'account.securityTitle' : 'account.appearanceTitle') | translate }}</h2>
+<dialog #settingsDialog class="settings-dialog" (click)="closeOnBackdrop($event)" (cancel)="closeSettings()" aria-labelledby="settings-title">
+  <button class="settings-close" type="button" [attr.aria-label]="'common.close' | translate" (click)="closeSettings()">×</button>
+  <p class="eyebrow">CARXY STUDIO</p>
+  <h2 id="settings-title">{{ (settingsTab === 'security' ? 'account.securityTitle' : 'account.appearanceTitle') | translate }}</h2>
       @if (user) {
         <div class="settings-tabs" role="tablist">
           <button type="button" role="tab" [class.active]="settingsTab === 'appearance'" (click)="settingsTab = 'appearance'">{{ 'account.appearance' | translate }}</button>
@@ -174,8 +172,6 @@
             </div>
           }
         </section>
-        <button class="settings-done" type="button" (click)="settingsOpen = false">{{ 'common.close' | translate }}</button>
+        <button class="settings-done" type="button" (click)="closeSettings()">{{ 'common.close' | translate }}</button>
       }
-    </section>
-  </div>
-}
+</dialog>

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, inject, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -25,13 +25,13 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
   styleUrl: './account-menu.css',
 })
 export class AccountMenuComponent {
+  @ViewChild('settingsDialog') private settingsDialog?: ElementRef<HTMLDialogElement>;
   readonly user$ = inject(AuthService).user$;
   readonly fallbackAvatar = 'user-avatar.svg';
   readonly i18n = inject(I18nService);
   readonly languages = this.i18n.languages;
   readonly preferences: EditorPreferences;
   open = false;
-  settingsOpen = false;
   settingsTab: 'appearance' | 'security' = 'appearance';
   readonly auth = inject(AuthService);
   private readonly social = inject(SocialService);
@@ -72,7 +72,17 @@ export class AccountMenuComponent {
   toggleSettings(tab: 'appearance' | 'security' = 'appearance'): void {
     this.open = false;
     this.settingsTab = tab;
-    this.settingsOpen = true;
+    this.settingsDialog?.nativeElement.showModal();
+  }
+
+  closeSettings(): void {
+    this.settingsDialog?.nativeElement.close();
+  }
+
+  closeOnBackdrop(event: MouseEvent): void {
+    const dialog = this.settingsDialog?.nativeElement;
+    if (!dialog) return;
+    if (event.target === dialog) dialog.close();
   }
 
   saveAppearance(): void {
@@ -88,7 +98,7 @@ export class AccountMenuComponent {
 
   finishSettings(): void {
     this.saveAppearance();
-    this.settingsOpen = false;
+    this.closeSettings();
     this.notifications.success(
       this.i18n.translate('account.settingsSaved'),
       this.i18n.translate('common.saved'),
@@ -143,7 +153,7 @@ export class AccountMenuComponent {
       await this.social.deleteAccountData(uid);
       await this.auth.deleteAccount();
       this.open = false;
-      this.settingsOpen = false;
+      this.closeSettings();
       await this.router.navigate(['/login']);
       this.notifications.success(
         this.i18n.translate('Tu cuenta se eliminó y tus conversaciones quedaron anonimizadas.'),
@@ -161,7 +171,6 @@ export class AccountMenuComponent {
     try {
       await this.auth.logout();
       this.open = false;
-      this.settingsOpen = false;
       await this.router.navigate(['/login']);
       this.notifications.info(this.i18n.translate('Tu sesión se ha cerrado.'));
     } catch (error) {
