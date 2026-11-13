@@ -87,6 +87,11 @@
   grid-template-columns: 0 minmax(0, 1fr);
 }
 
+/* Que gane siempre sobre las media queries de tablet (tienen la misma especificidad y van después en el archivo) o de lo contrario en pantallas ≤1100px el panel no se colapsa y queda un hueco en blanco. */
+.editor-layout.panel-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
 .panel-collapsed .editor-panel-area {
   opacity: 0;
   pointer-events: none;
@@ -94,6 +99,10 @@
 }
 
 .presentation-mode {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.editor-layout.presentation-mode {
   grid-template-columns: 0 minmax(0, 1fr);
 }
 
