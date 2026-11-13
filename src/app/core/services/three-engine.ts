@@ -72,6 +72,9 @@ export class ThreeEngineService implements OnDestroy {
   public presentationEnabled = false;
   public arSupported = false;
   public ownCursorUid: string | null = null;
+  /** Último elemento lienzo o instancia de arranque (ver línea de siembra). */
+  public skipStarterScene = false;
+
   public readonly collaboratorJoined$ = new Subject<{ uid: string; displayName: string; color: string }>();
   public readonly collaboratorLeft$ = new Subject<string>();
   public readonly collaboratorTransform$ = new Subject<{ uid: string; objectId: string; position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number }; scale: { x: number; y: number; z: number } }>();
@@ -250,7 +253,9 @@ export class ThreeEngineService implements OnDestroy {
     this.initializePostProcessing(width, height);
     this.detectARSupport();
 
-    if (firstSceneInitialization && this.objects.length === 0
+    if (firstSceneInitialization
+      && !this.skipStarterScene
+      && this.objects.length === 0
       && this.pendingModels.length === 0 && this.pendingPrimitives.length === 0) {
       this.addPrimitive('box');
       this.starterObjectId = this.objects.at(-1)?.id ?? null;

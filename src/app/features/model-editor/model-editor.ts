@@ -245,6 +245,11 @@ export class ModelEditor implements OnInit, OnDestroy {
     const share = this.route.snapshot.queryParamMap.get('share');
     this.shareToken = share;
     if (qp) {
+      // Suprimir el cubo de arranque: cada cliente plantaba el suyo al abrir
+      // un proyecto compartido y las escenas divergían (los remotos nunca se
+      // veían y la sincronía nunca funcionaba). La escena se siembra en local
+      // o carga desde Firestore; aquí nunca debe sembrarse una caja extra.
+      this.threeEngine.skipStarterScene = true;
       this.projectId = qp;
 
       this.subscriptions.add(
