@@ -1,8 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, ViewChild, ElementRef, inject, signal, AfterViewInit, HostListener } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { Subscription } from 'rxjs';
 import { I18nService } from '../../core/services/i18n';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
@@ -904,6 +907,7 @@ export class HelpPage implements OnInit, OnDestroy, AfterViewInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly i18n = inject(I18nService);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly subscription = new Subscription();
 
   @HostListener('window:resize')
@@ -1043,6 +1047,13 @@ export class HelpPage implements OnInit, OnDestroy, AfterViewInit {
 
   toggleArticle(id: string): void {
     this.expandedId = this.expandedId === id ? null : id;
+  }
+
+  /** Renderiza el Markdown de la respuesta del asistente como HTML saneado. */
+  renderAssistantAnswer(markdown: string): SafeHtml {
+    const raw = marked.parse(markdown ?? '', { gfm: true, breaks: true }) as string;
+    const safe = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+    return this.sanitizer.bypassSecurityTrustHtml(safe);
   }
 
   get shortcuts(): Array<{ keys: string; action: string }> {

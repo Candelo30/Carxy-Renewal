@@ -104,7 +104,7 @@
       @for (item of assistantHistory(); track item.id) {
         <div class="assistant-qa">
           <p class="assistant-q">🙋 {{ item.q }}</p>
-          <div class="assistant-answer">{{ item.a }}</div>
+          <div class="assistant-answer" [innerHTML]="renderAssistantAnswer(item.a)"></div>
         </div>
       }
       <p class="assistant-note">{{ 'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.' | translate }}</p>
