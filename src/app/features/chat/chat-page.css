@@ -5,8 +5,18 @@
   color: var(--text-primary);
 }
 
+/* Tokens del chat: jerarquía visual y micro-interacciones. */
+:host {
+  --chat-accent: var(--accent-color);
+  --chat-border: color-mix(in srgb, var(--border-color) 68%, transparent);
+  --chat-shadow-soft: 0 10px 30px color-mix(in srgb, #000 26%, transparent);
+  --chat-shadow-strong: 0 16px 44px color-mix(in srgb, #000 38%, transparent);
+  --chat-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --chat-radius: 16px;
+}
+
 /* ==========================================================================
-   Shell / layout
+   Fundamentos
    ========================================================================== */
 .chat-shell {
   display: flex;
@@ -18,6 +28,40 @@
     var(--surface-main);
 }
 
+/* Anillo de foco consistente en todo el chat (el tema no lo define globalmente).
+   El radio lo hereda cada elemento del propio `border-radius`.
+   Los campos de formulario ya traen su propio anillo (box-shadow), así que
+   se excluyen para no dibujar dos indicadores a la vez. */
+.chat-shell :focus-visible:not(input):not(textarea):not(select) {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Scrollbars discretos y temáticos. */
+.chat-shell ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.chat-shell ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-shell ::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 38%, transparent);
+  background-clip: content-box;
+}
+
+.chat-shell ::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text-muted) 62%, transparent);
+  background-clip: content-box;
+}
+
+/* ==========================================================================
+   Shell / layout
+   ========================================================================== */
 .conversations-intro {
   margin-top: 8px;
   color: var(--text-muted);
@@ -36,7 +80,17 @@
   background: transparent;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1120px) {
+  .chat-layout {
+    grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  }
+
+  .conversations {
+    padding: 18px 14px 22px;
+  }
+}
+
+@media (max-width: 880px) {
   .chat-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -63,14 +117,53 @@
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 640px) {
   .chat-layout {
     width: 100%;
   }
 
+  .conversations {
+    padding: 14px 12px 18px;
+  }
+
+  .conversation-header {
+    height: 64px;
+    padding: 0 12px;
+  }
+
   .back-button {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+}
+
+/* Preferir menos movimiento para quienes lo piden en su sistema. */
+@media (prefers-reduced-motion: reduce) {
+  .chat-shell *,
+  .chat-shell *::before,
+  .chat-shell *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Más contraste cuando el sistema lo pide. */
+@media (prefers-contrast: more) {
+  .recent-chat,
+  .bubble,
+  .search-box input,
+  .conversations input,
+  .composer textarea {
+    border-color: var(--border-color) !important;
+  }
+
+  .recent-chat.selected,
+  .pin-toggle.pinned,
+  .icon-button.active {
+    border-color: var(--accent-color) !important;
   }
 }
 
@@ -79,12 +172,14 @@
    ========================================================================== */
 .conversations {
   min-width: 0;
-  overflow: auto;
-  padding: 24px 18px 22px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 18px 28px;
   border-right: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   background:
-    radial-gradient(100% 60% at 0% 0%, color-mix(in srgb, var(--accent-color) 10%, transparent), transparent 42%),
-    var(--surface-panel);
+    radial-gradient(120% 55% at 0% 0%, color-mix(in srgb, var(--accent-color) 12%, transparent), transparent 46%),
+    radial-gradient(120% 55% at 0% 100%, color-mix(in srgb, var(--accent-color) 5%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel) 92%, transparent), var(--surface-panel));
   scrollbar-gutter: stable;
 }
 
@@ -102,19 +197,60 @@
   letter-spacing: -0.02em;
 }
 
+/* Contador de actividad: tarjeta plana, sin borde completo. */
 .recent-heading-row {
+  display: flex;
   margin-top: 14px;
-  padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
+}
+
+.recent-heading-row p {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .recent-heading-row strong {
   color: var(--accent-color);
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botón de ajustes dentro de la barra de actividad. */
+.open-settings {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  place-items: center;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.open-settings svg {
+  width: 15px;
+  height: 15px;
+}
+
+.open-settings:hover {
+  border-color: color-mix(in srgb, var(--accent-color) 40%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 14%, transparent);
+  color: var(--accent-color);
+  transform: rotate(35deg);
 }
 
 .recent-conversations {
@@ -123,7 +259,10 @@
 
 .recent-conversations h2,
 .new-conversation-title {
+  display: flex;
   margin-bottom: 10px;
+  align-items: center;
+  gap: 8px;
   color: var(--text-muted);
   font-size: 0.66rem;
   font-weight: 800;
@@ -131,10 +270,17 @@
   text-transform: uppercase;
 }
 
+.recent-conversations h2::after,
+.new-conversation-title::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
 .search-box {
   position: relative;
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   align-items: center;
 }
 
@@ -156,8 +302,9 @@
   outline: none;
   background: var(--surface-control);
   color: var(--text-primary);
+  font: inherit;
   font-size: 0.82rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .search-box input::placeholder {
@@ -166,6 +313,7 @@
 
 .search-box input:focus {
   border-color: color-mix(in srgb, var(--accent-color) 55%, var(--border-color));
+  background: var(--surface-raised);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 18%, transparent);
 }
 
@@ -180,15 +328,15 @@
   border: 0;
 }
 
+/* Una sola zona de scroll: la sidebar. Antes la lista tenía su propio
+   `max-height: 48vh`, lo que generaba un scroll anidado. */
 .recent-list {
   display: grid;
-  gap: 8px;
-  max-height: 48vh;
-  overflow-y: auto;
-  padding: 2px;
-  scrollbar-width: thin;
+  gap: 6px;
 }
 
+/* Fila de conversación. Es un `div[role=button]` (no un `button`) porque
+   contenía otro `button` (fijar), anidamiento inválido en HTML. */
 .recent-chat {
   position: relative;
   display: flex;
@@ -198,18 +346,27 @@
   gap: 11px;
   padding: 10px 11px;
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: var(--chat-radius);
   background: transparent;
   color: var(--text-primary);
+  font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  transition:
+    background 150ms var(--chat-ease),
+    border-color 150ms var(--chat-ease),
+    box-shadow 150ms var(--chat-ease),
+    transform 150ms var(--chat-ease);
 }
 
 .recent-chat:hover {
   border-color: color-mix(in srgb, var(--accent-color) 30%, var(--border-color));
   background: color-mix(in srgb, var(--accent-color) 6%, var(--surface-raised));
-  transform: translateX(2px);
+  transform: translateY(-1px);
+}
+
+.recent-chat:active {
+  transform: translateY(0);
 }
 
 .recent-chat.selected {
@@ -219,11 +376,20 @@
     var(--surface-raised);
   box-shadow:
     inset 3px 0 0 0 var(--accent-color),
-    0 8px 22px color-mix(in srgb, #000 28%, transparent);
+    var(--chat-shadow-soft);
 }
 
 .recent-chat.pinned {
-  border-color: color-mix(in srgb, #f59e0b 38%, var(--border-color));
+  border-color: color-mix(in srgb, var(--color-warning) 42%, var(--border-color));
+  background:
+    radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--color-warning) 7%, transparent), transparent 55%),
+    transparent;
+}
+
+.recent-chat.pinned.selected {
+  box-shadow:
+    inset 3px 0 0 0 var(--accent-color),
+    var(--chat-shadow-soft);
 }
 
 .recent-avatar {
@@ -239,23 +405,30 @@
   border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
   border-radius: 50%;
   object-fit: cover;
+  background: var(--surface-raised);
 }
 
+/* Punto de presencia: sin marco, se apoya en el color. */
 .presence-dot {
   position: absolute;
   right: -2px;
   bottom: -2px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--surface-panel);
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--surface-active);
   border-radius: 50%;
-  background: #94a3b8;
-  transition: background 150ms ease, box-shadow 150ms ease;
+  background: color-mix(in srgb, var(--text-muted) 70%, transparent);
+  transition: background 150ms ease, box-shadow 150ms ease, transform 150ms var(--chat-ease);
+}
+
+.recent-chat:hover .presence-dot,
+.header-presence {
+  transform: scale(1.1);
 }
 
 .presence-dot.online {
-  background: #34d399;
-  box-shadow: 0 0 8px #34d399aa;
+  background: var(--color-success);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-success) 70%, transparent);
 }
 
 .presence-dot.header-presence {
@@ -264,6 +437,16 @@
   width: 14px;
   height: 14px;
   border-width: 2px;
+  border-color: color-mix(in srgb, var(--surface-raised) 55%, var(--surface-panel));
+}
+
+.recent-chat.unread .recent-chat-copy strong {
+  color: var(--text-primary);
+}
+
+.recent-chat.unread .recent-chat-copy small {
+  color: var(--text-primary);
+  font-weight: 650;
 }
 
 .unread-dot {
@@ -302,7 +485,7 @@
   width: 12px;
   height: 12px;
   flex: none;
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .recent-chat-copy strong,
@@ -323,19 +506,22 @@
   line-height: 1.35;
 }
 
+/* Columna derecha: fecha arriba, fijar abajo. El botón de fijar solo aparece
+   al pasar el ratón o al enfocarlo, en lugar de reservar hueco permanente. */
 .recent-chat-meta {
   display: flex;
   flex: none;
-  align-items: center;
-  gap: 4px;
-  align-self: stretch;
   flex-direction: column;
+  align-items: flex-end;
+  align-self: stretch;
   justify-content: space-between;
+  gap: 4px;
 }
 
 .recent-chat time {
   color: var(--text-muted);
   font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -350,7 +536,8 @@
   color: var(--text-muted);
   place-items: center;
   cursor: pointer;
-  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+  opacity: 0;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
 }
 
 .pin-toggle svg {
@@ -358,30 +545,48 @@
   height: 14px;
 }
 
+.recent-chat:hover .pin-toggle,
+.pin-toggle:focus-visible,
+.pin-toggle.pinned {
+  opacity: 1;
+}
+
 .pin-toggle:hover {
   border-color: var(--border-color);
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .pin-toggle.pinned {
-  color: #f59e0b;
-  background: color-mix(in srgb, #f59e0b 12%, var(--surface-raised));
-  border-color: color-mix(in srgb, #f59e0b 35%, var(--border-color));
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--surface-raised));
+  border-color: color-mix(in srgb, var(--color-warning) 35%, var(--border-color));
 }
 
+/* Estado vacío de la lista. */
 .no-recent-chats {
-  padding: 14px 13px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 22px 16px;
   border: 1px dashed color-mix(in srgb, var(--border-color) 85%, transparent);
-  border-radius: 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-panel) 55%, transparent);
   color: var(--text-muted);
   font-size: 0.74rem;
   line-height: 1.55;
-  background: color-mix(in srgb, var(--surface-panel) 55%, transparent);
+  text-align: center;
+}
+
+.no-recent-chats svg {
+  width: 30px;
+  height: 30px;
+  color: color-mix(in srgb, var(--accent-color) 70%, var(--text-muted));
+  opacity: 0.85;
 }
 
 .new-conversation-title {
-  margin: 20px 0 0;
-  padding-top: 18px;
+  margin: 22px 0 0;
+  padding-top: 20px;
   border-top: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
 }
 
@@ -399,18 +604,20 @@
 
 .conversations input {
   min-width: 0;
-  padding: 12px 12px;
+  padding: 12px;
   border: 1px solid var(--border-color);
   border-radius: 11px;
   outline: none;
   background: var(--surface-control);
   color: var(--text-primary);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  font: inherit;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .conversations input:focus,
 .composer textarea:focus {
   border-color: color-mix(in srgb, var(--accent-color) 55%, var(--border-color));
+  background: var(--surface-raised);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 18%, transparent);
 }
 
@@ -422,6 +629,7 @@
   border-radius: 11px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 92%, #ffffff), color-mix(in srgb, var(--accent-color) 72%, #2b0f5e));
   color: #ffffff;
+  font: inherit;
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -439,72 +647,212 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 0%, rgba(255,255,255,0.28), transparent 40%);
+  background: radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.28), transparent 40%);
   pointer-events: none;
 }
 
 .error {
   margin-top: 10px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--color-danger) 45%, var(--border-color));
   border-radius: 10px;
   background: color-mix(in srgb, var(--color-danger) 10%, transparent);
-  color: #ffb4b4;
+  color: color-mix(in srgb, var(--color-danger) 80%, var(--text-primary));
   font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .notice {
   margin-top: 18px;
-  padding: 11px;
+  padding: 11px 12px;
   border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--border-color));
   border-radius: 11px;
   background: color-mix(in srgb, var(--color-warning) 10%, var(--surface-panel));
-  color: #ffd88a;
+  color: color-mix(in srgb, var(--color-warning) 75%, var(--text-primary));
   font-size: 0.73rem;
+  line-height: 1.45;
 }
 
+/* Aviso de fallo de sincronización: el chat ya no se queda en blanco sin
+   explicación cuando el listener de Firestore falla. */
+.stream-error {
+  display: flex;
+  margin-top: 12px;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-danger) 45%, var(--border-color));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: color-mix(in srgb, var(--color-danger) 80%, var(--text-primary));
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.stream-error svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ==========================================================================
+   Selector de fondo (usado en el diálogo de ajustes)
+   ========================================================================== */
 .background-select {
-  background: var(--surface-control);
-  color: var(--text-primary);
+  height: 34px;
+  max-width: 168px;
+  padding: 0 28px 0 10px;
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  padding: 8px 10px;
+  outline: none;
+  background-color: var(--surface-control);
+  color: var(--text-primary);
   font: inherit;
-  max-width: 180px;
+  font-size: 0.74rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  transition: border-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
 }
 
-.global-background {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 18px;
-}
-
-.global-background-label {
-  color: var(--text-muted);
-  font-size: 14px;
+.background-select:hover {
+  color: var(--accent-color);
+  border-color: color-mix(in srgb, var(--accent-color) 40%, var(--border-color));
 }
 
 .background-select:focus {
-  outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 25%, transparent);
+}
+
+.setting .background-select {
+  flex: none;
+  max-width: 176px;
+}
+
+/* ==========================================================================
+   Tema claro: el "canvas" del chat necesita más separación.
+   ========================================================================== */
+:root[data-theme='light'] .conversation {
+  background:
+    radial-gradient(80% 55% at 50% 0%, color-mix(in srgb, var(--chat-accent) 8%, transparent), transparent 60%),
+    #e9ebf4;
+}
+
+:root[data-theme='light'] .bubble {
+  border-color: var(--border-color);
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(24, 28, 48, 0.07), 0 8px 18px rgba(24, 28, 48, 0.1);
+}
+
+:root[data-theme='light'] .message.own .bubble {
+  border-color: transparent;
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--chat-accent) 88%, #ffffff),
+    color-mix(in srgb, var(--chat-accent) 82%, #4335a6) 88%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 18px color-mix(in srgb, var(--chat-accent) 32%, transparent);
+}
+
+:root[data-theme='light'] .message.own .bubble b,
+:root[data-theme='light'] .message.own .bubble p {
+  color: #ffffff;
+}
+
+:root[data-theme='light'] .message.own .bubble time {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+:root[data-theme='light'] .model-card {
+  background: color-mix(in srgb, var(--accent-color) 5%, #ffffff);
+}
+
+:root[data-theme='light'] .presence-dot {
+  border-color: #ffffff;
+}
+
+/* ==========================================================================
+   Canvas oscuro elegido explícitamente (fondo "Océano", "Aurora", etc.):
+   sobre él las burbujas usan una paleta oscura fija (no dependen del tema
+   claro, donde --surface-raised es casi blanco).
+   ========================================================================== */
+.conversation[data-bg='aurora'] .bubble,
+.conversation[data-bg='ocean'] .bubble,
+.conversation[data-bg='sunset'] .bubble,
+.conversation[data-bg='forest'] .bubble {
+  border-color: color-mix(in srgb, var(--border-color) 85%, transparent);
+  background:
+    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--chat-accent) 12%, transparent), transparent 55%),
+    #1e222d;
+  box-shadow: 0 4px 14px color-mix(in srgb, #000 30%, transparent);
+}
+
+.conversation[data-bg='aurora'] .bubble:hover,
+.conversation[data-bg='ocean'] .bubble:hover,
+.conversation[data-bg='sunset'] .bubble:hover,
+.conversation[data-bg='forest'] .bubble:hover {
+  border-color: color-mix(in srgb, var(--accent-color) 40%, var(--border-color));
+}
+
+.conversation[data-bg='aurora'] .bubble b,
+.conversation[data-bg='ocean'] .bubble b,
+.conversation[data-bg='sunset'] .bubble b,
+.conversation[data-bg='forest'] .bubble b {
+  color: var(--text-muted);
+}
+
+.conversation[data-bg='aurora'] .bubble p,
+.conversation[data-bg='ocean'] .bubble p,
+.conversation[data-bg='sunset'] .bubble p,
+.conversation[data-bg='forest'] .bubble p {
+  color: #f3f4f8;
+}
+
+.conversation[data-bg='aurora'] .bubble time,
+.conversation[data-bg='ocean'] .bubble time,
+.conversation[data-bg='sunset'] .bubble time,
+.conversation[data-bg='forest'] .bubble time {
+  color: #929bad;
+}
+
+.conversation[data-bg='aurora'] .day-divider,
+.conversation[data-bg='ocean'] .day-divider,
+.conversation[data-bg='sunset'] .day-divider,
+.conversation[data-bg='forest'] .day-divider {
+  color: #929bad;
 }
 
 /* ==========================================================================
    Conversation area
    ========================================================================== */
 .conversation {
+  position: relative;
   display: flex;
   min-width: 0;
   min-height: 0;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  /* Acento propio del chat (ajustable) y escala del texto. */
+  --chat-accent: var(--accent-color);
+  --chat-scale: 1;
   background:
-    radial-gradient(80% 55% at 50% 0%, color-mix(in srgb, var(--accent-color) 5%, transparent), transparent 55%),
+    radial-gradient(90% 55% at 50% 0%, color-mix(in srgb, var(--chat-accent) 7%, transparent), transparent 58%),
+    radial-gradient(70% 45% at 100% 100%, color-mix(in srgb, var(--chat-accent) 5%, transparent), transparent 55%),
     var(--surface-main);
+}
+
+.conversation[data-scale='sm'] {
+  --chat-scale: 0.92;
+}
+
+.conversation[data-scale='lg'] {
+  --chat-scale: 1.12;
 }
 
 .conversation-header {
@@ -515,24 +863,26 @@
   align-items: center;
   gap: 12px;
   padding: 0 20px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: color-mix(in srgb, var(--surface-raised) 42%, var(--surface-panel));
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-raised) 46%, transparent), color-mix(in srgb, var(--surface-panel) 26%, transparent));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .back-button {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: 11px;
-  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--accent-color) 16%, transparent);
   color: var(--accent-color);
   cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms var(--chat-ease), color 140ms ease;
 }
 
 .back-button svg {
@@ -541,8 +891,13 @@
 }
 
 .back-button:hover {
-  border-color: color-mix(in srgb, var(--accent-color) 35%, var(--border-color));
-  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 50%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 26%, transparent);
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: translateX(-3px) scale(0.96);
 }
 
 .header-avatar {
@@ -558,6 +913,7 @@
   border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
   border-radius: 50%;
   object-fit: cover;
+  background: var(--surface-raised);
 }
 
 .header-copy {
@@ -584,15 +940,21 @@
 }
 
 .presence-text.online {
-  color: #34d399;
+  color: var(--color-success);
   font-weight: 700;
 }
 
+/* UID como "pill" monoespaciada: más legible que texto suelto. */
 .uid-line {
-  display: flex;
+  display: inline-flex;
+  max-width: 100%;
   align-items: center;
-  gap: 6px;
-  min-width: 0;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 1px 2px 1px 8px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-control) 70%, transparent);
 }
 
 .uid-text {
@@ -600,7 +962,8 @@
   overflow: hidden;
   color: var(--text-muted);
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  font-size: 0.63rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -633,6 +996,7 @@
 .conversation-actions {
   display: flex;
   margin-left: auto;
+  align-items: center;
   gap: 6px;
 }
 
@@ -662,13 +1026,19 @@
   background: color-mix(in srgb, var(--accent-color) 11%, transparent);
 }
 
+.icon-button:active {
+  transform: scale(0.94);
+}
+
 .icon-button.active {
   border-color: color-mix(in srgb, var(--accent-color) 50%, var(--border-color));
   color: var(--accent-color);
   background: color-mix(in srgb, var(--accent-color) 14%, transparent);
 }
 
-/* Search in conversation */
+/* ==========================================================================
+   Buscador dentro de la conversación
+   ========================================================================== */
 .message-search-bar {
   display: flex;
   align-items: center;
@@ -696,10 +1066,12 @@
   background: var(--surface-control);
   color: var(--text-primary);
   font: inherit;
+  font-size: 0.82rem;
 }
 
 .message-search-bar input:focus {
   border-color: color-mix(in srgb, var(--accent-color) 55%, var(--border-color));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 16%, transparent);
 }
 
 .match-count {
@@ -711,10 +1083,48 @@
   white-space: nowrap;
 }
 
+/* Navegación entre coincidencias de la búsqueda. */
+.match-nav {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.match-nav button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  place-items: center;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.match-nav button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.match-nav button:hover:not(:disabled) {
+  border-color: var(--border-color);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+}
+
+.match-nav button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .clear-search {
   display: grid;
   width: 30px;
   height: 30px;
+  flex: none;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 50%;
@@ -724,6 +1134,7 @@
   cursor: pointer;
   font-size: 1.15rem;
   line-height: 1;
+  transition: color 140ms ease, background 140ms ease;
 }
 
 .clear-search:hover {
@@ -731,7 +1142,9 @@
   background: color-mix(in srgb, var(--color-danger) 14%, var(--surface-panel));
 }
 
-/* Messages */
+/* ==========================================================================
+   Mensajes
+   ========================================================================== */
 .message-list {
   display: flex;
   flex: 1;
@@ -742,6 +1155,7 @@
   padding: 20px 22px 16px;
   scrollbar-width: thin;
   scroll-padding-bottom: 12px;
+  overscroll-behavior: contain;
 }
 
 .day-divider {
@@ -761,6 +1175,48 @@
   content: '';
   flex: 1;
   border-top: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+
+/* Separador de mensajes nuevos: aparece sobre el primer mensaje que llega
+   mientras el usuario está leyendo historial. */
+.unread-divider {
+  display: flex;
+  margin: 14px 0 10px;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-color);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.unread-divider::before,
+.unread-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid color-mix(in srgb, var(--accent-color) 45%, transparent);
+}
+
+.unread-divider span {
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+}
+
+/* Coincidencia activa de la búsqueda en la conversación. */
+.message[data-match] .bubble {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-warning) 55%, transparent),
+    0 4px 14px color-mix(in srgb, #000 16%, transparent);
+}
+
+.message[data-match].is-current .bubble {
+  border-color: color-mix(in srgb, var(--color-warning) 70%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-warning) 60%, transparent),
+    0 6px 18px color-mix(in srgb, #000 22%, transparent);
 }
 
 .message {
@@ -805,29 +1261,42 @@
   border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
   border-radius: 50%;
   object-fit: cover;
+  background: var(--surface-raised);
 }
 
 .bubble {
   position: relative;
+  min-width: 0;
   padding: 9px 13px 8px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   border-radius: 18px 18px 18px 6px;
   background:
-    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--accent-color) 6%, transparent), transparent 55%),
+    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--chat-accent) 7%, transparent), transparent 55%),
     var(--surface-raised);
-  box-shadow: 0 4px 14px color-mix(in srgb, #000 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    var(--chat-shadow-soft);
   word-break: break-word;
+  transition: border-color 160ms var(--chat-ease), box-shadow 160ms var(--chat-ease);
+}
+
+.bubble:hover {
+  border-color: color-mix(in srgb, var(--accent-color) 28%, var(--border-color));
 }
 
 .message.own .bubble {
-  border-color: color-mix(in srgb, var(--accent-color) 42%, var(--border-color));
+  border-color: color-mix(in srgb, var(--chat-accent) 48%, var(--border-color));
   border-radius: 18px 18px 6px 18px;
   background:
-    radial-gradient(140% 170% at 100% 0%, rgba(255,255,255,0.18), transparent 45%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 34%, var(--surface-raised)), color-mix(in srgb, var(--accent-color) 16%, var(--surface-raised)));
+    radial-gradient(140% 170% at 100% 0%, rgba(255, 255, 255, 0.16), transparent 45%),
+    linear-gradient(150deg, color-mix(in srgb, var(--chat-accent) 42%, var(--surface-raised)), color-mix(in srgb, var(--chat-accent) 20%, var(--surface-raised)) 70%);
   box-shadow:
-    inset 0 1px 0 #ffffff2e,
-    0 6px 18px color-mix(in srgb, var(--accent-color) 22%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 8px 22px color-mix(in srgb, var(--chat-accent) 26%, transparent);
+}
+
+.message.own .bubble:hover {
+  border-color: color-mix(in srgb, var(--chat-accent) 62%, var(--border-color));
 }
 
 .message.run-start .bubble {
@@ -841,8 +1310,8 @@
 .bubble b {
   display: block;
   margin-bottom: 4px;
-  color: var(--accent-color);
-  font-size: 0.66rem;
+  color: color-mix(in srgb, var(--chat-accent) 78%, var(--text-primary));
+  font-size: calc(0.66rem * var(--chat-scale));
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -855,39 +1324,19 @@
 .bubble p {
   margin: 0 0 6px;
   overflow-wrap: anywhere;
-  font-size: 0.88rem;
+  font-size: calc(0.88rem * var(--chat-scale));
   line-height: 1.5;
   white-space: pre-wrap;
 }
 
-.bubble :global(mark),
-.bubble mark {
-  padding: 0 2px;
-  border-radius: 4px;
-  background: color-mix(in srgb, #f59e0b 55%, transparent);
-  color: #111827;
-}
-
-.bubble a {
-  color: var(--accent-color);
-}
-
-.bubble a:hover {
-  text-decoration: underline;
-}
-
+/* La hora siempre visible (antes solo aparecía al hacer hover, por lo que en
+   táctil quedaba oculta); el botón de copiar sí aparece al interactuar. */
 .bubble-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  opacity: 0;
-  transition: opacity 140ms ease;
-}
-
-.bubble:hover .bubble-actions,
-.bubble.copied .bubble-actions {
-  opacity: 1;
+  margin-top: -2px;
 }
 
 .copy-message {
@@ -901,12 +1350,19 @@
   color: var(--text-muted);
   place-items: center;
   cursor: pointer;
-  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+  opacity: 0;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
 }
 
 .copy-message svg {
   width: 12px;
   height: 12px;
+}
+
+.bubble:hover .copy-message,
+.bubble:focus-within .copy-message,
+.copy-message:focus-visible {
+  opacity: 1;
 }
 
 .copy-message:hover {
@@ -916,22 +1372,183 @@
 }
 
 .bubble.copied .copy-message {
-  color: #34d399;
+  color: var(--color-success);
+  opacity: 1;
 }
 
 .bubble time {
   color: var(--text-muted);
   font-size: 0.58rem;
   font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+  transition: opacity 140ms ease;
 }
 
-/* Composer */
-.composer {
+/* Con las horas ocultas se libera el espacio del pie de la burbuja. */
+.conversation[data-timestamps='off'] .bubble time {
+  display: none;
+}
+
+.conversation[data-timestamps='off'] .bubble p {
+  margin-bottom: 0;
+}
+
+.bubble:hover time,
+.bubble:focus-within time {
+  opacity: 1;
+}
+
+.bubble mark {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-warning) 55%, transparent);
+  color: var(--surface-main);
+}
+
+.bubble a {
+  color: var(--accent-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in srgb, var(--accent-color) 45%, transparent);
+}
+
+.bubble a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Tarjeta de un modelo 3D compartido dentro del mensaje. */
+.model-card {
+  display: flex;
+  margin-top: 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 32%, var(--border-color));
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface-control) 80%, transparent);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.model-card:hover {
+  border-color: color-mix(in srgb, var(--accent-color) 60%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-control));
+  transform: translateY(-1px);
+}
+
+.model-card img {
+  width: 54px;
+  height: 42px;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  border-radius: 9px;
+  object-fit: cover;
+  background: var(--surface-raised);
+}
+
+.model-card-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.model-card-copy strong {
+  overflow: hidden;
+  font-size: 0.78rem;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-card-copy small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-card-open {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Botón "ir al último"
+   ========================================================================== */
+.jump-latest {
+  position: absolute;
+  right: 22px;
+  bottom: 124px;
+  z-index: 3;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 38%, var(--border-color));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  color: var(--accent-color);
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 26px color-mix(in srgb, #000 34%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: jumpIn 180ms ease;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.jump-latest:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-color) 62%, var(--border-color));
+  box-shadow: 0 14px 30px color-mix(in srgb, #000 40%, transparent);
+}
+
+.jump-latest svg {
+  width: 19px;
+  height: 19px;
+}
+
+.jump-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border: 2px solid var(--surface-raised);
+  border-radius: 999px;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+@keyframes jumpIn {
+  from {
+    transform: translateY(8px) scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Composer
+   ========================================================================== */.composer {
   display: flex;
   flex: none;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 16px 14px;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
   backdrop-filter: blur(10px);
@@ -947,10 +1564,11 @@
 
 .emoji-strip {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
 }
 
 .emoji-strip::-webkit-scrollbar {
@@ -958,34 +1576,46 @@
 }
 
 .emoji-btn {
+  display: grid;
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 10px;
   background: transparent;
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1;
+  place-items: center;
   cursor: pointer;
-  transition: transform 100ms ease, background 120ms ease, border-color 120ms ease;
+  transition: transform 120ms var(--chat-ease), background 120ms ease, border-color 120ms ease;
 }
 
 .emoji-btn:hover {
-  transform: translateY(-2px) scale(1.12);
-  background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+  transform: translateY(-2px) scale(1.15);
+  background: color-mix(in srgb, var(--accent-color) 13%, var(--surface-raised));
   border-color: var(--border-color);
 }
 
+.emoji-btn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+
+/* El contador solo cobra protagonismo cerca del límite. */
 .char-count {
   flex: none;
   color: var(--text-muted);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
+  opacity: 0.55;
+  transition: color 140ms ease, opacity 140ms ease;
 }
 
 .char-count.near-limit {
-  color: #f59e0b;
+  color: var(--color-warning);
+  opacity: 1;
 }
 
 .composer-input-row {
@@ -1009,12 +1639,7 @@
   line-height: 1.5;
   resize: none;
   scrollbar-width: thin;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.composer textarea:focus {
-  border-color: color-mix(in srgb, var(--accent-color) 55%, var(--border-color));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 16%, transparent);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .send-button {
@@ -1028,6 +1653,7 @@
   border-radius: 16px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 92%, #ffffff), color-mix(in srgb, var(--accent-color) 72%, #2b0f5e));
   color: #ffffff;
+  font: inherit;
   font-weight: 800;
   cursor: pointer;
   box-shadow: inset 0 1px 0 #ffffff3d, 0 8px 20px color-mix(in srgb, var(--accent-color) 32%, transparent);
@@ -1045,13 +1671,277 @@
   box-shadow: inset 0 1px 0 #ffffff4d, 0 12px 28px color-mix(in srgb, var(--accent-color) 42%, transparent);
 }
 
+.send-button:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
 .send-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-/* Empty states */
+/* ==========================================================================
+   Panel de ajustes del chat
+   ========================================================================== */
+.chat-settings {
+  /* El reset global de styles.css anula el margin:auto que centra el
+     <dialog> nativo: hay que restaurarlo o el panel queda pegado arriba. */
+  inset: 0;
+  margin: auto;
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(86dvh, 720px);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border-color) 90%, transparent);
+  border-radius: 18px;
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  box-shadow: var(--chat-shadow-strong);
+  overflow: hidden;
+}
+
+.chat-settings::backdrop {
+  background: #06080dc4;
+  backdrop-filter: blur(6px);
+}
+
+.chat-settings-panel {
+  display: grid;
+  gap: 4px;
+  max-height: inherit;
+  padding: 22px;
+  overflow-y: auto;
+}
+
+.chat-settings-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chat-settings-panel .eyebrow {
+  color: var(--accent-color);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.chat-settings-panel h2 {
+  margin: 4px 0 0;
+  font-size: 1.12rem;
+  letter-spacing: -0.015em;
+}
+
+.chat-settings-panel .dismiss {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  place-items: center;
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.chat-settings-panel .dismiss:hover {
+  border-color: var(--border-color);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+
+.setting:last-of-type {
+  border-bottom: 0;
+}
+
+.setting-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.setting-copy strong {
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.setting-copy small {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+/* Selector segmentado (tamaño del texto). */
+.segmented {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-control);
+}
+
+.segmented button {
+  width: 34px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.segmented button:nth-child(1) {
+  font-size: 0.7rem;
+}
+
+.segmented button:nth-child(2) {
+  font-size: 0.85rem;
+}
+
+.segmented button:nth-child(3) {
+  font-size: 1rem;
+}
+
+.segmented button:hover {
+  color: var(--text-primary);
+}
+
+.segmented button.active {
+  background: color-mix(in srgb, var(--accent-color) 22%, transparent);
+  color: var(--accent-color);
+  font-weight: 800;
+}
+
+/* Muestras de color. */
+.swatches {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--swatch);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.swatch:hover {
+  transform: scale(1.12);
+}
+
+.swatch.active {
+  border-color: var(--surface-panel);
+  box-shadow: 0 0 0 2px var(--swatch);
+}
+
+/* Interruptor. */
+.switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-control);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.switch.on {
+  border-color: color-mix(in srgb, var(--accent-color) 55%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 28%, transparent);
+}
+
+.switch.on span {
+  background: var(--accent-color);
+  transform: translateX(18px);
+}
+
+.switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chat-settings-panel footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.chat-settings-panel .tool {
+  display: inline-flex;
+  min-height: 38px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.chat-settings-panel .tool svg {
+  width: 15px;
+  height: 15px;
+}
+
+.chat-settings-panel .tool:hover {
+  border-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-raised));
+}
+
+.chat-settings-panel .tool:active {
+  transform: translateY(1px);
+}
+
+/* ==========================================================================
+   Estados vacíos
+   ========================================================================== */
 .empty {
   display: grid;
   flex: 1;
@@ -1068,23 +1958,48 @@
 }
 
 .empty--hero .empty-mark {
+  position: relative;
   display: grid;
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   margin-bottom: 14px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent-color) 38%, var(--border-color));
-  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 36%, var(--border-color));
+  border-radius: 32px;
   background:
-    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent-color) 30%, transparent), transparent 65%),
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--accent-color) 34%, transparent), transparent 62%),
     var(--surface-raised);
   color: var(--accent-color);
-  box-shadow: 0 14px 34px color-mix(in srgb, #000 28%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 40px color-mix(in srgb, var(--accent-color) 22%, transparent);
+}
+
+.empty--hero .empty-mark::before {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-color) 18%, transparent), transparent 70%);
+  animation: heroGlow 3.2s ease-in-out infinite;
+}
+
+@keyframes heroGlow {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
 }
 
 .empty--hero .empty-mark svg {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.5;
 }
 
 .empty h2 {
@@ -1100,6 +2015,9 @@
   line-height: 1.55;
 }
 
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
 @media (max-width: 720px) {
   .conversation-header {
     padding: 0 14px;
@@ -1130,6 +2048,10 @@
     height: 38px;
   }
 
+  .uid-line {
+    display: none;
+  }
+
   .send-label {
     display: none;
   }
@@ -1151,12 +2073,35 @@
   .conversation-actions .icon-button:last-child {
     display: none;
   }
+
+  .background-select {
+    max-width: 120px;
+  }
+
+  .jump-latest {
+    right: 14px;
+    bottom: 116px;
+    width: 38px;
+    height: 38px;
+  }
+
+  /* En pantallas estrechas el strip de emojis deja sitio de sobra. */
+  .emoji-btn {
+    width: 27px;
+    height: 27px;
+    font-size: 0.92rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .message,
   .recent-chat,
   .send-button,
+  .icon-button,
+  .copy-message,
+  .pin-toggle,
+  .jump-latest,
+  .model-card,
   .search-box input,
   .conversations input,
   .composer textarea {

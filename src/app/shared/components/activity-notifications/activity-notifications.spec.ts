@@ -57,7 +57,7 @@ describe('ActivityNotificationsComponent', () => {
           provide: SocialService,
           useValue: {
             activityNotifications$: vi.fn(() => of(ITEMS)),
-            markActivityNotificationRead: markRead,
+            markAllActivityNotificationsRead: markRead,
           },
         },
       ],
@@ -81,7 +81,7 @@ describe('ActivityNotificationsComponent', () => {
     await component.markAllRead(ITEMS, 'creator-1');
 
     expect(markRead).toHaveBeenCalledTimes(1);
-    expect(markRead).toHaveBeenCalledWith('creator-1', 'n-1');
+    expect(markRead).toHaveBeenCalledWith('creator-1', ['n-1']);
     expect(success).toHaveBeenCalledWith(
       expect.stringContaining('1'),
       expect.any(String),

@@ -1,0 +1,33 @@
+ÔØ» Building...
+Ô£ö Building...
+Initial chunk files | Names           |  Raw size | Estimated transfer size
+main-HU7O4HEK.js    | main            |   1.44 MB |               369.39 kB
+styles-462662ZW.css | styles          |   9.34 kB |                 1.65 kB
+
+                    | Initial total   |   1.45 MB |               371.04 kB
+
+Lazy chunk files    | Names           |  Raw size | Estimated transfer size
+chunk-CvgXNmNQ.js   | -               | 739.07 kB |               153.60 kB
+chunk-LqwSrjAi.js   | editor-page     | 181.69 kB |                33.98 kB
+chunk-ChDE1-Ho.js   | -               | 137.34 kB |                26.69 kB
+chunk-Bq7zdxIS.js   | -               | 123.62 kB |                28.97 kB
+chunk-DNGS2x58.js   | chat-page       | 100.47 kB |                18.95 kB
+chunk-CnXYAE8E.js   | admin-dashboard |  92.80 kB |                17.44 kB
+chunk-DRWswuHG.js   | about-page      |  89.13 kB |                17.26 kB
+chunk-BW5x3LQB.js   | legal-hi        |  84.43 kB |                18.43 kB
+chunk-BgJ426Bm.js   | legal-ru        |  72.18 kB |                18.95 kB
+chunk-4Rfraro7.js   | help-page       |  65.25 kB |                16.39 kB
+chunk-BmM5CONd.js   | hi-extra        |  58.80 kB |                12.66 kB
+chunk-Ck3HCS1q.js   | legal-ja        |  58.65 kB |                17.62 kB
+chunk-NvfNxYQp.js   | legal-de        |  53.74 kB |                17.74 kB
+chunk-C-GMbXvz.js   | legal-ko        |  53.67 kB |                17.05 kB
+chunk-4z2_RGh-.js   | legal-it        |  52.17 kB |                16.01 kB
+...and 43 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [41.741 seconds] - 2026-11-12T23:08:20.979Z
+
+Ôû▓ [WARNING] src/app/features/chat/chat-page.css exceeded maximum budget. Budget 30.00 kB was not met by 2.82 kB with a total of 32.82 kB.
+
+
+Output location: C:\Users\candelo\Documents\angular-3d-editor\dist\github-pages
+

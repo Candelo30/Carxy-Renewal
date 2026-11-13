@@ -6,7 +6,7 @@ import { I18nService } from '../../../core/services/i18n';
 import { NotificationService } from '../../../core/services/notifications';
 import { SocialService } from '../../../core/services/social';
 import { ActivityNotification } from '../../../core/models/social.models';
-import { of, switchMap } from 'rxjs';import { TranslatePipe } from '../../pipes/translate.pipe';
+import { of, switchMap, catchError } from 'rxjs';import { TranslatePipe } from '../../pipes/translate.pipe';
 
 
 @Component({
@@ -20,8 +20,17 @@ import { of, switchMap } from 'rxjs';import { TranslatePipe } from '../../pipes
 export class ActivityNotificationsComponent {
   readonly user$ = inject(AuthService).user$;
   readonly activities$ = this.user$.pipe(
-    switchMap((user) => user ? this.social.activityNotifications$(user.uid) : of([] as ActivityNotification[])),
+    switchMap((user) => user
+      ? this.social.activityNotifications$(user.uid).pipe(
+          catchError(() => {
+            this.failed = true;
+            return of([] as ActivityNotification[]);
+          }),
+        )
+      : of([] as ActivityNotification[])),
   );
+  /** True cuando la carga de la bandeja falló (permisos, índice, red). */
+  failed = false;
   /** Estado del panel como signal: la app es zoneless y un `boolean` simple
    *  no redibujaría el popover al cambiar desde código. */
   readonly open = signal(false);
@@ -51,7 +60,17 @@ export class ActivityNotificationsComponent {
   messageFor(item: ActivityNotification): string {
     if (item.kind === 'follow') return this.i18n.translate('comenzó a seguirte');
     if (item.kind === 'like') return this.i18n.translate('marcó tu modelo como favorito');
+    if (item.kind === 'message') return this.i18n.translate('te envió un mensaje');
     return this.i18n.translate('comentó en tu modelo');
+  }
+
+  /** Un mensaje lleva a la conversación; el resto, al perfil de quien actuó. */
+  linkFor(item: ActivityNotification): string[] {
+    return item.kind === 'message' ? ['/chat'] : ['/profile', item.actorId];
+  }
+
+  queryParamsFor(item: ActivityNotification): Record<string, string> | null {
+    return item.kind === 'message' ? { peer: item.actorId } : null;
   }
 
   async markRead(item: ActivityNotification, uid: string): Promise<void> {
@@ -74,7 +93,7 @@ export class ActivityNotificationsComponent {
       return;
     }
     try {
-      await Promise.all(unread.map((item) => this.social.markActivityNotificationRead(uid, item.id)));
+      await this.social.markAllActivityNotificationsRead(uid, unread.map((item) => item.id));
       this.notifications.success(
         this.i18n.translate('Marcaste {count} notificaciones como leídas.', { count: unread.length }),
         this.i18n.translate('Todo al día'),

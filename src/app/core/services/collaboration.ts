@@ -257,6 +257,68 @@ export class CollaborationService implements OnDestroy {
   async deleteProject(projectId: string): Promise<void> {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+
+    // Borrar en cascada los documentos asociados sería inválido con las reglas
+    // (el resto son documentos del proyecto, no archivos personales): se borra
+    // el documento principal y los subdocumentos colgantes por pertenencia.
+    const safe = async (task: () => Promise<unknown>) => {
+      try {
+        await task();
+      } catch (error) {
+        console.warn('No se pudo limpiar un dato asociado al proyecto.', error);
+      }
+    };
+
+    // Miembros del proyecto
+    await safe(async () => {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projectMembers),
+        where('projectId', '==', projectId),
+      );
+      const snapshot = await getDocs(q);
+      await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+    });
+
+    // Invitaciones del proyecto
+    await safe(async () => {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projectInvitations),
+        where('projectId', '==', projectId),
+      );
+      const snapshot = await getDocs(q);
+      await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+    });
+
+    // Enlaces de acceso del proyecto
+    await safe(async () => {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projectShareLinks),
+        where('projectId', '==', projectId),
+      );
+      const snapshot = await getDocs(q);
+      await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+    });
+
+    // Actividad del proyecto
+    await safe(async () => {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projectActivity),
+        where('projectId', '==', projectId),
+      );
+      const snapshot = await getDocs(q);
+      await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+    });
+
+    // Presencias del proyecto
+    await safe(async () => {
+      const q = query(
+        collection(db, SOCIAL_COLLECTIONS.projectPresences),
+        where('projectId', '==', projectId),
+      );
+      const snapshot = await getDocs(q);
+      await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+    });
+
     await deleteDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`));
   }
 
@@ -572,6 +634,21 @@ export class CollaborationService implements OnDestroy {
     if (!isOwner && !isGlobalAdmin) {
       throw new Error(this.i18n.translate('Solo el dueño puede cambiar roles en este proyecto.'));
     }
+    // Evita que un proyecto se quede sin propietario
+    if (role !== 'owner') {
+      const target = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`));
+      const targetData = target.exists() ? target.data() as { role?: string; userId?: string } : null;
+      if (targetData?.role === 'owner') {
+        const owners = await getDocs(query(
+          collection(db, SOCIAL_COLLECTIONS.projectMembers),
+          where('projectId', '==', projectId),
+          where('role', '==', 'owner'),
+        ));
+        if (owners.size <= 1) {
+          throw new Error(this.i18n.translate('El proyecto necesita al menos un propietario.'));
+        }
+      }
+    }
     await updateDoc(doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`), { role });
   }
 
@@ -583,11 +660,25 @@ export class CollaborationService implements OnDestroy {
 
     // Se permite eliminar tu propia membresía; para eliminar a otros hace falta ser dueño (o admin global).
     let targetUserId: string | null = null;
+    let targetRole: string | null = null;
     try {
       const snap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`));
       targetUserId = snap.exists() ? String((snap.data() as { userId?: unknown }).userId ?? '') : null;
+      targetRole = snap.exists() ? String((snap.data() as { role?: unknown }).role ?? '') || null : null;
     } catch {
       targetUserId = null;
+      targetRole = null;
+    }
+    // Evita dejar el proyecto sin propietario al eliminar al último owner
+    if (targetRole === 'owner') {
+      const owners = await getDocs(query(
+        collection(db, SOCIAL_COLLECTIONS.projectMembers),
+        where('projectId', '==', projectId),
+        where('role', '==', 'owner'),
+      ));
+      if (owners.size <= 1) {
+        throw new Error(this.i18n.translate('No puedes eliminar al último propietario del proyecto.'));
+      }
     }
     const isOwner = await this.isProjectOwnerRole(projectId, user.uid);
     const isGlobalAdmin = await this.isGlobalAdmin();

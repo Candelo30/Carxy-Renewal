@@ -109,6 +109,35 @@ describe('SocialService local mode', () => {
     expect(message.text).toBe('hola');
   });
 
+  it('notifies the other participant when a message is sent', async () => {
+    const author = {
+      uid: 'creator-1',
+      displayName: 'Creator',
+      email: '',
+      photoURL: null,
+      bio: '',
+    };
+
+    await service.sendMessage('creator-1__creator-2', {
+      text: 'Hola',
+      senderId: author.uid,
+      senderName: author.displayName,
+      senderPhotoURL: null,
+    });
+
+    // Sin notificación el receptor no tiene forma de enterarse del mensaje
+    // si no tiene el chat abierto.
+    const notifications = await firstValueFrom(service.activityNotifications$('creator-2'));
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0].kind).toBe('message');
+    expect(notifications[0].actorId).toBe('creator-1');
+    expect(notifications[0].targetId).toBe('creator-1__creator-2');
+    expect(notifications[0].read).toBe(false);
+
+    // El remitente no se notifica a sí mismo.
+    expect(await firstValueFrom(service.activityNotifications$('creator-1'))).toHaveLength(0);
+  });
+
   it('keeps private creations out of public creator lists and supports local metric updates', async () => {
     TestBed.resetTestingModule();
     localStorage.clear();

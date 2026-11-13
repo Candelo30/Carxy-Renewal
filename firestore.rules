@@ -193,14 +193,22 @@ service cloud.firestore {
                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
                 && request.resource.data.read == true
               ) || (
-                // El autor de la notificación puede actualizarla (p. ej. al repetir un like).
+                // El autor de la notificación puede actualizarla (p. ej. al
+                // repetir un like). Solo se permite reescribir los campos que
+                // la `create` habría escrito, sin cambiar kind/id/targetId
+                // ajenos: afectan a la relación actor→buzón.
                 isActiveUser()
                 && resource.data.actorId == request.auth.uid
                 && resource.data.recipientId == uid
                 && request.resource.data.actorId == request.auth.uid
                 && request.resource.data.recipientId == uid
+                && request.resource.data.kind == resource.data.kind
                 && request.resource.data.kind in ['follow', 'like', 'comment', 'message']
+                && request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['actorName', 'actorPhotoURL', 'targetId', 'createdAt', 'read'])
                 && request.resource.data.actorName is string
+                && request.resource.data.actorName.size() <= 120
+                && (request.resource.data.actorPhotoURL == null || request.resource.data.actorPhotoURL is string)
                 && request.resource.data.createdAt is number
                 && request.resource.data.read is bool
               )
@@ -694,17 +702,36 @@ service cloud.firestore {
           || pendingInvitationForRequester(projectId));
 
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'description', 'isPublic', 'createdAt', 'updatedAt',
+          'thumbnailUrl', 'ownerName', 'sceneJson', 'ownerPhotoURL'
+        ])
+        && request.resource.data.id == projectId
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 100
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500
+        && request.resource.data.isPublic is bool
         && request.resource.data.createdAt is number
         && request.resource.data.updatedAt is number;
 
       allow update: if signedIn()
         && (isAdmin() || isProjectOwner(projectId) || isProjectWriter(projectId))
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['name', 'description', 'isPublic', 'updatedAt', 'thumbnailUrl', 'sceneJson']);
+          .hasOnly(['name', 'description', 'isPublic', 'updatedAt', 'thumbnailUrl', 'sceneJson'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPublic'])
+          || isAdmin() || isProjectOwner(projectId)
+        )
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500
+        && (request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl is string)
+        && (request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl.size() <= 100000);
 
       allow delete: if signedIn() && (isAdmin() || isProjectOwner(projectId));
 
@@ -742,6 +769,7 @@ service cloud.firestore {
 
       allow create: if signedIn()
         && request.resource.data.projectId is string
+        && exists(/databases/$(database)/documents/projects/$(request.resource.data.projectId))
         && request.resource.data.userId is string
         && request.resource.data.userName is string
         && request.resource.data.userName.size() > 0
@@ -760,7 +788,6 @@ service cloud.firestore {
           || (request.resource.data.userId == request.auth.uid
             && request.resource.data.role == 'owner'
             && get(/databases/$(database)/documents/projects/$(request.resource.data.projectId)).data.ownerId == request.auth.uid)
-          || (isProjectWriter(request.resource.data.projectId) && request.resource.data.role in ['editor', 'viewer'])
           || (request.resource.data.userId == request.auth.uid
             && request.resource.data.role in ['viewer', 'editor', 'owner']
             && request.auth.token.email is string
@@ -771,6 +798,7 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.status == 'accepted'
             && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.role == request.resource.data.role
             && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.respondedAt is number
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + tokenEmailLower())).data.expiresAt >= request.time.toMillis()
             && request.resource.data.joinedAt >= request.time.toMillis() - 300000
             && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
           || (request.resource.data.userId == request.auth.uid
@@ -789,7 +817,7 @@ service cloud.firestore {
             isAdmin() || isProjectOwner(resource.data.projectId)
           ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
             && (request.resource.data.role in ['editor', 'viewer']
-          || (request.resource.data.role == 'owner' && isProjectOwner(request.resource.data.projectId)))
+          || (request.resource.data.role == 'owner' && (isAdmin() || isProjectOwner(request.resource.data.projectId))))
           || (
             request.auth.uid == resource.data.userId
             && request.resource.data.diff(resource.data).affectedKeys()
@@ -819,10 +847,12 @@ service cloud.firestore {
 
     match /projectShareLinks/{linkId} {
       allow get: if signedIn();
-      allow list: if signedIn() && (isAdmin() || (resource.data.projectId is string && isProjectOwner(resource.data.projectId)));
+      allow list: if signedIn()
+        && (isAdmin()
+          || (resource.data.projectId is string && (isProjectOwner(resource.data.projectId) || isProjectWriter(resource.data.projectId))));
       allow create: if signedIn()
         && request.resource.data.projectId is string
-        && isProjectOwner(request.resource.data.projectId)
+        && (isAdmin() || isProjectOwner(request.resource.data.projectId))
         && request.resource.data.id == linkId
         && request.resource.data.role in ['viewer', 'editor']
         && request.resource.data.createdBy == request.auth.uid
@@ -836,7 +866,7 @@ service cloud.firestore {
         && (!('label' in request.resource.data) || request.resource.data.label is string);
       allow update: if signedIn()
         && resource.data.projectId is string
-        && isProjectOwner(resource.data.projectId)
+        && (isAdmin() || isProjectOwner(resource.data.projectId))
         && request.resource.data.projectId == resource.data.projectId
         && request.resource.data.id == resource.data.id
         && request.resource.data.createdBy == resource.data.createdBy
@@ -847,7 +877,7 @@ service cloud.firestore {
         && request.resource.data.updatedAt is number;
       allow delete: if signedIn()
         && resource.data.projectId is string
-        && isProjectOwner(resource.data.projectId);
+        && (isAdmin() || isProjectOwner(resource.data.projectId));
     }
 
     match /projectInvitations/{invitationId} {
@@ -857,7 +887,7 @@ service cloud.firestore {
           || isProjectWriter(resource.data.projectId));
 
       allow create: if signedIn()
-        && isProjectWriter(request.resource.data.projectId)
+        && (isAdmin() || isProjectWriter(request.resource.data.projectId))
         && request.resource.data.invitedBy == request.auth.uid
         && request.resource.data.invitedEmail is string
         && request.resource.data.invitedEmail.size() > 0
@@ -865,7 +895,7 @@ service cloud.firestore {
         && request.resource.data.projectId is string
         && invitationId == request.resource.data.projectId + '_' + request.resource.data.invitedEmail
         && (request.resource.data.role in ['editor', 'viewer']
-          || (request.resource.data.role == 'owner' && isProjectOwner(request.resource.data.projectId)))
+          || (request.resource.data.role == 'owner' && (isAdmin() || isProjectOwner(request.resource.data.projectId))))
         && request.resource.data.status == 'pending'
         && request.resource.data.createdAt is number
         && request.resource.data.expiresAt is number
@@ -883,13 +913,15 @@ service cloud.firestore {
         && (
           (
             // Reenvío/actualización de invitación pendiente por un miembro con permisos de escritura.
-            isProjectWriter(resource.data.projectId)
+            (isAdmin() || isProjectWriter(resource.data.projectId))
+            && resource.data.status == 'pending'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'projectName', 'invitedBy', 'invitedByName', 'role', 'status', 'createdAt', 'expiresAt', 'invitedUid'
             ])
             && request.resource.data.status == 'pending'
+            && request.resource.data.expiresAt >= request.time.toMillis()
             && (request.resource.data.role in ['editor', 'viewer']
-          || (request.resource.data.role == 'owner' && isProjectOwner(request.resource.data.projectId)))
+          || (request.resource.data.role == 'owner' && (isAdmin() || isProjectOwner(request.resource.data.projectId))))
             && request.resource.data.createdAt is number
             && request.resource.data.expiresAt is number
             && request.resource.data.invitedUid == null
@@ -898,6 +930,7 @@ service cloud.firestore {
             // Aceptación/rechazo por la persona invitada, o revocación/expiración por quien invitó.
             (resource.data.invitedBy == request.auth.uid
               || (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower()))
+            && resource.data.expiresAt >= request.time.toMillis()
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['status', 'respondedAt', 'invitedUid'])
             && request.resource.data.status in ['pending', 'accepted', 'rejected', 'revoked', 'expired']
@@ -928,17 +961,29 @@ service cloud.firestore {
 
     match /projectActivity/{activityId} {
       allow read: if signedIn()
-        && isProjectMember(resource.data.projectId, request.auth.uid);
+        && (isAdmin() || isProjectMember(resource.data.projectId, request.auth.uid));
 
       allow create: if signedIn()
-        && isProjectWriter(resource.data.projectId)
+        && request.resource.data.keys().hasOnly([
+          'id', 'projectId', 'actorId', 'actorName', 'action', 'objectId', 'objectType', 'snapshot', 'createdAt'
+        ])
+        && request.resource.data.id is string
+        && request.resource.data.projectId is string
+        && isProjectWriter(request.resource.data.projectId)
         && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.actorName is string
+        && request.resource.data.actorName.size() <= 120
         && request.resource.data.action in [
           'object_created', 'object_updated', 'object_deleted',
           'material_changed', 'layer_changed'
         ]
         && request.resource.data.objectId is string
+        && request.resource.data.objectId.size() <= 120
         && request.resource.data.objectType is string
+        && request.resource.data.objectType.size() <= 60
+        && (!('snapshot' in request.resource.data)
+          || request.resource.data.snapshot == null
+          || (request.resource.data.snapshot is string && request.resource.data.snapshot.size() <= 20000))
         && request.resource.data.createdAt is number;
 
       allow update: if false;
@@ -947,24 +992,55 @@ service cloud.firestore {
 
     match /projectPresences/{presenceId} {
       allow read: if signedIn()
-        && isProjectMember(resource.data.projectId, request.auth.uid);
+        && (isAdmin() || isProjectMember(resource.data.projectId, request.auth.uid));
       allow list: if signedIn()
-        && isProjectMember(resource.data.projectId, request.auth.uid);
+        && (isAdmin()
+          || (resource.data.projectId is string
+            && isProjectMember(resource.data.projectId, request.auth.uid)));
 
       allow create: if signedIn()
+        && isProjectMember(request.resource.data.projectId, request.auth.uid)
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.projectId is string
         && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 120
         && request.resource.data.isOnline is bool
-        && request.resource.data.lastSeen is number;
+        && request.resource.data.lastSeen is number
+        && request.resource.data.cursorX is number
+        && request.resource.data.cursorY is number
+        && (request.resource.data.currentObjectId == null
+          || request.resource.data.currentObjectId is string)
+        && (request.resource.data.photoURL == null
+          || request.resource.data.photoURL is string)
+        && (!('transform' in request.resource.data)
+          || request.resource.data.transform == null
+          || (request.resource.data.transform is map
+            && request.resource.data.transform.objectId is string
+            && request.resource.data.transform.updatedAt is number))
+        && request.resource.data.keys().hasOnly([
+          'uid', 'projectId', 'displayName', 'photoURL', 'isOnline',
+          'currentObjectId', 'cursorX', 'cursorY', 'transform', 'lastSeen'
+        ]);
 
       allow update: if signedIn()
-        && request.resource.data.uid == request.auth.uid
+        && resource.data.uid == request.auth.uid
+        && isProjectMember(resource.data.projectId, request.auth.uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.projectId == resource.data.projectId
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'transform', 'lastSeen', 'displayName', 'photoURL']);
+          .hasOnly(['isOnline', 'currentObjectId', 'cursorX', 'cursorY', 'transform', 'lastSeen', 'displayName', 'photoURL'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 120
+        && request.resource.data.lastSeen is number
+        && (request.resource.data.photoURL == null
+          || request.resource.data.photoURL is string)
+        && (request.resource.data.currentObjectId == null
+          || request.resource.data.currentObjectId is string);
 
       allow delete: if signedIn()
-        && request.resource.data.uid == request.auth.uid;
+        && resource.data.uid == request.auth.uid;
     }
 
     match /helpArticles/{articleId} {

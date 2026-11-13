@@ -1,8 +1,9 @@
 import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, combineLatest, firstValueFrom, map, of, shareReplay, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, catchError, combineLatest, firstValueFrom, map, of, shareReplay, startWith, switchMap } from 'rxjs';
 import {
   ContentReport,
   CommunityQuestion,
@@ -81,6 +82,20 @@ export class AdminDashboardComponent {
   readonly i18n = inject(I18nService);
   readonly notifications = inject(NotificationService);
 
+  /**
+   * Los listeners de Firestore de este panel se cancelan al destruir el
+   * componente. Sin esto, cada `refresh()` y cada visita a `/admin` dejaba
+   * activos 9 `collectionData` nuevos, y cada cancelación provocaba el
+   * unlisten/relisten que dispara la carrera de target IDs del SDK.
+   */
+  private readonly destroyRef = inject(DestroyRef);
+
+  /**
+   * Suscripción de la carga de datos actual (`loadData()`). Se cancela antes
+   * de recargar y al destruir el componente.
+   */
+  private dataSub?: Subscription;
+
   readonly user$: Observable<UserProfile | null> = this.auth.user$;
   mobileMenuOpen = false;
 
@@ -151,7 +166,7 @@ export class AdminDashboardComponent {
       this._tab = 'reports';
     }
     this.loadData();
-    this.vm$.subscribe((vm) => {
+    this.vm$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((vm) => {
       this.duplicateEmails = this.social.findDuplicateEmails(vm.users).map((d) => ({
         email: d.email,
         uids: d.uids,
@@ -178,60 +193,72 @@ export class AdminDashboardComponent {
   }
 
   private loadData(): void {
-    this.auth.user$.subscribe((user) => {
-      const isAdmin = user?.role === 'admin';
-      const isModerator = user?.role === 'moderator' || isAdmin;
+    // Cancela la carga anterior antes de crear los listeners nuevos. De lo
+    // contrario cada `refresh()` añade 9 `collectionData` adicionales sin
+    // cancelar los previos, y al desmontar el panel se cancelan todos a la
+    // vez: ese unlisten/relisten masivo es justo lo que dispara la carrera de
+    // target IDs del SDK (aserción interna `ca9`).
+    this.dataSub?.unsubscribe();
+    this.dataSub = this.auth.user$
+      .pipe(
+        // `switchMap` cancela el `combineLatest` anterior cuando `user$`
+        // vuelve a emitir, de modo que no quedan listeners huérfanos.
+        switchMap((user) => {
+          const isAdmin = user?.role === 'admin';
+          const isModerator = user?.role === 'moderator' || isAdmin;
 
-      if (!isAdmin && !isModerator) {
-        this.vmSubject.next({
-          user,
-          users: [],
-          posts: [],
-          reports: [],
-          feedback: [],
-          questions: [],
-          projects: [],
-          helpArticles: [],
-          activity: [],
-          audit: [],
-        });
-        return;
-      }
-
-      const users$ = (isAdmin ? this.social.adminUsers$ : of([] as UserProfile[])).pipe(
-        catchError(() => of([] as UserProfile[])),
-      );
-      const posts$ = this.social.allPosts$.pipe(catchError(() => of([] as Post3D[])));
-      const reports$ = this.social.reports$.pipe(catchError(() => of([] as ContentReport[])));
-      const feedback$ = this.community.feedback$.pipe(catchError(() => of([] as FeedbackMessage[])));
-      const questions$ = this.community.questions$.pipe(catchError(() => of([] as CommunityQuestion[])));
-      const projects$ = (isAdmin ? this.collaboration.getAllProjects() : this.collaboration.getProjects()).pipe(
-        catchError(() => of([] as Project[])),
-      );
-      const helpArticles$ = this.community.getHelpArticles().pipe(catchError(() => of([] as HelpArticle[])));
-      const activity$ = (isAdmin ? this.social.userActivity$ : of([] as UserActivity[])).pipe(catchError(() => of([] as UserActivity[])));
-      const audit$ = (isAdmin ? this.social.deletionAudit$ : of([] as AccountDeletionAudit[])).pipe(catchError(() => of([] as AccountDeletionAudit[])));
-
-      combineLatest([users$, posts$, reports$, feedback$, questions$, projects$, helpArticles$, activity$, audit$]).subscribe(
-        ([users, posts, reports, feedback, questions, projects, helpArticles, activity, audit]) => {
-          this.vmSubject.next({
-            user,
-            users: users ?? [],
-            posts: posts ?? [],
-            reports: reports ?? [],
-            feedback: feedback ?? [],
-            questions: questions ?? [],
-            projects: projects ?? [],
-            helpArticles: helpArticles ?? [],
-            activity: activity ?? [],
-            audit: audit ?? [],
-          });
-          if (this._tab === 'projects' && !this.selectedProjectId && projects?.length) {
-            this.selectProject(projects[0].id);
+          if (!isAdmin && !isModerator) {
+            return of({
+              user,
+              users: [] as UserProfile[],
+              posts: [] as Post3D[],
+              reports: [] as ContentReport[],
+              feedback: [] as FeedbackMessage[],
+              questions: [] as CommunityQuestion[],
+              projects: [] as Project[],
+              helpArticles: [] as HelpArticle[],
+              activity: [] as UserActivity[],
+              audit: [] as AccountDeletionAudit[],
+            });
           }
-        },
-      );
-    });
+
+          const users$ = (isAdmin ? this.social.adminUsers$ : of([] as UserProfile[])).pipe(
+            catchError(() => of([] as UserProfile[])),
+          );
+          const posts$ = this.social.allPosts$.pipe(catchError(() => of([] as Post3D[])));
+          const reports$ = this.social.reports$.pipe(catchError(() => of([] as ContentReport[])));
+          const feedback$ = this.community.feedback$.pipe(catchError(() => of([] as FeedbackMessage[])));
+          const questions$ = this.community.questions$.pipe(catchError(() => of([] as CommunityQuestion[])));
+          const projects$ = (isAdmin ? this.collaboration.getAllProjects() : this.collaboration.getProjects()).pipe(
+            catchError(() => of([] as Project[])),
+          );
+          const helpArticles$ = this.community.getHelpArticles().pipe(catchError(() => of([] as HelpArticle[])));
+          const activity$ = (isAdmin ? this.social.userActivity$ : of([] as UserActivity[])).pipe(catchError(() => of([] as UserActivity[])));
+          const audit$ = (isAdmin ? this.social.deletionAudit$ : of([] as AccountDeletionAudit[])).pipe(catchError(() => of([] as AccountDeletionAudit[])));
+
+          return combineLatest([users$, posts$, reports$, feedback$, questions$, projects$, helpArticles$, activity$, audit$]).pipe(
+            map(([users, posts, reports, feedback, questions, projects, helpArticles, activity, audit]) => ({
+              user,
+              users: users ?? [],
+              posts: posts ?? [],
+              reports: reports ?? [],
+              feedback: feedback ?? [],
+              questions: questions ?? [],
+              projects: projects ?? [],
+              helpArticles: helpArticles ?? [],
+              activity: activity ?? [],
+              audit: audit ?? [],
+            })),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((vm) => {
+        this.vmSubject.next(vm);
+        if (this._tab === 'projects' && !this.selectedProjectId && vm.projects?.length) {
+          this.selectProject(vm.projects[0].id);
+        }
+      });
   }
 
   readonly stats$ = this.vm$.pipe(

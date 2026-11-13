@@ -17,11 +17,12 @@ import {
   Subscription,
   catchError,
   combineLatest,
-  firstValueFrom,
+  distinctUntilChanged,
   map,
   of,
+  shareReplay,
   switchMap,
-  take,
+  tap,
 } from 'rxjs';
 import { ChatConversation, ChatMessage, User, UserActivity } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
@@ -30,6 +31,10 @@ import { NotificationService } from '../../core/services/notifications';
 import { I18nService } from '../../core/services/i18n';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
+import {
+  ChatAccentOption,
+  ChatFontScale,
+} from '../../shared/components/chat-settings/chat-settings';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 /** Claves de preferencias del chat guardadas en `localStorage`. */
@@ -37,6 +42,32 @@ const CHAT_BACKGROUND_KEY = 'carxy:chat:bg';
 const CHAT_BACKGROUND_PREFIX = 'carxy:chat:bg:';
 const CHAT_PINNED_KEY = 'carxy:chat:pinned';
 const CHAT_SEEN_KEY = 'carxy:chat:seen';
+/** Preferencias del panel de ajustes del chat. */
+const CHAT_SETTINGS_KEY = 'carxy:chat:settings';
+
+export interface ChatSettings {
+  fontScale: ChatFontScale;
+  showTimestamps: boolean;
+  accent: string;
+  muted: string[];
+}
+
+const DEFAULT_CHAT_SETTINGS: ChatSettings = {
+  fontScale: 'md',
+  showTimestamps: true,
+  accent: '#8b5cf6',
+  muted: [],
+};
+
+/** Acentos que se pueden elegir para el chat (el primero es el de la app). */
+const CHAT_ACCENTS: ChatAccentOption[] = [
+  { value: '#8b5cf6', label: 'Violeta' },
+  { value: '#0ea5e9', label: 'Azul' },
+  { value: '#10b981', label: 'Verde' },
+  { value: '#f59e0b', label: 'Ámbar' },
+  { value: '#f43f5e', label: 'Rosa' },
+  { value: '#64748b', label: 'Pizarra' },
+];
 /**
  * Evita reescribir `localStorage` en cada ciclo de detección de cambios:
  * `markSeen` se invoca desde `ngAfterViewChecked`.
@@ -76,7 +107,8 @@ export interface ConversationWithPartner extends ChatConversation {
 export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly user$ = inject(AuthService).user$;
   readonly auth = inject(AuthService);
-  private readonly social = inject(SocialService);
+  /** Público para que la plantilla pueda resolver las tarjetas de modelo. */
+  readonly social = inject(SocialService);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
@@ -89,13 +121,17 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   mobileMenuOpen = false;
   @ViewChild('messageList') private messageListContainer?: ElementRef<HTMLElement>;
   @ViewChild('composer') private composer?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('settingsDialog') private settingsDialog?: ElementRef<HTMLDialogElement>;
   readonly conversations$ = this.user$.pipe(
     switchMap((user) =>
       user
         ? this.social
             .recentChats$(user.uid)
             .pipe(
-              catchError(() => of([])),
+              catchError((error: unknown) => {
+                this.listError.set(this.describeStreamError(error, 'No se pudieron cargar tus conversaciones.'));
+                return of([]);
+              }),
               switchMap((conversations) =>
                 conversations.length
                   ? combineLatest(
@@ -110,6 +146,10 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
             )
         : of([]),
     ),
+    // La plantilla se suscribe varias veces (cabecera, lista y presencia) y
+    // `activities$` también: sin compartir, cada suscripción abriría su propio
+    // listener de perfiles.
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
   /**
    * Presencia (última actividad) de los interlocutores.
@@ -118,15 +158,21 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
    * que el chat lee el documento de cada interlocutor (permiso de lectura
    * individual). Así el chat funciona igual para usuarios, moderadores y
    * administradores sin pedir permisos que no corresponden al rol.
+   *
+   * El conjunto de interlocutores se filtra con `distinctUntilChanged` para
+   * que un mensaje nuevo (que reordena la lista) no reabra los listeners de
+   * presencia de todos los contactos.
    */
-  readonly activities$ = this.conversations$.pipe(
-    switchMap((conversations) => {
-      const peers = [...new Set(
-        conversations.map((conversation) => conversation.partner?.uid ?? '').filter(Boolean),
-      )];
+  readonly activities$ = combineLatest([this.user$, this.conversations$]).pipe(
+    map(([user, conversations]) => (user
+      ? [...new Set(conversations.map((conversation) => this.peerId(conversation, user.uid)).filter(Boolean))].sort()
+      : [])),
+    distinctUntilChanged((previous, next) =>
+      previous.length === next.length && previous.every((uid, index) => uid === next[index])),
+    switchMap((peers) => {
       if (!peers.length) return of(new Map<string, UserActivity>());
       return combineLatest(
-        peers.map((peerUid) => this.social.userActivityOf$(peerUid).pipe(
+        peers.map((peerUid) => this.social.userPresence$(peerUid).pipe(
           map((activity) => [peerUid, activity] as const),
         )),
       ).pipe(
@@ -147,18 +193,62 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly error = signal('');
   readonly copiedId = signal('');
   readonly copiedMessageId = signal('');
+  /**
+   * Errores de sincronización (conversaciones o hilo). Antes el `catchError`
+   * devolvía una lista vacía sin avisar, así que un fallo de permisos o de
+   * red dejaba el chat en blanco y sin explicación.
+   */
+  readonly listError = signal('');
+  readonly threadError = signal('');
   search = '';
-  chatId = '';
-  messages$?: Observable<MessageGroup[]>;
-  partnerProfile$?: Observable<User | null>;
+  /**
+   * Estado de la conversación abierta.
+   *
+   * La aplicación usa detección de cambios zoneless: asignar una propiedad
+   * simple no programa un render, así que abrir un chat podía no dibujarse
+   * nunca (dependía del throttling de `markSeen` o del `AsyncPipe` de
+   * `user$`). Con signals, cambiar de conversación siempre repinta.
+   */
+  readonly chatId = signal('');
+  readonly messages = signal<Observable<MessageGroup[]> | undefined>(undefined);
+  readonly partnerProfile = signal<Observable<User | null> | undefined>(undefined);
   messageQuery = '';
   messageSearchOpen = false;
   readonly pinned = new Set<string>(this.loadPinned());
-  private nearBottom = true;
+  /** Preferencias del chat guardadas en `localStorage`. */
+  private readonly settings: ChatSettings = this.loadChatSettings();
+  /** Escala del texto del chat (compacto / normal / grande). */
+  readonly chatFontScale = signal<ChatFontScale>(this.settings.fontScale);
+  /** Mostrar la hora en cada burbuja. */
+  readonly showTimestamps = signal(this.settings.showTimestamps);
+  /** Color de acento propio del chat (independiente del de la app). */
+  readonly chatAccent = signal(this.settings.accent);
+  /** Conversaciones silenciadas (sin badge de no leídos). */
+  readonly mutedChats = signal<string[]>(this.settings.muted);
+  /**
+   * ¿El hilo está pegado al final? Si no, aparece el botón "ir al último" y
+   * los mensajes que llegan se marcan como nuevos en vez de hacer scroll.
+   */
+  readonly atBottom = signal(true);
+  /** Mensajes recibidos por encima de la última posición leída. */
+  readonly unreadCount = signal(0);
+  /** Id del primer mensaje sin leer: marca el separador "Mensajes nuevos". */
+  readonly firstUnreadId = signal('');
+  /** Posición de la coincidencia resaltada en la búsqueda de la conversación. */
+  readonly searchCursor = signal(-1);
+  /** Aviso para lectores de pantalla cuando llegan mensajes sin estar al final. */
+  readonly announcement = signal('');
+  /** Mensajes de la conversación abierta (para exportar el historial). */
+  readonly chatMessages = signal<ChatMessage[]>([]);
+  /** Marca de la última lectura de la conversación abierta. */
+  private lastReadAt = 0;
+  /** `createdAt` del mensaje más reciente conocido. */
+  private newestMessageAt = 0;
   /** Evita envíos duplicados por doble clic o Enter repetido. */
   readonly sending = signal(false);
-  readonly chatBackgrounds: { id: string; label: string; css: string }[] = [
-    {
+  /** Acentos que se pueden elegir para el chat. */
+  readonly chatAccents = CHAT_ACCENTS;
+  readonly chatBackgrounds: { id: string; label: string; css: string }[] = [    {
       id: 'default',
       label: 'Predeterminado',
       css: 'radial-gradient(80% 55% at 50% 0%, color-mix(in srgb, var(--accent-color) 5%, transparent), transparent 55%), var(--surface-main)',
@@ -220,38 +310,106 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
     this.error.set('');
+    this.listError.set('');
+    this.threadError.set('');
     const nextChatId = [this.currentUser.uid, peer].sort().join('__');
-    if (this.chatId === nextChatId) {
+    if (this.chatId() === nextChatId) {
       // Misma conversación: no se recrea el stream, pero se refresca el estado visual.
-      this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId);
+      this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId());
       return;
     }
-    this.chatId = nextChatId;
-    this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId);
-    this.messages$ = this.social.chatMessages$(this.chatId).pipe(
-      catchError(() => of([])),
-      map((messages) => this.groupByDay(messages)),
+    this.chatId.set(nextChatId);
+    this.chatBackgroundId = this.effectiveChatBackgroundId(this.chatId());
+    this.messages.set(
+      this.social.chatMessages$(this.chatId()).pipe(
+        tap((messages) => this.syncReadState(messages)),
+        map((messages) => this.groupByDay(messages)),
+        catchError((error: unknown) => {
+          this.threadError.set(this.describeStreamError(error, 'No se pudo sincronizar la conversación.'));
+          return of([] as MessageGroup[]);
+        }),
+      ),
     );
-    this.partnerProfile$ = this.social.profile$(peer).pipe(
-      catchError(() => of(null)),
+    this.partnerProfile.set(
+      this.social.profile$(peer).pipe(
+        catchError(() => of(null)),
+      ),
     );
-    this.nearBottom = true;
-    this.markSeen(this.chatId);
-    void this.social.ensureChatConversation(this.chatId, this.currentUser?.uid).catch((error: unknown) => {
+    this.atBottom.set(true);
+    // Lo que ya existía al abrir la conversación está leído: solo cuentan
+    // como nuevos los mensajes que lleguen después.
+    this.lastReadAt = Date.now();
+    this.newestMessageAt = 0;
+    this.unreadCount.set(0);
+    this.firstUnreadId.set('');
+    this.searchCursor.set(-1);
+    this.markSeen(this.chatId());
+    // Que el badge de la campana no siga contando los mensajes del interlocutor
+    // como pendientes una vez que fueron abiertos a través de aquí.
+    void this.social.markMessageNotificationsRead(this.currentUser.uid, peer).catch(() => undefined);
+    void this.social.ensureChatConversation(this.chatId(), this.currentUser?.uid).catch((error: unknown) => {
       this.error.set(this.i18n.firebaseError(error, 'No se pudo abrir la conversación.'));
       this.notifications.error(this.error());
     });
   }
 
+  /**
+   * Traduce un fallo de sincronización a un mensaje comprensible.
+   * `i18n.firebaseError()` convierte los errores de Firebase ("Missing or
+   * insufficient permissions") en texto que el usuario entienda.
+   */
+  private describeStreamError(error: unknown, fallback: string): string {
+    return this.i18n.firebaseError(error, this.i18n.translate(fallback));
+  }
+
   ngAfterViewChecked(): void {
-    if (this.nearBottom) this.scrollToBottom();
-    if (this.chatId) this.markSeen(this.chatId);
+    if (this.atBottom()) this.scrollToBottom();
+    if (this.chatId()) this.markSeen(this.chatId());
   }
 
   onMessageListScroll(): void {
     const element = this.messageListContainer?.nativeElement;
     if (!element) return;
-    this.nearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 90;
+    const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 90;
+    this.atBottom.set(atBottom);
+    if (atBottom) this.markMessagesRead();
+  }
+
+  /**
+   * Recalcula qué mensajes siguen sin leer.
+   *
+   * Si el usuario está al final, lo que llega se considera leído (y el hilo
+   * hace scroll). Si está leyendo historial, los mensajes nuevos se acumulan
+   * y se marcan con un separador para no perderlos de vista.
+   */
+  private syncReadState(messages: ChatMessage[]): void {
+    this.chatMessages.set(messages);
+    this.newestMessageAt = messages.at(-1)?.createdAt ?? 0;
+    if (this.atBottom()) {
+      this.markMessagesRead();
+      return;
+    }
+    const pending = messages.filter((message) => message.createdAt > this.lastReadAt);
+    this.unreadCount.set(pending.length);
+    this.firstUnreadId.set(pending[0]?.id ?? '');
+    if (pending.length) {
+      this.announcement.set(this.i18n.translate('{count} mensajes nuevos', { count: pending.length }));
+    }
+  }
+
+  /** Marca todo lo que haya llegado hasta el final como leído. */
+  private markMessagesRead(): void {
+    if (!this.newestMessageAt) return;
+    this.lastReadAt = this.newestMessageAt;
+    this.unreadCount.set(0);
+    this.firstUnreadId.set('');
+  }
+
+  /** Vuelve al final del hilo y salta al último mensaje. */
+  scrollToLatest(): void {
+    this.atBottom.set(true);
+    this.markMessagesRead();
+    this.scrollToBottom();
   }
 
   scrollToBottom(): void {
@@ -275,12 +433,14 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   deselectChat(): void {
-    this.chatId = '';
+    this.chatId.set('');
     this.partnerId = '';
     this.chatBackgroundId = this.effectiveChatBackgroundId('');
-    this.messages$ = undefined;
-    this.partnerProfile$ = undefined;
+    this.messages.set(undefined);
+    this.partnerProfile.set(undefined);
     this.error.set('');
+    this.listError.set('');
+    this.threadError.set('');
     this.copiedId.set('');
   }
 
@@ -309,7 +469,78 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   hasUnread(conversation: ChatConversation): boolean {
+    if (this.isMuted(conversation.id)) return false;
     return conversation.updatedAt > (this.seenChats()[conversation.id] ?? 0);
+  }
+
+  /**
+   * Fecha de la última actividad de una conversación, en el formato que más
+   * ayuda: la hora si es de hoy, "Ayer", el día de la semana si es de esta
+   * semana y la fecha a partir de entonces.
+   */
+  conversationDateLabel(timestamp: number): string {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const startOf = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+    const days = Math.round((startOf(now) - startOf(date)) / 86_400_000);
+    const locale = this.localeFor(this.i18n.language());
+    if (days <= 0) {
+      return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(date);
+    }
+    if (days === 1) return this.i18n.translate('Ayer');
+    if (days < 7) {
+      return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
+    }
+    return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
+  }
+
+  /**
+   * Id del modelo compartido en un mensaje.
+   *
+   * El botón "Compartir modelo" del feed copia un enlace con `?post=<id>`; al
+   * pegarlo en el chat se muestra como tarjeta con la miniatura y el título
+   * en lugar de una URL suelta.
+   */
+  modelPostId(message: ChatMessage): string {
+    return /[?&]post=([A-Za-z0-9_-]+)/.exec(message.text)?.[1] ?? '';
+  }
+
+  /** ¿Este mensaje contiene la búsqueda en curso? */
+  isMatch(message: ChatMessage): boolean {
+    const query = this.messageQuery.trim().toLowerCase();
+    if (!query) return false;
+    return message.text.toLowerCase().includes(query);
+  }
+
+  /** Reinicia el cursor al cambiar la búsqueda. */
+  onMessageQueryChange(query: string): void {
+    this.messageQuery = query;
+    this.searchCursor.set(-1);
+  }
+
+  /** Salta a la siguiente coincidencia de la búsqueda. */
+  goToNextMatch(): void {
+    this.moveMatch(1);
+  }
+
+  /** Salta a la coincidencia anterior. */
+  goToPreviousMatch(): void {
+    this.moveMatch(-1);
+  }
+
+  private moveMatch(direction: 1 | -1): void {
+    const container = this.messageListContainer?.nativeElement;
+    if (!container) return;
+    const matches = Array.from(container.querySelectorAll<HTMLElement>('[data-match]'));
+    if (!matches.length) return;
+    const current = this.searchCursor();
+    const next = (current + direction + matches.length) % matches.length;
+    this.searchCursor.set(next);
+    matches.forEach((element) => element.classList.remove('is-current'));
+    const target = matches[next];
+    target.classList.add('is-current');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async copyPartnerId(): Promise<void> {
@@ -350,13 +581,53 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  /**
+   * Agrupa las conversaciones en bloques temporales (Hoy / Ayer / Anterior).
+   * Fijadas siempre arriba y en su propio bloque "Fijadas" si hay alguna.
+   */
+  conversationGroups(list: ConversationWithPartner[]): { key: string; label: string; items: ConversationWithPartner[] }[] {
+    if (!list.length) return [];
+    const startOf = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+    const today = startOf(new Date());
+    const dayMs = 86_400_000;
+    const locale = this.localeFor(this.i18n.language());
+    const t = (key: string) => this.i18n.translate(key);
+    const buckets = new Map<string, { key: string; label: string; items: ConversationWithPartner[] }>();
+    const pinnedGroup = { key: 'pinned', label: t('Fijadas'), items: [] as ConversationWithPartner[] };
+    const todayGroup = { key: 'today', label: t('Hoy'), items: [] as ConversationWithPartner[] };
+    const yesterdayGroup = { key: 'yesterday', label: t('Ayer'), items: [] as ConversationWithPartner[] };
+    const weekGroup = { key: 'week', label: t('Esta semana'), items: [] as ConversationWithPartner[] };
+    const earlierGroup = { key: 'earlier', label: t('Anteriores'), items: [] as ConversationWithPartner[] };
+
+    for (const conversation of list) {
+      if (this.pinned.has(conversation.id)) {
+        pinnedGroup.items.push(conversation);
+        continue;
+      }
+      const days = Math.round((today - startOf(new Date(conversation.updatedAt || 0))) / dayMs);
+      if (days <= 0) todayGroup.items.push(conversation);
+      else if (days === 1) yesterdayGroup.items.push(conversation);
+      else if (days < 7) weekGroup.items.push(conversation);
+      else earlierGroup.items.push(conversation);
+    }
+
+    for (const bucket of [pinnedGroup, todayGroup, yesterdayGroup, weekGroup, earlierGroup]) {
+      if (bucket.items.length) buckets.set(bucket.key, bucket);
+    }
+    return [...buckets.values()];
+  }
+
   toggleMessageSearch(): void {
     this.messageSearchOpen = !this.messageSearchOpen;
-    if (!this.messageSearchOpen) this.messageQuery = '';
+    if (!this.messageSearchOpen) {
+      this.messageQuery = '';
+      this.searchCursor.set(-1);
+    }
   }
 
   clearMessageSearch(): void {
     this.messageQuery = '';
+    this.searchCursor.set(-1);
   }
 
   filteredGroups(groups: MessageGroup[]): MessageGroup[] {
@@ -551,12 +822,12 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
    */
   onConversationBackgroundChange(id: string): void {
     const next = this.normalizeBackgroundId(id);
-    if (!this.chatId) {
+    if (!this.chatId()) {
       this.setGlobalChatBackground(next);
       return;
     }
     this.chatBackgroundId = next;
-    this.setConversationBackground(this.chatId, next);
+    this.setConversationBackground(this.chatId(), next);
   }
 
   onGlobalBackgroundChange(id: string): void {
@@ -566,6 +837,15 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   effectiveChatBackgroundId(chatId: string): string {
     const override = this.readStoredChatBackground(chatId);
     return override ?? this.globalChatBackgroundId;
+  }
+
+  /**
+   * Identificador del fondo efectivo como `data-*` para que el CSS pueda
+   * aplicar la paleta de burbujas acorde al lienzo (p. ej. oscuros),
+   * independientemente del tema global claro/oscuro.
+   */
+  conversationDataBg(): string {
+    return this.effectiveChatBackgroundId(this.chatId());
   }
 
   conversationBackground(chatId: string): string {
@@ -584,7 +864,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.globalChatBackgroundId = id;
     this.writeStoredValue(CHAT_BACKGROUND_KEY, id);
     // Si la conversación abierta no tiene un fondo propio, sigue al global.
-    if (this.chatId && !this.readStoredChatBackground(this.chatId)) {
+    if (this.chatId() && !this.readStoredChatBackground(this.chatId())) {
       this.chatBackgroundId = id;
     }
   }
@@ -644,9 +924,113 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  /** Cierra el panel de ajustes al hacer clic fuera del contenido. */
+  closeSettingsOnBackdrop(event: MouseEvent, dialog: HTMLDialogElement): void {
+    if (event.target !== dialog) return;
+    dialog.close();
+  }
+
+  /* ------------------------------------------------------------------
+     Ajustes del chat
+     ------------------------------------------------------------------ */
+
+  private loadChatSettings(): ChatSettings {
+    if (!this.storage) return { ...DEFAULT_CHAT_SETTINGS };
+    try {
+      const parsed = JSON.parse(this.storage.getItem(CHAT_SETTINGS_KEY) ?? '{}') as Partial<ChatSettings>;
+      const fontScale = parsed.fontScale === 'sm' || parsed.fontScale === 'lg' ? parsed.fontScale : 'md';
+      return {
+        fontScale,
+        showTimestamps: parsed.showTimestamps !== false,
+        accent: typeof parsed.accent === 'string' && parsed.accent.startsWith('#')
+          ? parsed.accent
+          : DEFAULT_CHAT_SETTINGS.accent,
+        muted: Array.isArray(parsed.muted)
+          ? parsed.muted.filter((id): id is string => typeof id === 'string')
+          : [],
+      };
+    } catch {
+      return { ...DEFAULT_CHAT_SETTINGS };
+    }
+  }
+
+  private persistChatSettings(): void {
+    this.writeStoredValue(CHAT_SETTINGS_KEY, JSON.stringify({
+      fontScale: this.chatFontScale(),
+      showTimestamps: this.showTimestamps(),
+      accent: this.chatAccent(),
+      muted: this.mutedChats(),
+    }));
+  }
+
+  setFontScale(scale: ChatFontScale): void {
+    this.chatFontScale.set(scale);
+    this.persistChatSettings();
+  }
+
+  toggleTimestamps(): void {
+    this.showTimestamps.set(!this.showTimestamps());
+    this.persistChatSettings();
+  }
+
+  setAccent(accent: string): void {
+    this.chatAccent.set(accent);
+    this.persistChatSettings();
+  }
+
+  /** Silencia (o reactiva) la conversación abierta. */
+  toggleMute(chatId: string): void {
+    if (!chatId) return;
+    const muted = this.mutedChats();
+    this.mutedChats.set(muted.includes(chatId) ? muted.filter((id) => id !== chatId) : [...muted, chatId]);
+    this.persistChatSettings();
+  }
+
+  isMuted(chatId: string): boolean {
+    return this.mutedChats().includes(chatId);
+  }
+
+  /** Descarga el historial de la conversación en texto plano. */
+  exportConversation(): void {
+    const messages = this.chatMessages();
+    if (!messages.length) {
+      this.notifications.info(
+        this.i18n.translate('No hay mensajes que exportar todavía.'),
+        this.i18n.translate('Exportar conversación'),
+      );
+      return;
+    }
+    const locale = this.localeFor(this.i18n.language());
+    const lines = messages.map((message) => {
+      const time = new Date(message.createdAt).toLocaleString(locale);
+      return `[${time}] ${message.senderName}: ${message.text}`;
+    });
+    const header = [
+      `CARXY · ${this.partnerId || 'conversación'}`,
+      this.i18n.translate('Exportado el {date}.', { date: new Date().toLocaleString(locale) }),
+      '',
+    ];
+    const blob = new Blob([header.join('\n'), lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `carxy-chat-${this.chatId() || 'conversacion'}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    this.notifications.success(
+      this.i18n.translate('Conversación exportada.'),
+      this.i18n.translate('Exportar conversación'),
+    );
+  }
+
   useFallbackAvatar(event: Event): void {
     const image = event.target;
     if (image instanceof HTMLImageElement) image.src = 'user-avatar.svg';
+  }
+
+  /** Abre el panel de ajustes del chat. */
+  openSettings(): void {
+    this.settingsDialog?.nativeElement.showModal();
   }
 
   private openRequestedConversation(): void {
@@ -657,20 +1041,29 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   async send(): Promise<void> {
     if (this.sending()) return;
     const text = this.message().trim();
-    if (!this.chatId || !text) return;
+    const chatId = this.chatId();
+    if (!chatId || !text) return;
     this.sending.set(true);
     try {
-      const user = await firstValueFrom(this.auth.user$.pipe(take(1)));
-      if (!user) return;
-      await this.social.sendMessage(this.chatId, {
+      // Se usa el usuario ya resuelto por `user$`: `firstValueFrom(user$)` podía
+      // devolver `null` en la primera emisión y descartaba el mensaje en
+      // silencio, dejando el texto en el compositor.
+      const user = this.currentUser;
+      if (!user) {
+        this.error.set(this.i18n.translate('Tu sesión aún no está lista. Inténtalo de nuevo en un momento.'));
+        this.notifications.warning(this.error());
+        return;
+      }
+      await this.social.sendMessage(chatId, {
         text,
         senderId: user.uid,
         senderName: user.displayName || user.email || 'Usuario',
+        senderPhotoURL: user.photoURL ?? null,
       });
       this.message.set('');
       this.error.set('');
-      this.nearBottom = true;
-      this.markSeen(this.chatId);
+      this.atBottom.set(true);
+      this.markSeen(chatId);
       setTimeout(() => this.scrollToBottom());
     } catch (error) {
       this.error.set(this.i18n.firebaseError(error, 'No se pudo enviar el mensaje.'));

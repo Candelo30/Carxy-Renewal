@@ -17,7 +17,7 @@ import {
   updateProfile,
 } from '@angular/fire/auth';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
-import { BehaviorSubject, Observable, combineLatest, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import { Firestore, doc, docData, setDoc } from '@angular/fire/firestore';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS } from '../config/app.constants';
 import { User as SocialUser, UserProfile, UserRole } from '../models/social.models';
@@ -71,7 +71,21 @@ export class AuthService {
     return this.auth?.currentUser;
   }
 
-  readonly user$: Observable<UserProfile | null> = this.auth && this.firestore
+  /**
+   * Estado del usuario autenticado.
+   *
+   * `shareReplay` es essential: `user$` se consume en ~30 puntos de la app y,
+   * sin compartir, cada suscriptor abría su propio par de listeners `docData`
+   * (perfil público + privado). Con el SDK compartidos, esos listeners se
+   * multiplicaban y cada unlisten/relisten incrementaba el número de targets
+   * del watch stream, que es el escenario que dispara la carrera de target
+   * IDs del SDK (aserción interna `ca9`).
+   *
+   * `refCount: false` mantiene los listeners vivos mientras haya al menos un
+   * suscriptor y evita el unlisten/relisten cuando el último suscriptor se
+   * va y vuelve (navegación entre rutas).
+   */
+  readonly user$: Observable<UserProfile | null> = (this.auth && this.firestore
     ? authState(this.auth).pipe(
         switchMap((firebaseUser) => {
           if (!firebaseUser) return of(null);
@@ -104,7 +118,8 @@ export class AuthService {
           emailVerified: firebaseUser.emailVerified,
           providers: firebaseUser.providerData.map((provider) => provider.providerId),
         } : null))
-      : this.localUser.asObservable();
+      : this.localUser.asObservable()
+  ).pipe(shareReplay({ bufferSize: 1, refCount: false }));
 
   readonly role$: Observable<UserRole | null> = this.user$.pipe(map((user) => user?.role ?? null));
 

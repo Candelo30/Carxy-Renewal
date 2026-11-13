@@ -1,0 +1,103 @@
+<dialog #dialog class="chat-settings" (click)="closeOnBackdrop($event)">
+  <div class="chat-settings-panel">
+    <header>
+      <div>
+        <p class="eyebrow">{{ 'AJUSTES' | translate }}</p>
+        <h2>{{ 'Personaliza tu chat' | translate }}</h2>
+      </div>
+      <button type="button" class="dismiss" (click)="close()" [attr.aria-label]="'Cerrar' | translate">×</button>
+    </header>
+
+    <section class="setting">
+      <div class="setting-copy">
+        <strong>{{ 'Tamaño del texto' | translate }}</strong>
+        <small>{{ 'Ajusta el tamaño de los mensajes.' | translate }}</small>
+      </div>
+      <div class="segmented" role="group" [attr.aria-label]="'Tamaño del texto' | translate">
+        <button type="button" [class.active]="fontScale === 'sm'" (click)="selectFontScale('sm')" [attr.aria-pressed]="fontScale === 'sm'">A</button>
+        <button type="button" [class.active]="fontScale === 'md'" (click)="selectFontScale('md')" [attr.aria-pressed]="fontScale === 'md'">A</button>
+        <button type="button" [class.active]="fontScale === 'lg'" (click)="selectFontScale('lg')" [attr.aria-pressed]="fontScale === 'lg'">A</button>
+      </div>
+    </section>
+
+    <section class="setting">
+      <div class="setting-copy">
+        <strong>{{ 'Color de acento' | translate }}</strong>
+        <small>{{ 'Solo para el chat.' | translate }}</small>
+      </div>
+      <div class="swatches" role="group" [attr.aria-label]="'Color de acento' | translate">
+        @for (option of accents; track option.value) {
+          <button
+            type="button"
+            class="swatch"
+            [class.active]="accent === option.value"
+            [style.--swatch]="option.value"
+            (click)="selectAccent(option.value)"
+            [attr.aria-label]="option.label"
+            [attr.aria-pressed]="accent === option.value"
+            [title]="option.label"
+          ></button>
+        }
+      </div>
+    </section>
+
+    <section class="setting">
+      <div class="setting-copy">
+        <strong>{{ 'Mostrar la hora' | translate }}</strong>
+        <small>{{ 'Hora junto a cada mensaje.' | translate }}</small>
+      </div>
+      <button
+        type="button"
+        class="switch"
+        role="switch"
+        [class.on]="showTimestamps"
+        [attr.aria-checked]="showTimestamps"
+        (click)="toggleTimestamps()"
+      ><span></span></button>
+    </section>
+
+    <section class="setting">
+      <div class="setting-copy">
+        <strong>{{ 'Silenciar conversación' | translate }}</strong>
+        <small>{{ 'No muestra el punto de no leídos.' | translate }}</small>
+      </div>
+      <button
+        type="button"
+        class="switch"
+        role="switch"
+        [class.on]="muted"
+        [attr.aria-checked]="muted"
+        [disabled]="!hasConversation"
+        (click)="toggleMute()"
+      ><span></span></button>
+    </section>
+
+    <section class="setting">
+      <div class="setting-copy">
+        <strong>{{ 'Fondo de la conversación' | translate }}</strong>
+        <small>{{ 'Elige el fondo de esta conversación.' | translate }}</small>
+      </div>
+      <select
+        class="background-select"
+        [ngModel]="backgroundId"
+        (ngModelChange)="selectBackground($event)"
+        [attr.aria-label]="'Fondo de conversación' | translate"
+      >
+        @for (background of backgrounds; track background.id) {
+          <option [value]="background.id">{{ background.label }}</option>
+        }
+      </select>
+    </section>
+
+    <footer>
+      <button type="button" class="tool" (click)="exportRequest.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12M8 11l4 4 4-4" />
+          <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+        </svg>
+        {{ 'Exportar conversación' | translate }}
+      </button>
+      <button type="button" class="tool" (click)="close()">{{ 'Cerrar' | translate }}</button>
+    </footer>
+  </div>
+</dialog>

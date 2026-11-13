@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { SocialService } from '../../core/services/social';
 import { ChatPage } from './chat-page';
@@ -17,11 +17,14 @@ function createSocialStub(overrides: Partial<Record<string, unknown>> = {}): Rec
   return {
     userActivity$: of([]),
     userActivityOf$: vi.fn(() => of(null)),
+    userPresence$: vi.fn(() => of(null)),
     activityNotifications$: vi.fn(() => of([])),
     recentChats$: vi.fn(() => of([])),
     chatMessages$: vi.fn(() => of([])),
     profile$: vi.fn(() => of(null)),
     markActivityNotificationRead: vi.fn().mockResolvedValue(undefined),
+    markMessageNotificationsRead: vi.fn().mockResolvedValue(undefined),
+    markAllActivityNotificationsRead: vi.fn().mockResolvedValue(undefined),
     sendMessage: vi.fn().mockResolvedValue(undefined),
     ensureChatConversation: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -173,5 +176,141 @@ describe('ChatPage', () => {
 
     const seenWrites = setItem.mock.calls.filter(([key]) => key === 'carxy:chat:seen');
     expect(seenWrites.length).toBeLessThanOrEqual(1);
+  });
+
+  it('exposes the open conversation through signals so zoneless repaints it', async () => {
+    const { component } = await setup();
+
+    component.partnerId = 'creator-2';
+    component.openConversation();
+
+    // Con propiedades simples el render dependía del throttling de `markSeen`
+    // o del AsyncPipe de `user$`, y el panel podía no dibujarse nunca.
+    expect(component.chatId()).toBe('creator-1__creator-2');
+    expect(component.messages()).toBeDefined();
+    expect(component.partnerProfile()).toBeDefined();
+  });
+
+  it('clears the conversation state when it is deselected', async () => {
+    const { component } = await setup();
+
+    component.partnerId = 'creator-2';
+    component.openConversation();
+    component.deselectChat();
+
+    expect(component.chatId()).toBe('');
+    expect(component.messages()).toBeUndefined();
+    expect(component.partnerProfile()).toBeUndefined();
+  });
+
+  it('shows the failure instead of silently emptying the message thread', async () => {
+    const { fixture, component } = await setup(createSocialStub({
+      chatMessages$: vi.fn(() => throwError(() => new Error('sin permisos'))),
+    }));
+
+    component.partnerId = 'creator-2';
+    component.openConversation();
+    fixture.detectChanges();
+
+    expect(component.threadError()).toContain('sin permisos');
+  });
+
+  it('shows the failure instead of silently emptying the conversation list', async () => {
+    const { fixture, component } = await setup(createSocialStub({
+      recentChats$: vi.fn(() => throwError(() => new Error('lista rota'))),
+    }));
+
+    fixture.detectChanges();
+
+    expect(component.listError()).toContain('lista rota');
+  });
+
+  it('sends the message with the already resolved user and their avatar', async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const { component } = await setup(createSocialStub({ sendMessage }));
+
+    component.partnerId = 'creator-2';
+    component.openConversation();
+    component.message.set('hola');
+    await component.send();
+
+    expect(sendMessage).toHaveBeenCalledWith('creator-1__creator-2', {
+      text: 'hola',
+      senderId: 'creator-1',
+      senderName: 'Creador Uno',
+      senderPhotoURL: null,
+    });
+  });
+
+  it('detects a shared model link so it can be shown as a card', async () => {
+    const { component } = await setup();
+
+    expect(component.modelPostId({
+      id: '1',
+      text: 'mira https://carxy.app/Carxy-Renewal/feed?post=abc-123_def',
+      senderId: 'creator-2',
+      senderName: 'Creador Dos',
+      createdAt: 1,
+    })).toBe('abc-123_def');
+
+    expect(component.modelPostId({
+      id: '2',
+      text: 'hola, ¿qué tal?',
+      senderId: 'creator-2',
+      senderName: 'Creador Dos',
+      createdAt: 2,
+    })).toBe('');
+  });
+
+  it('marks the messages that arrive while reading history as unread', async () => {
+    const { component } = await setup();
+
+    component.partnerId = 'creator-2';
+    component.openConversation();
+
+    const older = { id: 'a', text: 'viejo', senderId: 'creator-2', senderName: 'Creador Dos', createdAt: 1_000 };
+    const fresh = { id: 'b', text: 'nuevo', senderId: 'creator-2', senderName: 'Creador Dos', createdAt: 5_000 };
+    // El hilo llega con el historial y el usuario está al final: todo leído.
+    component['syncReadState']([older] as never);
+    expect(component.unreadCount()).toBe(0);
+
+    // El usuario sube a leer historial: a partir de aquí lo que llega se
+    // marca como nuevo en vez de hacer scroll.
+    component.atBottom.set(false);
+    component['syncReadState']([older, fresh] as never);
+
+    expect(component.unreadCount()).toBe(1);
+    expect(component.firstUnreadId()).toBe('b');
+  });
+
+  it('clears the unread marker when the user returns to the end of the thread', async () => {
+    const { component } = await setup();
+
+    component.partnerId = 'creator-2';
+    component.openConversation();
+    component['syncReadState']([
+      { id: 'a', text: 'hola', senderId: 'creator-2', senderName: 'Creador Dos', createdAt: 5_000 },
+    ] as never);
+    component.atBottom.set(false);
+    component['syncReadState']([
+      { id: 'a', text: 'hola', senderId: 'creator-2', senderName: 'Creador Dos', createdAt: 5_000 },
+      { id: 'b', text: 'otro', senderId: 'creator-2', senderName: 'Creador Dos', createdAt: 9_000 },
+    ] as never);
+    expect(component.unreadCount()).toBe(1);
+
+    component.scrollToLatest();
+
+    expect(component.atBottom()).toBe(true);
+    expect(component.unreadCount()).toBe(0);
+    expect(component.firstUnreadId()).toBe('');
+  });
+
+  it('shows the hour for conversations updated today and a label for older ones', async () => {
+    const { component } = await setup();
+
+    const now = Date.now();
+    expect(component.conversationDateLabel(now)).toMatch(/\d{1,2}:\d{2}/);
+    expect(component.conversationDateLabel(now - 86_400_000)).toBe('Ayer');
+    expect(component.conversationDateLabel(now - 30 * 86_400_000)).not.toBe('');
   });
 });

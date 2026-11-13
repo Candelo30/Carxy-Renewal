@@ -1,36 +1,4 @@
 import type { AppLanguage } from '../languages';
-import { DE_TRANSLATIONS } from './de';
-import { DE_EDITOR_TRANSLATIONS } from './de.editor';
-import { DE_EXTRA_TRANSLATIONS } from './de.extra';
-import { LEGAL_DE_TRANSLATIONS } from './legal.de';
-import { HI_TRANSLATIONS } from './hi';
-import { HI_EDITOR_TRANSLATIONS } from './hi.editor';
-import { HI_EXTRA_TRANSLATIONS } from './hi.extra';
-import { LEGAL_HI_TRANSLATIONS } from './legal.hi';
-import { IT_TRANSLATIONS } from './it';
-import { IT_EDITOR_TRANSLATIONS } from './it.editor';
-import { IT_EXTRA_TRANSLATIONS } from './it.extra';
-import { LEGAL_IT_TRANSLATIONS } from './legal.it';
-import { JA_TRANSLATIONS } from './ja';
-import { JA_EDITOR_TRANSLATIONS } from './ja.editor';
-import { JA_EXTRA_TRANSLATIONS } from './ja.extra';
-import { LEGAL_JA_TRANSLATIONS } from './legal.ja';
-import { KO_TRANSLATIONS } from './ko';
-import { KO_EDITOR_TRANSLATIONS } from './ko.editor';
-import { KO_EXTRA_TRANSLATIONS } from './ko.extra';
-import { LEGAL_KO_TRANSLATIONS } from './legal.ko';
-import { RU_TRANSLATIONS } from './ru';
-import { RU_EDITOR_TRANSLATIONS } from './ru.editor';
-import { RU_EXTRA_TRANSLATIONS } from './ru.extra';
-import { LEGAL_RU_TRANSLATIONS } from './legal.ru';
-import { TR_TRANSLATIONS } from './tr';
-import { TR_EDITOR_TRANSLATIONS } from './tr.editor';
-import { TR_EXTRA_TRANSLATIONS } from './tr.extra';
-import { LEGAL_TR_TRANSLATIONS } from './legal.tr';
-import { ZH_TRANSLATIONS } from './zh';
-import { ZH_EDITOR_TRANSLATIONS } from './zh.editor';
-import { ZH_EXTRA_TRANSLATIONS } from './zh.extra';
-import { LEGAL_ZH_TRANSLATIONS } from './legal.zh';
 
 /**
  * Capas de traducción por idioma. Las claves pueden ser semánticas
@@ -38,15 +6,126 @@ import { LEGAL_ZH_TRANSLATIONS } from './legal.zh';
  *
  * Los idiomas base (es/en/fr/pt) viven en MESSAGES y SOURCE_TRANSLATIONS.
  * Para añadir un idioma nuevo basta con crear sus archivos y registrarlo aquí.
+ *
+ * Las capas se cargan **bajo demanda**: cada idioma es un chunk aparte que
+ * solo se descarga si el usuario lo elige. Antes iban todas en el bundle
+ * inicial (más de 1 MB de diccionarios) y pesaban igual a un usuario en
+ * español que a uno en japonés. Mientras se descarga, la interfaz usa la
+ * cadena base en inglés y se repinta al terminar.
  */
-export const LOCALE_OVERLAYS: Partial<Record<AppLanguage, Record<string, string>>> = {
-  de: { ...DE_TRANSLATIONS, ...DE_EDITOR_TRANSLATIONS, ...DE_EXTRA_TRANSLATIONS, ...LEGAL_DE_TRANSLATIONS },
-  hi: { ...HI_TRANSLATIONS, ...HI_EDITOR_TRANSLATIONS, ...HI_EXTRA_TRANSLATIONS, ...LEGAL_HI_TRANSLATIONS },
-  it: { ...IT_TRANSLATIONS, ...IT_EDITOR_TRANSLATIONS, ...IT_EXTRA_TRANSLATIONS, ...LEGAL_IT_TRANSLATIONS },
-  ja: { ...JA_TRANSLATIONS, ...JA_EDITOR_TRANSLATIONS, ...JA_EXTRA_TRANSLATIONS, ...LEGAL_JA_TRANSLATIONS },
-  ko: { ...KO_TRANSLATIONS, ...KO_EDITOR_TRANSLATIONS, ...KO_EXTRA_TRANSLATIONS, ...LEGAL_KO_TRANSLATIONS },
-  ru: { ...RU_TRANSLATIONS, ...RU_EDITOR_TRANSLATIONS, ...RU_EXTRA_TRANSLATIONS, ...LEGAL_RU_TRANSLATIONS },
-  tr: { ...TR_TRANSLATIONS, ...TR_EDITOR_TRANSLATIONS, ...TR_EXTRA_TRANSLATIONS, ...LEGAL_TR_TRANSLATIONS },
-  zh: { ...ZH_TRANSLATIONS, ...ZH_EDITOR_TRANSLATIONS, ...ZH_EXTRA_TRANSLATIONS, ...LEGAL_ZH_TRANSLATIONS },
+export const LOCALE_OVERLAY_LOADERS: Partial<
+  Record<AppLanguage, () => Promise<Record<string, string>>>
+> = {
+  de: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./de'),
+      import('./de.editor'),
+      import('./de.extra'),
+      import('./legal.de'),
+    ]);
+    return {
+      ...base.DE_TRANSLATIONS,
+      ...editor.DE_EDITOR_TRANSLATIONS,
+      ...extra.DE_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_DE_TRANSLATIONS,
+    };
+  },
+  hi: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./hi'),
+      import('./hi.editor'),
+      import('./hi.extra'),
+      import('./legal.hi'),
+    ]);
+    return {
+      ...base.HI_TRANSLATIONS,
+      ...editor.HI_EDITOR_TRANSLATIONS,
+      ...extra.HI_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_HI_TRANSLATIONS,
+    };
+  },
+  it: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./it'),
+      import('./it.editor'),
+      import('./it.extra'),
+      import('./legal.it'),
+    ]);
+    return {
+      ...base.IT_TRANSLATIONS,
+      ...editor.IT_EDITOR_TRANSLATIONS,
+      ...extra.IT_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_IT_TRANSLATIONS,
+    };
+  },
+  ja: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./ja'),
+      import('./ja.editor'),
+      import('./ja.extra'),
+      import('./legal.ja'),
+    ]);
+    return {
+      ...base.JA_TRANSLATIONS,
+      ...editor.JA_EDITOR_TRANSLATIONS,
+      ...extra.JA_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_JA_TRANSLATIONS,
+    };
+  },
+  ko: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./ko'),
+      import('./ko.editor'),
+      import('./ko.extra'),
+      import('./legal.ko'),
+    ]);
+    return {
+      ...base.KO_TRANSLATIONS,
+      ...editor.KO_EDITOR_TRANSLATIONS,
+      ...extra.KO_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_KO_TRANSLATIONS,
+    };
+  },
+  ru: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./ru'),
+      import('./ru.editor'),
+      import('./ru.extra'),
+      import('./legal.ru'),
+    ]);
+    return {
+      ...base.RU_TRANSLATIONS,
+      ...editor.RU_EDITOR_TRANSLATIONS,
+      ...extra.RU_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_RU_TRANSLATIONS,
+    };
+  },
+  tr: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./tr'),
+      import('./tr.editor'),
+      import('./tr.extra'),
+      import('./legal.tr'),
+    ]);
+    return {
+      ...base.TR_TRANSLATIONS,
+      ...editor.TR_EDITOR_TRANSLATIONS,
+      ...extra.TR_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_TR_TRANSLATIONS,
+    };
+  },
+  zh: async () => {
+    const [base, editor, extra, legal] = await Promise.all([
+      import('./zh'),
+      import('./zh.editor'),
+      import('./zh.extra'),
+      import('./legal.zh'),
+    ]);
+    return {
+      ...base.ZH_TRANSLATIONS,
+      ...editor.ZH_EDITOR_TRANSLATIONS,
+      ...extra.ZH_EXTRA_TRANSLATIONS,
+      ...legal.LEGAL_ZH_TRANSLATIONS,
+    };
+  },
 };
-

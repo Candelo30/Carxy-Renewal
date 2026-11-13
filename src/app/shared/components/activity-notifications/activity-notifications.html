@@ -10,10 +10,12 @@
         <header><div><strong>{{ 'Notificaciones' | translate }}</strong><small>{{ '{count} sin leer' | translate: { count: unreadCount(items) } }}</small></div>
           <button type="button" [disabled]="unreadCount(items) === 0" (click)="markAllRead(items, user.uid)">{{ 'Marcar todas' | translate }}</button>
         </header>
-        @if (items.length) {
+        @if (failed) {
+          <p class="activity-empty" role="alert">{{ 'No se pudo cargar la actividad. Inténtalo de nuevo más tarde.' | translate }}</p>
+        } @else if (items.length) {
           <div class="activity-list">
             @for (item of items; track item.id) {
-              <a [routerLink]="['/profile', item.actorId]" [class.unread]="!item.read" (click)="markRead(item, user.uid)">
+              <a [routerLink]="linkFor(item)" [queryParams]="queryParamsFor(item)" [class.unread]="!item.read" (click)="markRead(item, user.uid)">
                 <img [src]="item.actorPhotoURL || 'user-avatar.svg'" alt="" />
                 <span><strong>{{ item.actorName }}</strong> {{ messageFor(item) }}<small>{{ item.createdAt | date:'short' }}</small></span>
                 @if (!item.read) { <i [aria-label]="'Sin leer' | translate"></i> }

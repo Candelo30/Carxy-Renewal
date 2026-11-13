@@ -35,11 +35,17 @@ Documento privado del usuario (mismo id). Contiene email y datos de contacto par
 | Campo | Tipo | Notas |
 |---|---|---|
 | `uid` | string |  |
-| `email` | string | copia para auditoría de actividad |
 | `displayName` | string |  |
 | `lastSeenAt` | number | usado para purgar cuentas inactivas (>30d) |
 | `lastSeenPath` | string | ruta donde se registró la actividad |
 | `updatedAt` | number |  |
+
+**No guarda el correo.** Cada documento se lee individualmente (`get`) desde
+cualquier usuario autenticado —el chat muestra "visto hace" a los
+interlocutores—, así que no debe contener datos personales. El correo para la
+auditoría vive en `userPrivate`, que es solo de administradores.
+La lista completa (`list`) sigue siendo exclusiva de administradores; el chat
+lee documento a documento.
 
 ### `accountDeletionAudit/{id}`
 | Campo | Tipo | Notas |
@@ -79,13 +85,17 @@ Documento privado del usuario (mismo id). Contiene email y datos de contacto par
 | `updatedAt` | number |  |
 | `lastMessage` | mapa `ChatMessage` | para listar conversaciones sin leer subcolección |
 
-**Subcolección:** `chats/{chatId}/messages/{messageId}` — `{ id, text, senderId, senderName, createdAt }`, ordenado `createdAt asc`.
+**Subcolección:** `chats/{chatId}/messages/{messageId}` — `{ id, text, senderId, senderName, senderPhotoURL?, createdAt }`, ordenado `createdAt asc`.
 Solo participantes leen/escriben según reglas.
+
+El `lastMessage` lo puede escribir cualquiera de los dos participantes (igual
+que al crear el chat): así una conversación que se quedó sin vista previa puede
+reponerse con el último mensaje sin bloquear la escritura.
 
 ### `follows` (por usuario, dentro de subcolecciones)
 - `users/{uid}/followers/{followerId}`: `{ followerId, followingId, createdAt }`.
 - `users/{uid}/following/{followingId}`: espejo inverso.
-- `users/{uid}/notifications/{notificationId}`: `{ recipientId, actorId, actorName, actorPhotoURL, kind: 'follow'|'like'|'comment', targetId?, createdAt, read }`.
+- `users/{uid}/notifications/{notificationId}`: `{ recipientId, actorId, actorName, actorPhotoURL, kind: 'follow'|'like'|'comment'|'message', targetId?, createdAt, read }`. El `kind` `'message'` apunta con `targetId` al `chatId` y enlaza a `/chat?peer=<actorId>`.
 - `users/{uid}/likedPosts/{postId}`: `{ postId, createdAt }` para favoritos.
 
 ### `reports/{reportId}` (moderación de contenido)

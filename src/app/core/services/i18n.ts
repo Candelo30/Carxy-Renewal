@@ -1,7 +1,7 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { APP_LANGUAGES, AppLanguage, DEFAULT_LANGUAGE, isAppLanguage } from '../i18n/languages';
-import { LOCALE_OVERLAYS } from '../i18n/locales';
+import { LOCALE_OVERLAY_LOADERS } from '../i18n/locales';
 import { MESSAGES, MessageTranslations } from '../i18n/messages';
 import { SOURCE_TRANSLATIONS, SourceTranslation } from '../i18n/source-translations';
 import { firebaseErrorMessage } from '../utils/firebase-error';
@@ -20,6 +20,7 @@ export class I18nService {
 
   constructor() {
     this.applyDocumentLanguage(this.language());
+    this.loadOverlay(this.language());
   }
   readonly currentLanguage = computed(() => this.language());
   readonly isSpanish = computed(() => this.language() === 'es');
@@ -28,6 +29,7 @@ export class I18nService {
     if (!isAppLanguage(language) || language === this.language()) return;
     this.language.set(language);
     this.applyDocumentLanguage(language);
+    this.loadOverlay(language);
     if (isPlatformBrowser(this.platformId)) {
       const preferences = this.localState.loadPreferences();
       this.localState.savePreferences({ ...preferences, language });
@@ -42,6 +44,9 @@ export class I18nService {
   /** Traduce una clave semántica o un texto original en español. */
   translate(key: string | null | undefined, params?: TranslationParams): string {
     if (!key) return '';
+    // Se lee para registrar la dependencia: cuando llega la capa de idioma se
+    // repinta la vista con las traducciones ya cargadas.
+    this.overlayRevision();
     const language = this.language();
     const message = this.lookupMessage(key);
     const source = this.lookupSource(key);
@@ -69,6 +74,31 @@ export class I18nService {
   private readonly normalizedMessageIndex = new Map<string, MessageTranslations>();
   private readonly normalizedSourceIndex = new Map<string, SourceTranslation>();
   private readonly overlayIndexes = new Map<AppLanguage, Map<string, string>>();
+  /** Capas de idioma ya descargadas (se cargan bajo demanda). */
+  private readonly loadedOverlays = new Map<AppLanguage, Record<string, string>>();
+  /** Se incrementa cuando llega una capa para forzar el repintado. */
+  private readonly overlayRevision = signal(0);
+
+  /**
+   * Descarga la capa de traducciones del idioma indicado.
+   *
+   * Cada idioma es un chunk aparte: solo se descarga si el usuario lo elige.
+   * Mientras se descarga, `translate()` cae a la cadena base en inglés.
+   */
+  private loadOverlay(language: AppLanguage): void {
+    if (this.loadedOverlays.has(language)) return;
+    const loader = LOCALE_OVERLAY_LOADERS[language];
+    if (!loader) return;
+    void loader()
+      .then((overlay) => {
+        this.loadedOverlays.set(language, overlay);
+        this.overlayIndexes.delete(language);
+        this.overlayRevision.update((value) => value + 1);
+      })
+      .catch(() => {
+        // Sin capa el idioma se queda en la cadena base en inglés.
+      });
+  }
 
   private lookupMessage(key: string): MessageTranslations | undefined {
     const direct = MESSAGES[key];
@@ -99,12 +129,15 @@ export class I18nService {
   }
 
   private lookupOverlay(language: AppLanguage, key: string): string | undefined {
-    const overlay = LOCALE_OVERLAYS[language];
+    const overlay = this.loadedOverlays.get(language);
     if (!overlay) return undefined;
     let index = this.overlayIndexes.get(language);
     if (!index) {
       index = new Map<string, string>();
       for (const [candidate, value] of Object.entries(overlay)) {
+        // Una cadena vacía es una traducción ausente, no una traducción válida:
+        // que el idioma caiga al siguiente fallback en vez de mostrar vacío.
+        if (!value) continue;
         const normalized = this.normalizeKey(candidate);
         if (!index.has(normalized)) index.set(normalized, value);
       }

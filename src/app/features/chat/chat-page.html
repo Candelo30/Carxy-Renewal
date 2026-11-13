@@ -6,7 +6,7 @@
     [subtitle]="'Conversaciones directas con otros creadores' | translate"
     (menuToggle)="toggleMobileMenu()"
   ></app-shell-header>
-  <section class="chat-layout" [class.has-chat]="!!chatId">
+  <section class="chat-layout" [class.has-chat]="!!chatId()">
     <aside class="conversations" aria-labelledby="messages-title">
       <p class="eyebrow">{{ 'CREADORES' | translate }}</p>
       <h1 id="messages-title">{{ 'Mensajes' | translate }}</h1>
@@ -15,9 +15,22 @@
       @if (user$ | async; as user) {
         <section class="recent-conversations" aria-labelledby="recent-conversations-title">
           <h2 id="recent-conversations-title">{{ 'Recientes' | translate }}</h2>
+
           <div class="recent-heading-row">
             @let activeCount = (activities$ | async)?.size || 0;
             <p><strong>{{ activeCount }}</strong> {{ 'contactos en actividad reciente' | translate }}</p>
+            <button
+              type="button"
+              class="open-settings"
+              (click)="openSettings()"
+              [attr.aria-label]="'Ajustes del chat' | translate"
+              [title]="'Ajustes del chat' | translate"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M18.7 14.6a1.6 1.6 0 0 0 .32 1.77l.06.06a1.94 1.94 0 1 1-2.75 2.75l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a1.94 1.94 0 1 1-3.88 0v-.1a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a1.94 1.94 0 1 1-2.75-2.75l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a1.94 1.94 0 1 1 0-3.88h.1a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a1.94 1.94 0 1 1 2.75-2.75l.06.06a1.6 1.6 0 0 0 1.77.32h.08a1.6 1.6 0 0 0 .97-1.47V3a1.94 1.94 0 1 1 3.88 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a1.94 1.94 0 1 1 2.75 2.75l-.06.06a1.6 1.6 0 0 0-.32 1.77v.08a1.6 1.6 0 0 0 1.47.97H21a1.94 1.94 0 1 1 0 3.88h-.1a1.6 1.6 0 0 0-1.47.97z" />
+              </svg>
+            </button>
           </div>
 
           <label class="search-box" for="conversation-search">
@@ -39,18 +52,27 @@
           @let conversations = conversations$ | async;
           @let activities = activities$ | async;
           @let visible = sortedConversations(visibleConversations(conversations ?? null, user.uid));
-          @if (visible.length) {
+          @let groups = conversationGroups(visible);
+          @if (groups.length) {
             <div class="recent-list">
-              @for (conversation of visible; track conversation.id) {
+              @for (group of groups; track group.key) {
+                <h3 class="recent-group">{{ group.label }}</h3>
+                @for (conversation of group.items; track conversation.id) {
                 @let peer = peerId(conversation, user.uid);
                 @let activity = activityFor(peer, activities);
-                <button
+                <!-- `div[role=button]`: antes era un <button> que contenía otro
+                     <button> (fijar), anidamiento inválido en HTML. -->
+                <div
                   class="recent-chat"
-                  type="button"
-                  [class.selected]="conversation.id === chatId"
+                  role="button"
+                  tabindex="0"
+                  [class.selected]="conversation.id === chatId()"
                   [class.pinned]="isPinned(conversation.id)"
-                  [attr.aria-current]="conversation.id === chatId ? 'true' : null"
+                  [class.unread]="hasUnread(conversation)"
+                  [attr.aria-current]="conversation.id === chatId() ? 'true' : null"
                   (click)="selectConversation(conversation, user.uid)"
+                  (keydown.enter)="selectConversation(conversation, user.uid)"
+                  (keydown.space)="selectConversation(conversation, user.uid); $event.preventDefault()"
                 >
                   <span class="recent-avatar">
                     <img
@@ -62,8 +84,7 @@
                     <span class="presence-dot" [class.online]="activity && (activityClass(activity) === 'online')" [attr.aria-hidden]></span>
                     @if (hasUnread(conversation)) {
                       <span class="unread-dot" [attr.aria-label]="'Mensajes nuevos' | translate"></span>
-                    }
-                  </span>
+                    }                  </span>
                   <span class="recent-chat-copy">
                     <span class="recent-chat-title-row">
                       <strong>{{ conversation.partner?.displayName || peer }}</strong>
@@ -79,7 +100,7 @@
                     }}</small>
                   </span>
                   <span class="recent-chat-meta">
-                    <time>{{ conversation.updatedAt | date: 'shortDate' }}</time>
+                    <time [attr.datetime]="conversation.updatedAt | date: 'iso'">{{ conversationDateLabel(conversation.updatedAt) }}</time>
                     <button
                       type="button"
                       class="pin-toggle"
@@ -87,38 +108,44 @@
                       [attr.aria-pressed]="isPinned(conversation.id)"
                       [attr.aria-label]="(isPinned(conversation.id) ? 'Quitar fijación' : 'Fijar conversación') | translate"
                       (click)="togglePin(conversation, $event)"
+                      (keydown)="$event.stopPropagation()"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 4h6M10 4v7l-4 4h12l-4-4V4" />
                       </svg>
                     </button>
                   </span>
-                </button>
+                </div>
+              }
               }
             </div>
           } @else if (search.trim()) {
-            <p class="no-recent-chats">{{ 'Sin resultados para «{query}»' | translate: { query: search } }}</p>
+            <div class="no-recent-chats">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.3" y2="16.3" />
+              </svg>
+              <span>{{ 'Sin resultados para «{query}»' | translate: { query: search } }}</span>
+            </div>
           } @else {
-            <p class="no-recent-chats">
-              {{ 'Aún no tienes conversaciones. Abre un perfil para enviar un mensaje o inicia un chat por UID.' | translate }}
+            <div class="no-recent-chats">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.7 8.7 0 0 1-3.9-.9L3 20l1.3-5.4a7.9 7.9 0 0 1-1-4A8.4 8.4 0 0 1 11.8 3 8.4 8.4 0 0 1 21 11.5z" />
+              </svg>
+              <span>{{ 'Aún no tienes conversaciones. Abre un perfil para enviar un mensaje o inicia un chat por UID.' | translate }}</span>
+            </div>
+          }
+          @if (listError()) {
+            <p class="stream-error" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v5M12 16.5v.5" />
+              </svg>
+              <span>{{ listError() }}</span>
             </p>
           }
         </section>
       }
-      <section class="global-background" aria-labelledby="global-background-title">
-        <h2 id="global-background-title">{{ 'Fondo del chat' | translate }}</h2>
-        <label class="global-background-label" for="global-chat-background">{{ 'Fondo global' | translate }}</label>
-        <select
-          id="global-chat-background"
-          class="background-select"
-          [ngModel]="globalChatBackgroundId"
-          (ngModelChange)="onGlobalBackgroundChange($event)"
-        >
-          @for (background of chatBackgrounds; track background.id) {
-            <option [value]="background.id">{{ background.label }}</option>
-          }
-        </select>
-      </section>
       <h2 class="new-conversation-title">{{ 'Nuevo chat' | translate }}</h2>
       <form (ngSubmit)="openConversation()">
         <label for="peer">{{ 'UID del creador' | translate }}</label>
@@ -140,9 +167,16 @@
       }
     </aside>
 
-    <section class="conversation" [style.background]="conversationBackground(chatId)">
-      @if (messages$; as stream) {
-        @let peer = partnerProfile$ | async;
+    <section
+      class="conversation"
+      [style.background]="conversationBackground(chatId())"
+      [style.--chat-accent]="chatAccent()"
+      [attr.data-bg]="conversationDataBg()"
+      [attr.data-scale]="chatFontScale()"
+      [attr.data-timestamps]="showTimestamps() ? 'on' : 'off'"
+    >
+      @if (messages(); as stream) {
+        @let peer = partnerProfile() | async;
         @let acts = activities$ | async;
         @let activity = activityFor(partnerId, acts);
         <div class="conversation-header">
@@ -175,19 +209,29 @@
             </small>
           </div>
           <div class="conversation-actions">
-            <select
-              class="background-select"
-              [ngModel]="chatBackgroundId"
-              (ngModelChange)="onConversationBackgroundChange($event)"
-              [attr.aria-label]="'Fondo de conversación' | translate"
-              [title]="'Fondo de conversación' | translate"
-            >
-              @for (background of chatBackgrounds; track background.id) {
-                <option [value]="background.id">{{ background.label }}</option>
-              }
-            </select>
             <button type="button" class="icon-button" [class.active]="messageSearchOpen" (click)="toggleMessageSearch()" [attr.aria-pressed]="messageSearchOpen" [title]="'Buscar en la conversación' | translate" [attr.aria-label]="'Buscar en la conversación' | translate">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.3" y2="16.3"/></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              [class.active]="isMuted(chatId())"
+              (click)="toggleMute(chatId())"
+              [attr.aria-pressed]="isMuted(chatId())"
+              [title]="(isMuted(chatId()) ? 'Reactivar notificaciones' : 'Silenciar conversación') | translate"
+              [attr.aria-label]="(isMuted(chatId()) ? 'Reactivar notificaciones' : 'Silenciar conversación') | translate"
+            >
+              @if (isMuted(chatId())) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><path d="M9 9l11-2"/><path d="M3 3l18 18"/></svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-9.3-5M6 8v5l-2 3h16"/><path d="M10 21h4"/></svg>
+              }
+            </button>
+            <button type="button" class="icon-button" (click)="openSettings()" [title]="'Ajustes del chat' | translate" [attr.aria-label]="'Ajustes del chat' | translate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M18.7 14.6a1.6 1.6 0 0 0 .32 1.77l.06.06a1.94 1.94 0 1 1-2.75 2.75l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a1.94 1.94 0 1 1-3.88 0v-.1a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a1.94 1.94 0 1 1-2.75-2.75l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a1.94 1.94 0 1 1 0-3.88h.1a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a1.94 1.94 0 1 1 2.75-2.75l.06.06a1.6 1.6 0 0 0 1.77.32h.08a1.6 1.6 0 0 0 .97-1.47V3a1.94 1.94 0 1 1 3.88 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a1.94 1.94 0 1 1 2.75 2.75l-.06.06a1.6 1.6 0 0 0-.32 1.77v.08a1.6 1.6 0 0 0 1.47.97H21a1.94 1.94 0 1 1 0 3.88h-.1a1.6 1.6 0 0 0-1.47.97z" />
+              </svg>
             </button>
             <a class="icon-button" [routerLink]="['/profile', partnerId]" [title]="'Ver perfil' | translate" [attr.aria-label]="'Ver perfil' | translate">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
@@ -199,7 +243,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.3" y2="16.3"/></svg>
             <input
               type="search"
-              [(ngModel)]="messageQuery"
+              [ngModel]="messageQuery"
+              (ngModelChange)="onMessageQueryChange($event)"
               [placeholder]="'Buscar en la conversación…' | translate"
               [attr.aria-label]="'Buscar en la conversación…' | translate"
               autocomplete="off"
@@ -207,10 +252,27 @@
             />
             @let groupsForCount = stream | async;
             <span class="match-count">{{ groupsForCount ? (matchCount(groupsForCount) + ' ' + ((matchCount(groupsForCount) === 1 ? 'coincidencia' : 'coincidencias') | translate)) : '' }}</span>
+            <div class="match-nav">
+              <button type="button" (click)="goToPreviousMatch()" [disabled]="!matchCount(groupsForCount ?? [])" [attr.aria-label]="'Coincidencia anterior' | translate">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
+              </button>
+              <button type="button" (click)="goToNextMatch()" [disabled]="!matchCount(groupsForCount ?? [])" [attr.aria-label]="'Coincidencia siguiente' | translate">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+            </div>
             <button type="button" class="clear-search" (click)="clearMessageSearch()" [attr.aria-label]="'Limpiar búsqueda' | translate">×</button>
           </div>
         }
-        <div class="message-list" #messageList (scroll)="onMessageListScroll()" aria-live="polite">
+        @if (threadError()) {
+          <p class="stream-error" role="alert">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5M12 16.5v.5" />
+            </svg>
+            <span>{{ threadError() }}</span>
+          </p>
+        }
+        <div class="message-list" #messageList (scroll)="onMessageListScroll()">
           @if (stream | async; as groups) {
             @if (groups.length) {
               @let visibleGroups = filteredGroups(groups);
@@ -219,7 +281,17 @@
                 <div class="day-divider" role="separator"><span>{{ group.label }}</span></div>
                 @for (item of group.messages; track item.message.id) {
                   @let own = item.message.senderId === (user$ | async)?.uid;
-                  <article class="message" [class.own]="own" [class.run-start]="item.firstOfRun">
+                  @if (firstUnreadId() === item.message.id) {
+                    <div class="unread-divider" role="separator">
+                      <span>{{ 'Mensajes nuevos' | translate }}</span>
+                    </div>
+                  }
+                  <article
+                    class="message"
+                    [class.own]="own"
+                    [class.run-start]="item.firstOfRun"
+                    [attr.data-match]="isMatch(item.message) ? '' : null"
+                  >
                     @if (!own) {
                       <span class="message-avatar">
                         @if (item.firstOfRun) {
@@ -232,6 +304,23 @@
                         <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName || ('Usuario' | translate)) }}</b>
                       }
                       <p [innerHTML]="highlightedHtml(item.message.text)"></p>
+                      @if (modelPostId(item.message); as postId) {
+                        @let shared = (social.postById$(postId) | async);
+                        @if (shared; as post) {
+                          <a class="model-card" [routerLink]="['/feed']" [queryParams]="{ post: post.id }">
+                            @if (post.thumbnailUrl) {
+                              <img [src]="post.thumbnailUrl" [alt]="post.title" loading="lazy" />
+                            }
+                            <span class="model-card-copy">
+                              <strong>{{ post.title }}</strong>
+                              <small>{{ post.author.displayName }}</small>
+                            </span>
+                            <svg class="model-card-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          </a>
+                        }
+                      }
                       <span class="bubble-actions">
                         <button type="button" class="copy-message" (click)="copyMessage(item.message)" [attr.aria-label]="'Copiar mensaje' | translate" [title]="copiedMessageId() === item.message.id ? ('Copiado' | translate) : ('Copiar mensaje' | translate)">
                           @if (copiedMessageId() === item.message.id) {
@@ -256,9 +345,21 @@
             <app-loading-spinner variant="inline" [label]="'chat.connecting' | translate" />
           }
         </div>
+        @if (!atBottom()) {
+          <button type="button" class="jump-latest" (click)="scrollToLatest()">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+            @if (unreadCount()) {
+              <span class="jump-badge">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
+            }
+            <span class="visually-hidden">{{ 'Ir al último mensaje' | translate }}</span>
+          </button>
+        }
+        <p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
         <form class="composer" (ngSubmit)="send()">
           <div class="composer-row">
-            <div class="emoji-strip" aria-label="{{ 'Insertar emoji' | translate }}">
+            <div class="emoji-strip" [attr.aria-label]="'Insertar emoji' | translate">
               @for (emoji of emojis; track emoji) {
                 <button type="button" class="emoji-btn" (click)="insertEmoji(emoji)">{{ emoji }}</button>
               }
@@ -301,4 +402,138 @@
       }
     </section>
   </section>
+
+  <button
+    type="button"
+    class="open-settings"
+    (click)="openSettings()"
+    [attr.aria-label]="'Ajustes del chat' | translate"
+    [title]="'Ajustes del chat' | translate"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M18.7 14.6a1.6 1.6 0 0 0 .32 1.77l.06.06a1.94 1.94 0 1 1-2.75 2.75l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a1.94 1.94 0 1 1-3.88 0v-.1a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a1.94 1.94 0 1 1-2.75-2.75l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a1.94 1.94 0 1 1 0-3.88h.1a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a1.94 1.94 0 1 1 2.75-2.75l.06.06a1.6 1.6 0 0 0 1.77.32h.08a1.6 1.6 0 0 0 .97-1.47V3a1.94 1.94 0 1 1 3.88 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a1.94 1.94 0 1 1 2.75 2.75l-.06.06a1.6 1.6 0 0 0-.32 1.77v.08a1.6 1.6 0 0 0 1.47.97H21a1.94 1.94 0 1 1 0 3.88h-.1a1.6 1.6 0 0 0-1.47.97z" />
+    </svg>
+  </button>
+
+  <dialog #settingsDialog class="chat-settings" (click)="closeSettingsOnBackdrop($event, settingsDialog)">
+    <div class="chat-settings-panel">
+      <header>
+        <div>
+          <p class="eyebrow">{{ 'AJUSTES' | translate }}</p>
+          <h2>{{ 'Personaliza tu chat' | translate }}</h2>
+        </div>
+        <button type="button" class="dismiss" (click)= "settingsDialog.close()" [attr.aria-label]="'Cerrar' | translate">×</button>
+      </header>
+
+      <section class="setting">
+        <div class="setting-copy">
+          <strong>{{ 'Tamaño del texto' | translate }}</strong>
+          <small>{{ 'Ajusta el tamaño de los mensajes.' | translate }}</small>
+        </div>
+        <div class="segmented" role="group" [attr.aria-label]="'Tamaño del texto' | translate">
+          <button type="button" [class.active]="chatFontScale() === 'sm'" (click)="setFontScale('sm')">{{ 'A' | translate }}</button>
+          <button type="button" [class.active]="chatFontScale() === 'md'" (click)="setFontScale('md')">{{ 'A' | translate }}</button>
+          <button type="button" [class.active]="chatFontScale() === 'lg'" (click)="setFontScale('lg')">{{ 'A' | translate }}</button>
+        </div>
+      </section>
+
+      <section class="setting">
+        <div class="setting-copy">
+          <strong>{{ 'Color de acento' | translate }}</strong>
+          <small>{{ 'Solo para el chat.' | translate }}</small>
+        </div>
+        <div class="swatches" role="group" [attr.aria-label]="'Color de acento' | translate">
+          @for (accent of chatAccents; track accent.value) {
+            <button
+              type="button"
+              class="swatch"
+              [class.active]="chatAccent() === accent.value"
+              [style.--swatch]="accent.value"
+              (click)="setAccent(accent.value)"
+              [attr.aria-label]="accent.label"
+              [attr.aria-pressed]="chatAccent() === accent.value"
+              [title]="accent.label"
+            ></button>
+          }
+        </div>
+      </section>
+
+      <section class="setting">
+        <div class="setting-copy">
+          <strong>{{ 'Mostrar la hora' | translate }}</strong>
+          <small>{{ 'Hora junto a cada mensaje.' | translate }}</small>
+        </div>
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          [class.on]="showTimestamps()"
+          [attr.aria-checked]="showTimestamps()"
+          (click)="toggleTimestamps()"
+        ><span></span></button>
+      </section>
+
+      <section class="setting">
+        <div class="setting-copy">
+          <strong>{{ 'Silenciar conversación' | translate }}</strong>
+          <small>{{ 'No muestra el punto de no leídos.' | translate }}</small>
+        </div>
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          [class.on]="isMuted(chatId())"
+          [attr.aria-checked]="isMuted(chatId())"
+          [disabled]="!chatId()"
+          (click)="toggleMute(chatId())"
+        ><span></span></button>
+      </section>
+
+      <section class="setting">
+        <div class="setting-copy">
+          <strong>{{ 'Fondo del chat' | translate }}</strong>
+          <small>{{ 'Fondo global para todas las conversaciones.' | translate }}</small>
+        </div>
+        <select
+          class="background-select"
+          [ngModel]="globalChatBackgroundId"
+          (ngModelChange)="onGlobalBackgroundChange($event)"
+          [attr.aria-label]="'Fondo del chat' | translate"
+        >
+          @for (background of chatBackgrounds; track background.id) {
+            <option [value]="background.id">{{ background.label }}</option>
+          }
+        </select>
+      </section>
+
+      <section class="setting">
+        <div class="setting-copy">
+          <strong>{{ 'Fondo de conversación' | translate }}</strong>
+          <small>{{ 'Elige el fondo de esta conversación.' | translate }}</small>
+        </div>
+        <select
+          class="background-select"
+          [ngModel]="chatBackgroundId"
+          (ngModelChange)="onConversationBackgroundChange($event)"
+          [attr.aria-label]="'Fondo de conversación' | translate"
+        >
+          @for (background of chatBackgrounds; track background.id) {
+            <option [value]="background.id">{{ background.label }}</option>
+          }
+        </select>
+      </section>
+
+      <footer>
+        <button type="button" class="tool" (click)="exportConversation()">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12M8 11l4 4 4-4" />
+            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          </svg>
+          {{ 'Exportar conversación' | translate }}
+        </button>
+        <button type="button" class="tool" (click)= "settingsDialog.close()">{{ 'Cerrar' | translate }}</button>
+      </footer>
+    </div>
+  </dialog>
 </main>

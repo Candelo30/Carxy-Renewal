@@ -30,7 +30,7 @@ import {
   ref,
   uploadBytes,
 } from '@angular/fire/storage';
-import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, retry, shareReplay, switchMap, timer } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, retry, shareReplay, switchMap, timer, throwError } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
 import { firebaseErrorMessage } from '../utils/firebase-error';
 import { AuthService } from './auth';
@@ -94,6 +94,10 @@ export class SocialService {
   private readonly commentStreams = new Map<string, BehaviorSubject<Comment[]>>();
   private readonly commentObservables = new Map<string, Observable<Comment[]>>();
   private readonly chatStreams = new Map<string, BehaviorSubject<ChatMessage[]>>();
+  /** Streams de presencia cacheados por uid (ver `userPresence$`). */
+  private readonly presenceStreams = new Map<string, Observable<UserActivity | null>>();
+  /** Streams de posts cacheados por id (ver `postById$`). */
+  private readonly postStreams = new Map<string, Observable<Post3D | null>>();
   private readonly localChatChanges = new BehaviorSubject<void>(undefined);
   private readonly localFollows = new BehaviorSubject<Follow[]>(this.readLocal(LOCAL_KEYS.follows, []));
   private readonly localLikes = new BehaviorSubject<Record<string, string[]>>(
@@ -294,6 +298,29 @@ export class SocialService {
     : this.localDeletionAudit.asObservable();
 
   /**
+   * Un post concreto, cacheado por id.
+   *
+   * La plantilla del chat lo usa para pintar la tarjeta de un modelo
+   * compartido. Como la plantilla se redibuja en cada ciclo de detección de
+   * cambios, devolver un observable nuevo abriría y cerraría un listener de
+   * Firestore por ciclo: se cachea por id y se comparte.
+   */
+  postById$(postId: string): Observable<Post3D | null> {
+    if (!this.firestore || !postId) return of(null);
+    let stream = this.postStreams.get(postId);
+    if (!stream) {
+      stream = docData(doc(this.firestore, SOCIAL_COLLECTIONS.posts, postId)).pipe(
+        map((data) => (data ? this.normalizePost({ ...data, id: postId }) : null)),
+        retry({ count: 2, delay: (_error, index) => timer(800 * (index + 1)) }),
+        catchError(() => of(null)),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+      this.postStreams.set(postId, stream);
+    }
+    return stream;
+  }
+
+  /**
    * Presencia (última actividad) de un usuario concreto.
    *
    * La colección `userActivity` solo se puede LISTAR por administradores, pero
@@ -306,8 +333,28 @@ export class SocialService {
     if (!this.firestore || !uid) return of(null);
     return docData(doc(this.firestore, SOCIAL_COLLECTIONS.userActivity, uid)).pipe(
       map((data) => (data ? this.normalizeActivity(data as Record<string, unknown>) : null)),
+      retry({ count: 3, delay: (_error, index) => timer(800 * (index + 1)) }),
       catchError(() => of(null)),
     );
+  }
+
+  /**
+   * Presencia de un interlocutor, cacheada por `uid`.
+   *
+   * La plantilla del chat llama a este método en cada fila de la lista y en la
+   * cabecera. Si devolviera un observable nuevo en cada llamada, el `AsyncPipe`
+   * se desuscribiría y volvería a suscribirse en cada ciclo de detección de
+   * cambios, abriendo y cerrando listeners de Firestore sin parar. Se cachea
+   * además con `shareReplay` para que el mismo usuario no abra dos listeners.
+   */
+  userPresence$(uid: string): Observable<UserActivity | null> {
+    if (!uid) return of(null);
+    let stream = this.presenceStreams.get(uid);
+    if (!stream) {
+      stream = this.userActivityOf$(uid).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+      this.presenceStreams.set(uid, stream);
+    }
+    return stream;
   }
 
   /**
@@ -710,11 +757,16 @@ export class SocialService {
         this.likeRateLimit.set(lockKey, Date.now());
         if (liked && post.author.uid !== actor.uid) {
           const notificationId = this.notificationId('like', actor.uid, post.id);
-          await setDoc(
-            doc(this.firestore, 'users', post.author.uid, 'notifications', notificationId),
-            { ...this.notificationData(post.author.uid, actor, 'like', post.id), id: notificationId },
-            { merge: true },
-          );
+          try {
+            await setDoc(
+              doc(this.firestore, 'users', post.author.uid, 'notifications', notificationId),
+              { ...this.notificationData(post.author.uid, actor, 'like', post.id), id: notificationId },
+              { merge: true },
+            );
+          } catch (error) {
+            // La notificación es un detalle; el like ya quedó aplicado.
+            console.warn('[carxy] No se pudo avisar del like al autor.', error);
+          }
         }
         return liked;
       }
@@ -973,8 +1025,15 @@ export class SocialService {
         query(collection(this.firestore, 'users', uid, 'notifications'), orderBy('createdAt', 'desc'), limit(30)),
         { idField: 'id' },
       ).pipe(
-        map((items) => items.map((item) => this.normalizeActivityNotification(item as Record<string, unknown>))),
-        catchError(() => of([] as ActivityNotification[])),
+        map((items) => items
+          .map((item) => this.normalizeActivityNotification(item as Record<string, unknown>))
+          .filter((item): item is ActivityNotification => item !== null)),
+        // Si la lectura falla (permisos, índice, red) la campana debe mostrarlo
+        // como estado de error, no como bandeja vacía.
+        catchError((error: unknown) => {
+          console.warn('[carxy] No se pudieron cargar las notificaciones.', error);
+          return throwError(() => error);
+        }),
       );
     }
     return this.localActivityNotifications.pipe(
@@ -1000,6 +1059,62 @@ export class SocialService {
     this.writeLocal(LOCAL_KEYS.activityNotifications, next);
   }
 
+  async markMessageNotificationsRead(uid: string, actorUid: string): Promise<void> {
+    if (this.firestore) {
+      const q = query(
+        collection(this.firestore, 'users', uid, 'notifications'),
+        where('actorId', '==', actorUid),
+        where('kind', '==', 'message'),
+        where('read', '==', false),
+      );
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return;
+      const batch = writeBatch(this.firestore);
+      for (const document of snapshot.docs) {
+        batch.update(document.ref, { read: true });
+      }
+      await batch.commit();
+      return;
+    }
+    const targetIds = new Set(
+      this.localActivityNotifications.value
+        .filter((item) => item.recipientId === uid && item.actorId === actorUid && item.kind === 'message' && !item.read)
+        .map((item) => item.id),
+    );
+    if (!targetIds.size) return;
+    const next = this.localActivityNotifications.value.map((item) =>
+      targetIds.has(item.id) ? { ...item, read: true } : item,
+    );
+    this.localActivityNotifications.next(next);
+    this.writeLocal(LOCAL_KEYS.activityNotifications, next);
+  }
+
+  /**
+   * Marca varias notificaciones como leídas en bloque (batch atómico).
+   * Los fallos individuales se toleran en silencio para la señalización visual;
+   * el batch fallará todo junto si las reglas las rechazan (mejor dar feedback).
+   */
+  async markAllActivityNotificationsRead(uid: string, notificationIds: string[]): Promise<void> {
+    if (!notificationIds.length) return;
+    if (this.firestore) {
+      const CHUNK = 400;
+      for (let start = 0; start < notificationIds.length; start += CHUNK) {
+        const batch = writeBatch(this.firestore);
+        for (const id of notificationIds.slice(start, start + CHUNK)) {
+          batch.update(doc(this.firestore, 'users', uid, 'notifications', id), { read: true });
+        }
+        await batch.commit();
+      }
+      return;
+    }
+    const target = new Set(notificationIds);
+    const next = this.localActivityNotifications.value.map((item) =>
+      target.has(item.id) ? { ...item, read: true } : item,
+    );
+    this.localActivityNotifications.next(next);
+    this.writeLocal(LOCAL_KEYS.activityNotifications, next);
+  }
+
   private isNotFoundError(error: unknown): boolean {
     return !!error
       && typeof error === 'object'
@@ -1007,15 +1122,22 @@ export class SocialService {
       && String((error as { code: unknown }).code).includes('not-found');
   }
 
-  private normalizeActivityNotification(data: Record<string, unknown>): ActivityNotification {
+  private normalizeActivityNotification(
+    data: Record<string, unknown>,
+  ): ActivityNotification | null {
     const kind = data['kind'];
+    if (kind !== 'follow' && kind !== 'like' && kind !== 'comment' && kind !== 'message') {
+      // Kind desconocido/corrupto: no se inventa un texto ruidoso, simplemente
+      // no se muestra la notificación.
+      return null;
+    }
     return {
       id: String(data['id'] ?? ''),
       recipientId: String(data['recipientId'] ?? ''),
       actorId: String(data['actorId'] ?? ''),
       actorName: String(data['actorName'] ?? ''),
       actorPhotoURL: typeof data['actorPhotoURL'] === 'string' ? data['actorPhotoURL'] : null,
-      kind: kind === 'follow' || kind === 'like' || kind === 'comment' ? kind : 'follow',
+      kind,
       ...(typeof data['targetId'] === 'string' ? { targetId: data['targetId'] } : {}),
       createdAt: this.normalizeTimestamp(data['createdAt']),
       read: data['read'] === true,
@@ -1027,7 +1149,17 @@ export class SocialService {
       return collectionData(
         query(collection(this.firestore, 'chats', chatId, 'messages'), orderBy('createdAt', 'asc')),
         { idField: 'id' },
-      ).pipe(map((items) => items.map((item) => this.normalizeMessage(item as Record<string, unknown>))));
+      ).pipe(
+        map((items) => items.map((item) => this.normalizeMessage(item as Record<string, unknown>))),
+        // Un fallo transitorio (red, refreshing del token) no puede dejar el
+        // hilo congelado para siempre: se reintenta con espera creciente y,
+        // si el error persiste, se propaga para que la interfaz lo muestre en
+        // lugar de quedarse con una lista vacía y sin reintentos.
+        retry({ count: 3, delay: (_error, index) => timer(800 * (index + 1)) }),
+        // Un solo listener de Firestore aunque varias partes de la plantilla
+        // se suscriban al mismo hilo.
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
     }
     return this.getChatStream(chatId).asObservable();
   }
@@ -1038,10 +1170,14 @@ export class SocialService {
    * La colección `chats` no puede consultarse desde el cliente: Firestore
    * evalúa las reglas de una consulta frente a TODOS los documentos que
    * podrían devolver, y la regla `list` anidada en `match /chats/{chatId}`
-   * no alcanza a la ruta de la colección (`/chats`). Abrir la colección
-   * entera expondría el `lastMessage` de conversaciones ajenas, así que el
-   * cliente mantiene un índice por usuario (`users/{uid}/recentChats`) con
-   * reglas estándar de pertenencia.
+   * no alcanza a la ruta de la colección (`/chats`). La única forma de abrir
+   * la colección entera sería `allow list: if signedIn()` para cualquiera,
+   * lo que expondría el `lastMessage` de conversaciones privadas de terceros.
+   *
+   * En su lugar se mantiene un índice por usuario
+   * (`users/{uid}/recentChats/{chatId}`) que el propio cliente actualiza al
+   * escribir/abrir un chat; la consulta accede a subcolecciones acotadas a
+   * `uid`, con reglas estándar de pertenencia.
    */
   recentChats$(uid: string): Observable<ChatConversation[]> {
     if (this.firestore) {
@@ -1080,13 +1216,6 @@ export class SocialService {
   }
 
   /**
-   * Alias de compatibilidad: la lógica vive en `recentChats$`.
-   */
-  chatConversations$(uid: string): Observable<ChatConversation[]> {
-    return this.recentChats$(uid);
-  }
-
-  /**
    * Mantiene el índice por usuario (`users/{uid}/recentChats/{chatId}`) que
    * alimenta la lista de conversaciones. Se escribe el índice de los DOS
    * participantes: cada uno lee únicamente el suyo.
@@ -1120,7 +1249,7 @@ export class SocialService {
     }
   }
 
-  async ensureChatConversation(chatId: string, writtenBy = ''): Promise<void> {
+  async ensureChatConversation(chatId: string, writtenBy?: string): Promise<void> {
     const participantIds = chatId.split('__');
     if (
       participantIds.length !== 2
@@ -1143,16 +1272,11 @@ export class SocialService {
 
     // La escritura va dentro de una transacción para no pisar un `lastMessage`
     // o un `updatedAt` más reciente que haya escrito `sendMessage` en paralelo.
+    let needsPreviewRepair = false;
     await runTransaction(this.firestore, async (transaction) => {
       const conversation = await transaction.get(chatRef);
       if (conversation.exists()) {
-        const data = conversation.data();
-        if (!data['lastMessage'] && latestMessage) {
-          transaction.update(chatRef, {
-            lastMessage: latestMessage,
-            updatedAt: latestMessage.createdAt,
-          });
-        }
+        needsPreviewRepair = !conversation.data()['lastMessage'] && !!latestMessage;
         return;
       }
       transaction.set(chatRef, {
@@ -1162,9 +1286,24 @@ export class SocialService {
       });
     });
 
-    // Índice por usuario: es lo que alimenta "Recientes". Cada apertura
-    // repone las filas de ambos participantes (idempotente), así una
-    // conversación antigua también aparece tras desplegar el fix.
+    // Rellenar el `lastMessage` de una conversación que se quedó sin él es una
+    // mejora cosmética (la lista mostraría "Conversación abierta"). Si las
+    // reglas la rechazan no debe tumbar el chat, así que va aislado: el
+    // siguiente mensaje ya rellena el campo por su cuenta.
+    if (needsPreviewRepair && latestMessage) {
+      try {
+        await updateDoc(chatRef, {
+          lastMessage: latestMessage,
+          updatedAt: latestMessage.createdAt,
+        });
+      } catch {
+        // La conversación sigue funcionando sin vista previa.
+      }
+    }
+
+    // Índice por usuario: es lo que alimenta "Recientes". Cada apertura repone
+    // las filas de ambos participantes (idempotente), así una conversación
+    // antigua también aparece tras desplegar el fix.
     if (writtenBy) {
       await this.writeRecentChats(
         chatId,
@@ -1209,8 +1348,12 @@ export class SocialService {
       }, { merge: true });
       batch.set(messageRef, entry);
       await batch.commit();
-      // Índice por usuario (alimenta "Recientes").
+      // Índice por usuario (habitación de "Recientes"): tras el commit el chat
+      // doc ya existe, así que las reglas pueden validar la autoría.
       await this.writeRecentChats(chatId, participantIds, entry.createdAt, entry.senderId, entry);
+      // Avisa al interlocutor: sin esto no hay forma de enterarse de un
+      // mensaje nuevo si no se tiene el chat abierto.
+      await this.notifyChatMessage(chatId, entry, participantIds);
       return;
     }
     const stream = this.getChatStream(chatId);
@@ -1218,6 +1361,54 @@ export class SocialService {
     stream.next(next);
     this.writeLocal(LOCAL_KEYS.chats, { ...this.readLocal<Record<string, ChatMessage[]>>(LOCAL_KEYS.chats, {}), [chatId]: next });
     this.localChatChanges.next();
+    const recipientId = participantIds.find((id) => id !== entry.senderId);
+    if (recipientId) {
+      this.addLocalActivityNotification(
+        recipientId,
+        {
+          uid: entry.senderId,
+          displayName: entry.senderName,
+          email: '',
+          photoURL: entry.senderPhotoURL ?? null,
+          bio: '',
+        },
+        'message',
+        chatId,
+        this.notificationId('message', entry.senderId, chatId),
+      );
+    }
+  }
+
+  /**
+   * Notifica al interlocutor de un mensaje nuevo.
+   *
+   * La notificación es "best effort": si las reglas aún no permiten el tipo
+   * `message`, el mensaje debe enviarse igual, así que el error se ignora.
+   */
+  private async notifyChatMessage(
+    chatId: string,
+    entry: ChatMessage,
+    participantIds: string[],
+  ): Promise<void> {
+    const recipientId = participantIds.find((id) => id !== entry.senderId);
+    if (!this.firestore || !recipientId) return;
+    const actor: User = {
+      uid: entry.senderId,
+      displayName: entry.senderName,
+      email: '',
+      photoURL: entry.senderPhotoURL ?? null,
+      bio: '',
+    };
+    const notificationId = this.notificationId('message', entry.senderId, chatId);
+    try {
+      await setDoc(
+        doc(this.firestore, 'users', recipientId, 'notifications', notificationId),
+        { ...this.notificationData(recipientId, actor, 'message', chatId), id: notificationId },
+        { merge: true },
+      );
+    } catch {
+      // Sin permiso (reglas sin desplegar) el mensaje se entrega igualmente.
+    }
   }
 
   async downloadModel(post: Post3D): Promise<Blob> {

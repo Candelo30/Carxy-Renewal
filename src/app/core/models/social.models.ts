@@ -143,6 +143,8 @@ export interface ChatMessage {
   text: string;
   senderId: string;
   senderName: string;
+  /** Avatar del remitente (opcional: sirve para la notificación de mensaje). */
+  senderPhotoURL?: string | null;
   createdAt: number;
 }
 
@@ -153,7 +155,7 @@ export interface ChatConversation {
   updatedAt: number;
 }
 
-export type ActivityNotificationKind = 'follow' | 'like' | 'comment';
+export type ActivityNotificationKind = 'follow' | 'like' | 'comment' | 'message';
 
 export interface ActivityNotification {
   id: string;

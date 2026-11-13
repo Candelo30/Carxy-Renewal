@@ -224,7 +224,7 @@ html[data-theme='light'] :is(
   app-my-models,
   app-editor-page,
   app-publish-modal
-) :is(input, textarea, select, .message, .card-actions button, .actions button, .small-button, .cancel) {
+) :is(input, textarea, select, .card-actions button, .actions button, .small-button, .cancel) {
   border-color: var(--border-color);
   background: var(--surface-control);
   color: var(--text-primary);
@@ -363,26 +363,6 @@ html[data-theme='light'] app-profile-page .edit-dialog {
 
 html[data-theme='light'] app-profile-page .edit-dialog :is(label, input, textarea) {
   color: var(--text-primary);
-}
-
-html[data-theme='light'] app-chat-page {
-  color: var(--text-primary);
-}
-
-html[data-theme='light'] app-chat-page :is(.conversations, .message, .message.own) {
-  border-color: var(--border-color);
-  background: var(--surface-panel);
-  color: var(--text-primary);
-}
-
-html[data-theme='light'] app-chat-page :is(.conversations input, .composer input) {
-  border-color: var(--border-color);
-  background: var(--surface-control);
-  color: var(--text-primary);
-}
-
-html[data-theme='light'] app-chat-page :is(.message b, .empty h2) {
-  color: var(--accent-color);
 }
 
 html[data-theme='light'] app-my-models {
