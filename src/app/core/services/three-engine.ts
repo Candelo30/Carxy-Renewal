@@ -333,6 +333,8 @@ export class ThreeEngineService implements OnDestroy {
     return JSON.stringify(draft.toJSON());
   }
 
+  private suppressSceneEvents = 0;
+
   public restoreScene(serialized: string): boolean {
     if (!this.scene) return false;
     try {
@@ -360,7 +362,14 @@ export class ThreeEngineService implements OnDestroy {
       this.selectedNode = null;
       this.transformControls?.detach();
       this.starterObjectId = null;
-      restoredObjects.forEach((object) => this.addObject(object, object.name || 'Modelo'));
+      // La restauración no debe provocar autosaves: una carga de escena
+      // sobreescribía el proyecto con contenido potencialmente rancio.
+      this.suppressSceneEvents++;
+      try {
+        restoredObjects.forEach((object) => this.addObject(object, object.name || 'Modelo'));
+      } finally {
+        this.suppressSceneEvents--;
+      }
       return true;
     } catch (error) {
       console.error('No se pudo restaurar el borrador de la escena.', error);
@@ -836,7 +845,8 @@ export class ThreeEngineService implements OnDestroy {
       console.warn('No se pudo comprobar la compatibilidad WebXR.', error);
       this.arSupported = false;
     }
-    this.sceneChanged$.next();
+    // No emitir sceneChanged$: la autodetección de AR no es una edición del
+    // usuario y disparaba un autosave al abrir la página.
   }
 
   private initializePostProcessing(width: number, height: number): void {
@@ -1148,7 +1158,7 @@ export class ThreeEngineService implements OnDestroy {
     this.objects.push(item);
     this.scene.add(object);
     this.selectObject(item.id);
-    this.sceneChanged$.next();
+    if (this.suppressSceneEvents === 0) this.sceneChanged$.next();
     return item.id;
   }
 
