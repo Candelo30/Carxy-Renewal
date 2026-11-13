@@ -214,7 +214,7 @@ const ARTICLES: HelpArticle[] = [
     keywords: 'atajos teclado keyboard shortcuts ctrl z copiar pegar duplicar',
     body: [
       'Estos atajos funcionan cuando el foco no está dentro de un campo de texto del panel. En macOS, usa Cmd en lugar de Ctrl.',
-      'Ctrl+Z deshacer  ·  Ctrl+Shift+Z rehacer  ·  Ctrl+D duplicar  ·  Ctrl+L bloquear/desbloquear pieza  ·  Ctrl+K búsqueda  ·  Ctrl+G enfocar pieza seleccionada  ·  Ctrl+S guardar/restablecer cámara  ·  Ctrl+A alternar modo presentación  ·  Ctrl+1 cambiar a Escena  ·  Ctrl+2 cambiar a Ajustes',
+      'Ctrl+Z deshacer  ·  Ctrl+Y / Ctrl+Shift+Z rehacer  ·  Ctrl+S guardar  ·  Ctrl+D duplicar  ·  Ctrl+C / Ctrl+V copiar y pegar objeto entre pestañas  ·  Supr/Retroceso borrar pieza  ·  G mover  ·  R rotar  ·  S escalar  ·  F enfocar pieza  ·  M modo medición  ·  1 Vista 3D  ·  2 Frontal  ·  3 Lateral  ·  4 Superior  ·  ? ayuda de atajos',
     ],
     tip: 'El historial guarda los últimos cambios de la escena. Si algo sale mal, Ctrl+Z es tu mejor amigo.',
   },
