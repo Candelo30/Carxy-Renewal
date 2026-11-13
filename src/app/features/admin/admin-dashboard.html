@@ -158,14 +158,14 @@
         <!-- USERS -->
         <ng-container *ngIf="isUsers">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Usuarios registrados</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} cuentas · {{ (stats$ | async)?.active30d || 0 }} activas (30d)</span></div><div class="panel-actions"><label class="activity-filter-label">Filtrar<select [(ngModel)]="activityFilterValue" name="activity-filter"><option value="all">Todas</option><option value="active">Activas (30d)</option><option value="inactive">Inactivas (+30d)</option><option value="suspended">Suspendidas</option></select></label><button class="small-button danger" (click)="purgeInactiveUsers()" [disabled]="!(inactiveUsers$ | async)?.length">{{ 'admin.purgeInactive' | translate }} (+{{ inactiveDeleteDays }}d)</button></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.registeredUsers' | translate }}</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} {{ 'admin.accounts' | translate }} · {{ (stats$ | async)?.active30d || 0 }} {{ 'admin.stats.active' | translate }} (30d)</span></div><div class="panel-actions"><label class="activity-filter-label">{{ 'projects.filter' | translate }}<select [(ngModel)]="activityFilterValue" name="activity-filter"><option value="all">{{ 'communityHelp.filter.all' | translate }}</option><option value="active">{{ 'admin.filterActive' | translate }}</option><option value="inactive">{{ 'admin.filterInactive' | translate }}</option><option value="suspended">{{ 'admin.filterSuspended' | translate }}</option></select></label><button class="small-button danger" (click)="purgeInactiveUsers()" [disabled]="!(inactiveUsers$ | async)?.length">{{ 'admin.purgeInactive' | translate }} (+{{ inactiveDeleteDays }}d)</button></div></div>
             <div class="alert alert-warning" *ngIf="duplicateEmails.length">
               <strong>{{ 'admin.duplicateEmailsTitle' | translate }}</strong>
               <span *ngFor="let d of duplicateEmails">{{ d.email }} ({{ d.count }} {{ 'admin.duplicateEmailsCount' | translate }}) · </span>
             </div>
             <div class="table-wrap" *ngIf="filteredUsers$ | async as users">
               <table>
-                <thead><tr><th>Usuario</th><th>Email</th><th>UID</th><th>Rol</th><th>Estado</th><th>Creado</th><th>Última actividad</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>{{ 'admin.user' | translate }}</th><th>{{ 'admin.email' | translate }}</th><th>{{ 'admin.uid' | translate }}</th><th>{{ 'admin.role' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.created' | translate }}</th><th>{{ 'admin.lastActivity' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let user of users; trackBy: trackUser">
                     <td><strong>{{ user.displayName }}</strong></td>
@@ -185,14 +185,14 @@
                       </button>
                     </td>
                   </tr>
-                  <tr *ngIf="!users.length"><td colspan="8" class="muted-cell">No hay usuarios para mostrar.</td></tr>
+                  <tr *ngIf="!users.length"><td colspan="8" class="muted-cell">{{ 'admin.noUsersToShow' | translate }}</td></tr>
                 </tbody>
               </table>
             </div>
             <section class="admin-panel" *ngIf="deletionAudit.length" style="margin-top:16px;">
-              <div class="panel-header"><div class="panel-title-row"><h3>Cuentas eliminadas (auditoría)</h3><span>{{ deletionAudit.length }} registros</span></div></div>
+              <div class="panel-header"><div class="panel-title-row"><h3>{{ 'admin.accountsDeletedAudit' | translate }}</h3><span>{{ deletionAudit.length }} registros</span></div></div>
               <div class="table-wrap"><table>
-                <thead><tr><th>Cuenta</th><th>Email</th><th>UID</th><th>Eliminada</th></tr></thead>
+                <thead><tr><th>{{ 'admin.account' | translate }}</th><th>{{ 'admin.email' | translate }}</th><th>{{ 'admin.uid' | translate }}</th><th>{{ 'admin.deleted' | translate }}</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let item of deletionAudit; trackBy: trackAudit">
                     <td><strong>{{ item.displayName || 'Cuenta eliminada' }}</strong></td>
@@ -209,7 +209,7 @@
         <!-- CONTENT -->
         <ng-container *ngIf="isContent">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Moderación de contenido</h2><span>{{ (filteredPosts$ | async)?.length || 0 }} modelos</span></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.contentModeration' | translate }}</h2><span>{{ (filteredPosts$ | async)?.length || 0 }} modelos</span></div></div>
             <div class="moderation-grid" *ngIf="filteredPosts$ | async as posts">
               <article class="content-card" *ngFor="let post of posts; trackBy: trackPost">
                 <img [src]="post.thumbnailUrl" [alt]="post.title" />
@@ -220,12 +220,12 @@
                   <small>❤ {{ post.likesCount || 0 }} · 👁 {{ post.viewsCount || 0 }} · ⤴ {{ post.remixCount || 0 }}</small>
                   <div class="card-actions">
                     <button class="small-button" (click)="togglePostVisibility(post)">{{ post.isPrivate ? 'Hacer público' : 'Hacer privado' }}</button>
-                    <a class="small-button" [routerLink]="['/profile', post.authorId || post.author.uid]">Autor</a>
-                    <button class="small-button danger" (click)="requestDelete(post)">Eliminar</button>
+                    <a class="small-button" [routerLink]="['/profile', post.authorId || post.author.uid]">{{ 'admin.author' | translate }}</a>
+                    <button class="small-button danger" (click)="requestDelete(post)">{{ 'admin.delete' | translate }}</button>
                   </div>
                 </div>
               </article>
-              <div class="empty-inline" *ngIf="!posts.length">No hay contenido para mostrar.</div>
+              <div class="empty-inline" *ngIf="!posts.length">{{ 'admin.noContentToShow' | translate }}</div>
             </div>
           </section>
         </ng-container>
@@ -234,19 +234,19 @@
         <ng-container *ngIf="isReports">
           <section class="admin-panel full-width">
             <div class="panel-header">
-              <div class="panel-title-row"><h2>Reportes de contenido</h2><span>{{ (filteredReports$ | async)?.length || 0 }} reportes</span></div>
+              <div class="panel-title-row"><h2>{{ 'admin.contentReports' | translate }}</h2><span>{{ (filteredReports$ | async)?.length || 0 }} reportes</span></div>
               <div class="panel-actions">
                 <select [(ngModel)]="reportFilter">
-                  <option value="all">Todos</option>
-                  <option value="open">Abiertos</option>
-                  <option value="resolved">Resueltos</option>
-                  <option value="dismissed">Descartados</option>
+                  <option value="all">{{ 'admin.all' | translate }}</option>
+                  <option value="open">{{ 'admin.open' | translate }}</option>
+                  <option value="resolved">{{ 'admin.resolved' | translate }}</option>
+                  <option value="dismissed">{{ 'admin.dismissed' | translate }}</option>
                 </select>
               </div>
             </div>
             <div class="table-wrap" *ngIf="filteredReports$ | async as reports">
               <table>
-                <thead><tr><th>Modelo</th><th>Reportado por</th><th>Motivo</th><th>Detalles</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>{{ 'admin.model' | translate }}</th><th>{{ 'admin.reportedBy' | translate }}</th><th>{{ 'admin.reason' | translate }}</th><th>{{ 'admin.details' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.date' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let report of reports; trackBy: trackReport">
                     <td><strong>{{ report.postTitle }}</strong><br /><small class="mono">{{ report.postId }}</small></td>
@@ -257,13 +257,13 @@
                     <td>{{ report.createdAt | date:'short' }}</td>
                     <td>
                       <div class="row-actions" *ngIf="report.status === 'open'; else closedReport">
-                        <button class="small-button primary" (click)="resolveReport(report,'resolved')">Resolver</button>
-                        <button class="small-button" (click)="resolveReport(report,'dismissed')">Descartar</button>
+                        <button class="small-button primary" (click)="resolveReport(report,'resolved')">{{ 'admin.resolve' | translate }}</button>
+                        <button class="small-button" (click)="resolveReport(report,'dismissed')">{{ 'admin.dismiss' | translate }}</button>
                       </div>
-                      <ng-template #closedReport><span class="muted">Cerrado</span></ng-template>
+                      <ng-template #closedReport><span class="muted">{{ 'admin.closed' | translate }}</span></ng-template>
                     </td>
                   </tr>
-                  <tr *ngIf="!reports.length"><td colspan="7" class="muted-cell">No hay reportes para mostrar.</td></tr>
+                  <tr *ngIf="!reports.length"><td colspan="7" class="muted-cell">{{ 'admin.noReportsToShow' | translate }}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -273,10 +273,10 @@
         <!-- FEEDBACK -->
         <ng-container *ngIf="isFeedback">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Feedback y contacto</h2><span>{{ (filteredFeedback$ | async)?.length || 0 }} mensajes</span></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.feedbackAndContact' | translate }}</h2><span>{{ (filteredFeedback$ | async)?.length || 0 }} mensajes</span></div></div>
             <div class="table-wrap" *ngIf="filteredFeedback$ | async as items">
               <table>
-                <thead><tr><th>Fecha</th><th>Tipo</th><th>Contacto</th><th>Asunto / Mensaje</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>{{ 'admin.date' | translate }}</th><th>{{ 'admin.type' | translate }}</th><th>{{ 'admin.contact' | translate }}</th><th>{{ 'admin.subjectMessage' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let item of items; trackBy: trackFeedback">
                     <td>{{ item.createdAt | date:'short' }}</td>
@@ -288,9 +288,9 @@
                         <option *ngFor="let s of feedbackStatuses" [value]="s">{{ s }}</option>
                       </select>
                     </td>
-                    <td><button class="small-button danger" (click)="deleteFeedback(item)">Eliminar</button></td>
+                    <td><button class="small-button danger" (click)="deleteFeedback(item)">{{ 'admin.delete' | translate }}</button></td>
                   </tr>
-                  <tr *ngIf="!items.length"><td colspan="6" class="muted-cell">No hay feedback para mostrar.</td></tr>
+                  <tr *ngIf="!items.length"><td colspan="6" class="muted-cell">{{ 'admin.feedbackEmpty' | translate }}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -300,10 +300,10 @@
         <!-- COMMUNITY HELP -->
         <ng-container *ngIf="isHelp">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Preguntas de la comunidad</h2><span>{{ (filteredQuestions$ | async)?.length || 0 }} preguntas</span></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.communityQuestions' | translate }}</h2><span>{{ (filteredQuestions$ | async)?.length || 0 }} preguntas</span></div></div>
             <div class="table-wrap" *ngIf="filteredQuestions$ | async as questions">
               <table>
-                <thead><tr><th>Pregunta</th><th>Autor</th><th>Métricas</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>{{ 'admin.question' | translate }}</th><th>{{ 'admin.author' | translate }}</th><th>{{ 'admin.metrics' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let q of questions; trackBy: trackQuestion">
                     <td>
@@ -315,9 +315,9 @@
                     <td>💬 {{ q.answersCount }} · 👍 {{ q.votes }}</td>
                     <td>
                       <div class="chip-row">
-                        <span class="chip" [class.on]="q.resolved">Resuelta</span>
-                        <span class="chip" [class.on]="q.pinned">Fijada</span>
-                        <span class="chip" [class.on]="q.locked">Bloqueada</span>
+                        <span class="chip" [class.on]="q.resolved">{{ 'admin.resolved' | translate }}</span>
+                        <span class="chip" [class.on]="q.pinned">{{ 'admin.pinned' | translate }}</span>
+                        <span class="chip" [class.on]="q.locked">{{ 'admin.locked' | translate }}</span>
                       </div>
                     </td>
                     <td>
@@ -325,11 +325,11 @@
                         <button class="small-button" (click)="toggleQuestionResolved(q)">{{ q.resolved ? 'Reabrir' : 'Resolver' }}</button>
                         <button class="small-button" (click)="toggleQuestionPinned(q)">{{ q.pinned ? 'Desfijar' : 'Fijar' }}</button>
                         <button class="small-button" (click)="toggleQuestionLocked(q)">{{ q.locked ? 'Desbloquear' : 'Bloquear' }}</button>
-                        <button class="small-button danger" (click)="deleteQuestion(q)">Eliminar</button>
+                        <button class="small-button danger" (click)="deleteQuestion(q)">{{ 'admin.delete' | translate }}</button>
                       </div>
                     </td>
                   </tr>
-                  <tr *ngIf="!questions.length"><td colspan="5" class="muted-cell">No hay preguntas para mostrar.</td></tr>
+                  <tr *ngIf="!questions.length"><td colspan="5" class="muted-cell">{{ 'admin.noQuestionsToShow' | translate }}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -339,7 +339,7 @@
         <!-- PROJECTS -->
         <ng-container *ngIf="isProjects">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>Proyectos colaborativos</h2><span>{{ (filteredProjects$ | async)?.length || 0 }} proyectos</span></div></div>
+            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.collaborativeProjects' | translate }}</h2><span>{{ (filteredProjects$ | async)?.length || 0 }} proyectos</span></div></div>
             <div class="projects-layout" *ngIf="filteredProjects$ | async as projects">
               <div class="projects-list">
                 <article class="project-card" *ngFor="let p of projects; trackBy: trackProject" [class.selected]="selectedProjectId === p.id" (click)="selectProject(p.id)">
@@ -348,21 +348,21 @@
                     <div class="project-desc">{{ p.description || 'Sin descripción' }}</div>
                     <div class="project-meta"><span class="badge">{{ p.isPublic ? 'Público' : 'Privado' }}</span><span>Actualizado {{ p.updatedAt | date:'shortDate' }}</span></div>
                   </div>
-                  <div class="project-actions"><button class="small-button danger" (click)="deleteProject(p.id); $event.stopPropagation()">Eliminar</button></div>
+                  <div class="project-actions"><button class="small-button danger" (click)="deleteProject(p.id); $event.stopPropagation()">{{ 'admin.delete' | translate }}</button></div>
                 </article>
-                <div class="empty-inline" *ngIf="!projects.length">No hay proyectos para mostrar.</div>
+                <div class="empty-inline" *ngIf="!projects.length">{{ 'admin.noProjectsToShow' | translate }}</div>
               </div>
               <div class="members-panel admin-panel" *ngIf="selectedProjectId">
-                <div class="panel-header"><div class="panel-title-row"><h3>Miembros del proyecto</h3><span>{{ projectMembers.length }}</span></div></div>
+                <div class="panel-header"><div class="panel-title-row"><h3>{{ 'admin.projectMembers' | translate }}</h3><span>{{ projectMembers.length }}</span></div></div>
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>Usuario</th><th>Rol</th><th>Ingreso</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>{{ 'admin.user' | translate }}</th><th>{{ 'admin.role' | translate }}</th><th>{{ 'admin.joined' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
                     <tbody>
                       <tr *ngFor="let m of projectMembers; trackBy: trackMember" [class.deleted-member]="isDeletedMember(m)">
                         <td>
-                          <strong><span *ngIf="isDeletedMember(m)">Cuenta eliminada</span><span *ngIf="!isDeletedMember(m)">{{ m.userName || m.userId }}</span></strong>
+                          <strong><span *ngIf="isDeletedMember(m)">{{ 'admin.accountDeleted' | translate }}</span><span *ngIf="!isDeletedMember(m)">{{ m.userName || m.userId }}</span></strong>
                           <br /><small class="mono" *ngIf="!isDeletedMember(m)">{{ m.userId }}</small>
-                          <span class="badge deleted-badge" *ngIf="isDeletedMember(m)">DELETADA</span>
+                          <span class="badge deleted-badge" *ngIf="isDeletedMember(m)">{{ 'admin.deletedBadge' | translate }}</span>
                         </td>
                         <td>
                           <select *ngIf="!isDeletedMember(m)" [ngModel]="m.role" (change)="onRoleChange(selectedProjectId, m.id, $event)">
@@ -371,9 +371,9 @@
                           <span class="deleted-role" *ngIf="isDeletedMember(m)">—</span>
                         </td>
                         <td>{{ m.joinedAt | date:'mediumDate' }}</td>
-                        <td><button class="small-button danger" (click)="removeMember(selectedProjectId, m.id)">Quitar</button></td>
+                        <td><button class="small-button danger" (click)="removeMember(selectedProjectId, m.id)">{{ 'admin.remove' | translate }}</button></td>
                       </tr>
-                      <tr *ngIf="!projectMembers.length"><td colspan="4" class="muted-cell">Sin miembros o proyecto sin datos.</td></tr>
+                      <tr *ngIf="!projectMembers.length"><td colspan="4" class="muted-cell">{{ 'admin.noMembersOrData' | translate }}</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -387,17 +387,17 @@
           <section class="admin-panel full-width">
             <div class="panel-header">
               <div class="panel-title-row">
-                <h2>Artículos del centro de ayuda</h2>
+                <h2>{{ 'admin.helpCenterArticles' | translate }}</h2>
                 <span>{{ (filteredArticles$ | async)?.length || 0 }} artículos</span>
               </div>
               <div class="panel-actions">
                 <select [(ngModel)]="helpArticleFilter">
-                  <option value="all">Todos</option>
-                  <option value="published">Publicados</option>
-                  <option value="draft">Borradores</option>
+                  <option value="all">{{ 'admin.all' | translate }}</option>
+                  <option value="published">{{ 'admin.published' | translate }}</option>
+                  <option value="draft">{{ 'admin.draft' | translate }}</option>
                 </select>
                 <select [(ngModel)]="helpArticleCategoryFilter">
-                  <option value="all">Todas las categorías</option>
+                  <option value="all">{{ 'admin.allCategories' | translate }}</option>
                   <option *ngFor="let c of helpCategories" [value]="c">{{ getCategoryLabel(c) }}</option>
                 </select>
               </div>
@@ -406,25 +406,25 @@
               <div class="help-editor">
                 <div class="help-editor-header">
                   <h3>{{ articleToEdit ? 'Editar artículo' : 'Nuevo artículo' }}</h3>
-                  <span class="editor-badge" *ngIf="articleToEdit">Editando</span>
+                  <span class="editor-badge" *ngIf="articleToEdit">{{ 'admin.editing' | translate }}</span>
                 </div>
                 <div class="article-form">
                   <div class="form-row">
-                    <div class="form-group"><label>Categoría</label>
+                    <div class="form-group"><label>{{ 'admin.category' | translate }}</label>
                       <select [(ngModel)]="newArticle.category">
                         <option *ngFor="let c of helpCategories" [value]="c">{{ getCategoryLabel(c) }}</option>
                       </select>
                     </div>
-                    <div class="form-group"><label>Icono</label><input [(ngModel)]="newArticle.icon" placeholder="📄" /></div>
-                    <div class="form-group"><label>Orden</label><input type="number" [(ngModel)]="newArticle.order" placeholder="0" /></div>
+                    <div class="form-group"><label>{{ 'admin.icon' | translate }}</label><input [(ngModel)]="newArticle.icon" placeholder="📄" /></div>
+                    <div class="form-group"><label>{{ 'admin.order' | translate }}</label><input type="number" [(ngModel)]="newArticle.order" placeholder="0" /></div>
                   </div>
-                  <div class="form-group"><label>Título *</label><input [(ngModel)]="newArticle.title" placeholder="Título del artículo" /></div>
-                  <div class="form-group"><label>Subtítulo</label><input [(ngModel)]="newArticle.subtitle" placeholder="Resumen corto para el listado" /></div>
-                  <div class="form-group"><label>Palabras clave</label><input [(ngModel)]="newArticle.keywords" placeholder="editor, gizmo, exportar…" /></div>
-                  <div class="form-group"><label>Contenido *</label><textarea rows="7" [(ngModel)]="articleBodyText" placeholder="Escribe cada párrafo. Puedes separar por línea en blanco o por salto de línea."></textarea></div>
-                  <div class="form-group"><label>Pasos (opcional, uno por línea)</label><textarea rows="5" [(ngModel)]="articleStepsText" placeholder="Paso 1&#10;Paso 2&#10;Paso 3"></textarea></div>
-                  <div class="form-group"><label>Consejo (opcional)</label><textarea rows="2" [(ngModel)]="articleTipText" placeholder="Tip breve para el lector"></textarea></div>
-                  <label class="check-row"><input type="checkbox" [(ngModel)]="newArticle.isPublished" /> Publicado (visible en el centro de ayuda)</label>
+                  <div class="form-group"><label>{{ 'admin.title' | translate }} *</label><input [(ngModel)]="newArticle.title" [placeholder]="'admin.articleTitlePlaceholder' | translate" /></div>
+                  <div class="form-group"><label>{{ 'admin.subtitle' | translate }}</label><input [(ngModel)]="newArticle.subtitle" [placeholder]="'admin.articleSummaryPlaceholder' | translate" /></div>
+                  <div class="form-group"><label>{{ 'admin.keywords' | translate }}</label><input [(ngModel)]="newArticle.keywords" [placeholder]="'admin.keywordsPlaceholder' | translate" /></div>
+                  <div class="form-group"><label>{{ 'admin.content' | translate }} *</label><textarea rows="7" [(ngModel)]="articleBodyText" [placeholder]="'admin.writeEachParagraph' | translate"></textarea></div>
+                  <div class="form-group"><label>{{ 'admin.stepsOptional' | translate }}</label><textarea rows="5" [(ngModel)]="articleStepsText" [placeholder]="'admin.stepsPlaceholder' | translate"></textarea></div>
+                  <div class="form-group"><label>{{ 'admin.tipOptional' | translate }}</label><textarea rows="2" [(ngModel)]="articleTipText" [placeholder]="'admin.tipPlaceholder' | translate"></textarea></div>
+                  <label class="check-row"><input type="checkbox" [(ngModel)]="newArticle.isPublished" /> {{ 'admin.publishedVisible' | translate }}</label>
                   <div class="form-actions">
                     <button class="small-button primary" (click)="saveHelpArticle()">{{ articleToEdit ? 'Guardar cambios' : 'Crear artículo' }}</button>
                     <button class="small-button" (click)="resetNewArticle()">{{ articleToEdit ? 'Cancelar edición' : 'Limpiar' }}</button>
@@ -433,7 +433,7 @@
               </div>
               <div class="help-list-panel">
                 <div class="help-list-header">
-                  <h4>Lista de artículos</h4>
+                  <h4>{{ 'admin.articlesList' | translate }}</h4>
                   <span class="muted">{{ (filteredArticles$ | async)?.length || 0 }} resultados</span>
                 </div>
                 <div class="help-list" *ngIf="filteredArticles$ | async as articles">
@@ -450,16 +450,16 @@
                       </div>
                     </div>
                     <div class="row-actions wrap">
-                      <button class="small-button" (click)="editHelpArticle(a)">Editar</button>
+                      <button class="small-button" (click)="editHelpArticle(a)">{{ 'admin.editArticle' | translate }}</button>
                       <button class="small-button" (click)="toggleArticlePublish(a)">{{ a.isPublished ? 'Despublicar' : 'Publicar' }}</button>
-                      <button class="small-button danger" (click)="deleteHelpArticle(a.id)">Eliminar</button>
+                      <button class="small-button danger" (click)="deleteHelpArticle(a.id)">{{ 'admin.delete' | translate }}</button>
                     </div>
                   </article>
                   <div class="help-empty" *ngIf="!articles.length">
                     <div class="empty-illustration">📚</div>
-                    <strong>No hay artículos para mostrar</strong>
-                    <p>Crea tu primer artículo con el formulario de la izquierda o ajusta los filtros de búsqueda/categoría/estado.</p>
-                    <button class="small-button primary" (click)="resetNewArticle()">Crear nuevo artículo</button>
+                    <strong>{{ 'admin.noArticlesToShow' | translate }}</strong>
+                    <p>{{ 'admin.createFirstArticle' | translate }}</p>
+                    <button class="small-button primary" (click)="resetNewArticle()">{{ 'admin.createNewArticle' | translate }}</button>
                   </div>
                 </div>
               </div>

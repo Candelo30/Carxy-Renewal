@@ -282,11 +282,11 @@
           <!-- Right: options -->
           <rect x="604" y="58" width="348" height="304" rx="14" fill="var(--surface-panel)" stroke="var(--border-color)"/>
           <text x="620" y="82" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">CARROCERÍA</text>
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'CARROCERÍA' | translate }}</text>
           @for (option of bodyOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
                [attr.aria-pressed]="selectedBodyId === option.id"
-               [attr.aria-label]="option.label"
+               [attr.aria-label]="option.label | translate"
                (click)="selectBody(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectBody(option.id)">
               <rect [attr.x]="620 + ($index * 112)" y="90" width="98" height="22" rx="11"
@@ -295,16 +295,16 @@
                     stroke-width="1.4"/>
               <text [attr.x]="669 + ($index * 112)" y="105" text-anchor="middle" font-size="9" font-weight="700"
                     [attr.fill]="selectedBodyId === option.id ? '#ffffff' : 'var(--text-primary)'"
-                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
+                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label | translate }}</text>
             </g>
           }
 
           <text x="620" y="130" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">EXTERIOR</text>
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'EXTERIOR' | translate }}</text>
           @for (option of exteriorOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
                [attr.aria-pressed]="selectedExteriorId === option.id"
-               [attr.aria-label]="option.label"
+               [attr.aria-label]="option.label | translate"
                (click)="selectExterior(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectExterior(option.id)">
               <circle [attr.cx]="636 + ($index * 54)" cy="150" r="12" [attr.fill]="option.swatch"
@@ -315,14 +315,14 @@
           <text x="620" y="178" font-size="11" font-weight="700" fill="var(--text-primary)"
                 font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ selectedExterior.label }}</text>
           <text x="620" y="191" font-size="8" fill="var(--text-muted)"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Acabado {{ selectedFinish.label }}</text>
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Acabado' | translate }} {{ selectedFinish.label | translate }}</text>
 
           <text x="620" y="209" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">ACABADO</text>
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'ACABADO' | translate }}</text>
           @for (option of finishOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
                [attr.aria-pressed]="selectedFinishId === option.id"
-               [attr.aria-label]="option.label"
+               [attr.aria-label]="option.label | translate"
                (click)="selectFinish(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectFinish(option.id)">
               <rect [attr.x]="620 + ($index * 112)" y="216" width="100" height="20" rx="10"
@@ -331,32 +331,32 @@
                     stroke-width="1.4"/>
               <text [attr.x]="670 + ($index * 112)" y="230" text-anchor="middle" font-size="8.5" font-weight="700"
                     [attr.fill]="selectedFinishId === option.id ? '#ffffff' : 'var(--text-primary)'"
-                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
+                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label | translate }}</text>
             </g>
           }
 
           <text x="620" y="244" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">INTERIOR</text>
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'INTERIOR' | translate }}</text>
           @for (option of interiorOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
                [attr.aria-pressed]="selectedInteriorId === option.id"
-               [attr.aria-label]="option.label"
+               [attr.aria-label]="option.label | translate"
                (click)="selectInterior(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectInterior(option.id)">
               <rect [attr.x]="620 + ($index * 86)" y="251" width="72" height="18" rx="8" [attr.fill]="option.swatch"
                     [attr.stroke]="selectedInteriorId === option.id ? 'var(--accent-color)' : 'transparent'"
                     stroke-width="3"/>
               <text [attr.x]="656 + ($index * 86)" y="264" text-anchor="middle" font-size="6.5" fill="var(--text-muted)"
-                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
+                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label | translate }}</text>
             </g>
           }
 
           <text x="620" y="278" font-size="8.5" letter-spacing="2.2" fill="var(--text-muted)"
-                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">LLANTAS</text>
+                font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'LLANTAS' | translate }}</text>
           @for (option of wheelOptions; track option.id; let i = $index) {
             <g class="mockup-hotspot" role="button" tabindex="0"
                [attr.aria-pressed]="selectedWheelId === option.id"
-               [attr.aria-label]="option.label"
+               [attr.aria-label]="option.label | translate"
                (click)="selectWheel(option.id)"
                (keydown)="($event.key === 'Enter' || $event.key === ' ') && selectWheel(option.id)">
               <rect [attr.x]="620 + ($index * 112)" y="285" width="100" height="20" rx="10"
@@ -365,13 +365,13 @@
                     stroke-width="1.4"/>
               <text [attr.x]="670 + ($index * 112)" y="299" text-anchor="middle" font-size="8.5" font-weight="700"
                     [attr.fill]="selectedWheelId === option.id ? '#ffffff' : 'var(--text-primary)'"
-                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label }}</text>
+                    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ option.label | translate }}</text>
             </g>
           }
 
           <g class="mockup-hotspot" role="button" tabindex="0"
              [attr.aria-pressed]="showSpoiler"
-             aria-label="Spoiler"
+             [attr.aria-label]="'Spoiler' | translate"
              (click)="toggleSpoiler()"
              (keydown)="($event.key === 'Enter' || $event.key === ' ') && toggleSpoiler()">
             <rect x="620" y="312" width="120" height="22" rx="8"
@@ -380,11 +380,11 @@
                   stroke-width="1.4"/>
             <text x="680" y="327" text-anchor="middle" font-size="8.5" font-weight="700"
                   [attr.fill]="showSpoiler ? '#ffffff' : 'var(--text-primary)'"
-                  font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">Spoiler</text>
+                  font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ 'Spoiler' | translate }}</text>
           </g>
           <g class="mockup-hotspot" role="button" tabindex="0"
              [attr.aria-pressed]="lightsOn"
-             aria-label="Luces"
+             [attr.aria-label]="'Luces' | translate"
              (click)="toggleLights()"
              (keydown)="($event.key === 'Enter' || $event.key === ' ') && toggleLights()">
             <rect x="750" y="312" width="96" height="22" rx="8"
@@ -393,7 +393,7 @@
                   stroke-width="1.4"/>
             <text x="798" y="327" text-anchor="middle" font-size="8.5" font-weight="700"
                   [attr.fill]="lightsOn ? '#111827' : 'var(--text-primary)'"
-                  font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">Luces</text>
+                  font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" pointer-events="none">{{ 'Luces' | translate }}</text>
           </g>
 
           <rect x="620" y="340" width="220" height="14" rx="7" fill="none" />
@@ -526,7 +526,7 @@
         <svg viewBox="0 0 720 648" xmlns="http://www.w3.org/2000/svg" role="presentation">
           <!-- Root: CISO -->
           <rect x="258" y="14" width="204" height="92" rx="46" fill="#b45ce8"/>
-          <text x="360" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">CISO</text>
+          <text x="360" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'CISO' | translate }}</text>
           <text x="360" y="61" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">HECTOR</text>
           <text x="360" y="80" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">SANCHEZ</text>
 
@@ -535,9 +535,9 @@
 
           <!-- CIO: Santiago Erazo -->
           <rect x="254" y="142" width="212" height="84" rx="42" fill="#d4d4d4" stroke="#bdbdbd"/>
-          <text x="360" y="168" text-anchor="middle" font-size="14" font-weight="800" fill="#1f2937" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">CIO</text>
+          <text x="360" y="168" text-anchor="middle" font-size="14" font-weight="800" fill="#1f2937" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'CIO' | translate }}</text>
           <text x="360" y="188" text-anchor="middle" font-size="13" font-weight="800" fill="#1f2937" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">SANTIAGO ERAZO</text>
-          <text x="360" y="207" text-anchor="middle" font-size="8.5" fill="#374151" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">PROGRAMADOR,DOCUMENTADOR</text>
+          <text x="360" y="207" text-anchor="middle" font-size="8.5" fill="#374151" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Programador, Documentador' | translate }}</text>
 
           <line x1="360" y1="226" x2="360" y2="264" stroke="#9ca3af" stroke-width="2"/>
           <line x1="150" y1="264" x2="570" y2="264" stroke="#9ca3af" stroke-width="2"/>
@@ -549,33 +549,33 @@
           <!-- Left column -->
           <rect x="40" y="294" width="220" height="66" rx="33" fill="#a3a3a3"/>
           <text x="150" y="322" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Andrea Rodríguez</text>
-          <text x="150" y="343" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tester,Documentador</text>
+          <text x="150" y="343" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Tester, Documentador' | translate }}</text>
 
           <line x1="150" y1="360" x2="150" y2="424" stroke="#9ca3af" stroke-width="2"/>
           <circle cx="150" cy="392" r="4" fill="#9ca3af"/>
 
           <rect x="40" y="424" width="220" height="66" rx="33" fill="#a3a3a3"/>
           <text x="150" y="452" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Harold Paz</text>
-          <text x="150" y="473" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tester,Documentador</text>
+          <text x="150" y="473" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Tester, Documentador' | translate }}</text>
 
           <line x1="150" y1="490" x2="150" y2="554" stroke="#9ca3af" stroke-width="2"/>
           <circle cx="150" cy="522" r="4" fill="#9ca3af"/>
 
           <rect x="40" y="554" width="220" height="66" rx="33" fill="#a3a3a3"/>
           <text x="150" y="582" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Alan Danilo Palechor</text>
-          <text x="150" y="603" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tester,Documentador,Analista</text>
+          <text x="150" y="603" text-anchor="middle" font-size="9.5" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Tester, Documentador, Analista' | translate }}</text>
 
           <!-- Right column -->
           <rect x="460" y="294" width="220" height="66" rx="33" fill="#a3a3a3"/>
           <text x="570" y="322" text-anchor="middle" font-size="13.5" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Luis Eduardo Candelo</text>
-          <text x="570" y="343" text-anchor="middle" font-size="9" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Programador,Analista,Documentador</text>
+          <text x="570" y="343" text-anchor="middle" font-size="9" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Programador, Analista, Documentador' | translate }}</text>
 
           <line x1="570" y1="360" x2="570" y2="424" stroke="#9ca3af" stroke-width="2"/>
           <circle cx="570" cy="392" r="4" fill="#9ca3af"/>
 
           <rect x="460" y="424" width="220" height="66" rx="33" fill="#a3a3a3"/>
           <text x="570" y="452" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Sara Guerrero</text>
-          <text x="570" y="473" text-anchor="middle" font-size="9" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Programador,Analista,Documentador</text>
+          <text x="570" y="473" text-anchor="middle" font-size="9" fill="#f5f5f5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">{{ 'Programador, Analista, Documentador' | translate }}</text>
         </svg>
       </figure>
       <p class="mockup-caption">{{ 'Organigrama original del equipo de la primera versión.' | translate }}</p>

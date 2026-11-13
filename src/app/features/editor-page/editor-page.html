@@ -45,7 +45,7 @@
         </div>
       }
     </div>
-    <div class="saved-views-toolbar" aria-label="Vistas guardadas">
+    <div class="saved-views-toolbar" [attr.aria-label]="'Vistas guardadas' | translate">
       <button type="button" class="saved-view-add" (click)="saveViewPrompt()" [title]="'editor.views.save' | translate">＋ {{ 'editor.views.save' | translate }}</button>
       @if (savedViews().length === 0) {
         <span class="saved-views-empty">{{ 'editor.views.empty' | translate }}</span>

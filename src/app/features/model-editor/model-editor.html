@@ -25,14 +25,14 @@
         <button [title]="'Agregar cono' | translate" (click)="addCone()"><span>△</span>{{ 'Cono' | translate }}</button>
         <button [title]="'Agregar plano' | translate" (click)="addPlane()"><span>▱</span>{{ 'Plano' | translate }}</button>
         <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar anillo' | translate" (click)="addRing()"><span>◊</span>{{ 'Anillo' | translate }}</button>
-        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz puntual'" (click)="addLight('point')"><span>💡</span>Punto</button>
-        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir foco (spot)'" (click)="addLight('spot')"><span>🔦</span>Foco</button>
-        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz direccional (sol)'" (click)="addLight('directional')"><span>☀</span>Direccional</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz puntual' | translate" (click)="addLight('point')"><span>💡</span>{{ 'Punto' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir foco (spot)' | translate" (click)="addLight('spot')"><span>🔦</span>{{ 'Foco' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz direccional (sol)' | translate" (click)="addLight('directional')"><span>☀</span>{{ 'Direccional' | translate }}</button>
       </div>
       <div class="organize-row">
-        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir vacío (punto de pivote invisible)'" (click)="addEmpty()"><span>◌</span>Vacío</button>
-        <button [disabled]="!canGroupSelected()" [title]="'Agrupar la selección en un vacío (Ctrl+clic para multiselección)'" (click)="groupSelected()"><span>▣</span>Agrupar{{ selectedCount() > 1 ? ' (' + selectedCount() + ')' : '' }}</button>
-        <button [disabled]="!canUngroupSelected()" [title]="'Desagrupar el vacío seleccionado'" (click)="ungroupSelected()"><span>◫</span>Desagrupar</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir vacío (punto de pivote invisible)' | translate" (click)="addEmpty()"><span>◌</span>{{ 'Vacío' | translate }}</button>
+        <button [disabled]="!canGroupSelected()" [title]="'Agrupar la selección en un vacío (Ctrl+clic para multiselección)' | translate" (click)="groupSelected()"><span>▣</span>{{ 'Agrupar' | translate }}{{ selectedCount() > 1 ? ' (' + selectedCount() + ')' : '' }}</button>
+        <button [disabled]="!canUngroupSelected()" [title]="'Desagrupar el vacío seleccionado' | translate" (click)="ungroupSelected()"><span>◫</span>{{ 'Desagrupar' | translate }}</button>
       </div>
       <label class="object-search" *ngIf="sceneObjects.length > 8">
         <span>⌕</span>
@@ -262,7 +262,7 @@
     <details class="panel-section panel-collapsible" *ngIf="selectedLight as light" open>
       <summary class="section-heading compact-heading summary-button">
         <div>
-          <span class="eyebrow">ILUMINACIÓN</span>
+          <span class="eyebrow">{{ 'ILUMINACIÓN' | translate }}</span>
           <h2>{{ light.name }}</h2>
         </div>
         <span class="collapse-arrow" aria-hidden="true"></span>
@@ -271,38 +271,38 @@
         <div class="material-card">
           <div class="material-row">
             <span class="material-dot" [style.background]="light.color"></span>
-            <span class="material-name">{{ light.kind === 'point' ? 'Luz puntual' : light.kind === 'spot' ? 'Foco (spot)' : 'Luz direccional' }}</span>
-            <input type="color" [ngModel]="light.color" (ngModelChange)="onLightColorChange($event)" />
+            <span class="material-name">{{ (light.kind === 'point' ? 'Luz puntual' : light.kind === 'spot' ? 'Foco (spot)' : 'Luz direccional') | translate }}</span>
+            <input type="color" [ngModel]="light.color" (ngModelChange)="onLightColorChange($event)" [attr.aria-label]="'Color de luz' | translate" />
           </div>
           <div class="material-properties">
             <label>
-              <span>Intensidad</span>
+              <span>{{ 'Intensidad' | translate }}</span>
               <input type="range" min="0" max="150" step="0.5" [ngModel]="light.intensity" (ngModelChange)="onLightPropertyChange('intensity', $event)" />
               <small>{{ light.intensity | number: '1.0-1' }}</small>
             </label>
             <label *ngIf="light.kind !== 'directional'">
-              <span>Alcance</span>
+              <span>{{ 'Alcance' | translate }}</span>
               <input type="range" min="0" max="20" step="0.1" [ngModel]="light.distance" (ngModelChange)="onLightPropertyChange('distance', $event)" />
               <small>{{ light.distance === 0 ? '∞' : (light.distance | number: '1.0-1') }}</small>
             </label>
             <label *ngIf="light.kind !== 'directional'">
-              <span>Atenuac.</span>
+              <span>{{ 'Atenuac.' | translate }}</span>
               <input type="range" min="0" max="4" step="0.05" [ngModel]="light.decay" (ngModelChange)="onLightPropertyChange('decay', $event)" />
               <small>{{ light.decay | number: '1.2-2' }}</small>
             </label>
             <label *ngIf="light.kind === 'spot'">
-              <span>Ángulo</span>
+              <span>{{ 'Ángulo' | translate }}</span>
               <input type="range" min="5" max="80" step="1" [ngModel]="light.angle ?? 25" (ngModelChange)="onLightPropertyChange('angle', $event)" />
               <small>{{ light.angle ?? 25 | number: '1.0-0' }}°</small>
             </label>
             <label *ngIf="light.kind === 'spot'">
-              <span>Penumbra</span>
+              <span>{{ 'Penumbra' | translate }}</span>
               <input type="range" min="0" max="1" step="0.01" [ngModel]="light.penumbra ?? 0" (ngModelChange)="onLightPropertyChange('penumbra', $event)" />
               <small>{{ light.penumbra ?? 0 | number: '1.2-2' }}</small>
             </label>
           </div>
         </div>
-        <p class="material-hint">Mueve el marcador octaédrico con el gizmo para colocar la luz en la escena.</p>
+        <p class="material-hint">{{ 'Mueve el marcador octaédrico con el gizmo para colocar la luz en la escena.' | translate }}</p>
       </div>
     </details>
 
@@ -402,7 +402,7 @@
                         [disabled]="busyMemberRoleId() === member.id"
                         [value]="member.role"
                         (change)="onMemberRoleChange(member, $event)"
-                        aria-label="Cambiar rol"
+                        [attr.aria-label]="'Cambiar rol' | translate"
                       >
                         <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
                         <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
@@ -459,8 +459,8 @@
     <details class="panel-section panel-collapsible" open>
       <summary class="section-heading compact-heading summary-button">
         <div>
-          <span class="eyebrow">EXPORTAR</span>
-          <h2>Escena y miniatura</h2>
+          <span class="eyebrow">{{ 'EXPORTAR' | translate }}</span>
+          <h2>{{ 'Escena y miniatura' | translate }}</h2>
         </div>
         <span class="collapse-arrow" aria-hidden="true"></span>
       </summary>
@@ -468,40 +468,40 @@
         <button class="export-caption-button" [disabled]="exportBusy" (click)="onExportGLB()">
           <span>⬇</span>
           <span class="export-caption-label">
-            <strong>{{ exportBusy ? 'Exportando…' : 'Exportar GLB' }}</strong>
-            <small>Compatible con Blender, Unity, Unreal y web (glTF 2.0)</small>
+            <strong>{{ exportBusy ? ('Exportando…' | translate) : ('Exportar GLB' | translate) }}</strong>
+            <small>{{ 'Compatible con Blender, Unity, Unreal y web (glTF 2.0)' | translate }}</small>
           </span>
         </button>
         <button class="export-caption-button" (click)="captureThumbnailPNG()">
           <span>🖼</span>
           <span class="export-caption-label">
-            <strong>Miniatura PNG</strong>
-            <small>Captura exacta de la cámara activa, lista para subir al marketplace</small>
+            <strong>{{ 'Miniatura PNG' | translate }}</strong>
+            <small>{{ 'Captura exacta de la cámara activa, lista para subir al marketplace' | translate }}</small>
           </span>
         </button>
-        <p class="material-hint">El GLB incluye materiales, luces y agrupación. La miniatura se descarga con el nombre del proyecto con el nombre del proyecto.</p>
+        <p class="material-hint">{{ 'El GLB incluye materiales, luces y agrupación. La miniatura se descarga con el nombre del proyecto.' | translate }}</p>
       </div>
     </details>
 
     <details class="panel-section panel-collapsible" open>
       <summary class="section-heading compact-heading summary-button">
         <div>
-          <span class="eyebrow">BIBLIOTECA</span>
-          <h2>Assets guardados</h2>
+          <span class="eyebrow">{{ 'BIBLIOTECA' | translate }}</span>
+          <h2>{{ 'Assets guardados' | translate }}</h2>
         </div>
         <span class="collapse-arrow" aria-hidden="true"></span>
       </summary>
       <div class="panel-collapsible-body">
         <div class="asset-save-row">
-          <input type="text" maxlength="80" placeholder="Nombre del asset…" [(ngModel)]="assetNameDraft" />
+          <input type="text" maxlength="80" [placeholder]="'Nombre del asset…' | translate" [(ngModel)]="assetNameDraft" />
           <button class="library-save-button inline" [disabled]="assetLibraryBusy || selectedCount() === 0" (click)="saveSelectedAsAsset()">
             <span>＋</span>
-            <span>{{ assetLibraryBusy ? 'Guardando…' : 'Guardar' }}</span>
+            <span>{{ assetLibraryBusy ? ('Guardando…' | translate) : ('Guardar' | translate) }}</span>
           </button>
         </div>
-        <p class="material-hint">{{ selectedCount() > 0 ? selectedCount() + ' objeto(s) seleccionado(s)' : 'Selecciona objetos primero (Ctrl+clic para multiselección)' }}</p>
-        <button class="library-refresh-button" [disabled]="assetLibraryBusy" (click)="loadAssets()">↻ Actualizar biblioteca</button>
-        <p class="material-hint" *ngIf="assetLibraryError">{{ assetLibraryError }}</p>
+        <p class="material-hint">{{ selectedCount() > 0 ? selectedCount() + ' ' + ('objeto(s) seleccionado(s)' | translate) : ('Selecciona objetos primero (Ctrl+clic para multiselección)' | translate) }}</p>
+        <button class="library-refresh-button" [disabled]="assetLibraryBusy" (click)="loadAssets()">↻ {{ 'Actualizar biblioteca' | translate }}</button>
+        <p class="material-hint" *ngIf="assetLibraryError">{{ assetLibraryError | translate }}</p>
         <div class="asset-list" *ngIf="assets.length; else emptyAssets">
           <div class="asset-row" *ngFor="let asset of assets">
             <div class="asset-row-main">
@@ -509,13 +509,13 @@
               <small>{{ formatAssetDate(asset.createdAt) }}</small>
             </div>
             <div class="asset-row-actions">
-              <button [disabled]="assetLibraryBusy" (click)="insertAsset(asset.id)" title="Insertar en la escena">＋ Ins</button>
-              <button [disabled]="assetLibraryBusy" (click)="deleteAsset(asset.id)" title="Borrar asset" aria-label="Borrar asset">🗑</button>
+              <button [disabled]="assetLibraryBusy" (click)="insertAsset(asset.id)" [title]="'Insertar en la escena' | translate">＋ {{ 'Ins' | translate }}</button>
+              <button [disabled]="assetLibraryBusy" (click)="deleteAsset(asset.id)" [title]="'Borrar asset' | translate" [attr.aria-label]="'Borrar asset' | translate">🗑</button>
             </div>
           </div>
         </div>
         <ng-template #emptyAssets>
-          <p class="empty-state">Aún no tienes assets. Guarda una pieza bien hecha (una llanta, un retrovisor) para reutilizarla en cualquier proyecto.</p>
+          <p class="empty-state">{{ 'Aún no tienes assets. Guarda una pieza bien hecha (una llanta, un retrovisor) para reutilizarla en cualquier proyecto.' | translate }}</p>
         </ng-template>
       </div>
     </details>
