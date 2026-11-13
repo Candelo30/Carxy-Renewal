@@ -30,7 +30,7 @@ import {
   ref,
   uploadBytes,
 } from '@angular/fire/storage';
-import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, retry, shareReplay, switchMap, timer } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
 import { firebaseErrorMessage } from '../utils/firebase-error';
 import { AuthService } from './auth';
@@ -1032,15 +1032,32 @@ export class SocialService {
     return this.getChatStream(chatId).asObservable();
   }
 
-  chatConversations$(uid: string): Observable<ChatConversation[]> {
+  /**
+   * Lista las conversaciones visibles para `uid`.
+   *
+   * La colección `chats` no puede consultarse desde el cliente: Firestore
+   * evalúa las reglas de una consulta frente a TODOS los documentos que
+   * podrían devolver, y la regla `list` anidada en `match /chats/{chatId}`
+   * no alcanza a la ruta de la colección (`/chats`). Abrir la colección
+   * entera expondría el `lastMessage` de conversaciones ajenas, así que el
+   * cliente mantiene un índice por usuario (`users/{uid}/recentChats`) con
+   * reglas estándar de pertenencia.
+   */
+  recentChats$(uid: string): Observable<ChatConversation[]> {
     if (this.firestore) {
       return collectionData(
-        query(collection(this.firestore, SOCIAL_COLLECTIONS.chats), where('participantIds', 'array-contains', uid)),
+        query(
+          collection(this.firestore, 'users', uid, 'recentChats'),
+          orderBy('updatedAt', 'desc'),
+          limit(30),
+        ),
         { idField: 'id' },
       ).pipe(
         map((items) => items
           .map((item) => this.normalizeChatConversation(item as Record<string, unknown>))
           .sort((first, second) => second.updatedAt - first.updatedAt)),
+        retry({ count: 3, delay: (_error, index) => timer(800 * (index + 1)) }),
+        shareReplay({ bufferSize: 1, refCount: true }),
       );
     }
 
@@ -1062,7 +1079,48 @@ export class SocialService {
     }));
   }
 
-  async ensureChatConversation(chatId: string): Promise<void> {
+  /**
+   * Alias de compatibilidad: la lógica vive en `recentChats$`.
+   */
+  chatConversations$(uid: string): Observable<ChatConversation[]> {
+    return this.recentChats$(uid);
+  }
+
+  /**
+   * Mantiene el índice por usuario (`users/{uid}/recentChats/{chatId}`) que
+   * alimenta la lista de conversaciones. Se escribe el índice de los DOS
+   * participantes: cada uno lee únicamente el suyo.
+   *
+   * Best effort: si una escritura falla (p. ej. reglas sin desplegar), el
+   * mensaje se entrega igualmente y el índice se repone en el siguiente
+   * envío o al abrir el chat.
+   */
+  private async writeRecentChats(
+    chatId: string,
+    participantIds: string[],
+    updatedAt: number,
+    writtenBy: string,
+    lastMessage?: ChatMessage,
+  ): Promise<void> {
+    if (!this.firestore || !writtenBy) return;
+    try {
+      await Promise.all(participantIds.map((owner) =>
+        setDoc(
+          doc(this.firestore!, 'users', owner, 'recentChats', chatId),
+          {
+            participantIds,
+            updatedAt,
+            writtenBy,
+            ...(lastMessage ? { lastMessage } : {}),
+          },
+          { merge: true },
+        )));
+    } catch (error) {
+      console.warn('[carxy] No se pudo actualizar el índice de chats recientes', error);
+    }
+  }
+
+  async ensureChatConversation(chatId: string, writtenBy = ''): Promise<void> {
     const participantIds = chatId.split('__');
     if (
       participantIds.length !== 2
@@ -1103,6 +1161,19 @@ export class SocialService {
         ...(latestMessage ? { lastMessage: latestMessage } : {}),
       });
     });
+
+    // Índice por usuario: es lo que alimenta "Recientes". Cada apertura
+    // repone las filas de ambos participantes (idempotente), así una
+    // conversación antigua también aparece tras desplegar el fix.
+    if (writtenBy) {
+      await this.writeRecentChats(
+        chatId,
+        participantIds,
+        latestMessage?.createdAt ?? Date.now(),
+        writtenBy,
+        latestMessage,
+      );
+    }
   }
 
   async sendMessage(chatId: string, message: Omit<ChatMessage, 'id' | 'createdAt'>): Promise<void> {
@@ -1138,6 +1209,8 @@ export class SocialService {
       }, { merge: true });
       batch.set(messageRef, entry);
       await batch.commit();
+      // Índice por usuario (alimenta "Recientes").
+      await this.writeRecentChats(chatId, participantIds, entry.createdAt, entry.senderId, entry);
       return;
     }
     const stream = this.getChatStream(chatId);

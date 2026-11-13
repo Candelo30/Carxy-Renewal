@@ -44,7 +44,7 @@ describe('SocialService local mode', () => {
 
     expect((await firstValueFrom(service.comments$('post-1')))[0].text).toBe('Looks great');
     expect((await firstValueFrom(service.chatMessages$('creator-1__creator-2')))[0].senderId).toBe('creator-1');
-    const [recentChat] = await firstValueFrom(service.chatConversations$('creator-1'));
+    const [recentChat] = await firstValueFrom(service.recentChats$('creator-1'));
     expect(recentChat.id).toBe('creator-1__creator-2');
     expect(recentChat.lastMessage?.text).toBe('Hello');
   });

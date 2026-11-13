@@ -18,7 +18,7 @@ function createSocialStub(overrides: Partial<Record<string, unknown>> = {}): Rec
     userActivity$: of([]),
     userActivityOf$: vi.fn(() => of(null)),
     activityNotifications$: vi.fn(() => of([])),
-    chatConversations$: vi.fn(() => of([])),
+    recentChats$: vi.fn(() => of([])),
     chatMessages$: vi.fn(() => of([])),
     profile$: vi.fn(() => of(null)),
     markActivityNotificationRead: vi.fn().mockResolvedValue(undefined),

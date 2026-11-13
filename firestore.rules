@@ -221,6 +221,34 @@ service cloud.firestore {
           allow delete: if isActiveUser() && request.auth.uid == uid;
           allow update: if false;
         }
+
+        match /recentChats/{chatId} {
+          // Índice por usuario de conversaciones: es lo que el chat muestra
+          // como "Recientes". Cada quien lee/gestiona únicamente el suyo;
+          // quien escribe debe ser participante del chat y la fila debe
+          // coincidir con el documento `chats/{chatId}` real.
+          allow read: if signedIn() && request.auth.uid == uid;
+          allow create, update: if signedIn()
+            && isActiveUser()
+            && request.resource.data.writtenBy == request.auth.uid
+            && request.resource.data.participantIds is list
+            && request.resource.data.participantIds.size() == 2
+            && request.resource.data.participantIds.hasAny([uid])
+            && request.resource.data.participantIds.hasAll([uid, request.auth.uid])
+            && request.resource.data.participantIds[0] is string
+            && request.resource.data.participantIds[1] is string
+            && request.resource.data.participantIds[0] < request.resource.data.participantIds[1]
+            && chatId == request.resource.data.participantIds[0] + '__' + request.resource.data.participantIds[1]
+            && get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds
+                 == request.resource.data.participantIds
+            && request.resource.data.updatedAt is number
+            && (!('lastMessage' in request.resource.data)
+              || (request.resource.data.lastMessage.senderId in request.resource.data.participantIds
+                && request.resource.data.lastMessage.text is string
+                && request.resource.data.lastMessage.text.size() > 0
+                && request.resource.data.lastMessage.text.size() <= 2000));
+          allow delete: if signedIn() && request.auth.uid == uid;
+        }
     }
 
     match /userPrivate/{uid} {
@@ -533,29 +561,24 @@ service cloud.firestore {
       }
     }
 
+    match /chats {
+      // Consultas sobre la colección `chats` reservadas a administradores
+      // (limpieza de cuentas eliminadas). Las conversaciones de un usuario se
+      // listan desde su subcolección `users/{uid}/recentChats`, con reglas de
+      // pertenencia estándar y sin exponer las conversaciones de terceros.
+      allow list: if isAdmin();
+    }
+
     match /chats/{chatId} {
+      // La administración de los documentos de la colección vive aquí. El
+      // listado por usuario vive en `users/{uid}/recentChats`; una consulta a
+      // `/chats` no alcanza a esta regla y solo está permitida a
+      // administradores (ver `match /chats`).
       function isParticipant(participants) {
         return signedIn()
           && participants is list
           && participants.size() == 2
           && participants.hasAny([request.auth.uid]);
-      }
-      // Versión para consultas (list). Una consulta es todo o nada: Firestore
-      // solo la acepta si puede DEMOSTRAR que todas las filas que podría
-      // devolver cumplen la regla. La consulta del cliente es
-      // `where('participantIds', 'array-contains', uid)`, y la demostración de
-      // pertenencia a un array solo funciona con el operador `in`; la forma
-      // `hasAny([uid])` no se acepta como prueba y la consulta entera se
-      // rechaza ("Missing or insufficient permissions"), lo que dejaba el
-      // panel lateral en "Aún no tienes conversaciones" aunque el documento
-      // exista y el usuario sea participante. Tampoco se puede comprobar
-      // `participants.size() == 2` en contexto de consulta. El invariante de
-      // dos participantes se sigue validando en `validConversation()` al
-      // crear el chat.
-      function isParticipantQuery(participants) {
-        return signedIn()
-          && participants is list
-          && request.auth.uid in participants;
       }
       function validConversation(participants) {
         return participants is list
@@ -569,7 +592,6 @@ service cloud.firestore {
         && chatId.split('__').hasAny([request.auth.uid])
         && (!exists(/databases/$(database)/documents/chats/$(chatId))
           || isParticipant(resource.data.participantIds));
-      allow list: if isParticipantQuery(resource.data.participantIds);
       allow create: if isActiveUser()
         && validConversation(request.resource.data.participantIds)
         && isParticipant(request.resource.data.participantIds)

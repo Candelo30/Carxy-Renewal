@@ -93,7 +93,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     switchMap((user) =>
       user
         ? this.social
-            .chatConversations$(user.uid)
+            .recentChats$(user.uid)
             .pipe(
               catchError(() => of([])),
               switchMap((conversations) =>
@@ -237,7 +237,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     );
     this.nearBottom = true;
     this.markSeen(this.chatId);
-    void this.social.ensureChatConversation(this.chatId).catch((error: unknown) => {
+    void this.social.ensureChatConversation(this.chatId, this.currentUser?.uid).catch((error: unknown) => {
       this.error.set(this.i18n.firebaseError(error, 'No se pudo abrir la conversación.'));
       this.notifications.error(this.error());
     });
