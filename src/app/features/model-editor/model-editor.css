@@ -286,6 +286,33 @@
   padding-right: 4px;
 }
 
+.asset-save-row {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+
+.asset-save-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  outline: none;
+}
+
+.asset-save-row input:focus {
+  border-color: var(--accent-color);
+}
+
+.library-save-button.inline {
+  width: auto;
+  padding: 9px 12px;
+}
+
 .asset-row {
   display: flex;
   align-items: center;

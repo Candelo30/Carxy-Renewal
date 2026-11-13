@@ -492,13 +492,14 @@
         <span class="collapse-arrow" aria-hidden="true"></span>
       </summary>
       <div class="panel-collapsible-body">
-        <button class="library-save-button" [disabled]="assetLibraryBusy || selectedCount() === 0" (click)="saveSelectedAsAsset()">
-          <span>＋</span>
-          <span class="export-caption-label">
-            <strong>{{ assetLibraryBusy ? 'Guardando…' : 'Guardar selección como asset' }}</strong>
-            <small>{{ selectedCount() > 0 ? selectedCount() + ' objeto(s) seleccionado(s)' : 'Selecciona objetos primero (Ctrl+clic para multiselección)' }}</small>
-          </span>
-        </button>
+        <div class="asset-save-row">
+          <input type="text" maxlength="80" placeholder="Nombre del asset…" [(ngModel)]="assetNameDraft" />
+          <button class="library-save-button inline" [disabled]="assetLibraryBusy || selectedCount() === 0" (click)="saveSelectedAsAsset()">
+            <span>＋</span>
+            <span>{{ assetLibraryBusy ? 'Guardando…' : 'Guardar' }}</span>
+          </button>
+        </div>
+        <p class="material-hint">{{ selectedCount() > 0 ? selectedCount() + ' objeto(s) seleccionado(s)' : 'Selecciona objetos primero (Ctrl+clic para multiselección)' }}</p>
         <button class="library-refresh-button" [disabled]="assetLibraryBusy" (click)="loadAssets()">↻ Actualizar biblioteca</button>
         <p class="material-hint" *ngIf="assetLibraryError">{{ assetLibraryError }}</p>
         <div class="asset-list" *ngIf="assets.length; else emptyAssets">

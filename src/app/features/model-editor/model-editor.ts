@@ -851,6 +851,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   // --- Biblioteca de assets ---
   public assetLibraryBusy = false;
   public assetLibraryError = '';
+  public assetNameDraft = '';
   public assets: { id: string; name: string; createdAt: number }[] = [];
 
   async loadAssets(): Promise<void> {
@@ -873,8 +874,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       return;
     }
     const suggested = selected.length === 1 ? selected[0].name : `Grupo de ${selected.length} objetos`;
-    const name = (prompt(this.i18n.translate('Nombre del asset:'), suggested) ?? '').trim();
-    if (!name) return;
+    const name = (this.assetNameDraft.trim() || suggested).slice(0, 80);
     const json = this.threeEngine.exportSelectionObjectsJSON();
     if (!json) {
       this.notifications.error(this.i18n.translate('No se pudo exportar la selección.'));
@@ -884,6 +884,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     try {
       await this.collaboration.saveAsset(name, json);
       this.notifications.success(this.i18n.translate('Asset guardado en tu biblioteca.'), this.i18n.translate('Biblioteca'));
+      this.assetNameDraft = '';
       await this.loadAssets();
     } catch (error) {
       console.warn('No se pudo guardar el asset.', error);
