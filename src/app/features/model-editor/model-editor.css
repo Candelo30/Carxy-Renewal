@@ -539,6 +539,24 @@ input[type='range'] {
   text-align: right;
 }
 
+.emissive-controls {
+  display: grid;
+  grid-template-columns: 30px 1fr 34px;
+  align-items: center;
+  gap: 6px;
+}
+
+.emissive-controls input[type='color'] {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+}
+
 .material-row input[type='color'],
 .setting-row input[type='color'] {
   width: 30px;

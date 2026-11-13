@@ -224,6 +224,14 @@
             <input type="range" min="0" max="1" step="0.01" [ngModel]="mat.opacity" (ngModelChange)="onMaterialPropertyChange(mat.uuid, 'opacity', $event)" />
             <small>{{ mat.opacity | percent }}</small>
           </label>
+          <label *ngIf="mat.emissive !== null">
+            <span>{{ 'Emisión' | translate }}</span>
+            <div class="emissive-controls">
+              <input type="color" [ngModel]="mat.emissive" (ngModelChange)="onMaterialEmissiveChange(mat.uuid, $event)" />
+              <input type="range" min="0" max="2" step="0.01" [ngModel]="mat.emissiveIntensity" (ngModelChange)="onMaterialPropertyChange(mat.uuid, 'emissiveIntensity', $event)" />
+              <small>{{ mat.emissiveIntensity | number: '1.2-2' }}</small>
+            </div>
+          </label>
         </div>
       </div>
       <p class="empty-state" *ngIf="materials.length === 0">

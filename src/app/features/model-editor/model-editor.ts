@@ -787,9 +787,14 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.threeEngine.updateMaterialColor(uuid, newColor);
   }
 
+  onMaterialEmissiveChange(uuid: string, newColor: string): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.threeEngine.updateMaterialEmissive(uuid, newColor);
+  }
+
   onMaterialPropertyChange(
     uuid: string,
-    property: 'roughness' | 'metalness' | 'opacity',
+    property: 'roughness' | 'metalness' | 'opacity' | 'emissiveIntensity',
     value: number,
   ): void {
     if (this.shareLinkBlocksEditing) return;

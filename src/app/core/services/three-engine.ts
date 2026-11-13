@@ -38,6 +38,8 @@ export interface EditableMaterial {
   metalness: number | null;
   opacity: number;
   transparent: boolean;
+  emissive: string | null;
+  emissiveIntensity: number;
   materialRef: THREE.Material;
 }
 
@@ -1515,6 +1517,8 @@ export class ThreeEngineService implements OnDestroy {
         metalness?: number;
         opacity?: number;
         transparent?: boolean;
+        emissive?: THREE.Color;
+        emissiveIntensity?: number;
       };
       this.currentMaterials.push({
         uuid: material.uuid,
@@ -1525,6 +1529,8 @@ export class ThreeEngineService implements OnDestroy {
         metalness: typeof value.metalness === 'number' ? value.metalness : null,
         opacity: value.opacity ?? 1,
         transparent: value.transparent ?? false,
+        emissive: value.emissive instanceof THREE.Color ? `#${value.emissive.getHexString()}` : null,
+        emissiveIntensity: typeof value.emissiveIntensity === 'number' ? value.emissiveIntensity : 1,
         materialRef: material,
       });
     };
@@ -1546,15 +1552,27 @@ export class ThreeEngineService implements OnDestroy {
     }
   }
 
-  public updateMaterialProperty(uuid: string, property: 'roughness' | 'metalness' | 'opacity', value: number): void {
+  public updateMaterialProperty(uuid: string, property: 'roughness' | 'metalness' | 'opacity' | 'emissiveIntensity', value: number): void {
     const material = this.currentMaterials.find((item) => item.uuid === uuid)?.materialRef as
-      | (THREE.Material & { roughness?: number; metalness?: number; opacity: number })
+      | (THREE.Material & { roughness?: number; metalness?: number; opacity: number; emissiveIntensity?: number })
       | undefined;
     if (!material) return;
     material[property] = value;
     if (property === 'opacity') {
       material.transparent = value < 1;
       material.needsUpdate = true;
+    }
+    if (property === 'emissiveIntensity') {
+      const item = this.currentMaterials.find((entry) => entry.uuid === uuid);
+      if (item) item.emissiveIntensity = value;
+    }
+  }
+
+  public updateMaterialEmissive(uuid: string, hexColor: string): void {
+    const item = this.currentMaterials.find((material) => material.uuid === uuid);
+    if (item?.emissive && 'emissive' in item.materialRef && item.materialRef.emissive instanceof THREE.Color) {
+      item.materialRef.emissive.set(hexColor);
+      item.emissive = hexColor;
     }
   }
 
