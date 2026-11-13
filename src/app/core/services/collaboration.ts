@@ -532,28 +532,58 @@ export class CollaborationService implements OnDestroy {
   }
 
   /**
-   * Invita a una persona que el usuario sigue (seguidor) mediante su perfil.
-   * Reutiliza `inviteMember` para las validaciones de reglas y, al terminal,
-   * notifica al seguidor como usuario con `kind: 'invite'` para que reciba la
-   * invitación también en su buzón de actividad.
+   * Invita a una persona que el usuario sigue usando su UID (el correo de
+   * otro usuario vive en `userPrivate` y no se expone a nadie más). El owner
+   * del proyecto usa su propio correo resuelto del token para la invitación,
+   * pero la clave canónica es ahora el UID del seguidor invitado.
+   *
+   * Pasos:
+   *   1) Crea/rehace la invitación (status pending, expiresAt=7d).
+   *   2) Notifica al seguidor con kind=invite en su buzón.
    */
-  async inviteFollower(projectId: string, targetUid: string, role: ProjectRole): Promise<{ id: string; emailSent: boolean }> {
+  async inviteFollower(projectId: string, targetUid: string, role: ProjectRole): Promise<void> {
     const user = await this.currentUser();
     if (!user) throw new Error(this.i18n.translate('Inicia sesión para invitar seguidores.'));
+    if (user.uid === targetUid) throw new Error(this.i18n.translate('No puedes invitarte a ti mismo.'));
+
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
 
-    const profileSnap = await getDoc(doc(db, 'users', targetUid));
-    if (!profileSnap.exists()) throw new Error(this.i18n.translate('Ese seguidor ya no existe en la comunidad.'));
-    const profile = profileSnap.data() as { email?: string; displayName?: string; photoURL?: string | null };
-    const email = String(profile.email ?? '').trim().toLowerCase();
-    if (!email) throw new Error(this.i18n.translate('Ese seguidor no tiene correo verificable.'));
+    const canWrite = await this.canUserWrite(projectId, user.uid);
+    if (!canWrite) throw new Error(this.i18n.translate('No tienes permiso para invitar a este proyecto.'));
 
-    // Reusa el pipeline de invitación por correo: reglas (isProjectWriter),
-    // expiresAt, id canónico y setDoc.
-    const res = await this.inviteMember(projectId, email, role);
+    // Solo el dueño (o un admin global) puede invitar a alguien como dueño.
+    const isOwner = await this.isProjectOwnerRole(projectId, user.uid);
+    const isGlobalAdmin = await this.isGlobalAdmin();
+    if (role === 'owner' && !isOwner && !isGlobalAdmin) {
+      throw new Error(this.i18n.translate('Solo el dueño puede invitar a un dueño.'));
+    }
 
-    // Notificación 'invite' en el buzón del seguidor.
+    const projectSnap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`));
+    const projectName = projectSnap.exists() ? String((projectSnap.data() as Record<string, unknown>)['name'] ?? 'CARXY') : 'CARXY';
+
+    const now = Date.now();
+    const expiresAt = now + 7 * 24 * 60 * 60 * 1000; // 7 días
+    const invitedEmail = targetUid; // la clave canónica del seguidor
+    const invitationId = `${projectId}_${invitedEmail}`;
+    const ref = doc(db, `${SOCIAL_COLLECTIONS.projectInvitations}/${invitationId}`);
+
+    const invitation: ProjectInvitation = {
+      id: invitationId,
+      projectId,
+      projectName,
+      invitedBy: user.uid,
+      invitedByName: user.displayName,
+      invitedEmail,
+      invitedUid: targetUid,
+      role,
+      status: 'pending',
+      createdAt: now,
+      expiresAt,
+    };
+    await setDoc(ref, invitation, { merge: true });
+
+    // Notifica al seguidor como 'invite' (el buzón muestra "te quiere invitar").
     try {
       const notificationId = `invite_${user.uid}_${projectId}_${targetUid}`
         .replace(/[^A-Za-z0-9_-]/g, '_')
@@ -566,13 +596,12 @@ export class CollaborationService implements OnDestroy {
         actorPhotoURL: user.photoURL ?? null,
         kind: 'invite',
         targetId: projectId,
-        createdAt: Date.now(),
+        createdAt: now,
         read: false,
       });
     } catch (error) {
       console.warn('[carxy] Invitación creada, pero no se pudo avisar al seguidor.', error);
     }
-    return { id: res.id, emailSent: res.emailSent };
   }
 
   async inviteMember(projectId: string, invitedEmail: string, role: ProjectRole): Promise<{ id: string; emailSent: boolean }> {
@@ -770,26 +799,46 @@ export class CollaborationService implements OnDestroy {
     if (!db) return of([]);
     return this.authService.user$.pipe(
       switchMap((user) => {
-        if (!user?.email) return of([]);
+        if (!user) return of([]);
         const invitedEmail = this.normalizeInvitationEmail(user.email);
-        if (!invitedEmail) return of([]);
-        try {
-          const q = query(
+        const queries: any[] = [];
+        if (invitedEmail) {
+          queries.push(query(
             collection(db, SOCIAL_COLLECTIONS.projectInvitations),
             where('invitedEmail', '==', invitedEmail),
             where('status', '==', 'pending'),
-            limit(100)
-          );
-          return (collectionData(q, { idField: 'id' }) as Observable<ProjectInvitation[]>).pipe(
-            map((items) => [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))),
-            catchError((err) => {
-              console.warn('No se pudieron cargar tus invitaciones.', err);
-              return of([] as ProjectInvitation[]);
-            })
-          );
-        } catch {
-          return of([] as ProjectInvitation[]);
+            limit(100),
+          ));
         }
+        // También las invitaciones dirigidas por uid (invitar a seguidores).
+        if (user.uid) {
+          queries.push(query(
+            collection(db, SOCIAL_COLLECTIONS.projectInvitations),
+            where('invitedUid', '==', user.uid),
+            where('status', '==', 'pending'),
+            limit(100),
+          ));
+        }
+
+        if (!queries.length) return of([]);
+        const streams = queries.map((q) =>
+          (collectionData(q, { idField: 'id' }) as Observable<ProjectInvitation[]>).pipe(
+            catchError(() => of([] as ProjectInvitation[])),
+          ),
+        );
+        return combineLatest(streams).pipe(
+          map((arrays) => {
+            const seen = new Set<string>();
+            const merged = arrays.flatMap((items) => items).filter((item) => {
+              const id = (item as any)?.id;
+              if (!id || seen.has(id)) return false;
+              seen.add(id);
+              return true;
+            });
+            return merged.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          }),
+          catchError(() => of([] as ProjectInvitation[])),
+        );
       }),
       catchError(() => of([] as ProjectInvitation[]))
     );
