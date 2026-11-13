@@ -30,7 +30,7 @@ import { I18nService } from '../../core/services/i18n';
 import { AppLanguage } from '../../core/i18n/languages';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { CollaborationService, hasPermission } from '../../core/services/collaboration';
-import { absoluteAppUrl } from '../../core/utils/share';
+import { absoluteAppUrl, copyText } from '../../core/utils/share';
 import type { ProjectShareLink } from '../../core/models/social.models';
 import { EditorStatusService } from '../../core/services/editor-status.service';
 import { LayersPanelComponent } from './layers-panel/layers-panel';
@@ -987,7 +987,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       return;
     }
     if (!isPlatformBrowser(this.platformId)) return;
-    void navigator.clipboard.writeText(payload).then(() => {
+    copyText(payload).then(() => {
       this.notifications.success(this.i18n.translate('Objeto copiado al portapapeles.'), this.i18n.translate('Copiar'));
     }, () => {
       this.notifications.error(this.i18n.translate('No se pudo acceder al portapapeles.'), this.i18n.translate('Copiar'));
@@ -1277,7 +1277,7 @@ export class ModelEditor implements OnInit, OnDestroy {
         userSub.unsubscribe();
         return;
       }
-      void navigator.clipboard.writeText(payload).then(() => {
+      copyText(payload).then(() => {
         this.notifications.success(
           this.i18n.translate('Escena copiada al portapapeles. Comparte este código con otro creador.'),
           this.i18n.translate('Escena compartida'),
@@ -1497,7 +1497,7 @@ export class ModelEditor implements OnInit, OnDestroy {
     if (!this.projectId || !isPlatformBrowser(this.platformId)) return;
     const url = absoluteAppUrl(`projects/${encodeURIComponent(this.projectId)}`, this.document.baseURI);
     try {
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       this.notifications.success(this.i18n.translate('projects.shareCopied'), this.i18n.translate('projects.shareTitle'));
     } catch {
       this.notifications.error(this.i18n.translate('projects.shareError'));
