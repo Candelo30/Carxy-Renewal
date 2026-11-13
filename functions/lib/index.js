@@ -125,3 +125,6 @@ Object.defineProperty(exports, "sendFeedbackConfirmation", { enumerable: true, g
 // --- Eliminación de proyectos (cascada segura) ---
 var projects_1 = require("./projects");
 Object.defineProperty(exports, "deleteProject", { enumerable: true, get: function () { return projects_1.deleteProject; } });
+// --- Asistente CARXY (Gemini) ---
+var assistant_1 = require("./assistant");
+Object.defineProperty(exports, "askCarxyBot", { enumerable: true, get: function () { return assistant_1.askCarxyBot; } });

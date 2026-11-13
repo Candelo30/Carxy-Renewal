@@ -2073,5 +2073,15 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'La nota de voz supera el tamaño máximo permitido.': t('The voice note exceeds the maximum size.', 'La note vocale dépasse la taille maximale.', 'A nota de voz excede o tamanho máximo.'),
   'La nota de voz supera la duración máxima de {seconds} s.': t('The voice note exceeds the maximum duration of {seconds} s.', 'La note vocale dépasse la durée maximale de {seconds} s.', 'A nota de voz excede a duração máxima de {seconds} s.'),
   'No se pudo leer la grabación.': t('Could not read the recording.', 'Impossible de lire l’enregistrement.', 'Não foi possível ler a gravação.'),
+  'Asistente CARXY': t('CARXY Assistant', 'Assistant CARXY', 'Assistente CARXY'),
+  'Beta': t('Beta', 'Bêta', 'Beta'),
+  'Responde tus dudas sobre el editor, la publicación y la comunidad. Respuestas generadas por IA.': t('Answers your questions about the editor, publishing and the community. AI-generated answers.', 'Répond à vos questions sur l’éditeur, la publication et la communauté. Réponses générées par l’IA.', 'Responde as suas dúvidas sobre o editor, a publicação e a comunidade. Respostas geradas por IA.'),
+  'Ej: ¿Cómo publico mi escena?': t('E.g.: How do I publish my scene?', 'Ex. : Comment publier ma scène ?', 'Ex.: Como publico a minha cena?'),
+  'Pregunta al asistente': t('Ask the assistant', 'Demander à l’assistant', 'Perguntar ao assistente'),
+  'Pensando…': t('Thinking…', 'Réflexion…', 'Pensando…'),
+  'Preguntar': t('Ask', 'Demander', 'Perguntar'),
+  'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': t('AI-generated answers. Check critical information in the Help Center or write us from Contact.', 'Réponses générées par l’IA. Vérifiez les informations critiques dans le centre d’aide ou écrivez-nous depuis Contact.', 'Respostas geradas por IA. Verifique informações críticas no Centro de Ajuda ou escreva para nós pelo Contacto.'),
+  'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': t('Your session is not ready yet. Reload the page or try again in a moment.', 'Votre session n’est pas encore prête. Rechargez la page ou réessayez dans un instant.', 'A sua sessão ainda não está pronta. Recarregue a página ou tente de novo daqui a um momento.'),
+  'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': t('The assistant could not respond right now. Try again in a few seconds.', 'L’assistant n’a pas pu répondre pour l’instant. Réessayez dans quelques secondes.', 'O assistente não conseguiu responder agora. Tente de novo em alguns segundos.'),
 
 };

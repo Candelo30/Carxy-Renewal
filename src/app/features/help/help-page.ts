@@ -1,7 +1,8 @@
 import { isPlatformBrowser } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Subscription } from 'rxjs';
 import { I18nService } from '../../core/services/i18n';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
@@ -888,6 +889,13 @@ export class HelpPage implements OnInit, OnDestroy {
   expandedId: string | null = null;
   mobileMenuOpen = false;
 
+  /** --- Asistente CARXY (beta) --- */
+  readonly assistantQuestion = signal('');
+  readonly assistantAnswer = signal('');
+  readonly assistantError = signal('');
+  readonly asking = signal(false);
+  readonly assistantHistory = signal<Array<{ q: string; a: string }>>([]);
+
   private readonly route = inject(ActivatedRoute);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -963,6 +971,41 @@ export class HelpPage implements OnInit, OnDestroy {
   clearSearch(): void {
     this.query = '';
     this.activeCategory = 'todas';
+  }
+
+  /**
+   * Pregunta al asistente (Gemini vía Cloud Function `askCarxyBot`).
+   * La clave de la API nunca toca el cliente; si el backend no está configurado,
+   * la función devuelve un mensaje amable y el asistente no falla.
+   */
+  async askAssistant(): Promise<void> {
+    const question = this.assistantQuestion().trim();
+    if (!question || this.asking()) return;
+    this.asking.set(true);
+    this.assistantError.set('');
+    this.assistantAnswer.set('');
+    try {
+      if (typeof getFunctions !== 'function') {
+        throw new Error('functions-not-available');
+      }
+      const callable = httpsCallable(getFunctions(), 'askCarxyBot');
+      const result = await callable({ question });
+      const answer = String((result?.data as { answer?: string } | undefined)?.answer ?? '').trim();
+      if (!answer) throw new Error('empty-answer');
+      this.assistantAnswer.set(answer);
+      this.assistantHistory.update((history) => [...history, { q: question, a: answer }].slice(-3));
+      this.assistantQuestion.set('');
+    } catch (error) {
+      const code = String((error as { code?: string; message?: string })?.code ?? '');
+      if (code.includes('unauthenticated')) {
+        this.assistantError.set(this.i18n.translate('Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.'));
+      } else {
+        this.assistantError.set(this.i18n.translate('El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.'));
+      }
+    } finally {
+      this.asking.set(false);
+      this.cdr.detectChanges();
+    }
   }
 
   toggleArticle(id: string): void {

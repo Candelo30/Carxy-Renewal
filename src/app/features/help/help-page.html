@@ -68,6 +68,52 @@
     </div>
   </section>
 
+  <section class="assistant-strip" aria-labelledby="assistant-title">
+    <div class="assistant-card">
+      <div class="assistant-head">
+        <span class="assistant-icon" aria-hidden="true">✨</span>
+        <div class="assistant-head-copy">
+          <h2 id="assistant-title">{{ 'Asistente CARXY' | translate }} <span class="assistant-badge">{{ 'Beta' | translate }}</span></h2>
+          <p>{{ 'Responde tus dudas sobre el editor, la publicación y la comunidad. Respuestas generadas por IA.' | translate }}</p>
+        </div>
+      </div>
+      <form class="assistant-form" (ngSubmit)="askAssistant()">
+        <input
+          type="text"
+          name="assistant-question"
+          [ngModel]="assistantQuestion()"
+          (ngModelChange)="assistantQuestion.set($event)"
+          [placeholder]="'Ej: ¿Cómo publico mi escena?' | translate"
+          [attr.aria-label]="'Pregunta al asistente' | translate"
+          maxlength="500"
+          autocomplete="off"
+          [disabled]="asking()"
+        />
+        <button type="submit" class="assistant-submit" [disabled]="!assistantQuestion().trim() || asking()">
+          @if (asking()) {
+            <span class="assistant-spinner" aria-hidden="true"></span>
+            {{ 'Pensando…' | translate }}
+          } @else {
+            {{ 'Preguntar' | translate }}
+          }
+        </button>
+      </form>
+      @if (assistantError()) {
+        <p class="assistant-error" role="alert">{{ assistantError() }}</p>
+      }
+      @if (assistantAnswer(); as answer) {
+        <div class="assistant-answer" aria-live="polite">{{ answer }}</div>
+      }
+      @for (item of assistantHistory(); track item.q) {
+        <div class="assistant-qa">
+          <p class="assistant-q">🙋 {{ item.q }}</p>
+          <div class="assistant-answer">{{ item.a }}</div>
+        </div>
+      }
+      <p class="assistant-note">{{ 'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.' | translate }}</p>
+    </div>
+  </section>
+
   <section class="help-layout">
     <aside class="help-sidebar">
       <p class="sidebar-title">{{ 'Categorías' | translate }}</p>
