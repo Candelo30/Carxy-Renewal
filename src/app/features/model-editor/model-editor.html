@@ -29,10 +29,18 @@
         <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir foco (spot)'" (click)="addLight('spot')"><span>🔦</span>Foco</button>
         <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz direccional (sol)'" (click)="addLight('directional')"><span>☀</span>Direccional</button>
       </div>
-      <div class="object-list">
+      <label class="object-search" *ngIf="sceneObjects.length > 8">
+        <span>⌕</span>
+        <input
+          type="search"
+          [placeholder]="'Buscar objetos…' | translate"
+          [(ngModel)]="objectSearchTerm"
+        />
+      </label>
+      <div class="object-list" [class.scrollable]="sceneObjects.length > 8">
         <button
           class="object-row"
-          *ngFor="let item of sceneObjects; trackBy: trackById"
+          *ngFor="let item of filteredSceneObjects; trackBy: trackById"
           [class.selected]="item.id === selectedObjectId"
           [class.locked-object]="!isObjectEditable(item.id)"
           (click)="selectObject(item.id)"
@@ -50,6 +58,9 @@
             {{ isObjectEditable(item.id) ? '🔓' : '🔒' }}
           </button>
         </button>
+        <p class="empty-state" *ngIf="filteredSceneObjects.length === 0 && sceneObjects.length > 0">
+          {{ 'Sin resultados para la búsqueda.' | translate }}
+        </p>
         <div class="empty-state" *ngIf="sceneObjects.length === 0">
           {{ 'Agrega una forma para comenzar.' | translate }}
         </div>

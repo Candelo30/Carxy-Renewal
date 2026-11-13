@@ -690,6 +690,17 @@ export class ModelEditor implements OnInit, OnDestroy {
     node.visible = !node.visible;
   }
 
+  // --- Filtro de la lista de objetos (búsqueda + altura acotada) ---
+  public objectSearchTerm = '';
+
+  get filteredSceneObjects(): readonly SceneObject[] {
+    const query = this.objectSearchTerm.trim().toLocaleLowerCase();
+    if (!query) return this.sceneObjects;
+    return this.sceneObjects.filter((item) =>
+      item.name.toLocaleLowerCase().includes(query),
+    );
+  }
+
   get filteredSceneNodes(): SceneNode[] {
     const query = this.searchTerm.trim().toLocaleLowerCase();
     return query
