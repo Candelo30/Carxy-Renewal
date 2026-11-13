@@ -735,4 +735,23 @@ export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': 'Multiselezione: tocca le righe per aggiungere o rimuovere elementi',
   'Marcadores de luz/vacío': 'Marker luci/vuoti',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': 'Sistema',
+  'Auditoría': 'Registro di audit',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': 'Sospendere i {count} account selezionati?',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': 'Ripristinare i {count} account selezionati?',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': 'Eliminare i {count} post selezionati?',
+  '¿Ocultar las {count} publicación(es)?': 'Nascondere i {count} post?',
+  '¿Hacer públicas las {count} publicación(es)?': 'Rendere pubblici i {count} post?',
+  'Suspendidas {count} cuenta(s).': '{count} account sospesi.',
+  'Restauradas {count} cuenta(s).': '{count} account ripristinati.',
+  'Eliminadas {count} publicación(es).': '{count} post eliminati.',
+  'Ocultadas {count} publicación(es).': '{count} post nascosti.',
+  'Publicadas {count} publicación(es).': '{count} post pubblicati.',
+  'Suspensión masiva': 'Sospensione multipla',
+  'Restauración masiva': 'Ripristino multiplo',
+  'Borrado masivo': 'Eliminazione multipla',
+  'Visibilidad masiva': 'Visibilità multipla',
+  'Moderación pendiente': 'Moderazione in sospeso',
+  'Firebase Storage no está configurado.': 'Firebase Storage non è configurato.',
 };

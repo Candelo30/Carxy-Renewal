@@ -737,4 +737,23 @@ export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': 'Мультивыбор: нажимайте на строки, чтобы добавить или убрать элементы',
   'Marcadores de luz/vacío': 'Маркеры света/пустышки',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': 'Sistem',
+  'Auditoría': 'Denetim günlüğü',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': 'Seçili {count} hesabı askıya al?',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': 'Seçili {count} hesabı geri yükle?',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': 'Seçili {count} gönderi silinsin mi?',
+  '¿Ocultar las {count} publicación(es)?': '{count} gönderi gizlensin mi?',
+  '¿Hacer públicas las {count} publicación(es)?': '{count} gönderi herkese açık yapılsın mı?',
+  'Suspendidas {count} cuenta(s).': '{count} hesap askıya alındı.',
+  'Restauradas {count} cuenta(s).': '{count} hesap geri yüklendi.',
+  'Eliminadas {count} publicación(es).': '{count} gönderi silindi.',
+  'Ocultadas {count} publicación(es).': '{count} gönderi gizlendi.',
+  'Publicadas {count} publicación(es).': '{count} gönderi yayınlandı.',
+  'Suspensión masiva': 'Toplu askıya alma',
+  'Restauración masiva': 'Toplu geri yükleme',
+  'Borrado masivo': 'Toplu silme',
+  'Visibilidad masiva': 'Toplu görünürlük',
+  'Moderación pendiente': 'Bekleyen moderasyon',
+  'Firebase Storage no está configurado.': 'Firebase Storage yapılandırılmadı.',
 };

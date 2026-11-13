@@ -2040,4 +2040,24 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Multiselección: toca filas para añadirlas o quitarlas': t('Multi-select: tap rows to add or remove items', 'Multi-sélection : touchez les lignes pour ajouter ou retirer des éléments', 'Multi-seleção: toque nas linhas para adicionar ou remover itens'),
   'Marcadores de luz/vacío': t('Light/empty markers', 'Marqueurs lumières/vides', 'Marcadores de luz/vazio'),
 
+  // --- Panel de administración: sistema, auditoría y acciones masivas ---
+  'Sistema': t('System', 'Système', 'Sistema'),
+  'Auditoría': t('Audit log', 'Journal d’audit', 'Auditoria'),
+  '¿Suspender las {count} cuenta(s) seleccionadas?': t('Suspend the {count} selected account(s)?', 'Suspendre les {count} compte(s) sélectionnés ?', 'Suspender as {count} conta(s) selecionada(s)?'),
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': t('Restore the {count} selected account(s)?', 'Restaurer les {count} compte(s) sélectionnés ?', 'Restaurar as {count} conta(s) selecionada(s)?'),
+  '¿Eliminar las {count} publicación(es) seleccionadas?': t('Delete the {count} selected post(s)?', 'Supprimer les {count} publication(s) sélectionnées ?', 'Excluir as {count} publicação(ões) selecionada(s)?'),
+  '¿Ocultar las {count} publicación(es)?': t('Hide the {count} post(s)?', 'Masquer les {count} publication(s) ?', 'Ocultar as {count} publicação(ões)?'),
+  '¿Hacer públicas las {count} publicación(es)?': t('Make the {count} post(s) public?', 'Rendre publiques les {count} publication(s) ?', 'Tornar públicas as {count} publicação(ões)?'),
+  'Suspendidas {count} cuenta(s).': t('{count} account(s) suspended.', '{count} compte(s) suspendu(s).', '{count} conta(s) suspensa(s).'),
+  'Restauradas {count} cuenta(s).': t('{count} account(s) restored.', '{count} compte(s) restauré(s).', '{count} conta(s) restaurada(s).'),
+  'Eliminadas {count} publicación(es).': t('{count} post(s) deleted.', '{count} publication(s) supprimée(s).', '{count} publicação(ões) excluída(s).'),
+  'Ocultadas {count} publicación(es).': t('{count} post(s) hidden.', '{count} publication(s) masquée(s).', '{count} publicação(ões) ocultada(s).'),
+  'Publicadas {count} publicación(es).': t('{count} post(s) published.', '{count} publication(s) publiée(s).', '{count} publicação(ões) publicada(s).'),
+  'Suspensión masiva': t('Bulk suspension', 'Suspension groupée', 'Suspensão em massa'),
+  'Restauración masiva': t('Bulk restore', 'Restauration groupée', 'Restauração em massa'),
+  'Borrado masivo': t('Bulk delete', 'Suppression groupée', 'Exclusão em massa'),
+  'Visibilidad masiva': t('Bulk visibility', 'Visibilité groupée', 'Visibilidade em massa'),
+  'Moderación pendiente': t('Pending moderation', 'Modération en attente', 'Moderação pendente'),
+  'Firebase Storage no está configurado.': t('Firebase Storage is not configured.', 'Firebase Storage n’est pas configuré.', 'O Firebase Storage não está configurado.'),
+
 };

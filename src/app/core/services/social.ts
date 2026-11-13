@@ -50,6 +50,7 @@ import {
   UserRole,
   AccountDeletionAudit,
   UserActivity,
+  AdminAction,
 } from '../models/social.models';
 import { environment } from '../../../environments/environment';
 
@@ -296,6 +297,31 @@ export class SocialService {
           catchError(() => of([] as AccountDeletionAudit[])),
         ))
     : this.localDeletionAudit.asObservable();
+
+  readonly adminActions$: Observable<AdminAction[]> = this.firestore
+    ? (collectionData(collection(this.firestore, SOCIAL_COLLECTIONS.adminActions), { idField: 'id' })
+        .pipe(
+          map((items) => items.map((item) => this.normalizeAdminAction(item as Record<string, unknown>))),
+          map((actions) => [...actions].sort((a, b) => b.createdAt - a.createdAt).slice(0, 200)),
+          catchError(() => of([] as AdminAction[])),
+        ))
+    : of([] as AdminAction[]);
+
+  /**
+   * Registra una acción de moderación en `adminActions`. No debe impedir la
+   * operación principal si falla el registro de auditoría; sólo reporta.
+   */
+  async logAdminAction(entry: Omit<AdminAction, 'id' | 'createdAt'>): Promise<void> {
+    if (!this.firestore) return;
+    try {
+      await setDoc(doc(collection(this.firestore, SOCIAL_COLLECTIONS.adminActions)), {
+        ...entry,
+        createdAt: Date.now(),
+      });
+    } catch (error) {
+      console.warn('No se pudo registrar la acción administrativa.', error);
+    }
+  }
 
   /**
    * Un post concreto, cacheado por id.
@@ -1962,6 +1988,34 @@ export class SocialService {
       lastSeenAt: Number(item['lastSeenAt'] ?? 0),
       lastSeenPath: String(item['lastSeenPath'] ?? ''),
       updatedAt: Number(item['updatedAt'] ?? 0),
+    };
+  }
+
+  private normalizeAdminAction(item: Record<string, unknown>): AdminAction {
+    const raw = String(item['action'] ?? '');
+    const actions: AdminAction['action'][] = [
+      'role_changed', 'user_banned', 'user_restored', 'post_deleted', 'post_visibility_changed',
+      'report_resolved', 'report_dismissed', 'feedback_deleted', 'feedback_status_changed',
+      'question_deleted', 'question_pinned', 'question_locked', 'question_resolved',
+      'project_deleted', 'project_member_role_changed', 'project_member_removed',
+      'help_article_created', 'help_article_updated', 'help_article_deleted',
+      'help_article_published_toggled', 'inactive_users_purged',
+    ];
+    const action = (actions as string[]).includes(raw) ? raw as AdminAction['action'] : 'inactive_users_purged';
+    const targetTypes = ['user', 'post', 'report', 'feedback', 'question', 'project', 'help-article', 'bulk', 'system'];
+    const targetType = targetTypes.includes(String(item['targetType']))
+      ? String(item['targetType']) as AdminAction['targetType']
+      : 'system';
+    return {
+      id: String(item['id'] ?? ''),
+      adminId: String(item['adminId'] ?? ''),
+      adminName: String(item['adminName'] ?? 'Admin'),
+      action,
+      targetType,
+      targetId: String(item['targetId'] ?? ''),
+      targetLabel: String(item['targetLabel'] ?? ''),
+      detail: String(item['detail'] ?? ''),
+      createdAt: Number(item['createdAt'] ?? 0),
     };
   }
 

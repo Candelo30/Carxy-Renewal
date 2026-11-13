@@ -259,6 +259,25 @@ service cloud.firestore {
         }
     }
 
+    /* Auditoría de acciones administrativas. Lee/escribe: admin o moderador.
+       Escribe: solo el propio actor; crea únicamente, no se puede modificar ni
+       borrar (registro inmutable para trazabilidad). */
+    match /adminActions/{actionId} {
+      allow read: if signedIn() && canModerate();
+      allow create: if signedIn()
+        && canModerate()
+        && request.resource.data.keys().hasOnly([
+          'adminId', 'adminName', 'action', 'targetType', 'targetId',
+          'targetLabel', 'detail', 'createdAt',
+        ])
+        && request.resource.data.adminId == request.auth.uid
+        && request.resource.data.action is string
+        && request.resource.data.targetType in ['user', 'post', 'report', 'feedback', 'question', 'project', 'help-article', 'bulk', 'system']
+        && request.resource.data.targetId is string
+        && request.resource.data.createdAt is number;
+      allow update, delete: if false;
+    }
+
     match /userPrivate/{uid} {
       allow get: if isAdmin() || (signedIn() && request.auth.uid == uid);
       allow list: if isAdmin();

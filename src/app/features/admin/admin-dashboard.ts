@@ -20,6 +20,8 @@ import {
   ProjectRole,
   UserActivity,
   AccountDeletionAudit,
+  AdminAction,
+  AdminActionKind,
 } from '../../core/models/social.models';
 import { AuthService } from '../../core/services/auth';
 import { CommunityService } from '../../core/services/community';
@@ -39,7 +41,9 @@ export type AdminTab =
   | 'feedback'
   | 'help'
   | 'projects'
-  | 'helpArticles';
+  | 'helpArticles'
+  | 'sistema'
+  | 'auditoria';
 
 interface ChartBar {
   label: string;
@@ -110,6 +114,7 @@ export class AdminDashboardComponent {
     helpArticles: HelpArticle[];
     activity: UserActivity[];
     audit: AccountDeletionAudit[];
+    actions: AdminAction[];
   }>({
     user: null,
     users: [],
@@ -121,6 +126,7 @@ export class AdminDashboardComponent {
     helpArticles: [],
     activity: [],
     audit: [],
+    actions: [],
   });
 
   readonly vm$ = this.vmSubject.asObservable();
@@ -128,6 +134,7 @@ export class AdminDashboardComponent {
   readonly roles: UserRole[] = ['user', 'moderator', 'admin'];
   readonly inactiveDeleteDays = this.social.INACTIVE_DELETE_DAYS;
   readonly inactiveUsers$ = this.social.inactiveUsers$;
+  readonly adminActions$ = this.social.adminActions$;
   duplicateEmails: { email: string; uids: string[]; count: number }[] = [];
   readonly projectRoles: ProjectRole[] = ['owner', 'editor', 'viewer'];
   readonly helpCategories: HelpArticleCategory[] = [
@@ -219,6 +226,7 @@ export class AdminDashboardComponent {
               helpArticles: [] as HelpArticle[],
               activity: [] as UserActivity[],
               audit: [] as AccountDeletionAudit[],
+              actions: [] as AdminAction[],
             });
           }
 
@@ -235,9 +243,10 @@ export class AdminDashboardComponent {
           const helpArticles$ = this.community.getHelpArticles().pipe(catchError(() => of([] as HelpArticle[])));
           const activity$ = (isAdmin ? this.social.userActivity$ : of([] as UserActivity[])).pipe(catchError(() => of([] as UserActivity[])));
           const audit$ = (isAdmin ? this.social.deletionAudit$ : of([] as AccountDeletionAudit[])).pipe(catchError(() => of([] as AccountDeletionAudit[])));
+          const actions$ = (isAdmin ? this.social.adminActions$ : of([] as AdminAction[])).pipe(catchError(() => of([] as AdminAction[])));
 
-          return combineLatest([users$, posts$, reports$, feedback$, questions$, projects$, helpArticles$, activity$, audit$]).pipe(
-            map(([users, posts, reports, feedback, questions, projects, helpArticles, activity, audit]) => ({
+          return combineLatest([users$, posts$, reports$, feedback$, questions$, projects$, helpArticles$, activity$, audit$, actions$]).pipe(
+            map(([users, posts, reports, feedback, questions, projects, helpArticles, activity, audit, actions]) => ({
               user,
               users: users ?? [],
               posts: posts ?? [],
@@ -248,6 +257,7 @@ export class AdminDashboardComponent {
               helpArticles: helpArticles ?? [],
               activity: activity ?? [],
               audit: audit ?? [],
+              actions: actions ?? [],
             })),
           );
         }),
@@ -385,6 +395,8 @@ export class AdminDashboardComponent {
       help: this.i18n.translate('admin.questions'),
       projects: this.i18n.translate('admin.projects'),
       helpArticles: this.i18n.translate('admin.help'),
+      sistema: this.i18n.translate('Sistema'),
+      auditoria: this.i18n.translate('Auditoría'),
     };
     return titles[this._tab] ?? this.i18n.translate('admin.panelTitle');
   }
@@ -434,6 +446,7 @@ export class AdminDashboardComponent {
         this.i18n.translate('Se eliminaron {deleted} cuenta(s) inactivas.', { deleted: result.deleted }),
         this.i18n.translate('Limpieza de inactividad'),
       );
+      void this.log('inactive_users_purged', 'system', `purge-${Date.now()}`, `Limpieza de inactividad: ${result.deleted} cuenta(s)`, `Firestore: ${result.deleted} eliminadas, ${result.skipped.length} omitidas; Auth: ${authDeleted} eliminadas, ${authFailed} fallidas`);
       if (authDeleted) {
         this.notifications.success(
           this.i18n.translate('Se borraron {deleted} cuenta(s) de Firebase Auth.', { deleted: authDeleted }),
@@ -486,6 +499,7 @@ export class AdminDashboardComponent {
         this.i18n.translate('Rol actualizado para {name}.', { name: user.displayName }),
         this.i18n.translate('Rol actualizado'),
       );
+      void this.log('role_changed', 'user', user.uid, user.displayName, `Rol: ${user.role} → ${role}`);
     } catch (error) {
       this.notifications.error(
         this.i18n.firebaseError(error, 'No se pudo actualizar el rol.'),
@@ -504,6 +518,7 @@ export class AdminDashboardComponent {
           ? this.i18n.translate('Se restauró la cuenta de {name}.', { name: user.displayName })
           : this.i18n.translate('Se suspendió la cuenta de {name}.', { name: user.displayName }),
       );
+      void this.log(user.isBanned ? 'user_restored' : 'user_banned', 'user', user.uid, user.displayName, user.isBanned ? 'Restaurada' : 'Suspendida');
     } catch (error) {
       this.notifications.error(
         this.i18n.firebaseError(error, 'No se pudo actualizar el estado de la cuenta.'),
@@ -520,6 +535,7 @@ export class AdminDashboardComponent {
           ? this.i18n.translate('Publicación visible para la comunidad.')
           : this.i18n.translate('Publicación marcada como privada.'),
       );
+      void this.log('post_visibility_changed', 'post', post.id, post.title, post.isPrivate ? 'Pública' : 'Privada');
     } catch (error) {
       this.notifications.error(
         this.i18n.firebaseError(error, 'No se pudo actualizar la visibilidad.'),
@@ -541,6 +557,7 @@ export class AdminDashboardComponent {
         status === 'resolved' ? this.i18n.translate('Reporte resuelto.') : this.i18n.translate('Reporte descartado.'),
         this.i18n.translate('Reporte actualizado'),
       );
+      void this.log(status === 'resolved' ? 'report_resolved' : 'report_dismissed', 'report', report.id, report.postTitle, `Motivo: ${report.reason}`);
     } catch (error) {
       this.notifications.error(
         this.i18n.firebaseError(error, 'No se pudo actualizar el reporte.'),
@@ -553,6 +570,7 @@ export class AdminDashboardComponent {
       await this.community.updateFeedbackStatus(feedback.id, status);
       this.refresh();
       this.notifications.success(this.i18n.translate('Estado del mensaje actualizado.'));
+      void this.log('feedback_status_changed', 'feedback', feedback.id, feedback.subject, `Estado: ${feedback.status} → ${status}`);
     } catch (error) {
       this.notifications.error(
         this.i18n.firebaseError(error, 'No se pudo actualizar el mensaje.'),
@@ -566,6 +584,7 @@ export class AdminDashboardComponent {
       await this.community.deleteFeedback(feedback.id);
       this.refresh();
       this.notifications.success(this.i18n.translate('Mensaje de feedback eliminado.'));
+      void this.log('feedback_deleted', 'feedback', feedback.id, feedback.subject, `De: ${feedback.name}`);
     } catch (error) {
       this.notifications.error(
         this.i18n.firebaseError(error, 'No se pudo eliminar el mensaje.'),
@@ -577,6 +596,7 @@ export class AdminDashboardComponent {
     try {
       await this.community.setQuestionPinned(question.id, !question.pinned);
       this.refresh();
+      void this.log('question_pinned', 'question', question.id, question.title, question.pinned ? 'Desfijada' : 'Fijada');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la pregunta.'));
     }
@@ -586,6 +606,7 @@ export class AdminDashboardComponent {
     try {
       await this.community.setQuestionLocked(question.id, !question.locked);
       this.refresh();
+      void this.log('question_locked', 'question', question.id, question.title, question.locked ? 'Desbloqueada' : 'Bloqueada');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la pregunta.'));
     }
@@ -595,6 +616,7 @@ export class AdminDashboardComponent {
     try {
       await this.community.setQuestionResolved(question.id, !question.resolved);
       this.refresh();
+      void this.log('question_resolved', 'question', question.id, question.title, question.resolved ? 'Abierta' : 'Resuelta');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar la pregunta.'));
     }
@@ -606,6 +628,7 @@ export class AdminDashboardComponent {
       await this.community.deleteQuestion(question);
       this.refresh();
       this.notifications.success(this.i18n.translate('Pregunta eliminada.'));
+      void this.log('question_deleted', 'question', question.id, question.title, '');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar la pregunta.'));
     }
@@ -627,6 +650,7 @@ export class AdminDashboardComponent {
         this.i18n.translate('Se eliminó “{title}”.', { title: this.postToDelete.title }),
         this.i18n.translate('Publicación eliminada'),
       );
+      void this.log('post_deleted', 'post', this.postToDelete.id, this.postToDelete.title, '');
       this.postToDelete = null;
       this.refresh();
     } catch (error) {
@@ -655,6 +679,9 @@ export class AdminDashboardComponent {
     try {
       await this.collaboration.updateMemberRole(projectId, memberId, value);
       this.notifications.success(this.i18n.translate('Rol actualizado.'));
+      const project = this.vmSubject.value.projects.find((p) => p.id === projectId);
+      const member = this.projectMembers.find((m) => m.id === memberId);
+      void this.log('project_member_role_changed', 'project', projectId, project?.name ?? projectId, `${member?.userName ?? memberId} → ${value}`);
       this.selectProject(projectId);
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el rol.'));
@@ -666,6 +693,9 @@ export class AdminDashboardComponent {
     try {
       await this.collaboration.removeMember(projectId, memberId);
       this.notifications.success(this.i18n.translate('Miembro eliminado.'));
+      const project = this.vmSubject.value.projects.find((p) => p.id === projectId);
+      const member = this.projectMembers.find((m) => m.id === memberId);
+      void this.log('project_member_removed', 'project', projectId, project?.name ?? projectId, member?.userName ?? memberId);
       this.selectProject(projectId);
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el miembro.'));
@@ -675,11 +705,13 @@ export class AdminDashboardComponent {
   async deleteProject(projectId: string): Promise<void> {
     if (!confirm(this.i18n.translate('¿Eliminar proyecto? Esta acción no se puede deshacer.'))) return;
     try {
+      const project = this.vmSubject.value.projects.find((p) => p.id === projectId);
       await this.collaboration.deleteProject(projectId);
       this.selectedProjectId = '';
       this.projectMembers = [];
       this.refresh();
       this.notifications.success(this.i18n.translate('Proyecto eliminado.'));
+      void this.log('project_deleted', 'project', projectId, project?.name ?? projectId, '');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el proyecto.'));
     }
@@ -729,6 +761,7 @@ export class AdminDashboardComponent {
   trackMember(_index: number, member: ProjectMember): string { return member.id; }
   trackArticle(_index: number, article: HelpArticle): string { return article.id; }
   trackReport(_index: number, report: ContentReport): string { return report.id; }
+  trackAction(_index: number, action: AdminAction): string { return action.id; }
   trackBar(_index: number, bar: ChartBar): string { return bar.label; }
 
   get isDashboard(): boolean { return this._tab === 'dashboard'; }
@@ -739,9 +772,19 @@ export class AdminDashboardComponent {
   get isProjects(): boolean { return this._tab === 'projects'; }
   get isReports(): boolean { return this._tab === 'reports'; }
   get isHelpArticles(): boolean { return this._tab === 'helpArticles'; }
+  get isSistema(): boolean { return this._tab === 'sistema'; }
+  get isAuditoria(): boolean { return this._tab === 'auditoria'; }
 
   openReportsCount(reports: ContentReport[]): number {
     return (reports ?? []).filter((report) => report.status === 'open').length;
+  }
+
+  newFeedbackCount(feedback: FeedbackMessage[]): number {
+    return (feedback ?? []).filter((item) => item.status === 'new').length;
+  }
+
+  openQuestionsCount(questions: CommunityQuestion[]): number {
+    return (questions ?? []).filter((question) => !question.resolved).length;
   }
 
   resetNewArticle(): void {
@@ -808,9 +851,11 @@ export class AdminDashboardComponent {
       if (articleData.id) {
         await this.community.updateHelpArticle(articleData as HelpArticle);
         this.notifications.success(this.i18n.translate('Artículo actualizado.'));
+        void this.log('help_article_updated', 'help-article', articleData.id, articleData.title ?? '', '');
       } else {
         await this.community.createHelpArticle({ ...articleData, createdAt: Date.now() } as Omit<HelpArticle, 'id'>);
         this.notifications.success(this.i18n.translate('Artículo creado correctamente.'));
+        void this.log('help_article_created', 'help-article', articleData.title ?? 'unknown', articleData.title ?? '', '');
       }
       this.resetNewArticle();
       this.refresh();
@@ -822,10 +867,12 @@ export class AdminDashboardComponent {
   async deleteHelpArticle(id: string): Promise<void> {
     if (!confirm(this.i18n.translate('¿Eliminar artículo?'))) return;
     try {
+      const article = this.vmSubject.value.helpArticles.find((a) => a.id === id);
       await this.community.deleteHelpArticle(id);
       if (this.newArticle.id === id) this.resetNewArticle();
       this.refresh();
       this.notifications.success(this.i18n.translate('Artículo eliminado.'));
+      void this.log('help_article_deleted', 'help-article', id, article?.title ?? id, '');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el artículo.'));
     }
@@ -836,6 +883,7 @@ export class AdminDashboardComponent {
       await this.community.updateHelpArticle({ ...article, isPublished: !article.isPublished, updatedAt: Date.now() });
       this.refresh();
       this.notifications.success(article.isPublished ? this.i18n.translate('Artículo despublicado.') : this.i18n.translate('Artículo publicado.'));
+      void this.log('help_article_published_toggled', 'help-article', article.id, article.title, article.isPublished ? 'Despublicado' : 'Publicado');
     } catch (error) {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el artículo.'));
     }
@@ -992,4 +1040,445 @@ export class AdminDashboardComponent {
     startWith([] as ContentReport[]),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
+
+  // ---------------------------------------------------------------------
+  // Nuevas capacidades: auditoría, ordenación, CSV export, vista Sistema,
+  // acciones masivas y campanita de moderación.
+  // ---------------------------------------------------------------------
+
+  readonly auditFilter$ = new BehaviorSubject<'all' | AdminActionKind>('all');
+  private readonly sortVersion$ = new BehaviorSubject<number>(0);
+  get auditFilter(): 'all' | AdminActionKind { return this.auditFilter$.value; }
+  set auditFilter(value: 'all' | AdminActionKind) { this.auditFilter$.next(value); }
+  readonly auditKinds: AdminActionKind[] = [
+    'role_changed', 'user_banned', 'user_restored', 'post_deleted', 'post_visibility_changed',
+    'report_resolved', 'report_dismissed', 'feedback_deleted', 'feedback_status_changed',
+    'question_deleted', 'question_pinned', 'question_locked', 'question_resolved',
+    'project_deleted', 'project_member_role_changed', 'project_member_removed',
+    'help_article_created', 'help_article_updated', 'help_article_deleted',
+    'help_article_published_toggled', 'inactive_users_purged',
+  ];
+
+  readonly filteredActions$ = combineLatest([this.vm$, this.auditFilter$]).pipe(
+    map(([vm, filter]) => {
+      let list = vm.actions ?? [];
+      if (filter !== 'all') list = list.filter((a) => a.action === filter);
+      return [...list].sort((a, b) => b.createdAt - a.createdAt);
+    }),
+    startWith([] as AdminAction[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  private async log(action: AdminActionKind, targetType: AdminAction['targetType'], targetId: string, targetLabel: string, detail: string): Promise<void> {
+    try {
+      const currentUser = this.vmSubject.value.user;
+      if (!currentUser) return;
+      await this.social.logAdminAction({
+        adminId: currentUser.uid,
+        adminName: currentUser.displayName,
+        action,
+        targetType,
+        targetId,
+        targetLabel,
+        detail,
+      });
+    } catch (error) {
+      console.warn('No se pudo registrar la acción administrativa.', error);
+    }
+  }
+
+  private currentUserUid(): string | null {
+    return this.vmSubject.value.user?.uid ?? null;
+  }
+
+  readonly bulkToggleAllUsers$ = combineLatest([this.filteredUsers$]).pipe(
+    map(([users]) => {
+      const total = users.length;
+      const selected = users.filter((u) => this.selectedUsers.has(u.uid)).length;
+      return { total, selected, allSelected: total > 0 && selected === total };
+    }),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  readonly bulkToggleAllPosts$ = combineLatest([this.filteredPosts$]).pipe(
+    map(([posts]) => {
+      const total = posts.length;
+      const selected = posts.filter((p) => this.selectedPosts.has(p.id)).length;
+      return { total, selected, allSelected: total > 0 && selected === total };
+    }),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  toggleBulkUser(uid: string): void {
+    if (this.selectedUsers.has(uid)) this.selectedUsers.delete(uid);
+    else this.selectedUsers.add(uid);
+  }
+
+  toggleBulkPost(id: string): void {
+    if (this.selectedPosts.has(id)) this.selectedPosts.delete(id);
+    else this.selectedPosts.add(id);
+  }
+
+  toggleBulkUsers(allSelected: boolean): void {
+    this.filteredUsers$.subscribe((list) => {
+      if (allSelected) {
+        for (const u of list) this.selectedUsers.delete(u.uid);
+      } else {
+        for (const u of list) this.selectedUsers.add(u.uid);
+      }
+    });
+  }
+
+  toggleBulkPosts(allSelected: boolean): void {
+    this.filteredPosts$.subscribe((list) => {
+      if (allSelected) {
+        for (const p of list) this.selectedPosts.delete(p.id);
+      } else {
+        for (const p of list) this.selectedPosts.add(p.id);
+      }
+    });
+  }
+
+  async bulkBanUsers(): Promise<void> {
+    const currentUser = this.vmSubject.value.user;
+    if (!currentUser) return;
+    if (!confirm(this.i18n.translate('¿Suspender las {count} cuenta(s) seleccionadas?', { count: this.selectedUsers.size }))) return;
+    let ok = 0;
+    let failed = 0;
+    for (const uid of Array.from(this.selectedUsers)) {
+      if (uid === currentUser.uid) continue;
+      try {
+        const user = this.vmSubject.value.users.find((u) => u.uid === uid);
+        if (!user || user.isBanned) { failed++; continue; }
+        await this.social.setUserBanned(uid, true);
+        this.selectedUsers.delete(uid);
+        ok++;
+      } catch {
+        failed++;
+      }
+    }
+    this.refresh();
+    await this.log('user_banned', 'bulk', `bulk-${Date.now()}`, `Suspender ${ok} cuenta(s)`, `ok=${ok} failed=${failed}`);
+    this.notifications.success(this.i18n.translate('Suspendidas {count} cuenta(s).', { count: ok }), this.i18n.translate('Suspensión masiva'));
+  }
+
+  async bulkRestoreUsers(): Promise<void> {
+    const currentUser = this.vmSubject.value.user;
+    if (!currentUser) return;
+    if (!confirm(this.i18n.translate('¿Restaurar las {count} cuenta(s) seleccionadas?', { count: this.selectedUsers.size }))) return;
+    let ok = 0;
+    let failed = 0;
+    for (const uid of Array.from(this.selectedUsers)) {
+      if (uid === currentUser.uid) continue;
+      try {
+        await this.social.setUserBanned(uid, false);
+        this.selectedUsers.delete(uid);
+        ok++;
+      } catch {
+        failed++;
+      }
+    }
+    this.refresh();
+    await this.log('user_restored', 'bulk', `bulk-${Date.now()}`, `Restaurar ${ok} cuenta(s)`, `ok=${ok} failed=${failed}`);
+    this.notifications.success(this.i18n.translate('Restauradas {count} cuenta(s).', { count: ok }), this.i18n.translate('Restauración masiva'));
+  }
+
+  async bulkDeletePosts(): Promise<void> {
+    if (!this.selectedPosts.size) return;
+    if (!confirm(this.i18n.translate('¿Eliminar las {count} publicación(es) seleccionadas?', { count: this.selectedPosts.size }))) return;
+    let ok = 0;
+    let failed = 0;
+    for (const postId of Array.from(this.selectedPosts)) {
+      try {
+        const post = this.vmSubject.value.posts.find((p) => p.id === postId);
+        if (!post) { failed++; continue; }
+        await this.social.deletePost(post);
+        this.selectedPosts.delete(postId);
+        ok++;
+      } catch {
+        failed++;
+      }
+    }
+    this.refresh();
+    await this.log('post_deleted', 'bulk', `bulk-${Date.now()}`, `Eliminar ${ok} publicación(es)`, `ok=${ok} failed=${failed}`);
+    this.notifications.success(this.i18n.translate('Eliminadas {count} publicación(es).', { count: ok }), this.i18n.translate('Borrado masivo'));
+  }
+
+  async bulkSetPostVisibility(hidden: boolean): Promise<void> {
+    const selected = Array.from(this.selectedPosts);
+    if (!selected.length) return;
+    if (!confirm(this.i18n.translate(hidden ? '¿Ocultar las {count} publicación(es)?' : '¿Hacer públicas las {count} publicación(es)?', { count: selected.length }))) return;
+    let ok = 0;
+    let failed = 0;
+    for (const postId of selected) {
+      try {
+        const post = this.vmSubject.value.posts.find((p) => p.id === postId);
+        if (!post) { failed++; continue; }
+        await this.social.setPostHidden(post, hidden);
+        ok++;
+      } catch {
+        failed++;
+      }
+    }
+    this.refresh();
+    await this.log('post_visibility_changed', 'bulk', `bulk-${Date.now()}`, `Visibilidad ${hidden ? 'oculta' : 'pública'} para ${ok} publicación(es)`, `ok=${ok} failed=${failed}`);
+    this.notifications.success(this.i18n.translate(hidden ? 'Ocultadas {count} publicación(es).' : 'Publicadas {count} publicación(es).', { count: ok }), this.i18n.translate('Visibilidad masiva'));
+  }
+
+  userSortKey: 'displayName' | 'createdAt' | 'lastSeen' | 'role' = 'createdAt';
+  userSortDir: 'asc' | 'desc' = 'desc';
+  postSortKey: 'title' | 'createdAt' | 'viewsCount' | 'likesCount' | 'remixCount' = 'createdAt';
+  postSortDir: 'asc' | 'desc' = 'desc';
+  reportSortKey: 'createdAt' | 'status' | 'reason' = 'createdAt';
+  reportSortDir: 'asc' | 'desc' = 'desc';
+
+  toggleUserSort(key: typeof this.userSortKey): void {
+    if (this.userSortKey === key) this.userSortDir = this.userSortDir === 'asc' ? 'desc' : 'asc';
+    else { this.userSortKey = key; this.userSortDir = 'desc'; }
+    this.sortVersion$.next(this.sortVersion$.value + 1);
+  }
+
+  togglePostSort(key: typeof this.postSortKey): void {
+    if (this.postSortKey === key) this.postSortDir = this.postSortDir === 'asc' ? 'desc' : 'asc';
+    else { this.postSortKey = key; this.postSortDir = 'desc'; }
+    this.sortVersion$.next(this.sortVersion$.value + 1);
+  }
+
+  toggleReportSort(key: typeof this.reportSortKey): void {
+    if (this.reportSortKey === key) this.reportSortDir = this.reportSortDir === 'asc' ? 'desc' : 'asc';
+    else { this.reportSortKey = key; this.reportSortDir = 'desc'; }
+    this.sortVersion$.next(this.sortVersion$.value + 1);
+  }
+
+  readonly sortedUsers$ = combineLatest([this.filteredUsers$, this.sortVersion$]).pipe(
+    map(([users]) => {
+      const list = [...users];
+      const dir = this.userSortDir === 'asc' ? 1 : -1;
+      const key = this.userSortKey;
+      const act = new Map<string, number>();
+      for (const entry of this.vmSubject.value.activity ?? []) act.set(entry.uid, entry.lastSeenAt);
+      if (key === 'displayName') list.sort((a, b) => dir * a.displayName.localeCompare(b.displayName));
+      else if (key === 'createdAt') list.sort((a, b) => dir * ((a.createdAt ?? 0) - (b.createdAt ?? 0)));
+      else if (key === 'role') list.sort((a, b) => dir * a.role.localeCompare(b.role));
+      else if (key === 'lastSeen') list.sort((a, b) => dir * ((act.get(a.uid) ?? 0) - (act.get(b.uid) ?? 0)));
+      return list;
+    }),
+    startWith([] as UserProfile[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  readonly sortedPosts$ = combineLatest([this.filteredPosts$, this.sortVersion$]).pipe(
+    map(([posts]) => {
+      const list = [...posts];
+      const dir = this.postSortDir === 'asc' ? 1 : -1;
+      const key = this.postSortKey;
+      if (key === 'title') list.sort((a, b) => dir * a.title.localeCompare(b.title));
+      else if (key === 'createdAt') list.sort((a, b) => dir * (a.createdAt - b.createdAt));
+      else if (key === 'viewsCount') list.sort((a, b) => dir * ((a.viewsCount ?? 0) - (b.viewsCount ?? 0)));
+      else if (key === 'likesCount') list.sort((a, b) => dir * ((a.likesCount ?? a.likes ?? 0) - (b.likesCount ?? b.likes ?? 0)));
+      else if (key === 'remixCount') list.sort((a, b) => dir * ((a.remixCount ?? 0) - (b.remixCount ?? 0)));
+      return list;
+    }),
+    startWith([] as Post3D[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  readonly sortedReports$ = combineLatest([this.filteredReports$, this.sortVersion$]).pipe(
+    map(([reports]) => {
+      const list = [...reports];
+      const dir = this.reportSortDir === 'asc' ? 1 : -1;
+      const key = this.reportSortKey;
+      if (key === 'createdAt') list.sort((a, b) => dir * (a.createdAt - b.createdAt));
+      else if (key === 'status') list.sort((a, b) => dir * a.status.localeCompare(b.status));
+      else if (key === 'reason') list.sort((a, b) => dir * a.reason.localeCompare(b.reason));
+      return list;
+    }),
+    startWith([] as ContentReport[]),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  private toCsvRow(v: string | number | null | undefined): string {
+    if (v == null) return '';
+    const s = String(v);
+    if (/[",\n\r;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  private toCsv(rows: string[][]): string {
+    return rows.map((row) => row.map((v) => this.toCsvRow(v)).join(',')).join('\r\n');
+  }
+
+  private downloadCsv(filename: string, rows: string[][]): void {
+    if (typeof document === 'undefined') return;
+    const bom = '\ufeff';
+    const blob = new Blob([bom + this.toCsv(rows)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  exportUsersCsv(): void {
+    const users = this.vmSubject.value.users;
+    if (!users.length) return;
+    const rows: string[][] = [['uid', 'displayName', 'email', 'role', 'isBanned', 'createdAt']];
+    for (const u of users) {
+      rows.push([u.uid, u.displayName, u.email ?? '', u.role, String(u.isBanned), String(u.createdAt ?? '')]);
+    }
+    this.downloadCsv(`carxy-usuarios-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de usuarios', `CSV export de ${users.length} usuario(s)`);
+  }
+
+  exportPostsCsv(): void {
+    const posts = this.vmSubject.value.posts;
+    if (!posts.length) return;
+    const rows: string[][] = [['id', 'title', 'author', 'visibility', 'likes', 'views', 'remixes', 'createdAt']];
+    for (const p of posts) {
+      rows.push([p.id, p.title, p.author?.displayName ?? '', p.isPrivate ? 'private' : 'public', String(p.likesCount ?? p.likes ?? 0), String(p.viewsCount ?? 0), String(p.remixCount ?? 0), String(p.createdAt)]);
+    }
+    this.downloadCsv(`carxy-modelos-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de publicaciones', `CSV export de ${posts.length} publicación(es)`);
+  }
+
+  exportReportsCsv(): void {
+    const reports = this.vmSubject.value.reports;
+    if (!reports.length) return;
+    const rows: string[][] = [['id', 'postTitle', 'reporter', 'reason', 'status', 'createdAt']];
+    for (const r of reports) {
+      rows.push([r.id, r.postTitle, r.reporterName, r.reason, r.status, String(r.createdAt)]);
+    }
+    this.downloadCsv(`carxy-reportes-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de reportes', `CSV export de ${reports.length} reporte(s)`);
+  }
+
+  exportFeedbackCsv(): void {
+    const feedback = this.vmSubject.value.feedback;
+    if (!feedback.length) return;
+    const rows: string[][] = [['id', 'type', 'name', 'email', 'subject', 'status', 'createdAt']];
+    for (const f of feedback) {
+      rows.push([f.id, f.type, f.name, f.email ?? '', f.subject, f.status, String(f.createdAt)]);
+    }
+    this.downloadCsv(`carxy-feedback-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de feedback', `CSV export de ${feedback.length} mensaje(s)`);
+  }
+
+  exportQuestionsCsv(): void {
+    const questions = this.vmSubject.value.questions;
+    if (!questions.length) return;
+    const rows: string[][] = [['id', 'title', 'author', 'resolved', 'pinned', 'locked', 'createdAt']];
+    for (const q of questions) {
+      rows.push([q.id, q.title, q.authorName ?? '', String(q.resolved), String(q.pinned), String(q.locked), String(q.createdAt)]);
+    }
+    this.downloadCsv(`carxy-preguntas-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de preguntas', `CSV export de ${questions.length} pregunta(s)`);
+  }
+
+  get pendingModeration(): number {
+    const vm = this.vmSubject.value;
+    const openReports = (vm.reports ?? []).filter((r) => r.status === 'open').length;
+    const newFeedback = (vm.feedback ?? []).filter((f) => f.status === 'new').length;
+    const openQuestions = (vm.questions ?? []).filter((q) => !q.resolved).length;
+    return openReports + newFeedback + openQuestions + this.duplicateEmails.length;
+  }
+
+  get topAuthorsByPosts(): Array<{ name: string; posts: number }> {
+    const counts = new Map<string, { name: string; posts: number }>();
+    for (const p of this.vmSubject.value.posts) {
+      const id = p.author?.uid ?? 'unknown';
+      const name = p.author?.displayName ?? 'Cuenta eliminada';
+      const entry = counts.get(id) ?? { name, posts: 0 };
+      entry.posts++;
+      counts.set(id, entry);
+    }
+    return [...counts.values()].sort((a, b) => b.posts - a.posts).slice(0, 8);
+  }
+
+  get topLikedPosts(): Array<{ title: string; likes: number; author: string }> {
+    return [...(this.vmSubject.value.posts ?? [])]
+      .sort((a, b) => (b.likesCount ?? b.likes ?? 0) - (a.likesCount ?? a.likes ?? 0))
+      .slice(0, 6)
+      .map((p) => ({ title: p.title, likes: p.likesCount ?? p.likes ?? 0, author: p.author?.displayName ?? '' }));
+  }
+
+  get registrationTrend(): Array<{ label: string; value: number; color: string; pct: number }> {
+    const DAY = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const buckets = new Array(14).fill(0);
+    const fmt = new Intl.DateTimeFormat('es', { day: '2-digit', month: 'short' });
+    const labels: string[] = [];
+    for (let i = 13; i >= 0; i--) { labels.push(fmt.format(new Date(now - i * DAY))); }
+    for (const u of this.vmSubject.value.users) {
+      const age = now - (u.createdAt ?? 0);
+      const days = Math.floor(age / DAY);
+      if (days >= 0 && days < 14) buckets[13 - days]++;
+    }
+    const max = Math.max(1, ...buckets);
+    return buckets.map((v, i) => ({
+      label: labels[i],
+      value: v,
+      color: i === 13 ? '#a78bfa' : '#60a5fa',
+      pct: Math.max(5, Math.round((v / max) * 100)),
+    }));
+  }
+
+  getAuditLabel(action: AdminActionKind): string {
+    const map: Record<AdminActionKind, string> = {
+      role_changed: 'Rol actualizado',
+      user_banned: 'Usuario suspendido',
+      user_restored: 'Usuario restaurado',
+      post_deleted: 'Publicación eliminada',
+      post_visibility_changed: 'Visibilidad cambiada',
+      report_resolved: 'Reporte resuelto',
+      report_dismissed: 'Reporte descartado',
+      feedback_deleted: 'Feedback eliminado',
+      feedback_status_changed: 'Estado de feedback',
+      question_deleted: 'Pregunta eliminada',
+      question_pinned: 'Pregunta fijada',
+      question_locked: 'Pregunta bloqueada',
+      question_resolved: 'Pregunta resuelta',
+      project_deleted: 'Proyecto eliminado',
+      project_member_role_changed: 'Rol de miembro',
+      project_member_removed: 'Miembro eliminado',
+      help_article_created: 'Artículo creado',
+      help_article_updated: 'Artículo actualizado',
+      help_article_deleted: 'Artículo eliminado',
+      help_article_published_toggled: 'Publicación alternada',
+      inactive_users_purged: 'Limpieza / exportación',
+    };
+    return map[action] ?? action;
+  }
+
+  getAuditTargetType(targetType: AdminAction['targetType']): string {
+    const map: Record<AdminAction['targetType'], string> = {
+      user: 'Usuario',
+      post: 'Publicación',
+      report: 'Reporte',
+      feedback: 'Feedback',
+      question: 'Pregunta',
+      project: 'Proyecto',
+      'help-article': 'Artículo',
+      bulk: 'Masivo',
+      system: 'Sistema',
+    };
+    return map[targetType];
+  }
+
+  getAuditBadgeColor(action: AdminActionKind): string {
+    if (action.startsWith('user_')) return 'badge-info';
+    if (action.startsWith('post_')) return 'badge-warn';
+    if (action.startsWith('report_')) return 'badge-warn';
+    if (action.startsWith('feedback_')) return 'badge-info';
+    if (action.startsWith('question_')) return 'badge-info';
+    if (action.startsWith('project_')) return 'badge-danger';
+    if (action.startsWith('help_article_')) return 'badge-success';
+    if (action === 'inactive_users_purged') return 'badge-muted';
+    return 'badge-muted';
+  }
+
+  private readonly _bellActive$ = new BehaviorSubject<boolean>(false);
+  get bellActive(): boolean { return this._bellActive$.value; }
+  toggleBell(): void { this._bellActive$.next(!this._bellActive$.value); }
+  closeBell(): void { this._bellActive$.next(false); }
 }

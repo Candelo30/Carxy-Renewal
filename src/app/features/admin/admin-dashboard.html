@@ -1,4 +1,6 @@
 <main class="admin-shell page-with-header">
+  <div class="admin-ambient" aria-hidden="true"></div>
+
   <app-shell-header
     [showSearch]="false"
     [showNav]="true"
@@ -13,45 +15,82 @@
     <aside class="admin-sidebar" [class.open]="mobileMenuOpen">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <span class="sidebar-brand-icon">🛡</span>
-          <span class="sidebar-brand-name">CARXY Admin</span>
+          <span class="sidebar-brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+              <rect width="40" height="40" rx="11" fill="url(#sb-g)" />
+              <path d="M12 25.5C12 19.4249 16.9249 14.5 23 14.5C24.9138 14.5 26.7047 15.0555 28.2361 16.0472L29.5 17.5M23 14.5V8.5M30 18L34 18" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M20 20L28 28" stroke="#fff" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16.5" cy="20" r="1.6" fill="#fff" />
+              <defs>
+                <linearGradient id="sb-g" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#8b5cf6" />
+                  <stop offset="1" stop-color="#6d28d9" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </span>
+          <span class="sidebar-brand-name"><strong>CARXY</strong> <em>Admin</em></span>
         </div>
         <button class="sidebar-close" type="button" (click)="closeMobileMenu()" [attr.aria-label]="'admin.closeMenu' | translate">✕</button>
       </div>
-      <nav class="sidebar-nav">
-        <button class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
-          <span class="sidebar-icon">📊</span><span class="sidebar-label">{{ 'admin.dashboard' | translate }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')" [disabled]="moderationOnly">
-          <span class="sidebar-icon">👥</span><span class="sidebar-label">{{ 'admin.users' | translate }}</span>
-          <span class="sidebar-badge">{{ vm.users.length }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
-          <span class="sidebar-icon">📦</span><span class="sidebar-label">{{ 'admin.content' | translate }}</span>
-          <span class="sidebar-badge">{{ vm.posts.length }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isReports" (click)="setTab('reports')">
-          <span class="sidebar-icon">🚩</span><span class="sidebar-label">{{ 'admin.reports' | translate }}</span>
-          <span class="sidebar-badge warn" *ngIf="openReportsCount(vm.reports)">{{ openReportsCount(vm.reports) }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
-          <span class="sidebar-icon">💬</span><span class="sidebar-label">{{ 'admin.feedback' | translate }}</span>
-          <span class="sidebar-badge">{{ vm.feedback.length }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
-          <span class="sidebar-icon">❓</span><span class="sidebar-label">{{ 'admin.questions' | translate }}</span>
-          <span class="sidebar-badge">{{ vm.questions.length }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isProjects" (click)="setTab('projects')" [disabled]="moderationOnly">
-          <span class="sidebar-icon">🗂</span><span class="sidebar-label">{{ 'admin.projects' | translate }}</span>
-          <span class="sidebar-badge">{{ vm.projects.length }}</span>
-        </button>
-        <button class="sidebar-item" [class.active]="isHelpArticles" (click)="setTab('helpArticles')" [disabled]="moderationOnly">
-          <span class="sidebar-icon">📚</span><span class="sidebar-label">{{ 'admin.help' | translate }}</span>
-          <span class="sidebar-badge">{{ vm.helpArticles.length }}</span>
-        </button>
+
+      <nav class="sidebar-nav" aria-label="Secciones del panel de administración">
+        <div class="sidebar-group">
+          <span class="sidebar-group-label">Panel</span>
+          <button class="sidebar-item" [class.active]="isDashboard" (click)="setTab('dashboard')">
+            <span class="sidebar-icon">◫</span><span class="sidebar-label">{{ 'admin.dashboard' | translate }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isUsers" (click)="setTab('users')" [disabled]="moderationOnly">
+            <span class="sidebar-icon">◉</span><span class="sidebar-label">{{ 'admin.users' | translate }}</span>
+            <span class="sidebar-badge">{{ vm.users.length }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isContent" (click)="setTab('content')">
+            <span class="sidebar-icon">▤</span><span class="sidebar-label">{{ 'admin.content' | translate }}</span>
+            <span class="sidebar-badge">{{ vm.posts.length }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isReports" (click)="setTab('reports')">
+            <span class="sidebar-icon">⚑</span><span class="sidebar-label">{{ 'admin.reports' | translate }}</span>
+            <span class="sidebar-badge warn" *ngIf="openReportsCount(vm.reports) as count">{{ count }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isFeedback" (click)="setTab('feedback')">
+            <span class="sidebar-icon">◐</span><span class="sidebar-label">{{ 'admin.feedback' | translate }}</span>
+            <span class="sidebar-badge">{{ vm.feedback.length }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isHelp" (click)="setTab('help')">
+            <span class="sidebar-icon">?</span><span class="sidebar-label">{{ 'admin.questions' | translate }}</span>
+            <span class="sidebar-badge">{{ vm.questions.length }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isProjects" (click)="setTab('projects')" [disabled]="moderationOnly">
+            <span class="sidebar-icon">⌗</span><span class="sidebar-label">{{ 'admin.projects' | translate }}</span>
+            <span class="sidebar-badge">{{ vm.projects.length }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isHelpArticles" (click)="setTab('helpArticles')" [disabled]="moderationOnly">
+            <span class="sidebar-icon">▦</span><span class="sidebar-label">{{ 'admin.help' | translate }}</span>
+            <span class="sidebar-badge">{{ vm.helpArticles.length }}</span>
+          </button>
+        </div>
+
+        <div class="sidebar-group">
+          <span class="sidebar-group-label">Sistema</span>
+          <button class="sidebar-item" [class.active]="isSistema" (click)="setTab('sistema')">
+            <span class="sidebar-icon">⛁</span><span class="sidebar-label">Sistema</span>
+            <span class="sidebar-badge" *ngIf="pendingModeration as pend">{{ pend }}</span>
+          </button>
+          <button class="sidebar-item" [class.active]="isAuditoria" (click)="setTab('auditoria')">
+            <span class="sidebar-icon">▤</span><span class="sidebar-label">{{ 'Auditoría' }}</span>
+            <span class="sidebar-badge">{{ vm.actions?.length ?? 0 }}</span>
+          </button>
+        </div>
       </nav>
+
       <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <span class="sidebar-user-avatar">{{ vm.user?.displayName?.charAt(0) || 'A' }}</span>
+          <div class="sidebar-user-meta">
+            <strong>{{ vm.user?.displayName }}</strong>
+            <small>{{ vm.user?.role }}</small>
+          </div>
+        </div>
         <button class="sidebar-logout" type="button" (click)="auth.logout()">{{ 'admin.logout' | translate }}</button>
       </div>
     </aside>
@@ -60,17 +99,55 @@
       <header class="admin-header">
         <div class="admin-header-left">
           <button class="mobile-menu-toggle" type="button" (click)="toggleMobileMenu()" [attr.aria-label]="'admin.openMenu' | translate">☰</button>
-          <div>
+          <div class="admin-header-title-wrap">
+            <span class="admin-breadcrumb" aria-label="Ruta">Carxy <em>›</em> Admin <em>›</em> <strong>{{ pageTitle }}</strong></span>
             <h1 class="admin-page-title">{{ pageTitle }}</h1>
             <p class="admin-page-subtitle" *ngIf="moderationOnly">{{ 'admin.moderationMode' | translate }}</p>
           </div>
         </div>
         <div class="admin-header-right">
-          <div class="admin-search">
-            <input type="search" class="search-input" [(ngModel)]="searchQuery" [placeholder]="'admin.searchPlaceholder' | translate" />
+          <div class="admin-search" role="search">
+            <svg class="search-glyph" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <path d="M9 3a6 6 0 100 12 6 6 0 000-12zm0-2a8 8 0 106.32 13.66l3.2 3.2a.75.75 0 101.06-1.06l-3.2-3.2A8 8 0 009 1z" fill="currentColor" />
+            </svg>
+            <input type="search" class="search-input" [(ngModel)]="searchQuery" [placeholder]="'admin.searchPlaceholder' | translate" aria-label="Buscar en esta sección" />
           </div>
-          <button class="btn-refresh" type="button" (click)="refresh()" [title]="'admin.refresh' | translate">↻</button>
-          <button class="btn-user" type="button" [title]="'admin.currentUser' | translate">{{ vm.user?.displayName?.charAt(0) || 'A' }}</button>
+
+          <button class="icon-action" type="button" (click)="toggleBell()" [attr.aria-label]="'Moderación pendiente' | translate" [attr.aria-expanded]="bellActive">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <path d="M12 2a6 6 0 00-6 6v3.2c0 1.4-.5 2.7-1.45 3.83L2.8 17.2a.75.75 0 00.58 1.22h17.24a.75.75 0 00.58-1.22l-1.75-2.17A5.7 5.7 0 0118 11.2V8a6 6 0 00-6-6zm0 18a3 3 0 002.7-1.5h-5.4A3 3 0 0012 20z" fill="currentColor" />
+            </svg>
+            <span class="bell-badge" *ngIf="pendingModeration as pend">{{ pend }}</span>
+          </button>
+          <button class="icon-action" type="button" (click)="refresh()" [title]="'admin.refresh' | translate" [attr.aria-label]="'admin.refresh' | translate">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <path d="M4 4v6h6M20 20v-6h-6M20 16A8 8 0 005.4 7M4 8a8 8 0 0014.6 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            </svg>
+          </button>
+          <div class="bell-panel" *ngIf="bellActive" role="dialog" aria-label="Pendiente de moderación">
+            <div class="bell-panel-header">
+              <strong>Pendiente de moderación</strong>
+              <button type="button" class="bell-panel-close" (click)="closeBell()" aria-label="Cerrar">✕</button>
+            </div>
+            <p class="bell-panel-empty" *ngIf="pendingModeration === 0">Todo está al día.</p>
+            <ul class="bell-items" *ngIf="pendingModeration > 0">
+              <li class="bell-item" *ngIf="(vm.reports ?? []).filter(r => r.status === 'open').length as openReports" (click)="setTab('reports')">
+                <span class="bell-item-icon reports">⚑</span>
+                <span class="bell-item-text"><strong>{{ openReports }} reporte(s) abiertos</strong><small>Revisar y resolver</small></span>
+                <span class="bell-item-arrow">→</span>
+              </li>
+              <li class="bell-item" *ngIf="(vm.feedback ?? []).filter(f => f.status === 'new').length as newFeedback" (click)="setTab('feedback')">
+                <span class="bell-item-icon feedback">◐</span>
+                <span class="bell-item-text"><strong>{{ newFeedback }} mensaje(s) de feedback</strong><small>Sin atender</small></span>
+                <span class="bell-item-arrow">→</span>
+              </li>
+              <li class="bell-item" *ngIf="(vm.questions ?? []).filter(q => !q.resolved).length as openQuestions" (click)="setTab('help')">
+                <span class="bell-item-icon help">?</span>
+                <span class="bell-item-text"><strong>{{ openQuestions }} pregunta(s) sin respuesta</strong><small>Revisar y fijar / resolver</small></span>
+                <span class="bell-item-arrow">→</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </header>
 
@@ -79,78 +156,152 @@
         <!-- DASHBOARD -->
         <ng-container *ngIf="isDashboard">
           <ng-container *ngIf="stats$ | async as stats">
-            <div class="stats-grid">
-              <article class="stat-card accent-blue"><span class="stat-icon">👥</span><div><small>{{ 'admin.stats.users' | translate }}</small><strong>{{ stats.totalUsers }}</strong></div><em>{{ stats.activeUsers }} {{ 'admin.stats.active' | translate }}</em></article>
-              <article class="stat-card accent-red"><span class="stat-icon">⛔</span><div><small>{{ 'admin.stats.suspended' | translate }}</small><strong>{{ stats.suspendedUsers }}</strong></div><em>{{ stats.moderatorUsers }} {{ 'admin.stats.moderators' | translate }} · {{ stats.adminUsers }} {{ 'admin.stats.admins' | translate }}</em></article>
-              <article class="stat-card accent-green"><span class="stat-icon">📦</span><div><small>{{ 'admin.stats.publications' | translate }}</small><strong>{{ stats.totalPosts }}</strong></div><em>{{ stats.publicPosts }} {{ 'admin.stats.public' | translate }} · {{ stats.privatePosts }} {{ 'admin.stats.private' | translate }}</em></article>
-              <article class="stat-card accent-amber"><span class="stat-icon">🚩</span><div><small>{{ 'admin.stats.openReports' | translate }}</small><strong>{{ stats.openReports }}</strong></div><em>{{ stats.resolvedReports }} {{ 'admin.stats.resolved' | translate }}</em></article>
-              <article class="stat-card accent-violet"><span class="stat-icon">💬</span><div><small>{{ 'admin.feedback' | translate }}</small><strong>{{ stats.totalFeedback }}</strong></div><em>{{ stats.newFeedback }} {{ 'admin.stats.new' | translate }}</em></article>
-              <article class="stat-card accent-cyan"><span class="stat-icon">❓</span><div><small>{{ 'admin.questions' | translate }}</small><strong>{{ stats.totalQuestions }}</strong></div><em>{{ stats.openQuestions }} {{ 'admin.stats.open' | translate }}</em></article>
-              <article class="stat-card"><span class="stat-icon">🗂</span><div><small>{{ 'admin.projects' | translate }}</small><strong>{{ stats.totalProjects }}</strong></div><em>{{ 'admin.stats.collaboration' | translate }}</em></article>
-              <article class="stat-card"><span class="stat-icon">❤</span><div><small>{{ 'admin.stats.engagement' | translate }}</small><strong>{{ stats.totalLikes }}</strong></div><em>{{ stats.totalViews }} {{ 'admin.stats.views' | translate }} · {{ stats.totalRemixes }} {{ 'admin.stats.remixes' | translate }}</em></article>
-            </div>
+            <div class="dashboard-layout">
+              <div class="dashboard-main">
 
-            <div class="charts-grid">
-              <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.usersByRole' | translate }}</h2></div></div>
-                <div class="chart-bars" *ngIf="chartUsersByRole$ | async as bars">
-                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
-                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
-                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                <div class="hero-strip">
+                  <div class="hero-copy">
+                    <span class="hero-eyebrow">Resumen administrativo · CARXY Admin</span>
+                    <h2 class="hero-title">Bienvenido de nuevo, {{ vm.user?.displayName }}.</h2>
+                    <p class="hero-subtitle">Esto es lo que está pasando en la comunidad ahora mismo.</p>
+                  </div>
+                  <div class="hero-meta">
+                    <span class="hero-chip"><strong>{{ stats.activeToday }}</strong> activos hoy</span>
+                    <span class="hero-chip"><strong>{{ stats.active7d }}</strong> activos 7 días</span>
+                    <span class="hero-chip"><strong>{{ stats.active30d }}</strong> activos 30 días</span>
                   </div>
                 </div>
-              </section>
-              <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.contentVisibility' | translate }}</h2></div></div>
-                <div class="chart-bars" *ngIf="chartPostsVisibility$ | async as bars">
-                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
-                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
-                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
-                  </div>
-                </div>
-              </section>
-              <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.reportsStatus' | translate }}</h2></div></div>
-                <div class="chart-bars" *ngIf="chartReports$ | async as bars">
-                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
-                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
-                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
-                  </div>
-                </div>
-              </section>
-              <section class="admin-panel chart-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.feedbackStatus' | translate }}</h2></div></div>
-                <div class="chart-bars" *ngIf="chartFeedback$ | async as bars">
-                  <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
-                    <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
-                    <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
-                  </div>
-                </div>
-              </section>
-            </div>
 
-            <div class="admin-grid">
-              <section class="admin-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.recentPosts' | translate }}</h2></div></div>
-                <div class="moderation-grid">
-                  <article class="content-card" *ngFor="let post of vm.posts.slice(0, 6); trackBy: trackPost">
-                    <img [src]="post.thumbnailUrl" [alt]="post.title" />
-                    <div>
-                      <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? ('admin.stats.private' | translate) : ('admin.stats.public' | translate) }}</span></div>
-                      <small>{{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }} · {{ post.viewsCount || 0 }} {{ 'admin.views' | translate }}</small>
+                <div class="trend-strip">
+                  <span class="section-label">Registros · últimos 14 días</span>
+                  <div class="trend-bars">
+                    <div class="trend-bar" *ngFor="let b of registrationTrend; let i = index">
+                      <div class="trend-bar-fill" [style.height.%]="b.pct" [style.background]="b.color" [attr.title]="b.label + ' · ' + b.value + ' registros'"></div>
+                      <span class="trend-bar-label">{{ i % 2 === 0 ? b.label : '' }}</span>
                     </div>
-                  </article>
-                  <div class="empty-inline" *ngIf="!vm.posts.length">{{ 'admin.noPostsYet' | translate }}</div>
+                  </div>
                 </div>
-              </section>
-              <section class="admin-panel">
-                <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.recentActivity' | translate }}</h2></div></div>
-                <ul class="activity-list">
-                  <li *ngFor="let r of vm.reports.slice(0,5); trackBy: trackReport">🚩 {{ 'admin.report' | translate }}: <strong>{{ r.postTitle }}</strong> · {{ reportStatusLabel(r) | translate }}</li>
-                  <li *ngFor="let f of vm.feedback.slice(0,5); trackBy: trackFeedback">💬 {{ 'admin.feedback' | translate }}: <strong>{{ f.subject }}</strong> · {{ f.status }}</li>
-                  <li *ngIf="!vm.reports.length && !vm.feedback.length" class="muted">{{ 'admin.noRecentActivity' | translate }}</li>
-                </ul>
-              </section>
+
+                <div class="stats-grid">
+                  <article class="stat-card accent-blue"><span class="stat-icon stat-icon-blue">◉</span><div><small>{{ 'admin.stats.users' | translate }}</small><strong>{{ stats.totalUsers }}</strong></div><em>{{ stats.activeUsers }} {{ 'admin.stats.active' | translate }}</em></article>
+                  <article class="stat-card accent-red"><span class="stat-icon stat-icon-red">▮</span><div><small>{{ 'admin.stats.suspended' | translate }}</small><strong>{{ stats.suspendedUsers }}</strong></div><em>{{ stats.moderatorUsers }} {{ 'admin.stats.moderators' | translate }} · {{ stats.adminUsers }} {{ 'admin.stats.admins' | translate }}</em></article>
+                  <article class="stat-card accent-green"><span class="stat-icon stat-icon-green">▤</span><div><small>{{ 'admin.stats.publications' | translate }}</small><strong>{{ stats.totalPosts }}</strong></div><em>{{ stats.publicPosts }} {{ 'admin.stats.public' | translate }} · {{ stats.privatePosts }} {{ 'admin.stats.private' | translate }}</em></article>
+                  <article class="stat-card accent-amber"><span class="stat-icon stat-icon-amber">⚑</span><div><small>{{ 'admin.stats.openReports' | translate }}</small><strong>{{ stats.openReports }}</strong></div><em>{{ stats.resolvedReports }} {{ 'admin.stats.resolved' | translate }}</em></article>
+                  <article class="stat-card accent-violet"><span class="stat-icon stat-icon-violet">◐</span><div><small>{{ 'admin.feedback' | translate }}</small><strong>{{ stats.totalFeedback }}</strong></div><em>{{ stats.newFeedback }} {{ 'admin.stats.new' | translate }}</em></article>
+                  <article class="stat-card accent-cyan"><span class="stat-icon stat-icon-cyan">?</span><div><small>{{ 'admin.questions' | translate }}</small><strong>{{ stats.totalQuestions }}</strong></div><em>{{ stats.openQuestions }} {{ 'admin.stats.open' | translate }}</em></article>
+                  <article class="stat-card stat-neutral"><span class="stat-icon stat-icon-neutral">⌗</span><div><small>{{ 'admin.projects' | translate }}</small><strong>{{ stats.totalProjects }}</strong></div><em>{{ 'admin.stats.collaboration' | translate }}</em></article>
+                  <article class="stat-card stat-neutral"><span class="stat-icon stat-icon-neutral">♡</span><div><small>{{ 'admin.stats.engagement' | translate }}</small><strong>{{ stats.totalLikes }}</strong></div><em>{{ stats.totalViews }} {{ 'admin.stats.views' | translate }} · {{ stats.totalRemixes }} {{ 'admin.stats.remixes' | translate }}</em></article>
+                </div>
+
+                <div class="charts-grid">
+                  <section class="admin-panel chart-panel">
+                    <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.usersByRole' | translate }}</h2></div></div>
+                    <div class="chart-bars" *ngIf="chartUsersByRole$ | async as bars">
+                      <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                        <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                        <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="admin-panel chart-panel">
+                    <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.contentVisibility' | translate }}</h2></div></div>
+                    <div class="chart-bars" *ngIf="chartPostsVisibility$ | async as bars">
+                      <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                        <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                        <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="admin-panel chart-panel">
+                    <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.charts.reportsStatus' | translate }}</h2></div></div>
+                    <div class="chart-bars" *ngIf="chartReports$ | async as bars">
+                      <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                        <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                        <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="admin-panel chart-panel">
+                    <div class="panel-header"><div class="panel-title-row"><h2>Preguntas de la comunidad</h2></div></div>
+                    <div class="chart-bars" *ngIf="chartQuestions$ | async as bars">
+                      <div class="bar-row" *ngFor="let b of bars; trackBy: trackBar">
+                        <div class="bar-label"><span>{{ b.label }}</span><strong>{{ b.value }}</strong></div>
+                        <div class="bar-track"><div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div></div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <section class="admin-panel">
+                  <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.recentPosts' | translate }}</h2></div></div>
+                  <div class="moderation-grid">
+                    <article class="content-card" *ngFor="let post of vm.posts.slice(0, 6); trackBy: trackPost">
+                      <img [src]="post.thumbnailUrl" [alt]="post.title" />
+                      <div>
+                        <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? ('admin.stats.private' | translate) : ('admin.stats.public' | translate) }}</span></div>
+                        <small>{{ post.author.displayName }} · {{ post.createdAt | date:'mediumDate' }} · {{ post.viewsCount || 0 }} {{ 'admin.views' | translate }}</small>
+                      </div>
+                    </article>
+                    <div class="empty-inline" *ngIf="!vm.posts.length">{{ 'admin.noPostsYet' | translate }}</div>
+                  </div>
+                </section>
+              </div>
+
+              <aside class="dashboard-side">
+                <section class="admin-panel moderation-panel">
+                  <div class="panel-header"><div class="panel-title-row"><h3>Pendiente de moderación</h3><span class="panel-badge warn" *ngIf="pendingModeration as pend">{{ pend }}</span></div></div>
+                  <ul class="moderation-queue" *ngIf="pendingModeration; else allGood">
+                    <li class="mq-item" *ngIf="openReportsCount(vm.reports) as openReports">
+                      <div class="mq-icon warn-dot">⚑</div>
+                      <button type="button" class="mq-text" (click)="setTab('reports')">
+                        <strong>{{ openReports }} {{ 'admin.stats.openReports' | translate }}</strong>
+                        <small>Revisar y resolver</small>
+                      </button>
+                      <span class="mq-arrow">→</span>
+                    </li>
+                    <li class="mq-item" *ngIf="newFeedbackCount(vm.feedback) as newFeedback">
+                      <div class="mq-icon info-dot">◐</div>
+                      <button type="button" class="mq-text" (click)="setTab('feedback')">
+                        <strong>{{ newFeedback }} {{ 'admin.stats.new' | translate }}</strong>
+                        <small>Sin atender</small>
+                      </button>
+                      <span class="mq-arrow">→</span>
+                    </li>
+                    <li class="mq-item" *ngIf="openQuestionsCount(vm.questions) as openQuestions">
+                      <div class="mq-icon info-dot">?</div>
+                      <button type="button" class="mq-text" (click)="setTab('help')">
+                        <strong>{{ openQuestions }} {{ 'admin.stats.open' | translate }}</strong>
+                        <small>Responder o fijar</small>
+                      </button>
+                      <span class="mq-arrow">→</span>
+                    </li>
+                  </ul>
+                  <ng-template #allGood>
+                    <p class="all-clear">Todo al día. No hay moderación pendiente.</p>
+                  </ng-template>
+                </section>
+
+                <section class="admin-panel">
+                  <div class="panel-header"><div class="panel-title-row"><h3>Top autores</h3></div></div>
+                  <ol class="top-authors">
+                    <li *ngFor="let a of topAuthorsByPosts.slice(0, 6); let i = index">
+                      <span class="top-rank">{{ i + 1 }}</span>
+                      <span class="top-name" [title]="a.name">{{ a.name }}</span>
+                      <span class="top-value">{{ a.posts }} posts</span>
+                    </li>
+                    <li *ngIf="!topAuthorsByPosts.length" class="muted-cell">Sin publicaciones todavía.</li>
+                  </ol>
+                </section>
+
+                <section class="admin-panel">
+                  <div class="panel-header"><div class="panel-title-row"><h3>{{ 'admin.recentActivity' | translate }}</h3></div></div>
+                  <ul class="activity-list">
+                    <li *ngFor="let r of vm.reports.slice(0,4); trackBy: trackReport">⚑ {{ 'admin.report' | translate }}: <strong>{{ r.postTitle }}</strong> · {{ reportStatusLabel(r) | translate }}</li>
+                    <li *ngFor="let f of vm.feedback.slice(0,3); trackBy: trackFeedback">◐ {{ 'admin.feedback' | translate }}: <strong>{{ f.subject }}</strong> · {{ f.status }}</li>
+                    <li *ngIf="!vm.reports.length && !vm.feedback.length" class="muted-cell">{{ 'admin.noRecentActivity' | translate }}</li>
+                  </ul>
+                </section>
+              </aside>
             </div>
           </ng-container>
         </ng-container>
@@ -158,16 +309,43 @@
         <!-- USERS -->
         <ng-container *ngIf="isUsers">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.registeredUsers' | translate }}</h2><span>{{ (filteredUsers$ | async)?.length || 0 }} {{ 'admin.accounts' | translate }} · {{ (stats$ | async)?.active30d || 0 }} {{ 'admin.stats.active' | translate }} (30d)</span></div><div class="panel-actions"><label class="activity-filter-label">{{ 'projects.filter' | translate }}<select [(ngModel)]="activityFilterValue" name="activity-filter"><option value="all">{{ 'communityHelp.filter.all' | translate }}</option><option value="active">{{ 'admin.filterActive' | translate }}</option><option value="inactive">{{ 'admin.filterInactive' | translate }}</option><option value="suspended">{{ 'admin.filterSuspended' | translate }}</option></select></label><button class="small-button danger" (click)="purgeInactiveUsers()" [disabled]="!(inactiveUsers$ | async)?.length">{{ 'admin.purgeInactive' | translate }} (+{{ inactiveDeleteDays }}d)</button></div></div>
+            <div class="panel-header">
+              <div class="panel-title-row"><h2>{{ 'admin.registeredUsers' | translate }}</h2><span>{{ (sortedUsers$ | async)?.length || 0 }} {{ 'admin.accounts' | translate }} · {{ (stats$ | async)?.active30d || 0 }} {{ 'admin.stats.active' | translate }} (30d)</span></div>
+              <div class="panel-actions">
+                <label class="activity-filter-label">{{ 'projects.filter' | translate }}<select [ngModel]="activityFilterValue" (ngModelChange)="activityFilterValue = $event" name="activity-filter"><option value="all">{{ 'communityHelp.filter.all' | translate }}</option><option value="active">{{ 'admin.filterActive' | translate }}</option><option value="inactive">{{ 'admin.filterInactive' | translate }}</option><option value="suspended">{{ 'admin.filterSuspended' | translate }}</option></select></label>
+                <button class="small-button danger" (click)="purgeInactiveUsers()" [disabled]="!(inactiveUsers$ | async)?.length">{{ 'admin.purgeInactive' | translate }} (+{{ inactiveDeleteDays }}d)</button>
+                <button class="small-button" (click)="exportUsersCsv()">Exportar CSV</button>
+              </div>
+            </div>
             <div class="alert alert-warning" *ngIf="duplicateEmails.length">
               <strong>{{ 'admin.duplicateEmailsTitle' | translate }}</strong>
               <span *ngFor="let d of duplicateEmails">{{ d.email }} ({{ d.count }} {{ 'admin.duplicateEmailsCount' | translate }}) · </span>
             </div>
-            <div class="table-wrap" *ngIf="filteredUsers$ | async as users">
+            <div class="bulk-bar" *ngIf="(bulkToggleAllUsers$ | async) as bulk">
+              <label class="bulk-check"><input type="checkbox" [checked]="bulk.allSelected" (click)="toggleBulkUsers(bulk.allSelected)" /> <span><strong>{{ bulk.selected }}</strong> / {{ bulk.total }} seleccionados</span></label>
+              <div class="row-actions" *ngIf="bulk.selected">
+                <button class="small-button danger" (click)="bulkBanUsers()">Suspender</button>
+                <button class="small-button" (click)="bulkRestoreUsers()">Restaurar</button>
+              </div>
+            </div>
+            <div class="table-wrap" *ngIf="sortedUsers$ | async as users">
               <table>
-                <thead><tr><th>{{ 'admin.user' | translate }}</th><th>{{ 'admin.email' | translate }}</th><th>{{ 'admin.uid' | translate }}</th><th>{{ 'admin.role' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.created' | translate }}</th><th>{{ 'admin.lastActivity' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th class="th-check"></th>
+                    <th><button class="sort-btn" type="button" (click)="toggleUserSort('displayName')">{{ 'admin.user' | translate }}<span class="sort-arrow">{{ userSortKey === 'displayName' ? (userSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th>{{ 'admin.email' | translate }}</th>
+                    <th>{{ 'admin.uid' | translate }}</th>
+                    <th><button class="sort-btn" type="button" (click)="toggleUserSort('role')">{{ 'admin.role' | translate }}<span class="sort-arrow">{{ userSortKey === 'role' ? (userSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th>{{ 'admin.status' | translate }}</th>
+                    <th><button class="sort-btn" type="button" (click)="toggleUserSort('createdAt')">{{ 'admin.created' | translate }}<span class="sort-arrow">{{ userSortKey === 'createdAt' ? (userSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th><button class="sort-btn" type="button" (click)="toggleUserSort('lastSeen')">{{ 'admin.lastActivity' | translate }}<span class="sort-arrow">{{ userSortKey === 'lastSeen' ? (userSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th>{{ 'admin.actions' | translate }}</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  <tr *ngFor="let user of users; trackBy: trackUser">
+                  <tr *ngFor="let user of users; trackBy: trackUser" [class.row-selected]="selectedUsers.has(user.uid)">
+                    <td class="td-check"><input type="checkbox" [checked]="selectedUsers.has(user.uid)" (click)="toggleBulkUser(user.uid)" [attr.aria-label]="'Seleccionar ' + user.displayName" /></td>
                     <td><strong>{{ user.displayName }}</strong></td>
                     <td>{{ user.email || '—' }}</td>
                     <td><small class="mono">{{ user.uid }}</small></td>
@@ -185,7 +363,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr *ngIf="!users.length"><td colspan="8" class="muted-cell">{{ 'admin.noUsersToShow' | translate }}</td></tr>
+                  <tr *ngIf="!users.length"><td colspan="9" class="muted-cell">{{ 'admin.noUsersToShow' | translate }}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -209,9 +387,23 @@
         <!-- CONTENT -->
         <ng-container *ngIf="isContent">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.contentModeration' | translate }}</h2><span>{{ (filteredPosts$ | async)?.length || 0 }} modelos</span></div></div>
-            <div class="moderation-grid" *ngIf="filteredPosts$ | async as posts">
-              <article class="content-card" *ngFor="let post of posts; trackBy: trackPost">
+            <div class="panel-header">
+              <div class="panel-title-row"><h2>{{ 'admin.contentModeration' | translate }}</h2><span>{{ (sortedPosts$ | async)?.length || 0 }} modelos</span></div>
+              <div class="panel-actions">
+                <button class="small-button" (click)="exportPostsCsv()">Exportar CSV</button>
+              </div>
+            </div>
+            <div class="bulk-bar" *ngIf="(bulkToggleAllPosts$ | async) as bulk">
+              <label class="bulk-check"><input type="checkbox" [checked]="bulk.allSelected" (click)="toggleBulkPosts(bulk.allSelected)" /> <span><strong>{{ bulk.selected }}</strong> / {{ bulk.total }} seleccionados</span></label>
+              <div class="row-actions" *ngIf="bulk.selected">
+                <button class="small-button primary" (click)="bulkSetPostVisibility(false)">Hacer público</button>
+                <button class="small-button" (click)="bulkSetPostVisibility(true)">Hacer privado</button>
+                <button class="small-button danger" (click)="bulkDeletePosts()">Eliminar</button>
+              </div>
+            </div>
+            <div class="moderation-grid" *ngIf="sortedPosts$ | async as posts">
+              <article class="content-card" *ngFor="let post of posts; trackBy: trackPost" [class.card-selected]="selectedPosts.has(post.id)">
+                <label class="content-select"><input type="checkbox" [checked]="selectedPosts.has(post.id)" (click)="toggleBulkPost(post.id)" [attr.aria-label]="'Seleccionar ' + post.title" /></label>
                 <img [src]="post.thumbnailUrl" [alt]="post.title" />
                 <div>
                   <div class="content-title"><h3>{{ post.title }}</h3><span [class.private]="post.isPrivate">{{ post.isPrivate ? 'Privado' : 'Público' }}</span></div>
@@ -234,7 +426,7 @@
         <ng-container *ngIf="isReports">
           <section class="admin-panel full-width">
             <div class="panel-header">
-              <div class="panel-title-row"><h2>{{ 'admin.contentReports' | translate }}</h2><span>{{ (filteredReports$ | async)?.length || 0 }} reportes</span></div>
+              <div class="panel-title-row"><h2>{{ 'admin.contentReports' | translate }}</h2><span>{{ (sortedReports$ | async)?.length || 0 }} reportes</span></div>
               <div class="panel-actions">
                 <select [(ngModel)]="reportFilter">
                   <option value="all">{{ 'admin.all' | translate }}</option>
@@ -242,11 +434,22 @@
                   <option value="resolved">{{ 'admin.resolved' | translate }}</option>
                   <option value="dismissed">{{ 'admin.dismissed' | translate }}</option>
                 </select>
+                <button class="small-button" (click)="exportReportsCsv()">Exportar CSV</button>
               </div>
             </div>
-            <div class="table-wrap" *ngIf="filteredReports$ | async as reports">
+            <div class="table-wrap" *ngIf="sortedReports$ | async as reports">
               <table>
-                <thead><tr><th>{{ 'admin.model' | translate }}</th><th>{{ 'admin.reportedBy' | translate }}</th><th>{{ 'admin.reason' | translate }}</th><th>{{ 'admin.details' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.date' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>{{ 'admin.model' | translate }}</th>
+                    <th>{{ 'admin.reportedBy' | translate }}</th>
+                    <th><button class="sort-btn" type="button" (click)="toggleReportSort('reason')">{{ 'admin.reason' | translate }}<span class="sort-arrow">{{ reportSortKey === 'reason' ? (reportSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th>{{ 'admin.details' | translate }}</th>
+                    <th><button class="sort-btn" type="button" (click)="toggleReportSort('status')">{{ 'admin.status' | translate }}<span class="sort-arrow">{{ reportSortKey === 'status' ? (reportSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th><button class="sort-btn" type="button" (click)="toggleReportSort('createdAt')">{{ 'admin.date' | translate }}<span class="sort-arrow">{{ reportSortKey === 'createdAt' ? (reportSortDir === 'asc' ? '▲' : '▼') : '↕' }}</span></button></th>
+                    <th>{{ 'admin.actions' | translate }}</th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr *ngFor="let report of reports; trackBy: trackReport">
                     <td><strong>{{ report.postTitle }}</strong><br /><small class="mono">{{ report.postId }}</small></td>
@@ -273,7 +476,12 @@
         <!-- FEEDBACK -->
         <ng-container *ngIf="isFeedback">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.feedbackAndContact' | translate }}</h2><span>{{ (filteredFeedback$ | async)?.length || 0 }} mensajes</span></div></div>
+            <div class="panel-header">
+              <div class="panel-title-row"><h2>{{ 'admin.feedbackAndContact' | translate }}</h2><span>{{ (filteredFeedback$ | async)?.length || 0 }} mensajes</span></div>
+              <div class="panel-actions">
+                <button class="small-button" (click)="exportFeedbackCsv()">Exportar CSV</button>
+              </div>
+            </div>
             <div class="table-wrap" *ngIf="filteredFeedback$ | async as items">
               <table>
                 <thead><tr><th>{{ 'admin.date' | translate }}</th><th>{{ 'admin.type' | translate }}</th><th>{{ 'admin.contact' | translate }}</th><th>{{ 'admin.subjectMessage' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
@@ -300,7 +508,12 @@
         <!-- COMMUNITY HELP -->
         <ng-container *ngIf="isHelp">
           <section class="admin-panel full-width">
-            <div class="panel-header"><div class="panel-title-row"><h2>{{ 'admin.communityQuestions' | translate }}</h2><span>{{ (filteredQuestions$ | async)?.length || 0 }} preguntas</span></div></div>
+            <div class="panel-header">
+              <div class="panel-title-row"><h2>{{ 'admin.communityQuestions' | translate }}</h2><span>{{ (filteredQuestions$ | async)?.length || 0 }} preguntas</span></div>
+              <div class="panel-actions">
+                <button class="small-button" (click)="exportQuestionsCsv()">Exportar CSV</button>
+              </div>
+            </div>
             <div class="table-wrap" *ngIf="filteredQuestions$ | async as questions">
               <table>
                 <thead><tr><th>{{ 'admin.question' | translate }}</th><th>{{ 'admin.author' | translate }}</th><th>{{ 'admin.metrics' | translate }}</th><th>{{ 'admin.status' | translate }}</th><th>{{ 'admin.actions' | translate }}</th></tr></thead>
@@ -464,6 +677,97 @@
                 </div>
               </div>
             </div>
+          </section>
+        </ng-container>
+
+        <!-- SISTEMA -->
+        <ng-container *ngIf="isSistema">
+          <div class="sistema-grid" *ngIf="stats$ | async as stats">
+            <section class="admin-panel">
+              <div class="panel-header"><div class="panel-title-row"><h2>Estado de servicios</h2><span class="panel-badge">En vivo</span></div></div>
+              <ul class="service-list">
+                <li class="service-row"><span class="service-dot ok"></span><div><strong>Firebase Authentication</strong><small>Sesión de administrador verificada al cargar el panel</small></div><span class="service-state ok">Operativo</span></li>
+                <li class="service-row"><span class="service-dot ok"></span><div><strong>Cloud Firestore</strong><small>Colecciones en vivo: usuarios, modelos, reportes, feedback, auditoría</small></div><span class="service-state ok">Operativo</span></li>
+                <li class="service-row"><span class="service-dot warn"></span><div><strong>Cloud Storage</strong><small>Sin telemetría en la app; las miniaturas se suben al guardar proyectos</small></div><span class="service-state warn">No monitorizado</span></li>
+                <li class="service-row"><span class="service-dot ok"></span><div><strong>Reglas de seguridad</strong><small>Incluyen la colección <code>adminActions</code> (solo administradores)</small></div><span class="service-state ok">Desplegadas</span></li>
+              </ul>
+            </section>
+
+            <section class="admin-panel">
+              <div class="panel-header"><div class="panel-title-row"><h2>Agregados de la comunidad</h2></div></div>
+              <div class="aggregate-grid">
+                <div class="aggregate-item"><strong>{{ stats.totalUsers }}</strong><span>usuarios totales</span></div>
+                <div class="aggregate-item"><strong>{{ stats.active30d }}</strong><span>activos 30d</span></div>
+                <div class="aggregate-item"><strong>{{ stats.totalPosts }}</strong><span>modelos publicados</span></div>
+                <div class="aggregate-item"><strong>{{ stats.totalLikes }}</strong><span>me gusta totales</span></div>
+                <div class="aggregate-item"><strong>{{ stats.totalViews }}</strong><span>vistas totales</span></div>
+                <div class="aggregate-item"><strong>{{ stats.totalRemixes }}</strong><span>remixes totales</span></div>
+                <div class="aggregate-item"><strong>{{ stats.totalProjects }}</strong><span>proyectos colaborativos</span></div>
+                <div class="aggregate-item"><strong>{{ stats.publishedArticles }}</strong><span>artículos de ayuda publicados</span></div>
+              </div>
+            </section>
+
+            <section class="admin-panel full-row">
+              <div class="panel-header"><div class="panel-title-row"><h2>Registros · últimos 14 días</h2></div></div>
+              <div class="trend-strip trend-embedded">
+                <div class="trend-bars">
+                  <div class="trend-bar" *ngFor="let b of registrationTrend; let i = index">
+                    <div class="trend-bar-fill" [style.height.%]="b.pct" [style.background]="b.color" [attr.title]="b.label + ' · ' + b.value + ' registros'"></div>
+                    <span class="trend-bar-label">{{ i % 2 === 0 ? b.label : '' }}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="admin-panel">
+              <div class="panel-header"><div class="panel-title-row"><h3>Top autores</h3></div></div>
+              <ol class="top-authors">
+                <li *ngFor="let a of topAuthorsByPosts; let i = index">
+                  <span class="top-rank">{{ i + 1 }}</span>
+                  <span class="top-name" [title]="a.name">{{ a.name }}</span>
+                  <span class="top-value">{{ a.posts }} posts</span>
+                </li>
+                <li *ngIf="!topAuthorsByPosts.length" class="muted-cell">Sin publicaciones todavía.</li>
+              </ol>
+            </section>
+
+            <section class="admin-panel">
+              <div class="panel-header"><div class="panel-title-row"><h3>Publicaciones más valoradas</h3></div></div>
+              <ol class="top-authors">
+                <li *ngFor="let p of topLikedPosts; let i = index">
+                  <span class="top-rank heart">♡</span>
+                  <span class="top-name" [title]="p.title">{{ p.title }}</span>
+                  <span class="top-value">{{ p.likes }} likes</span>
+                </li>
+                <li *ngIf="!topLikedPosts.length" class="muted-cell">Sin publicaciones todavía.</li>
+              </ol>
+            </section>
+          </div>
+        </ng-container>
+
+        <!-- AUDITORÍA -->
+        <ng-container *ngIf="isAuditoria">
+          <section class="admin-panel full-width">
+            <div class="panel-header">
+              <div class="panel-title-row"><h2>Registro de auditoría</h2><span>{{ (vm.actions || []).length }} acciones registradas</span></div>
+              <div class="panel-actions">
+                <label class="sort-filter-label">Tipo de acción<select [(ngModel)]="auditFilter" name="audit-filter"><option value="all">Todas</option><option *ngFor="let k of auditKinds" [value]="k">{{ getAuditLabel(k) }}</option></select></label>
+              </div>
+            </div>
+            <ul class="admin-audit-log" *ngIf="filteredActions$ | async as actions">
+              <li class="audit-row" *ngFor="let action of actions; trackBy: trackAction">
+                <span class="badge {{ getAuditBadgeColor(action.action) }}">{{ getAuditLabel(action.action) }}</span>
+                <div class="audit-main">
+                  <strong>{{ action.targetLabel }}</strong>
+                  <small *ngIf="action.detail">{{ action.detail }}</small>
+                </div>
+                <div class="audit-meta">
+                  <span class="mono audit-type">{{ getAuditTargetType(action.targetType) }}</span>
+                  <small>{{ action.adminName }} · {{ action.createdAt | date:'short' }}</small>
+                </div>
+              </li>
+              <li class="empty-inline" *ngIf="!actions.length">Todavía no hay acciones registradas. Las acciones de moderación que realices aparecerán aquí automáticamente.</li>
+            </ul>
           </section>
         </ng-container>
 

@@ -735,4 +735,23 @@ export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': 'मल्टी-सेलेक्शन: आइटम जोड़ने/हटाने के लिए पंक्तियों पर टैप करें',
   'Marcadores de luz/vacío': 'लाइट/खाली मार्कर',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': 'सिस्टम',
+  'Auditoría': 'ऑडिट लॉग',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': '{count} चयनित खाता सस्पेंड करें?',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': '{count} चयनित खाता पुनर्स्थापित करें?',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': '{count} चयनित पोस्ट हटाएँ?',
+  '¿Ocultar las {count} publicación(es)?': '{count} पोस्ट छिपाएँ?',
+  '¿Hacer públicas las {count} publicación(es)?': '{count} पोस्ट सार्वजनिक करें?',
+  'Suspendidas {count} cuenta(s).': '{count} खाता सस्पेंड हुआ।',
+  'Restauradas {count} cuenta(s).': '{count} खाता पुनर्स्थापित हुआ।',
+  'Eliminadas {count} publicación(es).': '{count} पोस्ट हटाया गया।',
+  'Ocultadas {count} publicación(es).': '{count} पोस्ट छिपाया गया।',
+  'Publicadas {count} publicación(es).': '{count} पोस्ट प्रकाशित किया गया।',
+  'Suspensión masiva': 'बल्क सस्पेंशन',
+  'Restauración masiva': 'बल्क पुनर्स्थापना',
+  'Borrado masivo': 'बल्क विलोपन',
+  'Visibilidad masiva': 'बल्क दृश्यता',
+  'Moderación pendiente': 'लंबित मॉडरेशन',
+  'Firebase Storage no está configurado.': 'Firebase Storage कॉन्फ़िगर नहीं है।',
 };

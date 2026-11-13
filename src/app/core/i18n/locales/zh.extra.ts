@@ -735,4 +735,23 @@ export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': 'Çoklu seçim: öğe eklemek veya kaldırmak için satıra dokunun',
   'Marcadores de luz/vacío': 'Işık/Boş sahne işaretçileri',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': '系统',
+  'Auditoría': '审计日志',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': '停用所选的 {count} 个账号？',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': '恢复所选的 {count} 个账号？',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': '删除所选的 {count} 个帖子？',
+  '¿Ocultar las {count} publicación(es)?': '隐藏 {count} 个帖子？',
+  '¿Hacer públicas las {count} publicación(es)?': '将 {count} 个帖子设为公开？',
+  'Suspendidas {count} cuenta(s).': '已停用 {count} 个账号。',
+  'Restauradas {count} cuenta(s).': '已恢复 {count} 个账号。',
+  'Eliminadas {count} publicación(es).': '已删除 {count} 个帖子。',
+  'Ocultadas {count} publicación(es).': '已隐藏 {count} 个帖子。',
+  'Publicadas {count} publicación(es).': '已发布 {count} 个帖子。',
+  'Suspensión masiva': '批量停用',
+  'Restauración masiva': '批量恢复',
+  'Borrado masivo': '批量删除',
+  'Visibilidad masiva': '批量可见性',
+  'Moderación pendiente': '待处理审核',
+  'Firebase Storage no está configurado.': 'Firebase Storage 未配置。',
 };

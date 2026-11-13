@@ -735,4 +735,23 @@ export const DE_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': 'Mehrfachauswahl: Tippen Sie auf Zeilen, um Elemente hinzuzufügen oder zu entfernen',
   'Marcadores de luz/vacío': 'Licht-/Leere-Marker',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': 'System',
+  'Auditoría': 'Audit-Protokoll',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': '{count} ausgewählte Konto(s) sperren?',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': '{count} ausgewählte Konto(s) wiederherstellen?',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': '{count} ausgewählte(s) Beitrag/Beiträge löschen?',
+  '¿Ocultar las {count} publicación(es)?': '{count} Beitrag/Beiträge ausblenden?',
+  '¿Hacer públicas las {count} publicación(es)?': '{count} Beitrag/Beiträge öffentlich machen?',
+  'Suspendidas {count} cuenta(s).': '{count} Konto(s) gesperrt.',
+  'Restauradas {count} cuenta(s).': '{count} Konto(s) wiederhergestellt.',
+  'Eliminadas {count} publicación(es).': '{count} Beitrag/Beiträge gelöscht.',
+  'Ocultadas {count} publicación(es).': '{count} Beitrag/Beiträge ausgeblendet.',
+  'Publicadas {count} publicación(es).': '{count} Beitrag/Beiträge veröffentlicht.',
+  'Suspensión masiva': 'Massensperrung',
+  'Restauración masiva': 'Massenwiederherstellung',
+  'Borrado masivo': 'Massenlöschung',
+  'Visibilidad masiva': 'Massensichtbarkeit',
+  'Moderación pendiente': 'Ausstehende Moderation',
+  'Firebase Storage no está configurado.': 'Firebase Storage ist nicht konfiguriert.',
 };

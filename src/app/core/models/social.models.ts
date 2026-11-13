@@ -297,3 +297,42 @@ export interface HelpArticle {
   createdAt: number;
   updatedAt: number;
 }
+
+export type AdminActionKind =
+  | 'role_changed'
+  | 'user_banned'
+  | 'user_restored'
+  | 'post_deleted'
+  | 'post_visibility_changed'
+  | 'report_resolved'
+  | 'report_dismissed'
+  | 'feedback_deleted'
+  | 'feedback_status_changed'
+  | 'question_deleted'
+  | 'question_pinned'
+  | 'question_locked'
+  | 'question_resolved'
+  | 'project_deleted'
+  | 'project_member_role_changed'
+  | 'project_member_removed'
+  | 'help_article_created'
+  | 'help_article_updated'
+  | 'help_article_deleted'
+  | 'help_article_published_toggled'
+  | 'inactive_users_purged';
+
+export interface AdminAction {
+  id: string;
+  adminId: string;
+  adminName: string;
+  action: AdminActionKind;
+  targetType: 'user' | 'post' | 'report' | 'feedback' | 'question' | 'project' | 'help-article' | 'bulk' | 'system';
+  targetId: string;
+  targetLabel: string;
+  detail: string;
+  createdAt: number;
+}
+
+export type AdminActionTargetType = AdminAction['targetType'];
+
+// Re-exported for convenience

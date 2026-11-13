@@ -735,4 +735,23 @@ export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': 'マルチ選択: 行をタップしてアイテムを追加・削除',
   'Marcadores de luz/vacío': 'ライト/Emptyマーカー',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': 'システム',
+  'Auditoría': '監査ログ',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': '選択した {count} 件のアカウントを停止しますか？',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': '選択した {count} 件のアカウントを復元しますか？',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': '選択した {count} 件の投稿を削除しますか？',
+  '¿Ocultar las {count} publicación(es)?': '{count} 件の投稿を非表示にしますか？',
+  '¿Hacer públicas las {count} publicación(es)?': '{count} 件の投稿を公開しますか？',
+  'Suspendidas {count} cuenta(s).': '{count} 件のアカウントを停止しました。',
+  'Restauradas {count} cuenta(s).': '{count} 件のアカウントを復元しました。',
+  'Eliminadas {count} publicación(es).': '{count} 件の投稿を削除しました。',
+  'Ocultadas {count} publicación(es).': '{count} 件の投稿を非表示にしました。',
+  'Publicadas {count} publicación(es).': '{count} 件の投稿を公開しました。',
+  'Suspensión masiva': '一括停止',
+  'Restauración masiva': '一括復元',
+  'Borrado masivo': '一括削除',
+  'Visibilidad masiva': '一括公開設定',
+  'Moderación pendiente': '保留中のモデレーション',
+  'Firebase Storage no está configurado.': 'Firebase Storage が設定されていません。',
 };

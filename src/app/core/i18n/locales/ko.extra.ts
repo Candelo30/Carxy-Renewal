@@ -737,4 +737,23 @@ export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': '多选: 点击行以添加或移除条目',
   'Marcadores de luz/vacío': '灯光/空对象标记',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': '시스템',
+  'Auditoría': '감사 로그',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': '선택한 {count}개의 계정을 정지하시겠습니까?',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': '선택한 {count}개의 계정을 복원하시겠습니까?',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': '선택한 {count}개의 게시물을 삭제하시겠습니까?',
+  '¿Ocultar las {count} publicación(es)?': '{count}개의 게시물을 숨기시겠습니까?',
+  '¿Hacer públicas las {count} publicación(es)?': '{count}개의 게시물을 공개하시겠습니까?',
+  'Suspendidas {count} cuenta(s).': '{count}개의 계정이 정지되었습니다.',
+  'Restauradas {count} cuenta(s).': '{count}개의 계정이 복원되었습니다.',
+  'Eliminadas {count} publicación(es).': '{count}개의 게시물이 삭제되었습니다.',
+  'Ocultadas {count} publicación(es).': '{count}개의 게시물이 숨겨졌습니다.',
+  'Publicadas {count} publicación(es).': '{count}개의 게시물이 공개되었습니다.',
+  'Suspensión masiva': '일괄 정지',
+  'Restauración masiva': '일괄 복원',
+  'Borrado masivo': '일괄 삭제',
+  'Visibilidad masiva': '일괄 공개 설정',
+  'Moderación pendiente': '대기 중인 모더레이션',
+  'Firebase Storage no está configurado.': 'Firebase Storage가 구성되지 않았습니다.',
 };

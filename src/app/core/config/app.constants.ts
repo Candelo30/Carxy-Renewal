@@ -31,6 +31,7 @@ export const SOCIAL_COLLECTIONS = {
   projectActivity: 'projectActivity',
   projectPresences: 'projectPresences',
   assets: 'assets',
+  adminActions: 'adminActions',
   helpArticles: 'helpArticles',
   userActivity: 'userActivity',
   accountDeletionAudit: 'accountDeletionAudit',

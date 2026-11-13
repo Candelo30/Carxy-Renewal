@@ -735,4 +735,23 @@ export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Multiselección: toca filas para añadirlas o quitarlas': '다중 선택: 행을 탭하여 항목 추가/제거',
   'Marcadores de luz/vacío': '조명/빈 객체 마커',
 
+  // --- Panel de administración (sistema, auditoría, acciones masivas) ---
+  'Sistema': 'Система',
+  'Auditoría': 'Журнал аудита',
+  '¿Suspender las {count} cuenta(s) seleccionadas?': 'Приостановить выбранные аккаунты ({count})?',
+  '¿Restaurar las {count} cuenta(s) seleccionadas?': 'Восстановить выбранные аккаунты ({count})?',
+  '¿Eliminar las {count} publicación(es) seleccionadas?': 'Удалить выбранные публикации ({count})?',
+  '¿Ocultar las {count} publicación(es)?': 'Скрыть публикации ({count})?',
+  '¿Hacer públicas las {count} publicación(es)?': 'Сделать публикации общедоступными ({count})?',
+  'Suspendidas {count} cuenta(s).': 'Приостановлено аккаунтов: {count}.',
+  'Restauradas {count} cuenta(s).': 'Восстановлено аккаунтов: {count}.',
+  'Eliminadas {count} publicación(es).': 'Удалено публикаций: {count}.',
+  'Ocultadas {count} publicación(es).': 'Скрыто публикаций: {count}.',
+  'Publicadas {count} publicación(es).': 'Опубликовано: {count}.',
+  'Suspensión masiva': 'Массовая приостановка',
+  'Restauración masiva': 'Массовое восстановление',
+  'Borrado masivo': 'Массовое удаление',
+  'Visibilidad masiva': 'Массовое изменение видимости',
+  'Moderación pendiente': 'Ожидает модерации',
+  'Firebase Storage no está configurado.': 'Firebase Storage не настроен.',
 };
