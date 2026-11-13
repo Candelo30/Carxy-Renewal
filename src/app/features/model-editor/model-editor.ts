@@ -16,7 +16,7 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { interval, Subscription, Subject, firstValueFrom, take } from 'rxjs';
+import { interval, Subscription, Subject, firstValueFrom, take, catchError, map, of } from 'rxjs';
 import { auditTime, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
@@ -1495,8 +1495,21 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   async copyProjectLink(): Promise<void> {
     if (!this.projectId || !isPlatformBrowser(this.platformId)) return;
-    const url = absoluteAppUrl(`projects/${encodeURIComponent(this.projectId)}`, this.document.baseURI);
     try {
+      // Si el proyecto tiene un enlace de acceso activo, copiamos ESE: es el
+      // único enlace que funciona para quien NO es miembro (abre como visor o
+      // editor según el enlace). Sin enlace activo, copiamos la URL del
+      // proyecto (útil para miembros que ya tienen acceso).
+      const shareLink = await firstValueFrom(
+        this.collaboration.getShareLinks(this.projectId).pipe(
+          map((links) => links.find((link) => link.enabled) ?? null),
+          catchError(() => of(null)),
+          take(1),
+        ),
+      );
+      const url = shareLink
+        ? absoluteAppUrl(`editor?project=${encodeURIComponent(this.projectId)}&share=${encodeURIComponent(shareLink.id)}`, this.document.baseURI)
+        : absoluteAppUrl(`projects/${encodeURIComponent(this.projectId)}`, this.document.baseURI);
       await copyText(url);
       this.notifications.success(this.i18n.translate('projects.shareCopied'), this.i18n.translate('projects.shareTitle'));
     } catch {
