@@ -1048,6 +1048,7 @@ export class AdminDashboardComponent {
 
   readonly auditFilter$ = new BehaviorSubject<'all' | AdminActionKind>('all');
   private readonly sortVersion$ = new BehaviorSubject<number>(0);
+  private readonly selectionVersion$ = new BehaviorSubject<number>(0);
   get auditFilter(): 'all' | AdminActionKind { return this.auditFilter$.value; }
   set auditFilter(value: 'all' | AdminActionKind) { this.auditFilter$.next(value); }
   readonly auditKinds: AdminActionKind[] = [
@@ -1091,7 +1092,7 @@ export class AdminDashboardComponent {
     return this.vmSubject.value.user?.uid ?? null;
   }
 
-  readonly bulkToggleAllUsers$ = combineLatest([this.filteredUsers$]).pipe(
+  readonly bulkToggleAllUsers$ = combineLatest([this.filteredUsers$, this.selectionVersion$]).pipe(
     map(([users]) => {
       const total = users.length;
       const selected = users.filter((u) => this.selectedUsers.has(u.uid)).length;
@@ -1100,7 +1101,7 @@ export class AdminDashboardComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  readonly bulkToggleAllPosts$ = combineLatest([this.filteredPosts$]).pipe(
+  readonly bulkToggleAllPosts$ = combineLatest([this.filteredPosts$, this.selectionVersion$]).pipe(
     map(([posts]) => {
       const total = posts.length;
       const selected = posts.filter((p) => this.selectedPosts.has(p.id)).length;
@@ -1112,11 +1113,13 @@ export class AdminDashboardComponent {
   toggleBulkUser(uid: string): void {
     if (this.selectedUsers.has(uid)) this.selectedUsers.delete(uid);
     else this.selectedUsers.add(uid);
+    this.selectionVersion$.next(this.selectionVersion$.value + 1);
   }
 
   toggleBulkPost(id: string): void {
     if (this.selectedPosts.has(id)) this.selectedPosts.delete(id);
     else this.selectedPosts.add(id);
+    this.selectionVersion$.next(this.selectionVersion$.value + 1);
   }
 
   toggleBulkUsers(allSelected: boolean): void {
@@ -1126,6 +1129,7 @@ export class AdminDashboardComponent {
       } else {
         for (const u of list) this.selectedUsers.add(u.uid);
       }
+      this.selectionVersion$.next(this.selectionVersion$.value + 1);
     });
   }
 
@@ -1136,6 +1140,7 @@ export class AdminDashboardComponent {
       } else {
         for (const p of list) this.selectedPosts.add(p.id);
       }
+      this.selectionVersion$.next(this.selectionVersion$.value + 1);
     });
   }
 
@@ -1157,6 +1162,7 @@ export class AdminDashboardComponent {
         failed++;
       }
     }
+    this.selectionVersion$.next(this.selectionVersion$.value + 1);
     this.refresh();
     await this.log('user_banned', 'bulk', `bulk-${Date.now()}`, `Suspender ${ok} cuenta(s)`, `ok=${ok} failed=${failed}`);
     this.notifications.success(this.i18n.translate('Suspendidas {count} cuenta(s).', { count: ok }), this.i18n.translate('Suspensión masiva'));
@@ -1178,6 +1184,7 @@ export class AdminDashboardComponent {
         failed++;
       }
     }
+    this.selectionVersion$.next(this.selectionVersion$.value + 1);
     this.refresh();
     await this.log('user_restored', 'bulk', `bulk-${Date.now()}`, `Restaurar ${ok} cuenta(s)`, `ok=${ok} failed=${failed}`);
     this.notifications.success(this.i18n.translate('Restauradas {count} cuenta(s).', { count: ok }), this.i18n.translate('Restauración masiva'));
@@ -1199,6 +1206,7 @@ export class AdminDashboardComponent {
         failed++;
       }
     }
+    this.selectionVersion$.next(this.selectionVersion$.value + 1);
     this.refresh();
     await this.log('post_deleted', 'bulk', `bulk-${Date.now()}`, `Eliminar ${ok} publicación(es)`, `ok=${ok} failed=${failed}`);
     this.notifications.success(this.i18n.translate('Eliminadas {count} publicación(es).', { count: ok }), this.i18n.translate('Borrado masivo'));
