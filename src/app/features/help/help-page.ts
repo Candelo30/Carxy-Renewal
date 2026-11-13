@@ -896,10 +896,9 @@ export class HelpPage implements OnInit, OnDestroy, AfterViewInit {
 
   /** --- Asistente CARXY (beta) --- */
   readonly assistantQuestion = signal('');
-  readonly assistantAnswer = signal('');
   readonly assistantError = signal('');
   readonly asking = signal(false);
-  readonly assistantHistory = signal<Array<{ q: string; a: string }>>([]);
+  readonly assistantHistory = signal<Array<{ id: string; q: string; a: string }>>([]);
 
   private readonly route = inject(ActivatedRoute);
   private readonly platformId = inject(PLATFORM_ID);
@@ -1019,7 +1018,6 @@ export class HelpPage implements OnInit, OnDestroy, AfterViewInit {
     if (!question || this.asking()) return;
     this.asking.set(true);
     this.assistantError.set('');
-    this.assistantAnswer.set('');
     try {
       if (typeof getFunctions !== 'function') {
         throw new Error('functions-not-available');
@@ -1028,8 +1026,7 @@ export class HelpPage implements OnInit, OnDestroy, AfterViewInit {
       const result = await callable({ question });
       const answer = String((result?.data as { answer?: string } | undefined)?.answer ?? '').trim();
       if (!answer) throw new Error('empty-answer');
-      this.assistantAnswer.set(answer);
-      this.assistantHistory.update((history) => [...history, { q: question, a: answer }].slice(-3));
+      this.assistantHistory.update((history) => [...history, { id: crypto.randomUUID(), q: question, a: answer }].slice(-4));
       this.assistantQuestion.set('');
     } catch (error) {
       const code = String((error as { code?: string; message?: string })?.code ?? '');

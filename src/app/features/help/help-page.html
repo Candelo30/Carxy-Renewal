@@ -101,10 +101,7 @@
       @if (assistantError()) {
         <p class="assistant-error" role="alert">{{ assistantError() }}</p>
       }
-      @if (assistantAnswer(); as answer) {
-        <div class="assistant-answer" aria-live="polite">{{ answer }}</div>
-      }
-      @for (item of assistantHistory(); track item.q) {
+      @for (item of assistantHistory(); track item.id) {
         <div class="assistant-qa">
           <p class="assistant-q">🙋 {{ item.q }}</p>
           <div class="assistant-answer">{{ item.a }}</div>
