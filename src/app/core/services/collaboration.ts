@@ -531,6 +531,50 @@ export class CollaborationService implements OnDestroy {
     return `${projectId}_${this.normalizeInvitationEmail(invitedEmail)}`;
   }
 
+  /**
+   * Invita a una persona que el usuario sigue (seguidor) mediante su perfil.
+   * Reutiliza `inviteMember` para las validaciones de reglas y, al terminal,
+   * notifica al seguidor como usuario con `kind: 'invite'` para que reciba la
+   * invitación también en su buzón de actividad.
+   */
+  async inviteFollower(projectId: string, targetUid: string, role: ProjectRole): Promise<{ id: string; emailSent: boolean }> {
+    const user = await this.currentUser();
+    if (!user) throw new Error(this.i18n.translate('Inicia sesión para invitar seguidores.'));
+    const db = this.firestore;
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+
+    const profileSnap = await getDoc(doc(db, 'users', targetUid));
+    if (!profileSnap.exists()) throw new Error(this.i18n.translate('Ese seguidor ya no existe en la comunidad.'));
+    const profile = profileSnap.data() as { email?: string; displayName?: string; photoURL?: string | null };
+    const email = String(profile.email ?? '').trim().toLowerCase();
+    if (!email) throw new Error(this.i18n.translate('Ese seguidor no tiene correo verificable.'));
+
+    // Reusa el pipeline de invitación por correo: reglas (isProjectWriter),
+    // expiresAt, id canónico y setDoc.
+    const res = await this.inviteMember(projectId, email, role);
+
+    // Notificación 'invite' en el buzón del seguidor.
+    try {
+      const notificationId = `invite_${user.uid}_${projectId}_${targetUid}`
+        .replace(/[^A-Za-z0-9_-]/g, '_')
+        .slice(0, 500);
+      await setDoc(doc(db, 'users', targetUid, 'notifications', notificationId), {
+        id: notificationId,
+        recipientId: targetUid,
+        actorId: user.uid,
+        actorName: user.displayName || user.email || 'Usuario',
+        actorPhotoURL: user.photoURL ?? null,
+        kind: 'invite',
+        targetId: projectId,
+        createdAt: Date.now(),
+        read: false,
+      });
+    } catch (error) {
+      console.warn('[carxy] Invitación creada, pero no se pudo avisar al seguidor.', error);
+    }
+    return { id: res.id, emailSent: res.emailSent };
+  }
+
   async inviteMember(projectId: string, invitedEmail: string, role: ProjectRole): Promise<{ id: string; emailSent: boolean }> {
     const user = await this.currentUser();
     if (!user) throw new Error(this.i18n.translate('Inicia sesión para invitar miembros.'));

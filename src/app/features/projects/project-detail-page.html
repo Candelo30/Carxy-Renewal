@@ -157,6 +157,36 @@
       <button type="button" class="btn-secondary invite-link" (click)="shareProject()">
         🔗 {{ 'projects.share' | translate }}
       </button>
+
+      @if (following$ | async; as following) {
+        <div class="following-invites">
+          <h3>{{ 'Invitar seguidores' | translate }} <small>{{ 'Invita con un clic a quien sigues' | translate }}</small></h3>
+          @if (following.length) {
+            <ul class="following-list">
+              @for (person of following; track person.uid) {
+                <li class="following-row">
+                  <img class="following-avatar" [src]="person.photoURL || 'user-avatar.svg'" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
+                  <span class="following-name">{{ person.displayName }}</span>
+                  @if (invitedFollowers().has(person.uid)) {
+                    <span class="following-badge">{{ 'Invitado' | translate }}</span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn-primary following-invite-btn"
+                      [disabled]="busyFollowingId() === person.uid"
+                      (click)="inviteFollower(person)"
+                    >
+                      {{ busyFollowingId() === person.uid ? ('common.loading' | translate) : ('Invitar' | translate) }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-state">{{ 'Aún no sigues a nadie en la comunidad.' | translate }}</p>
+          }
+        </div>
+      }
     </section>
   }
 

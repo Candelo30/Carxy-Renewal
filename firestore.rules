@@ -174,7 +174,7 @@ service cloud.firestore {
             && request.resource.data.actorName is string
             && request.resource.data.actorName.size() <= 120
             && (request.resource.data.actorPhotoURL == null || request.resource.data.actorPhotoURL is string)
-            && request.resource.data.kind in ['follow', 'like', 'comment', 'message', 'remix', 'share']
+            && request.resource.data.kind in ['follow', 'like', 'comment', 'message', 'remix', 'share', 'invite']
             && request.resource.data.createdAt is number
             && request.resource.data.read == false
             && (
@@ -184,6 +184,7 @@ service cloud.firestore {
               || (request.resource.data.kind == 'message' && request.resource.data.targetId is string)
               || (request.resource.data.kind == 'remix' && request.resource.data.targetId is string)
               || (request.resource.data.kind == 'share' && request.resource.data.targetId is string)
+              || (request.resource.data.kind == 'invite' && request.resource.data.targetId is string)
             );
           allow update: if signedIn()
             && (
@@ -202,7 +203,7 @@ service cloud.firestore {
                 && request.resource.data.actorId == request.auth.uid
                 && request.resource.data.recipientId == uid
                 && request.resource.data.kind == resource.data.kind
-                && request.resource.data.kind in ['follow', 'like', 'comment', 'message', 'remix', 'share']
+                && request.resource.data.kind in ['follow', 'like', 'comment', 'message', 'remix', 'share', 'invite']
                 && request.resource.data.diff(resource.data).affectedKeys()
                      .hasOnly(['actorName', 'actorPhotoURL', 'targetId', 'createdAt', 'read'])
                 && request.resource.data.actorName is string

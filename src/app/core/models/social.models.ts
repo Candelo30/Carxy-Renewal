@@ -155,7 +155,7 @@ export interface ChatConversation {
   updatedAt: number;
 }
 
-export type ActivityNotificationKind = 'follow' | 'like' | 'comment' | 'message' | 'remix' | 'share';
+export type ActivityNotificationKind = 'follow' | 'like' | 'comment' | 'message' | 'remix' | 'share' | 'invite';
 
 export interface ActivityNotification {
   id: string;

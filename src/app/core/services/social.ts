@@ -978,6 +978,37 @@ export class SocialService {
     })));
   }
 
+  /**
+   * Lista las personas a las que el usuario sigue (hasta 50), junto con su
+   * perfil resumido. Es best-effort: los errores de lectura devuelven [].
+   */
+  myFollowing$(uid: string): Observable<User[]> {
+    if (!uid) return of([] as User[]);
+    if (this.firestore) {
+      const q = query(collection(this.firestore, 'users', uid, 'following'), limit(50));
+      return (collectionData(q, { idField: 'id' }) as Observable<Follow[]>).pipe(
+        switchMap((follows) => {
+          const targets = follows
+            .map((follow) => follow?.followingId)
+            .filter((id): id is string => typeof id === 'string' && id.length > 0);
+          if (!targets.length) return of([] as User[]);
+          const profiles$ = targets.slice(0, 30).map((targetId) =>
+            docData(doc(this.firestore!, 'users', targetId), { idField: 'uid' }),
+          );
+          return combineLatest(profiles$).pipe(
+            map((profiles) =>
+              profiles.filter((profile) => !!profile && !!(profile as User).displayName) as User[],
+            ),
+            catchError(() => of([] as User[])),
+          );
+        }),
+        catchError(() => of([] as User[])),
+      );
+    }
+    // Modo local (sin Firebase): no hay forma de obtener perfiles seguidos.
+    return of([] as User[]);
+  }
+
   async followUser(actor: User, targetUid: string): Promise<void> {
     if (!targetUid || targetUid === actor.uid) throw new Error('No puedes seguirte a ti mismo.');
     if (this.firestore) {

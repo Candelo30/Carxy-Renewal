@@ -1,13 +1,16 @@
-import { Component, ChangeDetectorRef, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AsyncPipe, DatePipe, DOCUMENT } from '@angular/common';
-import { combineLatest, tap } from 'rxjs';
+import { combineLatest, tap, of } from 'rxjs';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer';
 import { CollaborationService, hasPermission, type ProjectPermission } from '../../core/services/collaboration';
+import { SocialService } from '../../core/services/social';
+import type { User } from '../../core/models/social.models';
+import type { Observable } from 'rxjs';
 import { I18nService } from '../../core/services/i18n';
 import { AuthService } from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notifications';
@@ -31,6 +34,11 @@ export class ProjectDetailPage implements OnInit {
   private readonly notifications = inject(NotificationService);
   private readonly document = inject(DOCUMENT);
   private readonly cdr = inject(ChangeDetectorRef);
+  readonly social = inject(SocialService);
+
+  readonly busyFollowingId = signal<string | null>(null);
+  /** UIDs ya invitados en esta sesión (evita botones repetidos). */
+  readonly invitedFollowers = signal<Set<string>>(new Set());
 
   projectId = '';
   projectName = '';
@@ -40,6 +48,7 @@ export class ProjectDetailPage implements OnInit {
   invitations = this.collaboration.getMyInvitations();
   activity = this.collaboration.getProjectActivity('');
   shareLinks = this.collaboration.getShareLinks('');
+  following$: Observable<User[]> = of([]);
 
   newInviteEmail = '';
   newInviteRole: 'owner' | 'editor' | 'viewer' = 'editor';
@@ -91,8 +100,37 @@ export class ProjectDetailPage implements OnInit {
         const member = currentUid ? members.find((m) => m.userId === currentUid) : undefined;
         this.isOwner = member?.role === 'owner';
         this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
+        if (currentUid) {
+          this.following$ = this.social.myFollowing$(currentUid);
+        } else {
+          this.following$ = of([]);
+        }
         this.cdr.detectChanges();
       });
+  }
+
+  async inviteFollower(member: User): Promise<void> {
+    if (!this.projectId || !member?.uid) return;
+    if (this.busyFollowingId() === member.uid) return;
+    this.busyFollowingId.set(member.uid);
+    this.cdr.detectChanges();
+    try {
+      await this.collaboration.inviteFollower(this.projectId, member.uid, this.newInviteRole);
+      const next = new Set(this.invitedFollowers());
+      next.add(member.uid);
+      this.invitedFollowers.set(next);
+      this.notifications.success(
+        this.i18n.translate('Se le envió una invitación a {name}. Recibirá un aviso en su buzón.', { name: member.displayName }),
+        this.i18n.translate('Invitación enviada'),
+      );
+    } catch (error) {
+      this.notifications.error(
+        this.i18n.firebaseError(error, 'No se pudo enviar la invitación.'),
+      );
+    } finally {
+      this.busyFollowingId.set(null);
+      this.cdr.detectChanges();
+    }
   }
 
   async inviteMember(): Promise<void> {

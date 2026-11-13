@@ -88,13 +88,15 @@ export class ActivityNotificationsComponent {
     if (item.kind === 'message') return this.i18n.translate('te envió un mensaje');
     if (item.kind === 'remix') return this.i18n.translate('remixeó tu modelo');
     if (item.kind === 'share') return this.i18n.translate('se unió a tu proyecto por el enlace');
+    if (item.kind === 'invite') return this.i18n.translate('te quiere invitar a un proyecto');
     return this.i18n.translate('comentó en tu modelo');
   }
 
-  /** Un mensaje lleva a la conversación; compartir a la vista del proyecto; el resto, al perfil de quien actuó. */
+  /** Un mensaje lleva a la conversación; compartir e invitación al proyecto; el resto, al perfil de quien actuó. */
   linkFor(item: ActivityNotification): string[] {
     if (item.kind === 'message') return ['/chat'];
     if (item.kind === 'share') return ['/projects', item.targetId ?? ''];
+    if (item.kind === 'invite') return ['/projects', item.targetId ?? ''];
     return ['/profile', item.actorId];
   }
 
