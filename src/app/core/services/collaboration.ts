@@ -9,7 +9,9 @@ import {
   deleteDoc,
   DocumentSnapshot,
   getDoc,
+  getDocFromServer,
   getDocs,
+  onSnapshot,
   query,
   runTransaction,
   setDoc,
@@ -354,9 +356,48 @@ export class CollaborationService implements OnDestroy {
     );
   }
 
+  /**
+   * Lee la escena SOLO desde el servidor (sin la caché offline del SDK).
+   * La primera emisión de `getProjectScene` puede salir de la caché local
+   * (escena antigua); si se carga así y se re-guarda vía autosave, el
+   * servidor quedaría sobrescrito con contenido obsoleto.
+   */
+  getProjectSceneOnce(projectId: string): Observable<string | undefined> {
+    const db = this.firestore;
+    if (!db) return of(undefined);
+    return from(getDocFromServer(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`))).pipe(
+      map((snapshot) => (snapshot.data() as Project | undefined)?.sceneJson),
+      catchError((error: unknown) => {
+        console.warn('No se pudo leer la escena del proyecto desde el servidor.', error);
+        return of(undefined);
+      }),
+    );
+  }
+
   /** Observa cambios en tiempo real en la escena de un proyecto (para colaboración remota). */
   watchProjectScene(projectId: string): Observable<string | undefined> {
-    return this.getProjectScene(projectId);
+    const db = this.firestore;
+    if (!db) return of(undefined);
+    return new Observable<string | undefined>((subscriber) => {
+      const ref = doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`);
+      // Solo se aplican snapshots CONFIRMADOS por el servidor: los que llegan
+      // de la caché offline (p.ej. la escena rancia al abrir la página)
+      // sobrescribirían el trabajo actual y dispararían un autosave rancio.
+      const unsubscribe = onSnapshot(
+        ref,
+        { includeMetadataChanges: true },
+        (snapshot) => {
+          if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
+          const data = snapshot.data() as Project | undefined;
+          subscriber.next(data?.sceneJson);
+        },
+        (error: unknown) => {
+          console.warn('No se pudo observar la escena del proyecto.', error);
+          subscriber.next(undefined);
+        },
+      );
+      return unsubscribe;
+    });
   }
 
   /** Historial de actividad de un proyecto (quién hizo qué y cuándo). */

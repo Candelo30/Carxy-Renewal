@@ -281,7 +281,10 @@ export class ModelEditor implements OnInit, OnDestroy {
         })
       );
 
-      this.collaboration.getProjectScene(this.projectId).pipe(take(1)).subscribe((sceneJson) => {
+      // La carga inicial debe leer SIEMPRE desde el servidor: la primera
+      // emisión del listener puede servir contenido obsoleto de la caché
+      // local, y el autosave lo re-escribiría sobre el proyecto.
+      this.collaboration.getProjectSceneOnce(this.projectId).pipe(take(1)).subscribe((sceneJson) => {
         if (sceneJson) {
           this.threeEngine.loadProjectScene(sceneJson);
           this.projectSceneLoaded = true;
