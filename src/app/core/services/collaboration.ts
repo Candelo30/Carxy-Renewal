@@ -479,7 +479,21 @@ export class CollaborationService implements OnDestroy {
     const now = Date.now();
     const memberId = `${projectId}_${userId}`;
     const ref = doc(db, `${SOCIAL_COLLECTIONS.projectMembers}/${memberId}`);
-    const existing = await getDoc(ref);
+    // Las reglas no pueden evaluar `resource.data` sobre un documento
+    // inexistente, y `get()` directamente rechaza leerlo: la primera vez que
+    // alguien se convierte en miembro del proyecto (creador u alta por
+    // enlace), `getDoc(ref)` falla con "Missing or insufficient permissions"
+    // y la membresía nunca llegaba a escribirse. Se interpreta como
+    // "todavía no existe" y se sigue con el alta.
+    let existing: Partial<ProjectMember> | null = null;
+    try {
+      const existingSnap = await getDoc(ref);
+      existing = existingSnap.exists()
+        ? (existingSnap.data() as Partial<ProjectMember>)
+        : null;
+    } catch {
+      existing = null;
+    }
     const member: ProjectMember = {
       id: memberId,
       projectId,
@@ -487,8 +501,8 @@ export class CollaborationService implements OnDestroy {
       userName,
       userPhotoURL,
       role,
-      joinedAt: existing.exists()
-        ? (Number((existing.data() as Partial<ProjectMember>).joinedAt) || now)
+      joinedAt: existing
+        ? (Number(existing.joinedAt) || now)
         : now,
     };
     await setDoc(ref, member, { merge: true });
