@@ -1036,6 +1036,32 @@ export class CollaborationService implements OnDestroy {
       joinedViaShareLink: link.id,
     };
     await setDoc(memberRef, member);
+
+    // Aviso al dueño del proyecto: alguien nuevo se unió por el enlace.
+    try {
+      const projectSnap = await getDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${link.projectId}`));
+      const project = projectSnap.exists() ? (projectSnap.data() as { ownerId?: string }) : null;
+      const ownerId = project?.ownerId ?? '';
+      if (ownerId && ownerId !== user.uid) {
+        const notificationId = `share_${user.uid}_${link.projectId}_${now}`
+          .replace(/[^A-Za-z0-9_-]/g, '_')
+          .slice(0, 500);
+        await setDoc(doc(db, 'users', ownerId, 'notifications', notificationId), {
+          id: notificationId,
+          recipientId: ownerId,
+          actorId: user.uid,
+          actorName: user.displayName || user.email || 'Usuario',
+          actorPhotoURL: user.photoURL ?? null,
+          kind: 'share',
+          targetId: link.projectId,
+          createdAt: now,
+          read: false,
+        });
+      }
+    } catch (error) {
+      // El alta ya se hizo; avisar al dueño es un detalle best-effort.
+      console.warn('[carxy] No se pudo avisar al dueño del proyecto de la admisión por enlace.', error);
+    }
     return link;
   }
 

@@ -57,20 +57,64 @@ export class ActivityNotificationsComponent {
     return items.filter((item) => !item.read).length;
   }
 
+  /** Filtro del panel: todos / no leídos. */
+  readonly onlyUnread = signal(false);
+
+  visibleItems(items: ActivityNotification[]): ActivityNotification[] {
+    return this.onlyUnread() ? items.filter((item) => !item.read) : items;
+  }
+
+  groupLabel(item: ActivityNotification): 'Hoy' | 'Ayer' | 'Anteriores' {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const DAY = 24 * 60 * 60 * 1000;
+    const t = item.createdAt;
+    if (t >= startOfDay) return 'Hoy';
+    if (t >= startOfDay - DAY) return 'Ayer';
+    return 'Anteriores';
+  }
+
+  groupEntries(items: ActivityNotification[]): { label: 'Hoy' | 'Ayer' | 'Anteriores'; items: ActivityNotification[] }[] {
+    const visible = this.visibleItems(items);
+    const order: Array<'Hoy' | 'Ayer' | 'Anteriores'> = ['Hoy', 'Ayer', 'Anteriores'];
+    return order
+      .map((label) => ({ label, items: visible.filter((item) => this.groupLabel(item) === label) }))
+      .filter((group) => group.items.length > 0);
+  }
+
   messageFor(item: ActivityNotification): string {
     if (item.kind === 'follow') return this.i18n.translate('comenzó a seguirte');
     if (item.kind === 'like') return this.i18n.translate('marcó tu modelo como favorito');
     if (item.kind === 'message') return this.i18n.translate('te envió un mensaje');
+    if (item.kind === 'remix') return this.i18n.translate('remixeó tu modelo');
+    if (item.kind === 'share') return this.i18n.translate('se unió a tu proyecto por el enlace');
     return this.i18n.translate('comentó en tu modelo');
   }
 
-  /** Un mensaje lleva a la conversación; el resto, al perfil de quien actuó. */
+  /** Un mensaje lleva a la conversación; compartir a la vista del proyecto; el resto, al perfil de quien actuó. */
   linkFor(item: ActivityNotification): string[] {
-    return item.kind === 'message' ? ['/chat'] : ['/profile', item.actorId];
+    if (item.kind === 'message') return ['/chat'];
+    if (item.kind === 'share') return ['/projects', item.targetId ?? ''];
+    return ['/profile', item.actorId];
   }
 
   queryParamsFor(item: ActivityNotification): Record<string, string> | null {
     return item.kind === 'message' ? { peer: item.actorId } : null;
+  }
+
+  async clearRead(uid: string): Promise<void> {
+    try {
+      const removed = await this.social.clearReadActivityNotifications(uid);
+      this.notifications.success(
+        this.i18n.translate(removed > 0
+          ? 'Borraste {count} notificaciones leídas.'
+          : 'No había notificaciones leídas que borrar.', { count: removed }),
+        this.i18n.translate('Bandeja al día'),
+      );
+      this.open.set(false);
+    } catch (error) {
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudieron borrar las notificaciones leídas.'));
+    }
   }
 
   async markRead(item: ActivityNotification, uid: string): Promise<void> {

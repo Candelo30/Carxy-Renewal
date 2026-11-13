@@ -30,7 +30,7 @@ import {
   ref,
   uploadBytes,
 } from '@angular/fire/storage';
-import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, retry, shareReplay, switchMap, timer, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, retry, shareReplay, switchMap, take, timer, throwError } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
 import { firebaseErrorMessage } from '../utils/firebase-error';
 import { AuthService } from './auth';
@@ -1115,6 +1115,40 @@ export class SocialService {
     this.writeLocal(LOCAL_KEYS.activityNotifications, next);
   }
 
+  /**
+   * Borra todas las notificaciones ya leídas del buzón del usuario.
+   * Solo toca las marcadas como leídas (no son no leídas colapsables).
+   */
+  async clearReadActivityNotifications(uid: string): Promise<number> {
+    if (this.firestore) {
+      const q = query(
+        collection(this.firestore, 'users', uid, 'notifications'),
+        where('read', '==', true),
+      );
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return 0;
+      const CHUNK = 400;
+      const docs = snapshot.docs;
+      for (let start = 0; start < docs.length; start += CHUNK) {
+        const batch = writeBatch(this.firestore);
+        for (const document of docs.slice(start, start + CHUNK)) {
+          batch.delete(document.ref);
+        }
+        await batch.commit();
+      }
+      return docs.length;
+    }
+    const removed = this.localActivityNotifications.value.filter(
+      (item) => item.recipientId === uid && item.read,
+    ).length;
+    const next = this.localActivityNotifications.value.filter(
+      (item) => !(item.recipientId === uid && item.read),
+    );
+    this.localActivityNotifications.next(next);
+    this.writeLocal(LOCAL_KEYS.activityNotifications, next);
+    return removed;
+  }
+
   private isNotFoundError(error: unknown): boolean {
     return !!error
       && typeof error === 'object'
@@ -1752,11 +1786,70 @@ export class SocialService {
     this.countedRemixes.add(post.id);
     if (this.firestore) {
       await updateDoc(doc(this.firestore, SOCIAL_COLLECTIONS.posts, post.id), { remixCount: increment(1) });
+      // Avisar al autor del remix: solo la primera vez por sesión (el mapa de
+      // una sesión evita spam). Es best-effort, el remix ya quedó contado.
+      const actor = await this.socialActor();
+      if (actor && !actor.isBanned && post.author.uid !== actor.uid) {
+        const notificationId = this.notificationId('remix', actor.uid, post.id);
+        try {
+          await setDoc(
+            doc(this.firestore, 'users', post.author.uid, 'notifications', notificationId),
+            { ...this.notificationData(post.author.uid, actor, 'remix', post.id), id: notificationId },
+            { merge: true },
+          );
+        } catch (error) {
+          console.warn('[carxy] No se pudo avisar del remix al autor.', error);
+        }
+      }
       return;
     }
     this.persistLocalPosts(this.localPosts.value.map((item) => item.id === post.id
       ? { ...item, remixCount: (item.remixCount ?? 0) + 1 }
       : item));
+    const actor = await this.socialActor();
+    if (actor && !actor.isBanned && post.author?.uid && post.author.uid !== actor.uid) {
+      const localPost = post;
+      this.addLocalActivityNotification(
+        localPost.author.uid,
+        actor,
+        'remix',
+        post.id,
+        this.notificationId('remix', actor.uid, post.id),
+      );
+    }
+  }
+
+  /**
+   * Avisa al dueño de un proyecto cuando otra persona se une por un enlace de
+   * acceso. Se ejecuta solo en altas nuevas (no en reingresos ni en mejoras
+   * de rol). Es best-effort: el alta real ya se hizo, este es un detalle.
+   */
+  async notifyShareJoined(projectId: string, ownerId: string, actor: User): Promise<void> {
+    if (!ownerId || ownerId === actor.uid) return;
+    const notificationId = this.notificationId('share', actor.uid, projectId);
+    if (this.firestore) {
+      try {
+        await setDoc(
+          doc(this.firestore, 'users', ownerId, 'notifications', notificationId),
+          { ...this.notificationData(ownerId, actor, 'share', projectId), id: notificationId },
+          { merge: true },
+        );
+      } catch (error) {
+        console.warn('[carxy] No se pudo avisar al dueño del proyecto del join por enlace.', error);
+      }
+      return;
+    }
+    this.addLocalActivityNotification(ownerId, actor, 'share', projectId, this.notificationId('share', actor.uid, projectId));
+  }
+
+  private async socialActor(): Promise<User | null> {
+    const stream = this.auth?.user$;
+    if (!stream) return null;
+    try {
+      return await firstValueFrom(stream.pipe(take(1)));
+    } catch {
+      return null;
+    }
   }
 
   private notificationData(
