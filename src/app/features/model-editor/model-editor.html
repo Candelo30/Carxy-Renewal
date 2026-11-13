@@ -24,7 +24,10 @@
         <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar toro' | translate" (click)="addPrimitive('torus')"><span>◎</span>{{ 'Toro' | translate }}</button>
         <button [title]="'Agregar cono' | translate" (click)="addCone()"><span>△</span>{{ 'Cono' | translate }}</button>
         <button [title]="'Agregar plano' | translate" (click)="addPlane()"><span>▱</span>{{ 'Plano' | translate }}</button>
-        <button [title]="'Agregar anillo' | translate" (click)="addRing()"><span>◊</span>{{ 'Anillo' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar anillo' | translate" (click)="addRing()"><span>◊</span>{{ 'Anillo' | translate }}</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz puntual'" (click)="addLight('point')"><span>💡</span>Punto</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir foco (spot)'" (click)="addLight('spot')"><span>🔦</span>Foco</button>
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz direccional (sol)'" (click)="addLight('directional')"><span>☀</span>Direccional</button>
       </div>
       <div class="object-list">
         <button
@@ -237,6 +240,53 @@
       <p class="empty-state" *ngIf="materials.length === 0">
         {{ 'Selecciona un objeto para editar sus materiales.' | translate }}
       </p>
+      </div>
+    </details>
+
+    <details class="panel-section panel-collapsible" *ngIf="selectedLight as light" open>
+      <summary class="section-heading compact-heading summary-button">
+        <div>
+          <span class="eyebrow">ILUMINACIÓN</span>
+          <h2>{{ light.name }}</h2>
+        </div>
+        <span class="collapse-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-collapsible-body">
+        <div class="material-card">
+          <div class="material-row">
+            <span class="material-dot" [style.background]="light.color"></span>
+            <span class="material-name">{{ light.kind === 'point' ? 'Luz puntual' : light.kind === 'spot' ? 'Foco (spot)' : 'Luz direccional' }}</span>
+            <input type="color" [ngModel]="light.color" (ngModelChange)="onLightColorChange($event)" />
+          </div>
+          <div class="material-properties">
+            <label>
+              <span>Intensidad</span>
+              <input type="range" min="0" max="150" step="0.5" [ngModel]="light.intensity" (ngModelChange)="onLightPropertyChange('intensity', $event)" />
+              <small>{{ light.intensity | number: '1.0-1' }}</small>
+            </label>
+            <label *ngIf="light.kind !== 'directional'">
+              <span>Alcance</span>
+              <input type="range" min="0" max="20" step="0.1" [ngModel]="light.distance" (ngModelChange)="onLightPropertyChange('distance', $event)" />
+              <small>{{ light.distance === 0 ? '∞' : (light.distance | number: '1.0-1') }}</small>
+            </label>
+            <label *ngIf="light.kind !== 'directional'">
+              <span>Atenuac.</span>
+              <input type="range" min="0" max="4" step="0.05" [ngModel]="light.decay" (ngModelChange)="onLightPropertyChange('decay', $event)" />
+              <small>{{ light.decay | number: '1.2-2' }}</small>
+            </label>
+            <label *ngIf="light.kind === 'spot'">
+              <span>Ángulo</span>
+              <input type="range" min="5" max="80" step="1" [ngModel]="light.angle ?? 25" (ngModelChange)="onLightPropertyChange('angle', $event)" />
+              <small>{{ light.angle ?? 25 | number: '1.0-0' }}°</small>
+            </label>
+            <label *ngIf="light.kind === 'spot'">
+              <span>Penumbra</span>
+              <input type="range" min="0" max="1" step="0.01" [ngModel]="light.penumbra ?? 0" (ngModelChange)="onLightPropertyChange('penumbra', $event)" />
+              <small>{{ light.penumbra ?? 0 | number: '1.2-2' }}</small>
+            </label>
+          </div>
+        </div>
+        <p class="material-hint">Mueve el marcador octaédrico con el gizmo para colocar la luz en la escena.</p>
       </div>
     </details>
 

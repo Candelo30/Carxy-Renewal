@@ -1072,6 +1072,99 @@ export class ThreeEngineService implements OnDestroy {
     }
   }
 
+  public addLightPrimitive(kind: 'point' | 'spot' | 'directional'): string {
+    if (!this.scene) return '';
+    const name = kind === 'point' ? 'Luz de punto' : kind === 'spot' ? 'Luz de foco' : 'Luz direccional';
+    const markerColor = kind === 'point' ? '#ffd166' : kind === 'spot' ? '#7dd3fc' : '#f4f1de';
+    const group = new THREE.Group();
+    group.name = name;
+    // Marcador: un octaedro emissive/brillante para ver el "foco" en el viewport.
+    const markerMaterial = new THREE.MeshBasicMaterial({ color: markerColor, toneMapped: false });
+    const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), markerMaterial);
+    marker.name = 'Marcador de luz';
+    let light: THREE.PointLight | THREE.SpotLight | THREE.DirectionalLight;
+    if (kind === 'point') {
+      light = new THREE.PointLight(0xffd9a0, 30, 0, 1.8);
+    } else if (kind === 'spot') {
+      light = new THREE.SpotLight(0xffffff, 80, 0, Math.PI / 7, 0.42, 1.5);
+    } else {
+      light = new THREE.DirectionalLight(0xffffff, 2.2);
+    }
+    light.name = name;
+    if ('castShadow' in light) light.castShadow = false;
+    group.add(marker, light);
+    const offset = this.objects.length * 0.45;
+    group.position.set(offset - 2, 2.2, offset - 2);
+    const id = this.addObject(group, name);
+    this.resetCamera();
+    return id;
+  }
+
+  public getSelectedLightInfo(): {
+    kind: string; name: string; color: string; intensity: number;
+    distance: number; decay: number; angle: number | null; penumbra: number | null;
+  } | null {
+    const selected = this.selectedNode;
+    if (!selected) return null;
+    const found: THREE.Light[] = [];
+    selected.traverse((node) => {
+      if ((node as THREE.Light).isLight) found.push(node as THREE.Light);
+    });
+    const light = found[0] ?? null;
+    if (!light) return null;
+    const color = 'color' in light && light.color instanceof THREE.Color ? `#${light.color.getHexString()}` : '#ffffff';
+    const distance = 'distance' in light && typeof light.distance === 'number' ? light.distance : 0;
+    const decay = 'decay' in light && typeof light.decay === 'number' ? light.decay : 0;
+    const angle = light instanceof THREE.SpotLight ? THREE.MathUtils.radToDeg(light.angle) : null;
+    const penumbra = light instanceof THREE.SpotLight ? light.penumbra : null;
+    return {
+      kind: light.type.replace('Light', '').toLowerCase(),
+      name: light.name,
+      color,
+      intensity: light.intensity,
+      distance,
+      decay,
+      angle,
+      penumbra,
+    };
+  }
+
+  public updateLightProperty(
+    property: 'intensity' | 'distance' | 'decay' | 'angle' | 'penumbra',
+    value: number,
+  ): void {
+    const selected = this.selectedNode;
+    if (!selected) return;
+    const found: THREE.Light[] = [];
+    selected.traverse((node) => {
+      if ((node as THREE.Light).isLight) found.push(node as THREE.Light);
+    });
+    const light = found[0] ?? null;
+    if (!light) return;
+    if (property === 'angle') {
+      if (light instanceof THREE.SpotLight) light.angle = THREE.MathUtils.degToRad(value);
+    } else if (property === 'penumbra') {
+      if (light instanceof THREE.SpotLight) light.penumbra = value;
+    } else if (property === 'distance' || property === 'decay' || property === 'intensity') {
+      (light as THREE.PointLight | THREE.SpotLight)[property] = value;
+      if (property === 'intensity') light.intensity = value;
+    }
+    this.sceneChanged$.next();
+  }
+
+  public updateLightColor(hexColor: string): void {
+    const selected = this.selectedNode;
+    if (!selected) return;
+    const found: THREE.Light[] = [];
+    selected.traverse((node) => {
+      if ((node as THREE.Light).isLight) found.push(node as THREE.Light);
+    });
+    const light = found[0] ?? null;
+    if (!light || !('color' in light) || !(light.color instanceof THREE.Color)) return;
+    light.color.set(hexColor);
+    this.sceneChanged$.next();
+  }
+
   public addPrimitive(type: PrimitiveType): string {
     if (!this.scene) {
       this.pendingPrimitives.push(type);

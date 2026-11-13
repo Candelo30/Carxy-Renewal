@@ -364,6 +364,13 @@
   line-height: 1.55;
 }
 
+.material-hint {
+  margin: 8px 0 0 18px;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  line-height: 1.5;
+}
+
 .compact-heading {
   margin-bottom: 13px;
 }

@@ -227,6 +227,7 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.updateSelectionState();
       this.syncValuesFromEngine();
       this.loadMaterialsFromEngine();
+      this.refreshLightPanel();
       this.measureDimensions();
     }));
     this.editorHistory.attach();
@@ -431,6 +432,7 @@ export class ModelEditor implements OnInit, OnDestroy {
         this.updateSelectionState();
         this.syncValuesFromEngine();
         this.loadMaterialsFromEngine();
+        this.refreshLightPanel();
         this.measureDimensions();
         this.updateOwnPresence();
         const selId = this.threeEngine.getSelectedNodeId();
@@ -784,6 +786,42 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   // --- MÉTODOS DE MATERIALES ---
+
+  // --- LUCES DE ESCENA ---
+  public selectedLight: {
+    kind: string;
+    name: string;
+    color: string;
+    intensity: number;
+    distance: number;
+    decay: number;
+    angle: number | null;
+    penumbra: number | null;
+  } | null = null;
+
+  addLight(kind: 'point' | 'spot' | 'directional'): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.threeEngine.addLightPrimitive(kind);
+  }
+
+  refreshLightPanel(): void {
+    this.selectedLight = this.threeEngine.getSelectedLightInfo();
+    this.cdr.detectChanges();
+  }
+
+  onLightColorChange(hex: string): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.threeEngine.updateLightColor(hex);
+    this.refreshLightPanel();
+  }
+
+  onLightPropertyChange(
+    property: 'intensity' | 'distance' | 'decay' | 'angle' | 'penumbra',
+    value: number,
+  ): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.threeEngine.updateLightProperty(property, value);
+  }
 
   onMaterialColorChange(uuid: string, newColor: string): void {
     if (this.shareLinkBlocksEditing) return;
