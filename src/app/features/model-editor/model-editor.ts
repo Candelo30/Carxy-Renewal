@@ -10,6 +10,7 @@ import {
   ViewChild,
   ElementRef,
   inject,
+  signal,
 } from '@angular/core';
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, DOCUMENT } from '@angular/common';
@@ -1466,6 +1467,34 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   memberRoleLabel(role: ProjectRole): string {
     return 'projects.role' + (role.charAt(0).toUpperCase() + role.slice(1));
+  }
+
+  readonly busyMemberRoleId = signal<string | null>(null);
+
+  async onMemberRoleChange(member: ProjectMember, event: Event): Promise<void> {
+    if (!this.projectId || !this.isProjectOwner) return;
+    const target = event.target as HTMLSelectElement;
+    const role = target.value as ProjectRole;
+    if (role === 'owner' || role === 'editor' || role === 'viewer') {
+      if (role === member.role || this.busyMemberRoleId() !== null) {
+        target.value = member.role;
+        return;
+      }
+      this.busyMemberRoleId.set(member.id);
+      this.cdr.detectChanges();
+      try {
+        await this.collaboration.updateMemberRole(this.projectId, member.id, role);
+        this.notifications.success(this.i18n.translate('projects.roleUpdated'));
+      } catch (error) {
+        target.value = member.role;
+        this.notifications.error(this.i18n.firebaseError(error, 'No se pudo cambiar el rol.'));
+      } finally {
+        this.busyMemberRoleId.set(null);
+        this.cdr.detectChanges();
+      }
+      return;
+    }
+    target.value = member.role;
   }
 
   useFallbackAvatar(event: Event): void {

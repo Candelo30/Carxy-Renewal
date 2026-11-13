@@ -987,6 +987,28 @@ input[type='range'] {
   flex-wrap: wrap;
 }
 
+.presence-role-select {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2px 4px;
+  max-width: 92px;
+  cursor: pointer;
+}
+
+.presence-role-select option {
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+}
+
 .self-row {
   border-color: var(--accent-color);
   background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-panel));

@@ -302,7 +302,20 @@
                 <div class="presence-info">
                   <span class="presence-name">{{ member.userName }}</span>
                   <div class="presence-sub">
-                    <span class="member-role-chip role-{{ member.role }}">{{ memberRoleLabel(member.role) | translate }}</span>
+                    @if (isProjectOwner && member.role !== 'owner' && member.role !== undefined) {
+                      <select
+                        class="presence-role-select"
+                        [disabled]="busyMemberRoleId() === member.id"
+                        [value]="member.role"
+                        (change)="onMemberRoleChange(member, $event)"
+                        aria-label="Cambiar rol"
+                      >
+                        <option value="editor">{{ 'projects.roleEditor' | translate }}</option>
+                        <option value="viewer">{{ 'projects.roleViewer' | translate }}</option>
+                      </select>
+                    } @else {
+                      <span class="member-role-chip role-{{ member.role }}">{{ memberRoleLabel(member.role) | translate }}</span>
+                    }
                     @if (isMemberOnline(member)) {
                       @if (memberEditingName(member); as editingName) {
                         <span class="editing-chip">{{ 'projects.editing' | translate: { name: editingName } }}</span>
