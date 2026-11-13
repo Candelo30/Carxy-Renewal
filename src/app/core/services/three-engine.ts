@@ -1347,11 +1347,13 @@ export class ThreeEngineService implements OnDestroy {
   public updateRotation(axis: 'x' | 'y' | 'z', degrees: number): void {
     const target = this.getCurrentModel();
     if (target) target.rotation[axis] = THREE.MathUtils.degToRad(degrees);
+    this.transformChanged$.next();
   }
 
   public updatePosition(axis: 'x' | 'y' | 'z', value: number): void {
     const target = this.getCurrentModel();
     if (target) target.position[axis] = value;
+    this.transformChanged$.next();
   }
 
   public updateBackgroundColor(color: string): void {
