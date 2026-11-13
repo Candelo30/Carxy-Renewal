@@ -1349,6 +1349,25 @@ export class ThreeEngineService implements OnDestroy {
     this.transformChanged$.next();
   }
 
+  /** Escala individual por eje (x, y o z) para piezas no uniformes. */
+  public updateScaleAxis(axis: 'x' | 'y' | 'z', value: number): void {
+    const clamped = Math.min(20, Math.max(0.05, value));
+    const target = this.getCurrentModel();
+    if (target) target.scale[axis] = clamped;
+    this.transformChanged$.next();
+  }
+
+  /** Renombra el objeto actualmente seleccionado. */
+  public renameObject(objectId: string, name: string): void {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return;
+    item.name = trimmed.slice(0, 80);
+    item.object.name = item.name;
+    this.sceneChanged$.next();
+  }
+
   public updateRotation(axis: 'x' | 'y' | 'z', degrees: number): void {
     const target = this.getCurrentModel();
     if (target) target.rotation[axis] = THREE.MathUtils.degToRad(degrees);

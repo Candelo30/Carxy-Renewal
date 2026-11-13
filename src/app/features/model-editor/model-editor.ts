@@ -74,6 +74,10 @@ interface CameraBookmark {
 })
 export class ModelEditor implements OnInit, OnDestroy {
   public scale = 1;
+  public scaleX = 1;
+  public scaleY = 1;
+  public scaleZ = 1;
+  public renameValue = '';
   public posX = 0;
   public posY = 0;
   public posZ = 0;
@@ -719,6 +723,10 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.rotY = model ? Math.round(THREE.MathUtils.radToDeg(model.rotation.y)) : 0;
     this.rotZ = model ? Math.round(THREE.MathUtils.radToDeg(model.rotation.z)) : 0;
     this.scale = model ? Number(model.scale.x.toFixed(2)) : 1;
+    this.scaleX = model ? Number(model.scale.x.toFixed(2)) : 1;
+    this.scaleY = model ? Number(model.scale.y.toFixed(2)) : 1;
+    this.scaleZ = model ? Number(model.scale.z.toFixed(2)) : 1;
+    this.renameValue = this.threeEngine.getSceneObjects().find((o) => o.id === this.selectedObjectId)?.name ?? '';
     this.cdr.detectChanges();
   }
 
@@ -727,6 +735,17 @@ export class ModelEditor implements OnInit, OnDestroy {
   onScaleChange(): void {
     if (this.shareLinkBlocksEditing) return;
     this.threeEngine.updateScale(this.scale);
+  }
+
+  onScaleAxisChange(axis: 'x' | 'y' | 'z', value: number): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.threeEngine.updateScaleAxis(axis, Number(value));
+  }
+
+  onRenameChange(value: string): void {
+    if (this.shareLinkBlocksEditing) return;
+    if (!this.selectedObjectId) return;
+    this.threeEngine.renameObject(this.selectedObjectId, value);
   }
 
   onPositionChange(axis: 'x' | 'y' | 'z', value: number): void {
