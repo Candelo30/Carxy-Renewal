@@ -55,3 +55,6 @@ Thumbs.db
 
 # Firebase config (no versionar credenciales del cliente)
 public/firebase-config.js
+
+# Logs
+build.log
