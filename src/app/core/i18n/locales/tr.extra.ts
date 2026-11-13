@@ -780,4 +780,8 @@ export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'Yapay zekâ tarafından üretilen yanıtlar. Kritik bilgileri Yardım Merkezi’nde doğrulayın veya İletişim sayfasından yazın.',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': 'Oturumunuz henüz hazır değil. Sayfayı yenileyin veya biraz sonra tekrar deneyin.',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': 'Asistan şu anda yanıt veremedi. Birkaç saniye sonra tekrar deneyin.',
+  'Reproducir nota de voz': 'Sesli mesajı oynat',
+  'Pausar nota de voz': 'Sesli mesajı duraklat',
+  'Buscar en la nota de voz': 'Sesli mesajda ara',
+  'No se pudo reproducir la nota de voz.': 'Sesli mesaj oynatılamadı.',
 };

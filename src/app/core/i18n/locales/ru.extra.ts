@@ -778,4 +778,8 @@ export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'Ответы созданы ИИ. Проверяйте важную информацию в Центре помощи или пишите нам со страницы «Контакты».',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': 'Ваш сеанс ещё не готов. Перезагрузите страницу или повторите через момент.',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': 'Ассистент не смог ответить сейчас. Попробуйте через несколько секунд.',
+  'Reproducir nota de voz': 'Воспроизвести голосовое сообщение',
+  'Pausar nota de voz': 'Поставить голосовое сообщение на паузу',
+  'Buscar en la nota de voz': 'Перемотать голосовое сообщение',
+  'No se pudo reproducir la nota de voz.': 'Не удалось воспроизвести голосовое сообщение.',
 };

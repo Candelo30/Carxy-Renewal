@@ -250,6 +250,11 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly recording = signal(false);
   readonly recordSeconds = signal(0);
   readonly audioSending = signal(false);
+  /** --- Reproductor de notas de voz (un solo elemento activo a la vez) --- */
+  readonly audioNotePlayingId = signal<string | null>(null);
+  readonly audioNoteCurrent = signal(0);
+  readonly audioNoteDuration = signal(0);
+  private audioElement?: HTMLAudioElement;
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
   private recordInterval?: ReturnType<typeof setInterval>;
@@ -321,6 +326,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.error.set('');
     this.listError.set('');
     this.threadError.set('');
+    this.stopAudioNote();
     const nextChatId = [this.currentUser.uid, peer].sort().join('__');
     if (this.chatId() === nextChatId) {
       // Misma conversación: no se recrea el stream, pero se refresca el estado visual.
@@ -444,6 +450,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   deselectChat(): void {
     this.chatId.set('');
     this.partnerId = '';
+    this.stopAudioNote();
     this.chatBackgroundId = this.effectiveChatBackgroundId('');
     this.messages.set(undefined);
     this.partnerProfile.set(undefined);
@@ -1101,6 +1108,105 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     return message.kind === 'audio' && !!message.audioUrl;
   }
 
+  /** Alterna reproducir/pausar una nota de voz. Solo un elemento <audio> a la vez. */
+  toggleAudioNote(message: ChatMessage): void {
+    if (!message.audioUrl || typeof Audio === 'undefined') return;
+    if (this.audioNotePlayingId() === message.id) {
+      this.audioElement?.pause();
+      this.audioNotePlayingId.set(null);
+      return;
+    }
+    this.stopAudioNote();
+    const audio = new Audio(message.audioUrl);
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => {
+      if (this.audioNotePlayingId() !== message.id) return;
+      const meta = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (message.audioDuration ?? 0);
+      this.audioNoteDuration.set(meta);
+    };
+    audio.ontimeupdate = () => {
+      if (this.audioNotePlayingId() === message.id) this.audioNoteCurrent.set(audio.currentTime);
+    };
+    audio.onended = () => {
+      if (this.audioNotePlayingId() === message.id) {
+        this.audioNotePlayingId.set(null);
+        this.audioNoteCurrent.set(0);
+      }
+    };
+    audio.onerror = () => {
+      this.notifications.warning(this.i18n.translate('No se pudo reproducir la nota de voz.'));
+      this.audioNotePlayingId.set(null);
+    };
+    this.audioElement = audio;
+    this.audioNotePlayingId.set(message.id);
+    this.audioNoteCurrent.set(0);
+    this.audioNoteDuration.set(message.audioDuration ?? 0);
+    void audio.play().catch(() => {
+      this.audioNotePlayingId.set(null);
+      this.notifications.warning(this.i18n.translate('No se pudo reproducir la nota de voz.'));
+    });
+  }
+
+  /** Busca un punto concreto dentro de la nota de voz desde la pista clicable. */
+  seekAudioNote(event: MouseEvent, message: ChatMessage): void {
+    const track = event.currentTarget as HTMLElement;
+    const rect = track.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const fraction = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    if (this.audioNotePlayingId() !== message.id) {
+      this.toggleAudioNote(message);
+    }
+    const audio = this.audioElement;
+    if (!audio) return;
+    const duration = this.audioNoteDuration();
+    if (duration > 0) {
+      audio.currentTime = fraction * duration;
+      this.audioNoteCurrent.set(audio.currentTime);
+    }
+  }
+
+  /** Porcentaje de progreso de la nota actual (0 en las demás). */
+  audioNotePercent(message: ChatMessage): number {
+    if (this.audioNotePlayingId() !== message.id) return 0;
+    const duration = this.audioNoteDuration();
+    if (duration <= 0) return 0;
+    return Math.min(100, Math.max(0, (this.audioNoteCurrent() / duration) * 100));
+  }
+
+  /** Etiqueta mm:ss / mm:ss cuando está sonando; total mm:ss en reposo. */
+  audioNoteTimeLabel(message: ChatMessage): string {
+    const total = this.audioNotePlayingId() === message.id
+      ? this.audioNoteDuration()
+      : (message.audioDuration ?? 0);
+    if (this.audioNotePlayingId() === message.id) {
+      return `${this.formatAudioTime(this.audioNoteCurrent())} / ${this.formatAudioTime(total)}`;
+    }
+    return this.formatAudioTime(total);
+  }
+
+  private formatAudioTime(seconds: number): string {
+    const total = Math.max(0, Math.floor(seconds || 0));
+    const minutes = Math.floor(total / 60);
+    const rest = total % 60;
+    return `${minutes}:${rest.toString().padStart(2, '0')}`;
+  }
+
+  /** Detiene y libera el elemento de audio (al salir del chat o al destruir el componente). */
+  stopAudioNote(): void {
+    const audio = this.audioElement;
+    if (audio) {
+      audio.pause();
+      audio.onended = null;
+      audio.ontimeupdate = null;
+      audio.onloadedmetadata = null;
+      audio.src = '';
+      audio.load();
+    }
+    this.audioElement = undefined;
+    this.audioNotePlayingId.set(null);
+    this.audioNoteCurrent.set(0);
+  }
+
   /** Temporizador mm:ss para la barra de grabación. */
   recordTimer(): string {
     const total = this.recordSeconds();
@@ -1207,6 +1313,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    this.stopAudioNote();
     if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
     if (this.copyMessageTimer) clearTimeout(this.copyMessageTimer);
     if (this.mediaRecorder) {

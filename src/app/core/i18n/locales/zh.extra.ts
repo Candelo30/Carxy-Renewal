@@ -778,4 +778,8 @@ export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'AI 生成的回答。重要信息请在帮助中心核实，或通过联系页面写信给我们。',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': '你的会话尚未就绪。请刷新页面或稍后再试。',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': '助手暂时无法回答。请几秒钟后重试。',
+  'Reproducir nota de voz': '播放语音消息',
+  'Pausar nota de voz': '暂停语音消息',
+  'Buscar en la nota de voz': '在语音消息中定位',
+  'No se pudo reproducir la nota de voz.': '无法播放语音消息。',
 };

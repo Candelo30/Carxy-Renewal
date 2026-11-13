@@ -778,4 +778,8 @@ export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'AIによる回答です。重要な情報はヘルプセンターでご確認いただくか、お問い合わせからご連絡ください。',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': 'セッションの準備がまだ完了していません。ページを再読み込みするか、少し待ってからもう一度お試しください。',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': 'アシスタントは今すぐ回答できませんでした。数秒後にもう一度お試しください。',
+  'Reproducir nota de voz': 'ボイスメモを再生',
+  'Pausar nota de voz': 'ボイスメモを一時停止',
+  'Buscar en la nota de voz': 'ボイスメモ内をシーク',
+  'No se pudo reproducir la nota de voz.': 'ボイスメモを再生できませんでした。',
 };

@@ -863,15 +863,12 @@
   align-items: center;
   gap: 12px;
   padding: 0 20px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-raised) 46%, transparent), color-mix(in srgb, var(--surface-panel) 26%, transparent));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+  background: var(--surface-panel);
 }
 
 .back-button {
-  display: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 42px;
@@ -2164,17 +2161,63 @@
 .record-send:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .record-send-label { font-size: 0.84rem; }
 
-.audio-note { display: grid; gap: 4px; min-width: 0; }
-.audio-note audio {
-  width: 100%;
-  min-width: 0;
-  max-width: 240px;
-  height: 40px;
-  border-radius: 10px;
-  filter: saturate(0.9);
+.audio-note { display: flex; align-items: center; gap: 10px; min-width: 210px; max-width: 280px; padding: 6px 8px 6px 6px; }
+.audio-toggle {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; flex: none;
+  padding: 0; border: 1px solid var(--border-color); border-radius: 50%;
+  background: var(--surface-raised); color: var(--text-primary); cursor: pointer;
+  transition: all 140ms ease;
 }
-.audio-note audio::-webkit-media-controls-panel { background: var(--surface-raised); }
-.audio-note-duration { color: var(--text-muted); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+.audio-toggle svg { width: 15px; height: 15px; }
+.audio-toggle:hover { border-color: var(--accent-color); color: var(--accent-color); transform: scale(1.06); }
+.audio-track {
+  position: relative; height: 6px; flex: 1; min-width: 0; overflow: hidden;
+  padding: 0; border: none; border-radius: 999px; cursor: pointer;
+  background: color-mix(in srgb, var(--text-muted) 28%, transparent);
+}
+.audio-track-fill {
+  position: absolute; inset: 0 auto 0 0; width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 70%, #38bdf8));
+  transition: width 80ms linear;
+}
+.audio-time { flex: none; font-size: 0.68rem; font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 56px; text-align: right; }
+
+/* Lienzo oscuro explícito (aurora/océano/atardecer/bosque): fuerza tokens claros
+   para que el header, los iconos y los textos no se pierdan, sea cual sea
+   el tema de la app. */
+.conversation[data-bg='aurora'],
+.conversation[data-bg='ocean'],
+.conversation[data-bg='sunset'],
+.conversation[data-bg='forest'] {
+  color-scheme: dark;
+  --text-primary: #f3f1fa;
+  --text-muted: #a9a6c0;
+  --surface-main: #0d0a1a;
+  --surface-panel: rgba(255, 255, 255, 0.055);
+  --surface-raised: rgba(255, 255, 255, 0.075);
+  --surface-active: rgba(255, 255, 255, 0.14);
+  --surface-control: rgba(255, 255, 255, 0.09);
+  --border-color: rgba(255, 255, 255, 0.14);
+}
+.conversation[data-bg='aurora'] .conversation-header,
+.conversation[data-bg='ocean'] .conversation-header,
+.conversation[data-bg='sunset'] .conversation-header,
+.conversation[data-bg='forest'] .conversation-header {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+.conversation[data-bg='aurora'] .icon-button,
+.conversation[data-bg='ocean'] .icon-button,
+.conversation[data-bg='sunset'] .icon-button,
+.conversation[data-bg='forest'] .icon-button { color: rgba(243, 241, 250, 0.82); }
+.conversation[data-bg='aurora'] .icon-button:hover,
+.conversation[data-bg='ocean'] .icon-button:hover,
+.conversation[data-bg='sunset'] .icon-button:hover,
+.conversation[data-bg='forest'] .icon-button:hover { color: #fff; }
+.conversation[data-bg='aurora'] .audio-toggle,
+.conversation[data-bg='ocean'] .audio-toggle,
+.conversation[data-bg='sunset'] .audio-toggle,
+.conversation[data-bg='forest'] .audio-toggle { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.18); }
 
 @media (max-width: 640px) {
   .record-send-label { display: none; }

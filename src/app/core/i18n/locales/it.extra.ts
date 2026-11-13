@@ -778,4 +778,8 @@ export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'Risposte generate dall’IA. Verifica le informazioni critiche nel Centro assistenza o scrivici da Contatti.',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': 'La tua sessione non è ancora pronta. Ricarica la pagina o riprova tra un attimo.',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': 'L’assistente non è riuscito a rispondere ora. Riprova tra qualche secondo.',
+  'Reproducir nota de voz': 'Riproduci nota vocale',
+  'Pausar nota de voz': 'Metti in pausa la nota vocale',
+  'Buscar en la nota de voz': 'Cerca nella nota vocale',
+  'No se pudo reproducir la nota de voz.': 'Impossibile riprodurre la nota vocale.',
 };

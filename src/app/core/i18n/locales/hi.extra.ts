@@ -778,4 +778,8 @@ export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'AI-जनरेटेड जवाब। किसी भी गंभीर जानकारी को सहायता केंद्र में जाँचें या संपर्क फ़ॉर्म से लिखें।',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': 'आपका सत्र अभी तैयार नहीं है। पेज रीलोड करें या थोड़ी देर में फिर कोशिश करें।',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': 'सहायक अभी जवाब नहीं दे सका। कुछ सेकंड में फिर कोशिश करें।',
+  'Reproducir nota de voz': 'वॉयस नोट प्ले करें',
+  'Pausar nota de voz': 'वॉयस नोट रोकें',
+  'Buscar en la nota de voz': 'वॉयस नोट में खोजें',
+  'No se pudo reproducir la nota de voz.': 'वॉयस नोट चलाई नहीं जा सकी।',
 };

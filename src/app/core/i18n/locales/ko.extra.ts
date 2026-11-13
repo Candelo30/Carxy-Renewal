@@ -780,4 +780,8 @@ export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'AI가 생성한 답변입니다. 중요한 정보는 도움말 센터에서 확인하거나 문의 페이지를 통해 연락해 주세요.',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': '세션이 아직 준비되지 않았습니다. 페이지를 새로 고치거나 잠시 후 다시 시도해 주세요.',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': '어시스턴트가 지금 답변할 수 없습니다. 몇 초 후에 다시 시도해 주세요.',
+  'Reproducir nota de voz': '보이스 메모 재생',
+  'Pausar nota de voz': '보이스 메모 일시정지',
+  'Buscar en la nota de voz': '보이스 메모 탐색',
+  'No se pudo reproducir la nota de voz.': '보이스 메모를 재생할 수 없습니다.',
 };

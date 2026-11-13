@@ -778,4 +778,8 @@ export const DE_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Respuestas generadas por IA. Verifica información crítica en el Centro de ayuda o escríbenos desde Contacto.': 'KI-generierte Antworten. Prüfen Sie kritische Informationen im Hilfe-Center oder schreiben Sie uns über Kontakt.',
   'Tu sesión aún no está lista. Recarga la página o inténtalo de nuevo en un momento.': 'Ihre Sitzung ist noch nicht bereit. Laden Sie die Seite neu oder versuchen Sie es gleich noch einmal.',
   'El asistente no pudo responder ahora. Inténtalo de nuevo en unos segundos.': 'Der Assistent konnte gerade nicht antworten. Versuchen Sie es in einigen Sekunden erneut.',
+  'Reproducir nota de voz': 'Sprachnotiz abspielen',
+  'Pausar nota de voz': 'Sprachnotiz pausieren',
+  'Buscar en la nota de voz': 'In der Sprachnotiz suchen',
+  'No se pudo reproducir la nota de voz.': 'Sprachnotiz konnte nicht abgespielt werden.',
 };
