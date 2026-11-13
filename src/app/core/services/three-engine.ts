@@ -180,8 +180,8 @@ export class ThreeEngineService implements OnDestroy {
       this.timer.connect(document);
       this.scene = new THREE.Scene();
       this.scene.background = new THREE.Color('#171a22');
-      this.ambientLight = new THREE.AmbientLight(0xffffff, 0.66);
-      this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      this.ambientLight = new THREE.AmbientLight(0xffffff, 1.35);
+      this.directionalLight = new THREE.DirectionalLight(0xfff6e8, 2.35);
       this.directionalLight.position.set(5, 10, 7);
       this.directionalLight.castShadow = true;
       this.scene.add(this.ambientLight, this.directionalLight);
