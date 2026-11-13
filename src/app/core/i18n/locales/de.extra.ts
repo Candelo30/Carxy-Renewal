@@ -782,4 +782,6 @@ export const DE_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': 'Sprachnotiz pausieren',
   'Buscar en la nota de voz': 'In der Sprachnotiz suchen',
   'No se pudo reproducir la nota de voz.': 'Sprachnotiz konnte nicht abgespielt werden.',
+  'Categorías anteriores': 'Vorherige Kategorien',
+  'Más categorías': 'Mehr Kategorien',
 };

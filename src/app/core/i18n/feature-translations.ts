@@ -2077,6 +2077,8 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Pausar nota de voz': t('Pause voice note', 'Mettre en pause la note vocale', 'Pausar nota de voz'),
   'Buscar en la nota de voz': t('Seek in voice note', 'Naviguer dans la note vocale', 'Navegar na nota de voz'),
   'No se pudo reproducir la nota de voz.': t('Could not play the voice note.', 'Impossible de lire la note vocale.', 'Não foi possível reproduzir a nota de voz.'),
+  'Categorías anteriores': t('Previous categories', 'Catégories précédentes', 'Categorias anteriores'),
+  'Más categorías': t('More categories', 'Autres catégories', 'Mais categorias'),
   'Asistente CARXY': t('CARXY Assistant', 'Assistant CARXY', 'Assistente CARXY'),
   'Beta': t('Beta', 'Bêta', 'Beta'),
   'Responde tus dudas sobre el editor, la publicación y la comunidad. Respuestas generadas por IA.': t('Answers your questions about the editor, publishing and the community. AI-generated answers.', 'Répond à vos questions sur l’éditeur, la publication et la communauté. Réponses générées par l’IA.', 'Responde as suas dúvidas sobre o editor, a publicação e a comunidade. Respostas geradas por IA.'),

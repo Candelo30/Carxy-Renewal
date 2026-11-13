@@ -782,4 +782,6 @@ export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': 'ボイスメモを一時停止',
   'Buscar en la nota de voz': 'ボイスメモ内をシーク',
   'No se pudo reproducir la nota de voz.': 'ボイスメモを再生できませんでした。',
+  'Categorías anteriores': '前のカテゴリー',
+  'Más categorías': 'その他のカテゴリー',
 };

@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, ViewChild, ElementRef, inject, signal, AfterViewInit, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -880,7 +880,12 @@ const ARTICLES: HelpArticle[] = [
   templateUrl: './help-page.html',
   styleUrl: './help-page.css',
 })
-export class HelpPage implements OnInit, OnDestroy {
+export class HelpPage implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('categoryTrack') private categoryTrack?: ElementRef<HTMLElement>;
+  canScrollLeft = false;
+  canScrollRight = false;
+  showCategoryArrows = false;
+
   readonly categories = CATEGORIES;
   readonly articles = ARTICLES;
 
@@ -901,6 +906,15 @@ export class HelpPage implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly i18n = inject(I18nService);
   private readonly subscription = new Subscription();
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateCategoryArrows();
+  }
+
+  ngAfterViewInit(): void {
+    this.updateCategoryArrows();
+  }
 
   ngOnInit(): void {
     this.subscription.add(this.route.fragment.subscribe((fragment) => {
@@ -960,6 +974,28 @@ export class HelpPage implements OnInit, OnDestroy {
   selectCategory(category: HelpCategoryFilter): void {
     this.activeCategory = category;
     this.expandedId = null;
+    this.updateCategoryArrows();
+  }
+
+  /** Desplaza la fila de categorías de la versión móvil. */
+  scrollCategories(direction: number): void {
+    const track = this.categoryTrack?.nativeElement;
+    if (!track) return;
+    track.scrollBy({ left: direction * Math.max(180, Math.round(track.clientWidth * 0.72)), behavior: 'smooth' });
+  }
+
+  updateCategoryArrows(): void {
+    const track = this.categoryTrack?.nativeElement;
+    if (!track) {
+      this.canScrollLeft = false;
+      this.canScrollRight = false;
+      this.showCategoryArrows = false;
+      return;
+    }
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    this.canScrollLeft = track.scrollLeft > 1;
+    this.canScrollRight = track.scrollLeft < maxScroll - 1;
+    this.showCategoryArrows = maxScroll > 4;
   }
 
   applyQuery(value: string): void {

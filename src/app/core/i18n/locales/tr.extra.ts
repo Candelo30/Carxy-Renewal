@@ -784,4 +784,6 @@ export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': 'Sesli mesajı duraklat',
   'Buscar en la nota de voz': 'Sesli mesajda ara',
   'No se pudo reproducir la nota de voz.': 'Sesli mesaj oynatılamadı.',
+  'Categorías anteriores': 'Önceki kategoriler',
+  'Más categorías': 'Daha fazla kategori',
 };

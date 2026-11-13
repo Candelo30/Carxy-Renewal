@@ -782,4 +782,6 @@ export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': 'Metti in pausa la nota vocale',
   'Buscar en la nota de voz': 'Cerca nella nota vocale',
   'No se pudo reproducir la nota de voz.': 'Impossibile riprodurre la nota vocale.',
+  'Categorías anteriores': 'Categorie precedenti',
+  'Más categorías': 'Altre categorie',
 };

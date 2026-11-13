@@ -782,4 +782,6 @@ export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': 'वॉयस नोट रोकें',
   'Buscar en la nota de voz': 'वॉयस नोट में खोजें',
   'No se pudo reproducir la nota de voz.': 'वॉयस नोट चलाई नहीं जा सकी।',
+  'Categorías anteriores': 'पिछली श्रेणियाँ',
+  'Más categorías': 'और श्रेणियाँ',
 };

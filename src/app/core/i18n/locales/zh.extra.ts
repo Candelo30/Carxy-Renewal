@@ -782,4 +782,6 @@ export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': '暂停语音消息',
   'Buscar en la nota de voz': '在语音消息中定位',
   'No se pudo reproducir la nota de voz.': '无法播放语音消息。',
+  'Categorías anteriores': '上一组类别',
+  'Más categorías': '更多类别',
 };

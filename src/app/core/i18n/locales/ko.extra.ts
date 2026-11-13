@@ -784,4 +784,6 @@ export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': '보이스 메모 일시정지',
   'Buscar en la nota de voz': '보이스 메모 탐색',
   'No se pudo reproducir la nota de voz.': '보이스 메모를 재생할 수 없습니다.',
+  'Categorías anteriores': '이전 카테고리',
+  'Más categorías': '더 많은 카테고리',
 };

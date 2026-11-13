@@ -115,7 +115,11 @@
   </section>
 
   <section class="help-layout">
-    <aside class="help-sidebar">
+    <div class="category-scroller" [class.has-overflow]="showCategoryArrows">
+      <button type="button" class="scroll-arrow scroll-prev" (click)="scrollCategories(-1)" [disabled]="!canScrollLeft" [attr.aria-label]="'Categorías anteriores' | translate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <aside class="help-sidebar" #categoryTrack (scroll)="updateCategoryArrows()">
       <p class="sidebar-title">{{ 'Categorías' | translate }}</p>
       @for (category of categories; track category.id) {
         <button
@@ -142,7 +146,11 @@
           {{ 'Ir a GitHub ↗' | translate }}
         </a>
       </div>
-    </aside>
+      </aside>
+      <button type="button" class="scroll-arrow scroll-next" (click)="scrollCategories(1)" [disabled]="!canScrollRight" [attr.aria-label]="'Más categorías' | translate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
 
     <div class="help-content">
       <div class="results-head">

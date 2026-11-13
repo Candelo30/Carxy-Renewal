@@ -782,4 +782,6 @@ export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Pausar nota de voz': 'Поставить голосовое сообщение на паузу',
   'Buscar en la nota de voz': 'Перемотать голосовое сообщение',
   'No se pudo reproducir la nota de voz.': 'Не удалось воспроизвести голосовое сообщение.',
+  'Categorías anteriores': 'Предыдущие категории',
+  'Más categorías': 'Больше категорий',
 };

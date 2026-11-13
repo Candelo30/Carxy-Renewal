@@ -262,6 +262,8 @@
   gap: 4px;
 }
 
+.category-scroller { display: contents; }
+
 .sidebar-title {
   margin: 0 10px 6px;
   color: var(--text-muted);
@@ -776,15 +778,58 @@ kbd {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .category-scroller {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .scroll-arrow {
+    display: none;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+  }
+
+  .category-scroller.has-overflow .scroll-arrow {
+    display: grid;
+  }
+
+  .scroll-arrow svg { width: 17px; height: 17px; }
+
+  .scroll-arrow:not(:disabled):hover {
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    background: color-mix(in srgb, var(--accent-color) 12%, var(--surface-raised));
+  }
+
+  .scroll-arrow:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+
   .help-sidebar {
     position: static;
+    flex: 1 1 auto;
+    min-width: 0;
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: max-content;
     padding-bottom: 6px;
     gap: 6px;
     overflow-x: auto;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
+    scroll-padding-left: 4px;
   }
 
   .help-sidebar::-webkit-scrollbar {
@@ -799,6 +844,7 @@ kbd {
   .category-btn {
     width: auto;
     padding: 8px 12px;
+    scroll-snap-align: start;
     border-color: color-mix(in srgb, var(--border-color) 70%, transparent);
     background: color-mix(in srgb, var(--surface-panel) 70%, transparent);
   }
