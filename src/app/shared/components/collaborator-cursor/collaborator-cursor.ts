@@ -5,10 +5,17 @@ import { ThreeEngineService } from '../../../core/services/three-engine';
   selector: 'app-collaborator-cursor',
   standalone: true,
   imports: [],
+  // El cursor se posiciona en el :host (absolute, inset del layer) según el
+  // porcentaje del viewport del colaborador. Antes se aplicaba al div interno
+  // (`position: relative`), cuyo % se calcula sobre el ancho propio del
+  // cursor (~140px): el punto y el nombre quedaban pegados al borde superior
+  // izquierdo en vez de seguir a la persona.
+  host: {
+    '[style.left.%]': 'cursorX()',
+    '[style.top.%]': 'cursorY()',
+  },
   template: `
     <div class="collab-cursor"
-         [style.left.%]="cursorX()"
-         [style.top.%]="cursorY()"
          [style.--color]="collab().color"
          [attr.title]="collab().displayName">
       <div class="collab-dot"></div>
@@ -18,7 +25,7 @@ import { ThreeEngineService } from '../../../core/services/three-engine';
   styles: [`
     :host {
       position: absolute;
-      z-index: 5; /* Debajo del canvas (z-index: 50) para no bloquear */
+      z-index: 10; /* Por encima del canvas (z: 1), bajo los HUD (z: 20) */
       pointer-events: none;
       display: flex;
       align-items: center;
@@ -27,6 +34,7 @@ import { ThreeEngineService } from '../../../core/services/three-engine';
       font-weight: 700;
       color: var(--text-primary);
       white-space: nowrap;
+      transform: translate(-4px, -4px);
     }
 
     .collab-cursor {
@@ -43,7 +51,6 @@ import { ThreeEngineService } from '../../../core/services/three-engine';
       background: var(--color);
       border: 2px solid #ffffff;
       box-shadow: 0 0 10px var(--color);
-      transform: translate(-4px, -4px);
     }
 
     .collab-name {
