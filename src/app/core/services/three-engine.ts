@@ -1093,10 +1093,10 @@ export class ThreeEngineService implements OnDestroy {
     light.name = name;
     if ('castShadow' in light) light.castShadow = false;
     group.add(marker, light);
-    const offset = this.objects.length * 0.45;
-    group.position.set(offset - 2, 2.2, offset - 2);
+    const spawn: [number, number, number] =
+      kind === 'point' ? [0.8, 2.1, 1.2] : kind === 'spot' ? [2.1, 1.6, 1.6] : [3.2, 4.5, 2.4];
+    group.position.set(spawn[0], spawn[1], spawn[2]);
     const id = this.addObject(group, name);
-    this.resetCamera();
     return id;
   }
 
