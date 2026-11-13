@@ -915,6 +915,68 @@ export class CollaborationService implements OnDestroy {
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Biblioteca de assets del usuario                                    */
+  /* ------------------------------------------------------------------ */
+
+  async saveAsset(name: string, json: string): Promise<string> {
+    const user = await this.currentUser();
+    if (!user) throw new Error('Debes iniciar sesión.');
+    const db = this.firestore;
+    if (!db) throw new Error('Firebase no está configurado.');
+    const ref = doc(collection(db, SOCIAL_COLLECTIONS.assets));
+    await setDoc(ref, {
+      ownerId: user.uid,
+      name: name.trim().slice(0, 80),
+      json,
+      createdAt: Date.now(),
+    });
+    return ref.id;
+  }
+
+  async listAssets(): Promise<Array<{ id: string; name: string; createdAt: number }>> {
+    const user = await this.currentUser();
+    const db = this.firestore;
+    if (!db || !user) return [];
+    const q = query(
+      collection(db, SOCIAL_COLLECTIONS.assets),
+      where('ownerId', '==', user.uid),
+      limit(60),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((item) => {
+      const data = item.data() as { name?: unknown; createdAt?: unknown };
+      return {
+        id: item.id,
+        name: typeof data['name'] === 'string' ? data['name'] : 'Asset',
+        createdAt: typeof data['createdAt'] === 'number' ? data['createdAt'] : 0,
+      };
+    });
+  }
+
+  async getAssetJSON(assetId: string): Promise<string | null> {
+    const user = await this.currentUser();
+    const db = this.firestore;
+    if (!db || !user) return null;
+    const snap = await getDoc(doc(db, SOCIAL_COLLECTIONS.assets, assetId));
+    if (!snap.exists()) return null;
+    const data = snap.data() as { ownerId?: unknown; json?: unknown };
+    if (data['ownerId'] !== user.uid) return null;
+    return typeof data['json'] === 'string' && data['json'].length > 0 ? data['json'] : null;
+  }
+
+  async deleteAsset(assetId: string): Promise<void> {
+    const user = await this.currentUser();
+    const db = this.firestore;
+    if (!db || !user) return;
+    const ref = doc(db, SOCIAL_COLLECTIONS.assets, assetId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const data = snap.data() as { ownerId?: unknown };
+    if (data['ownerId'] !== user.uid) throw new Error('No tienes permisos para borrar este asset.');
+    await deleteDoc(ref);
+  }
+
+  /* ------------------------------------------------------------------ */
   /*  Presencia en tiempo real                                          */
   /* ------------------------------------------------------------------ */
 

@@ -268,6 +268,22 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == uid;
     }
 
+    /* Biblioteca de assets personales: el JSON de la pieza va embebido en el
+       documento. Solo el dueño puede leer su biblioteca, crear o borrar. */
+    match /assets/{assetId} {
+      allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.json is string
+        && request.resource.data.json.size() <= 1500000
+        && request.resource.data.createdAt is number;
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
     match /posts/{postId} {
       // Se compara con `authorId` (campo plano) y no con
       // `resource.data.author.uid` porque el cliente consulta con

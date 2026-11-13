@@ -29,6 +29,11 @@
         <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir foco (spot)'" (click)="addLight('spot')"><span>🔦</span>Foco</button>
         <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir luz direccional (sol)'" (click)="addLight('directional')"><span>☀</span>Direccional</button>
       </div>
+      <div class="organize-row">
+        <button [disabled]="shareLinkBlocksEditing" [title]="'Añadir vacío (punto de pivote invisible)'" (click)="addEmpty()"><span>◌</span>Vacío</button>
+        <button [disabled]="!canGroupSelected()" [title]="'Agrupar la selección en un vacío (Ctrl+clic para multiselección)'" (click)="groupSelected()"><span>▣</span>Agrupar{{ selectedCount() > 1 ? ' (' + selectedCount() + ')' : '' }}</button>
+        <button [disabled]="!canUngroupSelected()" [title]="'Desagrupar el vacío seleccionado'" (click)="ungroupSelected()"><span>◫</span>Desagrupar</button>
+      </div>
       <label class="object-search" *ngIf="sceneObjects.length > 8">
         <span>⌕</span>
         <input
@@ -43,7 +48,7 @@
           *ngFor="let item of filteredSceneObjects; trackBy: trackById"
           [class.selected]="item.id === selectedObjectId"
           [class.locked-object]="!isObjectEditable(item.id)"
-          (click)="selectObject(item.id)"
+          (click)="selectObject(item.id, $event)"
         >
           <span class="object-glyph">◇</span>
           <span class="object-name">{{ item.name }}</span>
@@ -450,6 +455,69 @@
       }
       </div>
     </details>
+
+    <details class="panel-section panel-collapsible" open>
+      <summary class="section-heading compact-heading summary-button">
+        <div>
+          <span class="eyebrow">EXPORTAR</span>
+          <h2>Escena y miniatura</h2>
+        </div>
+        <span class="collapse-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-collapsible-body">
+        <button class="export-caption-button" [disabled]="exportBusy" (click)="onExportGLB()">
+          <span>⬇</span>
+          <span class="export-caption-label">
+            <strong>{{ exportBusy ? 'Exportando…' : 'Exportar GLB' }}</strong>
+            <small>Compatible con Blender, Unity, Unreal y web (glTF 2.0)</small>
+          </span>
+        </button>
+        <button class="export-caption-button" (click)="captureThumbnailPNG()">
+          <span>🖼</span>
+          <span class="export-caption-label">
+            <strong>Miniatura PNG</strong>
+            <small>Captura exacta de la cámara activa, lista para subir al marketplace</small>
+          </span>
+        </button>
+        <p class="material-hint">El GLB incluye materiales, luces y agrupación. La miniatura se descarga con el nombre del proyecto con el nombre del proyecto.</p>
+      </div>
+    </details>
+
+    <details class="panel-section panel-collapsible" open>
+      <summary class="section-heading compact-heading summary-button">
+        <div>
+          <span class="eyebrow">BIBLIOTECA</span>
+          <h2>Assets guardados</h2>
+        </div>
+        <span class="collapse-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-collapsible-body">
+        <button class="library-save-button" [disabled]="assetLibraryBusy || selectedCount() === 0" (click)="saveSelectedAsAsset()">
+          <span>＋</span>
+          <span class="export-caption-label">
+            <strong>{{ assetLibraryBusy ? 'Guardando…' : 'Guardar selección como asset' }}</strong>
+            <small>{{ selectedCount() > 0 ? selectedCount() + ' objeto(s) seleccionado(s)' : 'Selecciona objetos primero (Ctrl+clic para multiselección)' }}</small>
+          </span>
+        </button>
+        <button class="library-refresh-button" [disabled]="assetLibraryBusy" (click)="loadAssets()">↻ Actualizar biblioteca</button>
+        <p class="material-hint" *ngIf="assetLibraryError">{{ assetLibraryError }}</p>
+        <div class="asset-list" *ngIf="assets.length; else emptyAssets">
+          <div class="asset-row" *ngFor="let asset of assets">
+            <div class="asset-row-main">
+              <span class="asset-row-name" [title]="asset.name">{{ asset.name }}</span>
+              <small>{{ formatAssetDate(asset.createdAt) }}</small>
+            </div>
+            <div class="asset-row-actions">
+              <button [disabled]="assetLibraryBusy" (click)="insertAsset(asset.id)" title="Insertar en la escena">＋ Ins</button>
+              <button [disabled]="assetLibraryBusy" (click)="deleteAsset(asset.id)" title="Borrar asset" aria-label="Borrar asset">🗑</button>
+            </div>
+          </div>
+        </div>
+        <ng-template #emptyAssets>
+          <p class="empty-state">Aún no tienes assets. Guarda una pieza bien hecha (una llanta, un retrovisor) para reutilizarla en cualquier proyecto.</p>
+        </ng-template>
+      </div>
+    </details>
   </ng-container>
 
   <ng-template #settingsPanel>
@@ -505,6 +573,13 @@
       <button class="setting-toggle" [class.enabled]="isOrthographic" (click)="onToggleCamera()">
         <span>{{ 'Cámara ortográfica' | translate }}</span><span>{{ isOrthographic ? 'ON' : 'OFF' }}</span>
       </button>
+      <div class="setting-divider"></div>
+      <span class="eyebrow viewport-eyebrow">{{ 'CALIDAD DE RENDER' | translate }}</span>
+      <div class="quality-presets">
+        <button [class.active]="quality === 'draft'" (click)="setQuality('draft')">{{ 'Borrador' | translate }}</button>
+        <button [class.active]="quality === 'standard'" (click)="setQuality('standard')">{{ 'Estándar' | translate }}</button>
+        <button [class.active]="quality === 'cinematic'" (click)="setQuality('cinematic')">{{ 'Cine' | translate }}</button>
+      </div>
       <div class="setting-divider"></div>
       <span class="eyebrow viewport-eyebrow">{{ 'CONTROLES DE VISOR' | translate }}</span>
       <div class="camera-presets">

@@ -143,6 +143,200 @@
   font-size: 1.25rem;
 }
 
+/* Fila de organización (vacío / agrupar / desagrupar) — mismo grid que primitivas */
+.organize-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 8px 0 10px;
+}
+
+.organize-row button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 9px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.16s, color 0.16s;
+}
+
+.organize-row button:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.organize-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.organize-row button span {
+  color: var(--accent-color);
+  font-size: 1rem;
+}
+
+/* Presets de calidad de render */
+.quality-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin: 2px 0 4px;
+}
+
+.quality-presets button {
+  padding: 9px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quality-presets button.active {
+  border-color: var(--accent-color);
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+
+/* Exportar / biblioteca: botones grandes con caption */
+.export-caption-button,
+.library-save-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s, transform 0.16s;
+}
+
+.export-caption-button:hover:not(:disabled),
+.library-save-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--accent-color);
+}
+
+.export-caption-button:disabled,
+.library-save-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.export-caption-button > span:first-child,
+.library-save-button > span:first-child {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--surface-active);
+  color: var(--accent-color);
+  font-size: 1.05rem;
+}
+
+.export-caption-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.export-caption-label small {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+}
+
+.library-refresh-button {
+  align-self: flex-start;
+  margin: 8px 0 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  cursor: pointer;
+}
+
+.library-refresh-button:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.asset-list {
+  display: grid;
+  gap: 5px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 6px 0 4px;
+  padding-right: 4px;
+}
+
+.asset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.asset-row-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.asset-row-name {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-row-main small {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+}
+
+.asset-row-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.asset-row-actions button {
+  padding: 5px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--surface-control);
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  cursor: pointer;
+}
+
+.asset-row-actions button:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
 .object-list {
   display: grid;
   gap: 4px;

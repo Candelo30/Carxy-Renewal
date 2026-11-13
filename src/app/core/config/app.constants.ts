@@ -30,6 +30,7 @@ export const SOCIAL_COLLECTIONS = {
   projectShareLinks: 'projectShareLinks',
   projectActivity: 'projectActivity',
   projectPresences: 'projectPresences',
+  assets: 'assets',
   helpArticles: 'helpArticles',
   userActivity: 'userActivity',
   accountDeletionAudit: 'accountDeletionAudit',

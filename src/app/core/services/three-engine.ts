@@ -469,9 +469,34 @@ export class ThreeEngineService implements OnDestroy {
     return nodes;
   }
 
-  public selectObject(id: string): void {
+  private readonly selectedIds = new Set<string>();
+
+  public selectObject(id: string, additive = false): void {
     const item = this.objects.find((entry) => entry.id === id);
-    if (!item || (item.object === this.currentModel && this.selectedNode === item.object)) return;
+    if (!item) return;
+    if (additive) {
+      if (this.selectedIds.has(id)) {
+        this.selectedIds.delete(id);
+        if (this.selectedNode === item.object && this.selectedIds.size > 0) {
+          const remaining = [...this.selectedIds];
+          const fallback = this.objects.find((entry) => entry.id === remaining[remaining.length - 1]);
+          if (fallback) {
+            this.currentModel = fallback.object;
+            this.selectedNode = fallback.object;
+            this.transformControls?.attach(this.selectedNode);
+            this.audioBaseScale.copy(this.selectedNode.scale);
+            this.refreshMaterials();
+          }
+        }
+        this.applyWireframeState();
+        this.selectionChanged$.next();
+        return;
+      }
+      this.selectedIds.add(id);
+    } else {
+      this.selectedIds.clear();
+      this.selectedIds.add(id);
+    }
     this.currentModel = item.object;
     this.selectedNode = item.object;
     this.transformControls?.attach(this.selectedNode);
@@ -479,6 +504,184 @@ export class ThreeEngineService implements OnDestroy {
     this.applyWireframeState();
     this.refreshMaterials();
     this.selectionChanged$.next();
+  }
+
+  public getSelectedObjectIds(): string[] {
+    return [...this.selectedIds].filter((id) => this.objects.some((item) => item.id === id));
+  }
+
+  public getSelectedObjects(): SceneObject[] {
+    return this.getSelectedObjectIds()
+      .map((id) => this.objects.find((item) => item.id === id))
+      .filter((item): item is SceneObject => !!item);
+  }
+
+  public getGroupObjectInfo(objectId: string): { isEmpty: boolean; childCount: number } | null {
+    const item = this.objects.find((entry) => entry.id === objectId);
+    if (!item) return null;
+    const marker = item.object.children.find(
+      (child) => child.userData?.['isEmptyMarker'] === true,
+    );
+    return {
+      isEmpty: marker !== undefined,
+      childCount: item.object.children.filter((child) => child !== marker).length,
+    };
+  }
+
+  private createEmptyMarker(scale = 0.09): THREE.Mesh {
+    const material = new THREE.MeshBasicMaterial({ color: '#cbd5e1', wireframe: true });
+    const marker = new THREE.Mesh(new THREE.OctahedronGeometry(scale, 0), material);
+    marker.userData['isEmptyMarker'] = true;
+    marker.name = 'Marcador vacío';
+    return marker;
+  }
+
+  public addEmpty(): string | null {
+    if (!this.scene) return null;
+    const group = new THREE.Group();
+    group.name = `Vacío`;
+    group.add(this.createEmptyMarker());
+    const emptyCount = this.objects.filter((entry) =>
+      entry.object.name.startsWith('Vacío'),
+    ).length;
+    group.name = `Vacío ${emptyCount + 1}`;
+    const id = this.addObject(group, group.name);
+    return id;
+  }
+
+  public groupSelection(): string | null {
+    if (!this.scene) return null;
+    const selected = this.getSelectedObjects();
+    if (selected.length < 2) return null;
+    const centroid = new THREE.Vector3();
+    for (const item of selected) {
+      centroid.add(item.object.getWorldPosition(new THREE.Vector3()));
+    }
+    centroid.divideScalar(selected.length);
+    const group = new THREE.Group();
+    group.name = 'Vacío';
+    group.position.copy(centroid);
+    const marker = this.createEmptyMarker(0.11);
+    group.add(marker);
+    this.scene.add(group);
+    const rootObjects = new Set(selected.map((item) => item.object));
+    this.objects = this.objects.filter((item) => !rootObjects.has(item.object));
+    for (const item of selected) {
+      group.attach(item.object);
+    }
+    const id = this.addObject(group, group.name);
+    this.selectedIds.clear();
+    this.selectedIds.add(id);
+    this.selectObject(id);
+    this.sceneChanged$.next();
+    return id;
+  }
+
+  public ungroupSelection(): boolean {
+    const selected = this.selectedNode;
+    if (!this.scene || !selected) return false;
+    const item = this.objects.find((entry) => entry.object === selected);
+    if (!item) return false;
+    const markerIndex = selected.children.findIndex(
+      (child) => child.userData?.['isEmptyMarker'] === true,
+    );
+    if (markerIndex === -1) return false;
+    const marker = selected.children[markerIndex];
+    const members = selected.children.filter((child) => child !== marker);
+    // Desparentar preservando el transform mundial
+    for (const child of members) {
+      this.scene.attach(child);
+    }
+    // Eliminar el vacío del listado y de la escena
+    this.scene.remove(selected);
+    this.objects = this.objects.filter((entry) => entry !== item);
+    this.disposeObject(selected);
+    // Re-añadir los miembros como objetos raíz serializables.
+    // Los miembros pueden ser meshes sueltos: se envuelven en un Group
+    // (consistente con cómo restoreScene normaliza objetos sueltos).
+    for (const child of members) {
+      let root: THREE.Group;
+      if (child instanceof THREE.Group) {
+        root = child;
+      } else {
+        const wrapper = new THREE.Group();
+        wrapper.name = child.name || 'Objeto';
+        this.scene.add(wrapper);
+        wrapper.attach(child);
+        root = wrapper;
+      }
+      const childId = `object-${this.nextObjectId++}`;
+      this.objects.push({ id: childId, name: root.name || 'Objeto', object: root });
+    }
+    if (members.length > 0) {
+      this.selectObject(this.objects[this.objects.length - 1].id);
+    }
+    this.refreshMaterials();
+    this.sceneChanged$.next();
+    return true;
+  }
+
+  public exportSelectionObjectsJSON(): string | null {
+    const selected = this.getSelectedObjects();
+    if (selected.length === 0) return null;
+    const draft = new THREE.Group();
+    for (const item of selected) {
+      draft.add(item.object.clone(true));
+    }
+    // Rebajas materiales duplicados a referencias compartidas vía toJSON nativo
+    return JSON.stringify(draft.toJSON());
+  }
+
+  public insertObjectsJSON(serialized: string): boolean {
+    if (!this.scene) return false;
+    try {
+      const parsed = new THREE.ObjectLoader().parse(JSON.parse(serialized) as THREE.Object3DJSON);
+      if (!(parsed instanceof THREE.Group) || parsed.children.length === 0) return false;
+      const unwrap = (object: THREE.Object3D): THREE.Object3D[] => {
+        if (object instanceof THREE.Group && object.name.startsWith('Vacío')) {
+          return object.children.flatMap(unwrap);
+        }
+        return [object];
+      };
+      const targets = parsed.children.flatMap(unwrap);
+      if (targets.length === 0) return false;
+      // La clonación preserva materiales/geometrías por UUID — verificación rápida de nombre
+      for (const object of targets) {
+        const root = object instanceof THREE.Group
+          ? object
+          : (() => { const group = new THREE.Group(); group.add(object); return group; })();
+        const cloneWorld = root.clone(true);
+        cloneWorld.position.x += 0.75;
+        cloneWorld.position.z += 0.75;
+        this.addObject(cloneWorld, cloneWorld.name || 'Asset');
+      }
+      this.sceneChanged$.next();
+      return true;
+    } catch (error) {
+      console.warn('No se pudo insertar el asset.', error);
+      return false;
+    }
+  }
+
+  public applyQualityPreset(preset: 'draft' | 'standard' | 'cinematic'): void {
+    if (!this.renderer) return;
+    if (preset === 'draft') {
+      this.renderer.setPixelRatio(1);
+      this.renderer.shadowMap.enabled = false;
+    } else if (preset === 'standard') {
+      this.renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 1.5));
+      this.renderer.shadowMap.enabled = true;
+    } else {
+      this.renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 2));
+      this.renderer.shadowMap.enabled = true;
+    }
+    this.scene?.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        const material = node.material as THREE.Material | THREE.Material[];
+        if (Array.isArray(material)) material.forEach((m) => (m.needsUpdate = true));
+        else if (material) material.needsUpdate = true;
+      }
+    });
   }
 
   public selectNode(uuid: string): void {

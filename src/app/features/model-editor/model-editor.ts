@@ -607,6 +607,9 @@ export class ModelEditor implements OnInit, OnDestroy {
       this.editorStatus.onlineCount.set(null);
     }
 
+    // La biblioteca de assets es transversal a proyectos: se carga una vez
+    void this.loadAssets();
+
     // Soporte de acciones rápidas desde la paleta de comandos (?action=...)
     this.subscriptions.add(
       this.route.queryParamMap.subscribe((params) => {
@@ -676,8 +679,9 @@ export class ModelEditor implements OnInit, OnDestroy {
     }
   }
 
-  selectObject(id: string): void {
-    this.threeEngine.selectObject(id);
+  selectObject(id: string, event?: MouseEvent): void {
+    const additive = !!event && (event.ctrlKey || event.metaKey);
+    this.threeEngine.selectObject(id, additive);
   }
 
   selectNode(id: string): void {
@@ -794,6 +798,166 @@ export class ModelEditor implements OnInit, OnDestroy {
   onBgColorChange(): void {
     this.threeEngine.updateBackgroundColor(this.bgColor);
     this.persistPreferences();
+  }
+
+  // --- Vacíos y agrupación ---
+  public quality: 'draft' | 'standard' | 'cinematic' = 'standard';
+
+  public selectedCount(): number {
+    return this.threeEngine.getSelectedObjects().length;
+  }
+
+  public canGroupSelected(): boolean {
+    return !this.shareLinkBlocksEditing && this.selectedCount() >= 2;
+  }
+
+  public canUngroupSelected(): boolean {
+    if (this.shareLinkBlocksEditing) return false;
+    const id = this.selectedObjectId;
+    if (!id) return false;
+    return this.threeEngine.getGroupObjectInfo(id)?.isEmpty === true;
+  }
+
+  addEmpty(): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.threeEngine.addEmpty();
+  }
+
+  groupSelected(): void {
+    if (this.shareLinkBlocksEditing) return;
+    const locked = this.threeEngine.getSelectedObjects().some(
+      (item) => !this.isObjectEditable(item.id),
+    );
+    if (locked) {
+      this.notifications.warning(this.i18n.translate('Hay objetos bloqueados por otro colaborador.'));
+      return;
+    }
+    this.threeEngine.groupSelection();
+  }
+
+  ungroupSelected(): void {
+    if (this.shareLinkBlocksEditing) return;
+    if (!this.canUngroupSelected()) return;
+    this.threeEngine.ungroupSelection();
+  }
+
+  setQuality(preset: 'draft' | 'standard' | 'cinematic'): void {
+    if (this.shareLinkBlocksEditing) return;
+    this.quality = preset;
+    this.threeEngine.applyQualityPreset(preset);
+    this.cdr.detectChanges();
+  }
+
+  // --- Biblioteca de assets ---
+  public assetLibraryBusy = false;
+  public assetLibraryError = '';
+  public assets: { id: string; name: string; createdAt: number }[] = [];
+
+  async loadAssets(): Promise<void> {
+    this.assetLibraryError = '';
+    try {
+      this.assets = await this.collaboration.listAssets();
+    } catch (error) {
+      console.warn('No se pudo listar la biblioteca de assets.', error);
+      this.assetLibraryError = 'No se pudo cargar la biblioteca.';
+      this.assets = [];
+    }
+    this.cdr.detectChanges();
+  }
+
+  async saveSelectedAsAsset(): Promise<void> {
+    if (this.shareLinkBlocksEditing) return;
+    const selected = this.threeEngine.getSelectedObjects();
+    if (selected.length === 0) {
+      this.notifications.warning(this.i18n.translate('Selecciona uno o más objetos para guardarlos.'));
+      return;
+    }
+    const suggested = selected.length === 1 ? selected[0].name : `Grupo de ${selected.length} objetos`;
+    const name = (prompt(this.i18n.translate('Nombre del asset:'), suggested) ?? '').trim();
+    if (!name) return;
+    const json = this.threeEngine.exportSelectionObjectsJSON();
+    if (!json) {
+      this.notifications.error(this.i18n.translate('No se pudo exportar la selección.'));
+      return;
+    }
+    this.assetLibraryBusy = true;
+    try {
+      await this.collaboration.saveAsset(name, json);
+      this.notifications.success(this.i18n.translate('Asset guardado en tu biblioteca.'), this.i18n.translate('Biblioteca'));
+      await this.loadAssets();
+    } catch (error) {
+      console.warn('No se pudo guardar el asset.', error);
+      this.notifications.error(this.i18n.translate('No se pudo guardar el asset. Revisa tu conexión.'));
+    } finally {
+      this.assetLibraryBusy = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async insertAsset(assetId: string): Promise<void> {
+    this.assetLibraryBusy = true;
+    this.assetLibraryError = '';
+    try {
+      const json = await this.collaboration.getAssetJSON(assetId);
+      if (!json) {
+        this.notifications.error(this.i18n.translate('No se pudo leer el asset.'));
+        return;
+      }
+      const ok = this.threeEngine.insertObjectsJSON(json);
+      if (!ok) {
+        this.notifications.error(this.i18n.translate('El asset no contiene objetos válidos.'));
+        return;
+      }
+      this.refreshSceneNodes();
+      this.sceneObjects = this.threeEngine.getSceneObjects();
+      this.cdr.detectChanges();
+      this.notifications.success(this.i18n.translate('Asset insertado en la escena.'), this.i18n.translate('Biblioteca'));
+    } catch (error) {
+      console.warn('No se pudo insertar el asset.', error);
+      this.assetLibraryError = 'No se pudo insertar el asset.';
+    } finally {
+      this.assetLibraryBusy = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async deleteAsset(assetId: string): Promise<void> {
+    if (this.shareLinkBlocksEditing) return;
+    this.assetLibraryBusy = true;
+    try {
+      await this.collaboration.deleteAsset(assetId);
+      this.assets = this.assets.filter((asset) => asset.id !== assetId);
+      this.notifications.success(this.i18n.translate('Asset eliminado.'), this.i18n.translate('Biblioteca'));
+    } catch (error) {
+      console.warn('No se pudo borrar el asset.', error);
+      this.notifications.error(this.i18n.translate('No se pudo borrar el asset.'));
+    } finally {
+      this.assetLibraryBusy = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  captureThumbnailPNG(): void {
+    const image = this.threeEngine.captureImageDataUrl();
+    if (!image) {
+      this.notifications.warning(this.i18n.translate('No se pudo capturar la vista actual.'));
+      return;
+    }
+    const safe = (this.projectName || 'carxy-miniatura').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase() || 'carxy-miniatura';
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = `${safe}-miniatura.png`;
+    link.click();
+    this.notifications.success(this.i18n.translate('Miniatura PNG descargada.'), this.i18n.translate('Exportar'));
+  }
+
+  formatAssetDate(timestamp: number): string {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  onExportGLB(): void {
+    this.exportSceneGLB();
   }
 
   // --- MÉTODOS DE MATERIALES ---
