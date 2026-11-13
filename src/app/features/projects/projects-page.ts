@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, ChangeDetectorRef, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +30,7 @@ export class ProjectsPage {
   readonly i18n = inject(I18nService);
   readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   newProjectName = '';
   newProjectDescription = '';
@@ -159,6 +160,7 @@ export class ProjectsPage {
       this.notifications.error(message, this.i18n.translate('projects.createErrorTitle'));
     } finally {
       this.creating = false;
+      this.cdr.detectChanges();
     }
   }
 

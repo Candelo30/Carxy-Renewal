@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +30,7 @@ export class ProjectDetailPage implements OnInit {
   readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
   private readonly document = inject(DOCUMENT);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
   projectName = '';
@@ -75,6 +76,7 @@ export class ProjectDetailPage implements OnInit {
       tap((p) => {
         this.projectLoaded = true;
         this.projectName = p?.name ?? '';
+        this.cdr.detectChanges();
       })
     );
     this.members = this.collaboration.getMembers(this.projectId);
@@ -89,6 +91,7 @@ export class ProjectDetailPage implements OnInit {
         const member = currentUid ? members.find((m) => m.userId === currentUid) : undefined;
         this.isOwner = member?.role === 'owner';
         this.canWrite = hasPermission(member?.role ?? 'viewer', 'write');
+        this.cdr.detectChanges();
       });
   }
 
@@ -96,6 +99,7 @@ export class ProjectDetailPage implements OnInit {
     const email = this.newInviteEmail.trim();
     if (!email) return;
     this.inviting = true;
+    this.cdr.detectChanges();
     try {
       const result = await this.collaboration.inviteMember(this.projectId, email, this.newInviteRole);
       this.newInviteEmail = '';
@@ -110,6 +114,7 @@ export class ProjectDetailPage implements OnInit {
       );
     } finally {
       this.inviting = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -209,6 +214,7 @@ export class ProjectDetailPage implements OnInit {
   async createShareLink(): Promise<void> {
     if (!this.isOwner) return;
     this.creatingShareLink = true;
+    this.cdr.detectChanges();
     try {
       await this.collaboration.createShareLink(this.projectId, this.newShareRole);
       this.notifications.success(this.i18n.translate('Enlace de acceso creado.'));
@@ -216,6 +222,7 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo crear el enlace.'));
     } finally {
       this.creatingShareLink = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -230,6 +237,7 @@ export class ProjectDetailPage implements OnInit {
 
   async toggleShareLink(link: ProjectShareLink): Promise<void> {
     this.busyShareLinkId = link.id;
+    this.cdr.detectChanges();
     try {
       await this.collaboration.updateShareLink(link.id, { enabled: !link.enabled });
       this.notifications.success(link.enabled ? this.i18n.translate('Enlace desactivado.') : this.i18n.translate('Enlace activado.'));
@@ -237,12 +245,14 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el enlace.'));
     } finally {
       this.busyShareLinkId = null;
+      this.cdr.detectChanges();
     }
   }
 
   async changeShareLinkRole(link: ProjectShareLink, role: string): Promise<void> {
     if (role !== 'editor' && role !== 'viewer') return;
     this.busyShareLinkId = link.id;
+    this.cdr.detectChanges();
     try {
       await this.collaboration.updateShareLink(link.id, { role: role as ProjectShareLinkRole });
       this.notifications.success(this.i18n.translate('Permisos del enlace actualizados.'));
@@ -250,12 +260,14 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo actualizar el enlace.'));
     } finally {
       this.busyShareLinkId = null;
+      this.cdr.detectChanges();
     }
   }
 
   async deleteShareLink(link: ProjectShareLink): Promise<void> {
     if (!confirm(this.i18n.translate('¿Eliminar este enlace de acceso?'))) return;
     this.busyShareLinkId = link.id;
+    this.cdr.detectChanges();
     try {
       await this.collaboration.deleteShareLink(link.id);
       this.notifications.success(this.i18n.translate('Enlace eliminado.'));
@@ -263,6 +275,7 @@ export class ProjectDetailPage implements OnInit {
       this.notifications.error(this.i18n.firebaseError(error, 'No se pudo eliminar el enlace.'));
     } finally {
       this.busyShareLinkId = null;
+      this.cdr.detectChanges();
     }
   }
 
@@ -300,6 +313,7 @@ export class ProjectDetailPage implements OnInit {
       );
     } finally {
       this.saving = false;
+      this.cdr.detectChanges();
     }
   }
 
