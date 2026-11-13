@@ -32,7 +32,10 @@ export class FileHandler {
           const modelName = file.name.replace(/\.(glb|gltf)$/i, '');
           this.threeEngine.addModelToScene(gltf.scene, modelName || file.name);
           URL.revokeObjectURL(objectUrl);
-          this.notifications.success(`Se importó ${file.name}.`, 'Modelo importado');
+          this.notifications.success(
+            this.i18n.translate('Se importó {name}.', { name: file.name }),
+            this.i18n.translate('Modelo importado'),
+          );
         });
       },
       undefined,
@@ -52,13 +55,16 @@ export class FileHandler {
     void this.createCurrentSceneBlob()
       .then((blob) => {
         this.downloadFile(blob, 'escena-3d.glb');
-        this.notifications.success('La escena se exportó como archivo GLB.', 'Exportación lista');
+        this.notifications.success(
+          this.i18n.translate('La escena se exportó como archivo GLB.'),
+          this.i18n.translate('Exportación lista'),
+        );
       })
       .catch((error: unknown) => {
         console.error('Error al exportar a GLB:', error);
         this.notifications.error(
           this.i18n.firebaseError(error, 'No se pudo exportar la escena.'),
-          'Error de exportación',
+          this.i18n.translate('Error de exportación'),
         );
       });
   }

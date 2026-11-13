@@ -920,7 +920,7 @@ export class CollaborationService implements OnDestroy {
 
   async saveAsset(name: string, json: string): Promise<string> {
     const user = await this.currentUser();
-    if (!user) throw new Error('Debes iniciar sesión.');
+    if (!user) throw new Error(this.i18n.translate('Debes iniciar sesión.'));
     const db = this.firestore;
     if (!db) throw new Error('Firebase no está configurado.');
     const ref = doc(collection(db, SOCIAL_COLLECTIONS.assets));
@@ -972,7 +972,7 @@ export class CollaborationService implements OnDestroy {
     const snap = await getDoc(ref);
     if (!snap.exists()) return;
     const data = snap.data() as { ownerId?: unknown };
-    if (data['ownerId'] !== user.uid) throw new Error('No tienes permisos para borrar este asset.');
+    if (data['ownerId'] !== user.uid) throw new Error(this.i18n.translate('No tienes permisos para borrar este asset.'));
     await deleteDoc(ref);
   }
 

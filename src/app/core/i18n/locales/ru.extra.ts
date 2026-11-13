@@ -3,6 +3,7 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': 'ТЕМА',
   'AUTOR': 'АВТОР',
   'Angular + Three.js': 'Angular + Three.js',
@@ -696,4 +697,33 @@ export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': '테스터 · 문서화',
   'Tester, Documentador, Analista': '테스터 · 문서화 · 애널리스트',
   'Vacío': '엠프티',
+
+  'Visor 3D interactivo': '인터랙티브 3D 뷰어',
+  'Cargando modelo 3D…': '3D 모델을 불러오는 중…',
+  'Arrastra para orbitar · rueda para zoom': '드래그하여 회전 · 스크롤하여 줌',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': '모델을 불러오는 데 시간이 너무 오래 걸렸습니다. 나중에 다시 시도하세요.',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': '모델에 접근할 수 없습니다. CORS 및 Firebase Storage 권한을 확인해 주세요.',
+  'Error de descarga HTTP {code}.': 'HTTP 다운로드 오류 {code}.',
+  'WebGL no está disponible en este navegador.': '이 브라우저에서는 WebGL을 사용할 수 없습니다.',
+  'Se importó {name}.': '{name}을(를) 가져왔습니다.',
+  'Modelo importado': '모델을 가져왔습니다',
+  'La escena se exportó como archivo GLB.': '장면이 GLB 파일로 내보내졌습니다.',
+  'Exportación lista': '내보내기 준비 완료',
+  'Error de exportación': '내보내기 오류',
+  'Inicia sesión para marcar favoritos.': '즐겨찾기에 추가하려면 로그인하세요.',
+  'No puedes marcar como favorito tu propio modelo.': '자기 자신의 모델을 즐겨찾기로 할 수 없습니다.',
+  'Espera un momento antes de volver a darle like a este modelo.': '이 모델에 다시 좋아요를 누르려면 잠시만 기다려 주세요.',
+  'No puedes seguirte a ti mismo.': '자기 자신을 팔로우할 수 없습니다.',
+  'No se pudo validar la conversación.': '대화를 확인할 수 없습니다.',
+  'No se pudo validar la conversación y el remitente del mensaje.': '대화와 메시지 발신자를 확인할 수 없습니다.',
+  'No se pudo descargar el modelo ({status}).': '모델을 다운로드할 수 없습니다 ({status}).',
+  'No se pudo validar la cuenta que se va a eliminar.': '삭제할 계정을 확인할 수 없습니다.',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storage가 설정되지 않았습니다. 계정 콘텐츠를 안전하게 삭제할 수 없습니다.',
+  'Debes iniciar sesión.': '로그인이 필요합니다.',
+  'No tienes permisos para borrar este asset.': '이 에셋을 삭제할 권한이 없습니다.',
+  'No se pudo copiar el enlace en este entorno.': '이 환경에서는 링크를 복사할 수 없습니다.',
+  'El navegador no permitió copiar el enlace.': '브라우저가 링크 복사를 허용하지 않았습니다.',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': 'Не удалось загрузить 3D-модель. Убедитесь, что файл GLB корректен.',
+
 };

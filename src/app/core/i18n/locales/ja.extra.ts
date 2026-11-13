@@ -3,6 +3,7 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': '件名',
   'AUTOR': '作者',
   'Angular + Three.js': 'Angular + Three.js',
@@ -696,4 +697,33 @@ export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': 'テスター · ドキュメンタリスト',
   'Tester, Documentador, Analista': 'テスター · ドキュメンタリスト · アナリスト',
   'Vacío': 'Empty',
+
+  'Visor 3D interactivo': 'インタラクティブ3Dビューア',
+  'Cargando modelo 3D…': '3Dモデルを読み込み中…',
+  'Arrastra para orbitar · rueda para zoom': 'ドラッグで回転・スクロールでズーム',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': 'モデルの読み込みに時間がかかりすぎました。後で再試行してください。',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': 'モデルにアクセスできませんでした。CORSとFirebase Storageの権限を確認してください。',
+  'Error de descarga HTTP {code}.': 'HTTPダウンロードエラー {code}。',
+  'WebGL no está disponible en este navegador.': 'このブラウザではWebGLを使用できません。',
+  'Se importó {name}.': '{name}をインポートしました。',
+  'Modelo importado': 'モデルをインポートしました',
+  'La escena se exportó como archivo GLB.': 'シーンをGLBファイルとしてエクスポートしました。',
+  'Exportación lista': 'エクスポート準備完了',
+  'Error de exportación': 'エクスポートエラー',
+  'Inicia sesión para marcar favoritos.': 'お気に入りに追加するにはログインしてください。',
+  'No puedes marcar como favorito tu propio modelo.': '自分のモデルをお気に入りにすることはできません。',
+  'Espera un momento antes de volver a darle like a este modelo.': 'このモデルを再度いいねするには少し時間をおいてください。',
+  'No puedes seguirte a ti mismo.': '自分自身をフォローすることはできません。',
+  'No se pudo validar la conversación.': '会話を検証できませんでした。',
+  'No se pudo validar la conversación y el remitente del mensaje.': '会話とメッセージの送信者を検証できませんでした。',
+  'No se pudo descargar el modelo ({status}).': 'モデルをダウンロードできませんでした ({status})。',
+  'No se pudo validar la cuenta que se va a eliminar.': '削除するアカウントを確認できませんでした。',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storageが構成されていません。アカウントのコンテンツを安全に削除できません。',
+  'Debes iniciar sesión.': 'ログインが必要です。',
+  'No tienes permisos para borrar este asset.': 'このアセットを削除する権限がありません。',
+  'No se pudo copiar el enlace en este entorno.': 'この環境ではリンクをコピーできませんでした。',
+  'El navegador no permitió copiar el enlace.': 'ブラウザがリンクのコピーを許可しませんでした。',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3Dモデルを読み込めませんでした。GLBファイルが有効であることを確認してください。',
+
 };

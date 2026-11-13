@@ -707,15 +707,15 @@ export class SocialService {
   }
 
   async toggleLike(post: Post3D, actor?: User): Promise<boolean> {
-    if (!actor) throw new Error('Inicia sesión para marcar favoritos.');
+    if (!actor) throw new Error(this.i18n.translate('Inicia sesión para marcar favoritos.'));
     if (actor.uid === post.author.uid) {
-      throw new Error('No puedes marcar como favorito tu propio modelo.');
+      throw new Error(this.i18n.translate('No puedes marcar como favorito tu propio modelo.'));
     }
     const lockKey = `${actor.uid}:${post.id}`;
     if (this.likeInFlight.has(lockKey)) return this.isLikedSync(post.id, actor.uid);
     const lastLike = this.likeRateLimit.get(lockKey);
     if (lastLike != null && Date.now() - lastLike < SocialService.LIKE_COOLDOWN_MS) {
-      throw new Error('Espera un momento antes de volver a darle like a este modelo.');
+      throw new Error(this.i18n.translate('Espera un momento antes de volver a darle like a este modelo.'));
     }
     this.likeInFlight.add(lockKey);
     try {
@@ -1010,7 +1010,7 @@ export class SocialService {
   }
 
   async followUser(actor: User, targetUid: string): Promise<void> {
-    if (!targetUid || targetUid === actor.uid) throw new Error('No puedes seguirte a ti mismo.');
+    if (!targetUid || targetUid === actor.uid) throw new Error(this.i18n.translate('No puedes seguirte a ti mismo.'));
     if (this.firestore) {
       const followerRef = doc(this.firestore, 'users', targetUid, 'followers', actor.uid);
       const followingRef = doc(this.firestore, 'users', actor.uid, 'following', targetUid);
@@ -1320,7 +1320,7 @@ export class SocialService {
       participantIds.length !== 2
       || participantIds[0] >= participantIds[1]
     ) {
-      throw new Error('No se pudo validar la conversación.');
+      throw new Error(this.i18n.translate('No se pudo validar la conversación.'));
     }
     if (!this.firestore) return;
 
@@ -1389,7 +1389,7 @@ export class SocialService {
       || !participantIds.includes(message.senderId)
       || !text
     ) {
-      throw new Error('No se pudo validar la conversación y el remitente del mensaje.');
+      throw new Error(this.i18n.translate('No se pudo validar la conversación y el remitente del mensaje.'));
     }
     if (text.length > SocialService.MAX_MESSAGE_LENGTH) {
       throw new Error(
@@ -1479,7 +1479,7 @@ export class SocialService {
   async downloadModel(post: Post3D): Promise<Blob> {
     if (post.modelUrl.startsWith('local-model://')) return this.readBlob(post.id);
     const response = await fetch(post.modelUrl);
-    if (!response.ok) throw new Error(`No se pudo descargar el modelo (${response.status}).`);
+    if (!response.ok) throw new Error(this.i18n.translate('No se pudo descargar el modelo ({status}).', { status: response.status }));
     return response.blob();
   }
 
@@ -1570,7 +1570,7 @@ export class SocialService {
   }
 
   async deleteAccountData(uid: string, reason: 'self' | 'inactivity' | 'admin' = 'self', deletedBy?: string): Promise<void> {
-    if (!uid) throw new Error('No se pudo validar la cuenta que se va a eliminar.');
+    if (!uid) throw new Error(this.i18n.translate('No se pudo validar la cuenta que se va a eliminar.'));
     await this.logDeletionAudit(uid, reason, deletedBy);
 
     if (!this.firestore) {
@@ -1638,7 +1638,7 @@ export class SocialService {
       where('authorId', '==', uid),
     ));
     if (ownPostsSnapshot.size && !this.storage) {
-      throw new Error('Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.');
+      throw new Error(this.i18n.translate('Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.'));
     }
     const publicPostsSnapshot = await getDocs(query(
       collection(this.firestore, SOCIAL_COLLECTIONS.posts),

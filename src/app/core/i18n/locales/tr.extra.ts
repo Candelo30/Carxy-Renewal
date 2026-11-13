@@ -5,6 +5,7 @@
  * Completa las traducciones en tr.extra.ts cuando quieras localizarlas.
  */
 export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': '',
   'AUTOR': '',
   'Angular + Three.js': '',
@@ -698,4 +699,33 @@ export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': 'Тестировщик · Техпис',
   'Tester, Documentador, Analista': 'Тестировщик · Техпис · Аналитик',
   'Vacío': 'Пустая группа',
+
+  'Visor 3D interactivo': 'Интерактивный 3D-просмотрщик',
+  'Cargando modelo 3D…': 'Загрузка 3D-модели…',
+  'Arrastra para orbitar · rueda para zoom': 'Перетаскивайте для вращения · колесо для масштабирования',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': 'Модель загружалась слишком долго. Попробуйте снова позже.',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': 'Не удалось получить доступ к модели. Проверьте CORS и права Firebase Storage.',
+  'Error de descarga HTTP {code}.': 'Ошибка загрузки HTTP {code}.',
+  'WebGL no está disponible en este navegador.': 'WebGL недоступен в этом браузере.',
+  'Se importó {name}.': '{name} импортирован.',
+  'Modelo importado': 'Модель импортирована',
+  'La escena se exportó como archivo GLB.': 'Сцена экспортирована как файл GLB.',
+  'Exportación lista': 'Экспорт готов',
+  'Error de exportación': 'Ошибка экспорта',
+  'Inicia sesión para marcar favoritos.': 'Войдите, чтобы добавить в избранное.',
+  'No puedes marcar como favorito tu propio modelo.': 'Нельзя добавить собственную модель в избранное.',
+  'Espera un momento antes de volver a darle like a este modelo.': 'Подождите перед повторным лайком этой модели.',
+  'No puedes seguirte a ti mismo.': 'Нельзя подписаться на себя.',
+  'No se pudo validar la conversación.': 'Не удалось проверить разговор.',
+  'No se pudo validar la conversación y el remitente del mensaje.': 'Не удалось проверить разговор и отправителя сообщения.',
+  'No se pudo descargar el modelo ({status}).': 'Не удалось скачать модель ({status}).',
+  'No se pudo validar la cuenta que se va a eliminar.': 'Не удалось проверить аккаунт для удаления.',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storage не настроен; содержимое аккаунта невозможно удалить безопасно.',
+  'Debes iniciar sesión.': 'Вы должны войти в систему.',
+  'No tienes permisos para borrar este asset.': 'У вас нет прав на удаление этого ассета.',
+  'No se pudo copiar el enlace en este entorno.': 'Не удалось скопировать ссылку в этой среде.',
+  'El navegador no permitió copiar el enlace.': 'Браузер не разрешил копирование ссылки.',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3D modeli yükleinemedi. GLB dosyasının geçerli olduğundan emin olun.',
+
 };

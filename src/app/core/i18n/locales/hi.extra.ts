@@ -3,6 +3,7 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': 'विषय',
   'AUTOR': 'लेखक',
   'Angular + Three.js': 'Angular + Three.js',
@@ -696,4 +697,33 @@ export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': 'टेस्टर · डॉक्यूमेंटर',
   'Tester, Documentador, Analista': 'टेस्टर · डॉक्यूमेंटर · विश्लेषक',
   'Vacío': 'खाली',
+
+  'Visor 3D interactivo': 'इंटरैक्टिव 3D व्यूअर',
+  'Cargando modelo 3D…': '3D मॉडल लोड हो रहा है…',
+  'Arrastra para orbitar · rueda para zoom': 'परिक्रमा के लिए खींचें · जूम के लिए स्क्रॉल करें',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': 'मॉडल बहुत देर से लोड हुआ। बाद में फिर कोशिश करें।',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': 'मॉडल तक नहीं पहुँच सका। CORS और Firebase Storage की अनुमतियाँ जांचें।',
+  'Error de descarga HTTP {code}.': 'HTTP डाउनलोड त्रुटि {code}.',
+  'WebGL no está disponible en este navegador.': 'इस ब्राउज़र में WebGL उपलब्ध नहीं है।',
+  'Se importó {name}.': '{name} आयात किया गया।',
+  'Modelo importado': 'मॉडल आयात हो गया',
+  'La escena se exportó como archivo GLB.': 'दृश्य GLB फ़ाइल के रूप में एक्सपोर्ट हुआ।',
+  'Exportación lista': 'एक्सपोर्ट तैयार है',
+  'Error de exportación': 'एक्सपोर्ट त्रुटि',
+  'Inicia sesión para marcar favoritos.': 'पसंदीदा में जोड़ने के लिए लॉग इन करें।',
+  'No puedes marcar como favorito tu propio modelo.': 'आप अपना ही मॉडल पसंदीदा नहीं कर सकते।',
+  'Espera un momento antes de volver a darle like a este modelo.': 'इस मॉडल को फिर से लाइक करने से पहले एक पल प्रतीक्षा करें।',
+  'No puedes seguirte a ti mismo.': 'आप स्वयं को फॉलो नहीं कर सकते।',
+  'No se pudo validar la conversación.': 'बातचीत की पुष्टि नहीं हो सकी।',
+  'No se pudo validar la conversación y el remitente del mensaje.': 'बातचीत और संदेश भेजने वाले की पुष्टि नहीं हो सकी।',
+  'No se pudo descargar el modelo ({status}).': 'मॉडल डाउनलोड नहीं हो सका ({status})।',
+  'No se pudo validar la cuenta que se va a eliminar.': 'जिस खाते को हटाना है उसकी पुष्टि नहीं हो सकी।',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storage कॉन्फ़िगर नहीं है; खाते की सामग्री सुरक्षित रूप से हटाएं नहीं जा सकती।',
+  'Debes iniciar sesión.': 'आपको लॉग इन करना होगा।',
+  'No tienes permisos para borrar este asset.': 'इस एसेट को हटाने की अनुमति नहीं है।',
+  'No se pudo copiar el enlace en este entorno.': 'इस वातावरण में लिंक कॉपी नहीं हो सका।',
+  'El navegador no permitió copiar el enlace.': 'ब्राउज़र ने लिंक कॉपी करने की अनुमति नहीं दी।',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3D मॉडल लोड नहीं हो सका। सुनिश्चित करें कि GLB फ़ाइल मान्य है।',
+
 };

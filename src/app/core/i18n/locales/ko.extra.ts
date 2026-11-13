@@ -5,6 +5,7 @@
  * Completa las traducciones en ko.extra.ts cuando quieras localizarlas.
  */
 export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': '',
   'AUTOR': '',
   'Angular + Three.js': '',
@@ -698,4 +699,33 @@ export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': '测试工程师 · 知识文档',
   'Tester, Documentador, Analista': '测试工程师 · 知识文档 · 分析师',
   'Vacío': '空对象',
+
+  'Visor 3D interactivo': '交互式 3D 查看器',
+  'Cargando modelo 3D…': '正在加载 3D 模型…',
+  'Arrastra para orbitar · rueda para zoom': '拖动环绕 · 滚轮缩放',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': '模型加载时间过长。请稍后重试。',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': '无法访问模型。请检查 CORS 和 Firebase Storage 权限。',
+  'Error de descarga HTTP {code}.': 'HTTP 下载错误 {code}。',
+  'WebGL no está disponible en este navegador.': '此浏览器不支持 WebGL。',
+  'Se importó {name}.': '已导入 {name}。',
+  'Modelo importado': '模型已导入',
+  'La escena se exportó como archivo GLB.': '场景已导出为 GLB 文件。',
+  'Exportación lista': '导出已就绪',
+  'Error de exportación': '导出错误',
+  'Inicia sesión para marcar favoritos.': '请登录以添加到收藏。',
+  'No puedes marcar como favorito tu propio modelo.': '不能收藏自己的模型。',
+  'Espera un momento antes de volver a darle like a este modelo.': '请稍候再点赞此模型。',
+  'No puedes seguirte a ti mismo.': '不能关注你自己。',
+  'No se pudo validar la conversación.': '无法验证对话。',
+  'No se pudo validar la conversación y el remitente del mensaje.': '无法验证对话和消息发送者。',
+  'No se pudo descargar el modelo ({status}).': '无法下载模型 ({status})。',
+  'No se pudo validar la cuenta que se va a eliminar.': '无法验证要删除的账户。',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storage 未配置；无法安全删除账户内容。',
+  'Debes iniciar sesión.': '您必须已登录。',
+  'No tienes permisos para borrar este asset.': '您没有权限删除此资产。',
+  'No se pudo copiar el enlace en este entorno.': '此环境无法复制链接。',
+  'El navegador no permitió copiar el enlace.': '浏览器不允许复制链接。',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3D 모델을 불러올 수 없습니다. GLB 파일이 유효한지 확인하세요.',
+
 };

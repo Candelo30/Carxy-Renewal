@@ -1,4 +1,5 @@
-import type { SourceTranslation } from './source-translations';
+import type {
+ SourceTranslation } from './source-translations';
 
 const t = (en: string, fr: string, pt: string): SourceTranslation => ({ en, fr, pt });
 
@@ -2002,4 +2003,32 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Tester, Documentador': t('Tester · Documentarian', 'Testeur · Doc', 'Tester · Documentador'),
   'Tester, Documentador, Analista': t('Tester · Documentarian · Analyst', 'Testeur · Doc · Analyste', 'Tester · Documentador · Analista'),
   'Vacío': t('Empty', 'Vide', 'Vazio'),
+  'Visor 3D interactivo': t('Interactive 3D viewer', 'Afficheur 3D interactif', 'Visualizador 3D interativo'),
+  'Cargando modelo 3D…': t('Loading 3D model…', 'Chargement du modèle 3D…', 'Carregando modelo 3D…'),
+  'Arrastra para orbitar · rueda para zoom': t('Drag to orbit · scroll to zoom', 'Faites glisser pour orbiter · molette pour zoomer', 'Arraste para orbitar · roda para zoom'),
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': t('The model took too long to load. Try again later.', 'Le modèle a mis trop de temps à charger. Réessayez plus tard.', 'O modelo demorou muito para carregar. Tente novamente mais tarde.'),
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': t('Could not reach the model. Check CORS and Firebase Storage permissions.', 'Impossible d\'accéder au modèle. Vérifiez CORS et les autorisations de Firebase Storage.', 'Não foi possível acessar o modelo. Verifique CORS e as permissões do Firebase Storage.'),
+  'Error de descarga HTTP {code}.': t('HTTP download error {code}.', 'Erreur de téléchargement HTTP {code}.', 'Erro de download HTTP {code}.'),
+  'WebGL no está disponible en este navegador.': t('WebGL is not available in this browser.', 'WebGL n\'est pas disponible dans ce navigateur.', 'WebGL não está disponível neste navegador.'),
+  'Se importó {name}.': t('Imported {name}.', '{name} importé.', '{name} importado.'),
+  'Modelo importado': t('Model imported', 'Modèle importé', 'Modelo importado'),
+  'La escena se exportó como archivo GLB.': t('The scene was exported as a GLB file.', 'La scène a été exportée au format GLB.', 'A cena foi exportada como arquivo GLB.'),
+  'Exportación lista': t('Export ready', 'Export prêt', 'Exportação pronta'),
+  'Error de exportación': t('Export error', 'Erreur d\'exportation', 'Erro de exportação'),
+  'Inicia sesión para marcar favoritos.': t('Log in to add to favorites.', 'Connectez-vous pour ajouter aux favoris.', 'Entre para adicionar aos favoritos.'),
+  'No puedes marcar como favorito tu propio modelo.': t('You cannot favorite your own model.', 'Vous ne pouvez pas mettre en favori votre propre modèle.', 'Você não pode favoritar seu próprio modelo.'),
+  'Espera un momento antes de volver a darle like a este modelo.': t('Wait a moment before liking this model again.', 'Attendez un instant avant d\'aimer à nouveau ce modèle.', 'Aguarde um momento antes de curtir este modelo novamente.'),
+  'No puedes seguirte a ti mismo.': t('You cannot follow yourself.', 'Vous ne pouvez pas vous suivre vous-même.', 'Você não pode seguir a si mesmo.'),
+  'No se pudo validar la conversación.': t('Could not validate the conversation.', 'Impossible de valider la conversation.', 'Não foi possível validar a conversa.'),
+  'No se pudo validar la conversación y el remitente del mensaje.': t('Could not validate the conversation and the message sender.', 'Impossible de valider la conversation et l\'expéditeur du message.', 'Não foi possível validar a conversa e o remetente da mensagem.'),
+  'No se pudo descargar el modelo ({status}).': t('Could not download the model ({status}).', 'Impossible de télécharger le modèle ({status}).', 'Não foi possível baixar o modelo ({status}).'),
+  'No se pudo validar la cuenta que se va a eliminar.': t('Could not validate the account to delete.', 'Impossible de valider le compte à supprimer.', 'Não foi possível validar a conta a ser excluída.'),
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': t('Firebase Storage is not configured; account content cannot be safely deleted.', 'Firebase Storage n\'est pas configuré ; le contenu du compte ne peut pas être supprimé en toute sécurité.', 'Firebase Storage não está configurado; o conteúdo da conta não pode ser excluído com segurança.'),
+  'Debes iniciar sesión.': t('You must be logged in.', 'Vous devez être connecté.', 'Você precisa estar conectado.'),
+  'No tienes permisos para borrar este asset.': t('You do not have permission to delete this asset.', 'Vous n\'avez pas la permission de supprimer cet asset.', 'Você não tem permissão para excluir este asset.'),
+  'No se pudo copiar el enlace en este entorno.': t('Could not copy the link in this environment.', 'Impossible de copier le lien dans cet environnement.', 'Não foi possível copiar o link neste ambiente.'),
+  'El navegador no permitió copiar el enlace.': t('The browser did not allow copying the link.', 'Le navigateur n\'a pas autorisé la copie du lien.', 'O navegador não permitiu copiar o link.'),
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': t('Could not load the 3D model. Make sure the GLB file is valid.', 'Impossible de charger le modèle 3D. Vérifiez que le fichier GLB est valide.', 'Não foi possível carregar o modelo 3D. Verifique se o arquivo GLB é válido.'),
+
 };

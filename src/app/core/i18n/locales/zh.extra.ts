@@ -3,6 +3,7 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': '主题',
   'AUTOR': '作者',
   'Angular + Three.js': 'Angular + Three.js',
@@ -696,4 +697,33 @@ export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': 'Tester · Belgeselci',
   'Tester, Documentador, Analista': 'Tester · Belgeselci · Analist',
   'Vacío': 'Boş grup',
+
+  'Visor 3D interactivo': 'Interaktif 3D görüntüleyici',
+  'Cargando modelo 3D…': '3D model yükleniyor…',
+  'Arrastra para orbitar · rueda para zoom': 'Döndürmek için sürükle · yakınlaştırmak için kaydır',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': 'Model çok geç yüklendi. Daha sonra tekrar deneyin.',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': 'Modele ulaşılamadı. CORS ve Firebase Storage izinlerini kontrol edin.',
+  'Error de descarga HTTP {code}.': 'HTTP indirme hatası {code}.',
+  'WebGL no está disponible en este navegador.': 'Bu tarayıcıda WebGL kullanılamıyor.',
+  'Se importó {name}.': 'İçe aktarıldı: {name}.',
+  'Modelo importado': 'Model içe aktarıldı',
+  'La escena se exportó como archivo GLB.': 'Sahne GLB dosyası olarak dışa aktarıldı.',
+  'Exportación lista': 'Dışa aktarma hazır',
+  'Error de exportación': 'Dışa aktarma hatası',
+  'Inicia sesión para marcar favoritos.': 'Favorilere eklemek için oturum açın.',
+  'No puedes marcar como favorito tu propio modelo.': 'Kendi modelinizi favorileyemezsiniz.',
+  'Espera un momento antes de volver a darle like a este modelo.': 'Bu modeli tekrar beğenmeden önce bir an bekleyin.',
+  'No puedes seguirte a ti mismo.': 'Kendinizi takip edemezsiniz.',
+  'No se pudo validar la conversación.': 'Konuşma doğrulanamadı.',
+  'No se pudo validar la conversación y el remitente del mensaje.': 'Konuşma ve mesaj göndereni doğrulanamadı.',
+  'No se pudo descargar el modelo ({status}).': 'Model indirilemedi ({status}).',
+  'No se pudo validar la cuenta que se va a eliminar.': 'Silinecek hesap doğrulanamadı.',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storage yapılandırılmamış; hesap içeriği güvenli şekilde silinemez.',
+  'Debes iniciar sesión.': 'Oturum açmanız gerekiyor.',
+  'No tienes permisos para borrar este asset.': 'Bu varlığı silme izniniz yok.',
+  'No se pudo copiar el enlace en este entorno.': 'Bu ortamda bağlantı kopyalanamadı.',
+  'El navegador no permitió copiar el enlace.': 'Tarayıcı bağlantıyı kopyalamaya izin vermedi.',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '无法加载 3D 模型。请确认 GLB 文件有效。',
+
 };

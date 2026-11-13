@@ -3,6 +3,7 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
+
   'ASUNTO': 'OGGETTO',
   'AUTOR': 'AUTORE',
   'Angular + Three.js': 'Angular + Three.js',
@@ -696,4 +697,33 @@ export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Tester, Documentador': 'Tester · Documentarista',
   'Tester, Documentador, Analista': 'Tester · Documentarista · Analista',
   'Vacío': 'Vuoto',
+
+  'Visor 3D interactivo': 'Visualizzatore 3D interattivo',
+  'Cargando modelo 3D…': 'Caricamento del modello 3D…',
+  'Arrastra para orbitar · rueda para zoom': 'Trascina per orbitare · rotella per lo zoom',
+  'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.': 'Il modello ha impiegato troppo tempo per caricarsi. Riprova più tardi.',
+  'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.': 'Impossibile accedere al modello. Controlla CORS e i permessi di Firebase Storage.',
+  'Error de descarga HTTP {code}.': 'Errore di download HTTP {code}.',
+  'WebGL no está disponible en este navegador.': 'WebGL non è disponibile in questo browser.',
+  'Se importó {name}.': '{name} importato.',
+  'Modelo importado': 'Modello importato',
+  'La escena se exportó como archivo GLB.': 'La scena è stata esportata come file GLB.',
+  'Exportación lista': 'Esportazione pronta',
+  'Error de exportación': 'Errore di esportazione',
+  'Inicia sesión para marcar favoritos.': 'Accedi per aggiungere ai preferiti.',
+  'No puedes marcar como favorito tu propio modelo.': 'Non puoi aggiungere il tuo modello ai preferiti.',
+  'Espera un momento antes de volver a darle like a este modelo.': 'Attendi un momento prima di mettere di nuovo Mi piace a questo modello.',
+  'No puedes seguirte a ti mismo.': 'Non puoi seguire te stesso.',
+  'No se pudo validar la conversación.': 'Impossibile convalidare la conversazione.',
+  'No se pudo validar la conversación y el remitente del mensaje.': 'Impossibile convalidare la conversazione e il mittente del messaggio.',
+  'No se pudo descargar el modelo ({status}).': 'Impossibile scaricare il modello ({status}).',
+  'No se pudo validar la cuenta que se va a eliminar.': 'Impossibile convalidare l\'account da eliminare.',
+  'Firebase Storage no está configurado; no se puede eliminar de forma segura el contenido de la cuenta.': 'Firebase Storage non è configurato; non è possibile eliminare in sicurezza il contenuto dell\'account.',
+  'Debes iniciar sesión.': 'Devi essere autenticato.',
+  'No tienes permisos para borrar este asset.': 'Non hai il permesso di eliminare questo asset.',
+  'No se pudo copiar el enlace en este entorno.': 'Impossibile copiare il link in questo ambiente.',
+  'El navegador no permitió copiar el enlace.': 'Il browser non ha consentito la copia del link.',
+
+  'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': 'Impossibile caricare il modello 3D. Assicurati che il file GLB sia valido.',
+
 };

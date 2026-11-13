@@ -3,16 +3,19 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnDestr
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
+import { I18nService } from '../../../core/services/i18n';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-model-preview',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     <div class="preview-viewport">
-      <canvas #canvas aria-label="Visor 3D interactivo"></canvas>
-      @if (loading) { <span class="preview-message">Cargando modelo 3D…</span> }
+      <canvas #canvas [attr.aria-label]="'Visor 3D interactivo' | translate"></canvas>
+      @if (loading) { <span class="preview-message">{{ 'Cargando modelo 3D…' | translate }}</span> }
       @if (error) { <span class="preview-message preview-error" role="alert">{{ error }}</span> }
-      <span class="preview-hint">Arrastra para orbitar · rueda para zoom</span>
+      <span class="preview-hint">{{ 'Arrastra para orbitar · rueda para zoom' | translate }}</span>
     </div>
   `,
   styles: [`
@@ -33,6 +36,7 @@ export class ModelPreviewComponent implements AfterViewInit, OnDestroy {
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly i18n = inject(I18nService);
   private renderer?: THREE.WebGLRenderer;
   private scene?: THREE.Scene;
   private camera?: THREE.PerspectiveCamera;
@@ -97,17 +101,17 @@ export class ModelPreviewComponent implements AfterViewInit, OnDestroy {
   }
 
   private getLoadErrorMessage(error: unknown, aborted: boolean): string {
-    if (aborted) return 'La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.';
+    if (aborted) return this.i18n.translate('La carga del modelo tardó demasiado. Inténtalo de nuevo más tarde.');
     if (error instanceof TypeError) {
-      return 'No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.';
+      return this.i18n.translate('No se pudo acceder al modelo. Revisa CORS y los permisos de Firebase Storage.');
     }
     if (error instanceof Error && error.message.startsWith('HTTP ')) {
-      return `Firebase Storage rechazó la descarga (${error.message.slice(5)}).`;
+      return this.i18n.translate('Error de descarga HTTP {code}.', { code: error.message.slice(5) });
     }
     if (error instanceof Error && /webgl/i.test(error.message)) {
-      return 'WebGL no está disponible en este navegador.';
+      return this.i18n.translate('WebGL no está disponible en este navegador.');
     }
-    return 'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.';
+    return this.i18n.translate('No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.');
   }
 
   private setupRenderer(): void {
