@@ -258,9 +258,23 @@ export class CollaborationService implements OnDestroy {
     const db = this.firestore;
     if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
 
-    // Borrar en cascada los documentos asociados sería inválido con las reglas
-    // (el resto son documentos del proyecto, no archivos personales): se borra
-    // el documento principal y los subdocumentos colgantes por pertenencia.
+    // Camino principal: Cloud Function `deleteProject` (admin SDK). En el
+    // cliente el borrado en cascada no puede completarse con las reglas
+    // vigentes y el proyecto quedaba huérfano a medio borrar.
+    try {
+      if (typeof getFunctions === 'function') {
+        const functions = getFunctions();
+        const callable = httpsCallable(functions, 'deleteProject');
+        await callable({ projectId });
+        return;
+      }
+    } catch (error) {
+      // La función no está desplegada o rechaza: cascada de respaldo, mejor
+      // esfuerzo (puede dejar datos asociados huérfanos; ver comentario en el
+      // backend).
+      console.warn('La función deleteProject no se pudo usar; intento cascada local.', error);
+    }
+
     const safe = async (task: () => Promise<unknown>) => {
       try {
         await task();

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendFeedbackConfirmation = exports.sendProjectInvitation = exports.sendWelcomeEmail = exports.sendResetPassword = exports.sendVerifyEmail = exports.cleanupInactiveUsers = exports.deleteFirebaseAuthUser = void 0;
+exports.sendFeedbackConfirmation = exports.deleteProject = exports.sendProjectInvitation = exports.sendWelcomeEmail = exports.sendResetPassword = exports.sendVerifyEmail = exports.cleanupInactiveUsers = exports.deleteFirebaseAuthUser = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
@@ -122,3 +122,6 @@ Object.defineProperty(exports, "sendResetPassword", { enumerable: true, get: fun
 Object.defineProperty(exports, "sendWelcomeEmail", { enumerable: true, get: function () { return functions_1.sendWelcomeEmail; } });
 Object.defineProperty(exports, "sendProjectInvitation", { enumerable: true, get: function () { return functions_1.sendProjectInvitation; } });
 Object.defineProperty(exports, "sendFeedbackConfirmation", { enumerable: true, get: function () { return functions_1.sendFeedbackConfirmation; } });
+// --- Eliminación de proyectos (cascada segura) ---
+var projects_1 = require("./projects");
+Object.defineProperty(exports, "deleteProject", { enumerable: true, get: function () { return projects_1.deleteProject; } });
