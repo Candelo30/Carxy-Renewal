@@ -721,8 +721,8 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 100
         && request.resource.data.description is string
         && request.resource.data.description.size() <= 500
-        && (request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl is string)
-        && (request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl.size() <= 100000);
+        && (!('thumbnailUrl' in request.resource.data) || request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl is string)
+        && (!('thumbnailUrl' in request.resource.data) || request.resource.data.thumbnailUrl == null || request.resource.data.thumbnailUrl.size() <= 100000);
 
       allow delete: if signedIn() && (isAdmin() || isProjectOwner(projectId));
 
