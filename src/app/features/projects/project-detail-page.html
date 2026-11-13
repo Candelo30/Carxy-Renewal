@@ -159,33 +159,36 @@
       </button>
 
       @if (following$ | async; as following) {
-        <div class="following-invites">
-          <h3>{{ 'Invitar seguidores' | translate }} <small>{{ 'Invita con un clic a quien sigues' | translate }}</small></h3>
-          @if (following.length) {
-            <ul class="following-list">
-              @for (person of following; track person.uid) {
-                <li class="following-row">
-                  <img class="following-avatar" [src]="person.photoURL || 'user-avatar.svg'" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
-                  <span class="following-name">{{ person.displayName }}</span>
-                  @if (invitedFollowers().has(person.uid)) {
-                    <span class="following-badge">{{ 'Invitado' | translate }}</span>
-                  } @else {
-                    <button
-                      type="button"
-                      class="btn-primary following-invite-btn"
-                      [disabled]="busyFollowingId() === person.uid"
-                      (click)="inviteFollower(person)"
-                    >
-                      {{ busyFollowingId() === person.uid ? ('common.loading' | translate) : ('Invitar' | translate) }}
-                    </button>
-                  }
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="empty-state">{{ 'Aún no sigues a nadie en la comunidad.' | translate }}</p>
-          }
-        </div>
+        @if (following.length > 0) {
+          <details class="following-section" open>
+            <summary class="following-summary">
+              <span>{{ 'Invitar seguidores' | translate }}<small>{{ following.length }}</small></span>
+              <span class="following-summary-arrow" aria-hidden="true"></span>
+            </summary>
+            <div class="following-section-body">
+              <div class="following-list">
+                @for (person of following; track person.uid) {
+                  <div class="following-row">
+                    <img class="following-avatar" [src]="person.photoURL || 'user-avatar.svg'" alt="" loading="lazy" (error)="useFallbackAvatar($event)" />
+                    <span class="following-name">{{ person.displayName }}</span>
+                    @if (invitedFollowers().has(person.uid)) {
+                      <span class="following-badge">{{ 'Invitado' | translate }}</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-primary following-invite-btn"
+                        [disabled]="busyFollowingId() === person.uid"
+                        (click)="inviteFollower(person)"
+                      >
+                        {{ busyFollowingId() === person.uid ? ('common.loading' | translate) : ('Invitar' | translate) }}
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </details>
+        }
       }
     </section>
   }
@@ -268,29 +271,34 @@
   }
 
   @if (projectId) {
-    <section class="activity-section">
-      <h2>{{ 'projects.activity' | translate }}</h2>
-      @if (activity | async; as activityList) {
-        <div class="activity-list">
-          @for (item of activityList; track item.id) {
-            <div class="activity-row">
-              <div class="activity-avatar">{{ item.actorName.charAt(0) }}</div>
-              <div class="activity-info">
-                <div class="activity-actor">{{ item.actorName }}</div>
-                <div class="activity-action">{{ item.action | translate }}</div>
-                <div class="activity-time">{{ item.createdAt | date:'short' }}</div>
+    <details class="activity-section activity-section-details" open>
+      <summary class="activity-summary">
+        <span>{{ 'projects.activity' | translate }}</span>
+        <span class="following-summary-arrow" aria-hidden="true"></span>
+      </summary>
+      <div class="following-section-body">
+        @if (activity | async; as activityList) {
+          <div class="activity-list">
+            @for (item of activityList; track item.id) {
+              <div class="activity-row">
+                <div class="activity-avatar">{{ item.actorName.charAt(0) }}</div>
+                <div class="activity-info">
+                  <div class="activity-actor">{{ item.actorName }}</div>
+                  <div class="activity-action">{{ item.action | translate }}</div>
+                  <div class="activity-time">{{ item.createdAt | date:'short' }}</div>
+                </div>
+                <div class="activity-object">{{ item.objectType }}</div>
               </div>
-              <div class="activity-object">{{ item.objectType }}</div>
-            </div>
-          }
-          @if (!activityList.length) {
-            <div class="empty-activity">
-              <p>{{ 'projects.noActivity' | translate }}</p>
-            </div>
-          }
-        </div>
-      }
-    </section>
+            }
+            @if (!activityList.length) {
+              <div class="empty-activity">
+                <p>{{ 'projects.noActivity' | translate }}</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </details>
   }
   </div>
 

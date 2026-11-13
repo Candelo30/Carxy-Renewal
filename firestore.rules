@@ -878,6 +878,7 @@ service cloud.firestore {
       allow read: if signedIn()
         && (resource.data.invitedBy == request.auth.uid
           || (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower())
+          || (resource.data.invitedUid is string && resource.data.invitedUid == request.auth.uid)
           || isProjectWriter(resource.data.projectId));
 
       allow create: if signedIn()
@@ -899,15 +900,15 @@ service cloud.firestore {
           'invitedUid', 'role', 'status', 'createdAt', 'expiresAt'
         ])
         && request.resource.data.id == invitationId
-        && request.resource.data.invitedUid == null;
+        && (request.resource.data.invitedUid == null || request.resource.data.invitedUid is string);
 
       allow update: if signedIn()
         && request.resource.data.projectId == resource.data.projectId
         && request.resource.data.invitedEmail == resource.data.invitedEmail
         && (
           (
-            // Reenvío/actualización de invitación pendiente por un miembro con permisos de escritura.
-            (isAdmin() || isProjectWriter(resource.data.projectId))
+              // Reenvío/actualización de invitación pendiente por un miembro con permisos de escritura.
+              (isAdmin() || isProjectWriter(resource.data.projectId))
             && resource.data.status == 'pending'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'projectName', 'invitedBy', 'invitedByName', 'role', 'status', 'createdAt', 'expiresAt', 'invitedUid'
@@ -915,15 +916,16 @@ service cloud.firestore {
             && request.resource.data.status == 'pending'
             && request.resource.data.expiresAt >= request.time.toMillis()
             && (request.resource.data.role in ['editor', 'viewer']
-          || (request.resource.data.role == 'owner' && (isAdmin() || isProjectOwner(request.resource.data.projectId))))
+              || (request.resource.data.role == 'owner' && (isAdmin() || isProjectOwner(request.resource.data.projectId))))
             && request.resource.data.createdAt is number
             && request.resource.data.expiresAt is number
             && request.resource.data.invitedUid == null
             && request.resource.data.projectName is string
           ) || (
-            // Aceptación/rechazo por la persona invitada, o revocación/expiración por quien invitó.
+            // Aceptación/rechazo por la persona invitada, o por quien invitó.
             (resource.data.invitedBy == request.auth.uid
-              || (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower()))
+              || (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower())
+              || (resource.data.invitedUid is string && resource.data.invitedUid == request.auth.uid))
             && resource.data.expiresAt >= request.time.toMillis()
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['status', 'respondedAt', 'invitedUid'])
@@ -935,8 +937,10 @@ service cloud.firestore {
                 && request.resource.data.respondedAt is number
                 && (
                   (
-                    request.auth.token.email is string
-                    && resource.data.invitedEmail == tokenEmailLower()
+                    (
+                      (request.auth.token.email is string && resource.data.invitedEmail == tokenEmailLower())
+                      || (resource.data.invitedUid is string && resource.data.invitedUid == request.auth.uid)
+                    )
                     && request.resource.data.status in ['accepted', 'rejected']
                     && request.resource.data.invitedUid == request.auth.uid
                   ) || (
