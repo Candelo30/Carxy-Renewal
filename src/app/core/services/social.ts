@@ -122,6 +122,10 @@ export class SocialService {
   private static readonly LIKE_COOLDOWN_MS = 2000;
   /** Límite de caracteres por mensaje de chat (debe coincidir con `firestore.rules`). */
   static readonly MAX_MESSAGE_LENGTH = 2000;
+  /** Tope de tamaño para una nota de voz (5 MB, ~5 min de webm/opus). */
+  static readonly MAX_AUDIO_BYTES = 5 * 1024 * 1024;
+  /** Duración máxima de una nota de voz en segundos. */
+  static readonly MAX_AUDIO_DURATION_SECONDS = 300;
   readonly INACTIVE_DELETE_DAYS = 30;
   /** Máx. documentos del feed público que el listener de Firestore carga de golpe (con orden por createdAt desc). */
   readonly POSTS_FEED_LIMIT = 120;
@@ -1427,7 +1431,81 @@ export class SocialService {
       text,
       id: crypto.randomUUID(),
       createdAt: Date.now(),
+      kind: 'text',
     };
+    await this.persistChatMessage(chatId, entry, participantIds);
+  }
+
+  /**
+   * Sube una nota de voz a Storage y la entrega como mensaje kind='audio'.
+   * El `text` conserva la etiqueta "Nota de voz" para que las reglas y las
+   * vistas previas (lastMessage) sigan validando sin cambios estructurales.
+   */
+  async sendAudioMessage(
+    chatId: string,
+    payload: { blob: Blob; durationSeconds: number; senderId: string; senderName: string; senderPhotoURL?: string | null },
+  ): Promise<void> {
+    const participantIds = chatId.split('__');
+    if (
+      participantIds.length !== 2
+      || participantIds[0] >= participantIds[1]
+      || !participantIds.includes(payload.senderId)
+    ) {
+      throw new Error(this.i18n.translate('No se pudo validar la conversación y el remitente del mensaje.'));
+    }
+    if (!(payload.blob instanceof Blob) || payload.blob.size === 0) {
+      throw new Error(this.i18n.translate('La grabación está vacía.'));
+    }
+    if (payload.blob.size > SocialService.MAX_AUDIO_BYTES) {
+      throw new Error(this.i18n.translate('La nota de voz supera el tamaño máximo permitido.'));
+    }
+    const duration = Math.round(payload.durationSeconds * 10) / 10;
+    if (!Number.isFinite(duration) || duration <= 0 || duration > SocialService.MAX_AUDIO_DURATION_SECONDS) {
+      throw new Error(
+        this.i18n.translate('La nota de voz supera la duración máxima de {seconds} s.', { seconds: SocialService.MAX_AUDIO_DURATION_SECONDS }),
+      );
+    }
+
+    const entryBase = {
+      text: this.i18n.translate('Nota de voz'),
+      audioDuration: duration,
+      kind: 'audio' as const,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      senderId: payload.senderId,
+      senderName: payload.senderName,
+      senderPhotoURL: payload.senderPhotoURL ?? null,
+    };
+
+    if (this.firestore) {
+      if (!this.storage) {
+        throw new Error(this.i18n.translate('Firebase Storage no está configurado.'));
+      }
+      const ext = payload.blob.type.includes('ogg') ? 'ogg' : payload.blob.type.includes('mp4') || payload.blob.type.includes('aac') ? 'm4a' : 'webm';
+      const storagePath = `chatAudio/${chatId}/${entryBase.id}.${ext}`;
+      const audioRef = ref(this.storage, storagePath);
+      await uploadBytes(audioRef, payload.blob, {
+        contentType: payload.blob.type || 'audio/webm',
+        customMetadata: { duration: String(duration) },
+      });
+      const audioUrl = await getDownloadURL(audioRef);
+      const entry: ChatMessage = { ...entryBase, audioUrl };
+      await this.persistChatMessage(chatId, entry, participantIds);
+      return;
+    }
+
+    // Fallback local (sin Firebase): se guarda como data URL en localStorage.
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error(this.i18n.translate('No se pudo leer la grabación.')));
+      reader.onload = () => resolve(String(reader.result ?? ''));
+      reader.readAsDataURL(payload.blob);
+    });
+    const entry: ChatMessage = { ...entryBase, audioUrl: dataUrl };
+    await this.persistChatMessage(chatId, entry, participantIds);
+  }
+
+  private async persistChatMessage(chatId: string, entry: ChatMessage, participantIds: string[]): Promise<void> {
     if (this.firestore) {
       const chatRef = doc(this.firestore, SOCIAL_COLLECTIONS.chats, chatId);
       const messageRef = doc(collection(chatRef, 'messages'));
@@ -2273,6 +2351,10 @@ export class SocialService {
   }
 
   private normalizeMessage(data: Record<string, unknown>): ChatMessage {
+    const kind = data['kind'] === 'audio' ? 'audio' : 'text';
+    const audioDuration = typeof data['audioDuration'] === 'number' && Number.isFinite(data['audioDuration'])
+      ? Math.max(0, data['audioDuration'] as number)
+      : undefined;
     return {
       ...data,
       id: String(data['id'] ?? ''),
@@ -2280,6 +2362,9 @@ export class SocialService {
       senderId: String(data['senderId'] ?? ''),
       senderName: String(data['senderName'] ?? ''),
       createdAt: this.normalizeTimestamp(data['createdAt']),
+      kind,
+      ...(kind === 'audio' && typeof data['audioUrl'] === 'string' ? { audioUrl: data['audioUrl'] as string } : {}),
+      ...(audioDuration !== undefined ? { audioDuration } : {}),
     } as ChatMessage;
   }
 

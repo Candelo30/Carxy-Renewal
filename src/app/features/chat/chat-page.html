@@ -303,7 +303,16 @@
                       @if (item.firstOfRun) {
                         <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName || ('Usuario' | translate)) }}</b>
                       }
-                      <p [innerHTML]="highlightedHtml(item.message.text)"></p>
+                      @if (isAudioMessage(item.message)) {
+                        <div class="audio-note">
+                          <audio controls preload="metadata" [src]="item.message.audioUrl"></audio>
+                          @if (item.message.audioDuration) {
+                            <small class="audio-note-duration">{{ item.message.audioDuration }}s</small>
+                          }
+                        </div>
+                      } @else {
+                        <p [innerHTML]="highlightedHtml(item.message.text)"></p>
+                      }
                       @if (modelPostId(item.message); as postId) {
                         @let shared = (social.postById$(postId) | async);
                         @if (shared; as post) {
@@ -366,8 +375,15 @@
             </div>
             <span class="char-count" [class.near-limit]="message().length > 1800">{{ message().length }}/2000</span>
           </div>
-          <div class="composer-input-row">
-            <textarea
+          @if (!recording()) {
+            <div class="composer-input-row">
+              <button type="button" class="mic-button" (click)="toggleRecording()" [disabled]="audioSending()" [attr.aria-label]="'Grabar nota de voz' | translate" [title]="'Grabar nota de voz' | translate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="2" width="6" height="12" rx="3"/>
+                  <path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>
+                </svg>
+              </button>
+              <textarea
               #composer
               name="message"
               rows="1"
@@ -387,7 +403,22 @@
               </svg>
               <span class="send-label">{{ 'Enviar' | translate }}</span>
             </button>
-          </div>
+            </div>
+          }
+          @if (recording()) {
+            <div class="composer-input-row recording-row">
+              <span class="recording-dot" aria-hidden="true"></span>
+              <span class="recording-timer" aria-label="Duración de la grabación">{{ recordTimer() }}</span>
+              <span class="recording-hint">{{ 'Grabando nota de voz…' | translate }}</span>
+              <button type="button" class="record-cancel" (click)="cancelRecording()" [attr.aria-label]="'Descartar grabación' | translate" [title]="'Descartar grabación' | translate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <button type="button" class="record-send" (click)="toggleRecording()" [attr.aria-label]="'Enviar nota de voz' | translate" [title]="'Enviar nota de voz' | translate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                <span class="record-send-label">{{ 'Enviar' | translate }}</span>
+              </button>
+            </div>
+          }
         </form>
       } @else {
         <div class="empty empty--hero">

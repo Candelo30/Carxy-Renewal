@@ -138,6 +138,8 @@ export interface Comment {
   createdAt: number;
 }
 
+export type ChatMessageKind = 'text' | 'audio';
+
 export interface ChatMessage {
   id: string;
   text: string;
@@ -146,6 +148,12 @@ export interface ChatMessage {
   /** Avatar del remitente (opcional: sirve para la notificación de mensaje). */
   senderPhotoURL?: string | null;
   createdAt: number;
+  /** 'audio' para las notas de voz; ausente/'text' para texto normal. */
+  kind?: ChatMessageKind;
+  /** URL pública del audio (kind='audio'). */
+  audioUrl?: string;
+  /** Duración en segundos (kind='audio'). */
+  audioDuration?: number;
 }
 
 export interface ChatConversation {

@@ -75,5 +75,21 @@ service firebase.storage {
           || request.resource.contentType.matches('image/png;.*'));
       allow delete: if signedIn() && (isProjectMember(projectId) || isModerator());
     }
+
+    match /chatAudio/{conversationId}/{fileName} {
+      // Solo los dos participantes del chat pueden leer/escribir el audio.
+      // `conversationId` = `$(participantes ordenados)` (uidA__uidB).
+      function isConversationParticipant() {
+        return signedIn()
+          && conversationId.split('__').hasAny([request.auth.uid])
+          && conversationId.size() <= 160;
+      }
+      allow read: if isConversationParticipant();
+      allow create: if isConversationParticipant()
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*')
+        && fileName.matches('^[A-Za-z0-9-]+\\.(webm|ogg|m4a|mp4|mp3|wav)$');
+      allow update, delete: if false;
+    }
   }
 }

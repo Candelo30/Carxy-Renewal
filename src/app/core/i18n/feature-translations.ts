@@ -2061,5 +2061,17 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Firebase Storage no está configurado.': t('Firebase Storage is not configured.', 'Firebase Storage n’est pas configuré.', 'O Firebase Storage não está configurado.'),
   'Cargando escena del proyecto…': t('Loading project scene…', 'Chargement de la scène du projet…', 'A carregar a cena do projeto…'),
   'Descargando geometría y materiales del proyecto': t('Downloading project geometry and materials', 'Téléchargement de la géométrie et des matériaux du projet', 'A baixar a geometria e os materiais do projeto'),
+  'Este navegador no permite grabar audio.': t('This browser cannot record audio.', 'Ce navigateur ne peut pas enregistrer de l’audio.', 'Este navegador não consegue gravar áudio.'),
+  'No se pudo acceder al micrófono. Revisa los permisos del navegador.': t('Could not access the microphone. Check your browser permissions.', 'Impossible d’accéder au microphone. Vérifiez les permissions du navigateur.', 'Não foi possível aceder ao microfone. Verifique as permissões do navegador.'),
+  'Grabar nota de voz': t('Record a voice note', 'Enregistrer une note vocale', 'Gravar uma nota de voz'),
+  'Grabando nota de voz…': t('Recording voice note…', 'Enregistrement de la note vocale…', 'A gravar nota de voz…'),
+  'Enviar nota de voz': t('Send voice note', 'Envoyer la note vocale', 'Enviar nota de voz'),
+  'Descartar grabación': t('Discard recording', 'Abandonner l’enregistrement', 'Descartar gravação'),
+  'Nota de voz': t('Voice note', 'Note vocale', 'Nota de voz'),
+  'No se pudo enviar la nota de voz': t('Could not send the voice note', 'Impossible d’envoyer la note vocale', 'Não foi possível enviar a nota de voz'),
+  'La grabación está vacía.': t('The recording is empty.', 'L’enregistrement est vide.', 'A gravação está vazia.'),
+  'La nota de voz supera el tamaño máximo permitido.': t('The voice note exceeds the maximum size.', 'La note vocale dépasse la taille maximale.', 'A nota de voz excede o tamanho máximo.'),
+  'La nota de voz supera la duración máxima de {seconds} s.': t('The voice note exceeds the maximum duration of {seconds} s.', 'La note vocale dépasse la durée maximale de {seconds} s.', 'A nota de voz excede a duração máxima de {seconds} s.'),
+  'No se pudo leer la grabación.': t('Could not read the recording.', 'Impossible de lire l’enregistrement.', 'Não foi possível ler a gravação.'),
 
 };

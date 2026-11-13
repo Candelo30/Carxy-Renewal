@@ -246,6 +246,15 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private newestMessageAt = 0;
   /** Evita envíos duplicados por doble clic o Enter repetido. */
   readonly sending = signal(false);
+  /** --- Notas de voz --- */
+  readonly recording = signal(false);
+  readonly recordSeconds = signal(0);
+  readonly audioSending = signal(false);
+  private mediaRecorder: MediaRecorder | null = null;
+  private recordedChunks: Blob[] = [];
+  private recordInterval?: ReturnType<typeof setInterval>;
+  private recordStartedAt = 0;
+  private readonly MAX_AUDIO_SECONDS = 300;
   /** Acentos que se pueden elegir para el chat. */
   readonly chatAccents = CHAT_ACCENTS;
   readonly chatBackgrounds: { id: string; label: string; css: string }[] = [    {
@@ -1073,10 +1082,143 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  /** Empieza la grabación o envía la nota ya grabada según el estado actual. */
+  async toggleRecording(): Promise<void> {
+    if (this.audioSending()) return;
+    if (this.recording()) {
+      this.stopRecordingAndSend();
+      return;
+    }
+    await this.startRecording();
+  }
+
+  /** Descarta la grabación en curso sin enviarla. */
+  cancelRecording(): void {
+    this.teardownRecording(false);
+  }
+
+  isAudioMessage(message: ChatMessage): boolean {
+    return message.kind === 'audio' && !!message.audioUrl;
+  }
+
+  /** Temporizador mm:ss para la barra de grabación. */
+  recordTimer(): string {
+    const total = this.recordSeconds();
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private async startRecording(): Promise<void> {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      this.notifications.warning(this.i18n.translate('Este navegador no permite grabar audio.'));
+      return;
+    }
+    if (!this.chatId()) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = this.pickAudioMimeType();
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      this.recordedChunks = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size) this.recordedChunks.push(event.data);
+      };
+      recorder.start(250);
+      this.mediaRecorder = recorder;
+      this.recording.set(true);
+      this.recordSeconds.set(0);
+      this.recordStartedAt = Date.now();
+      this.recordInterval = setInterval(() => {
+        const elapsed = (Date.now() - this.recordStartedAt) / 1000;
+        this.recordSeconds.set(Math.floor(elapsed));
+        if (elapsed >= this.MAX_AUDIO_SECONDS) {
+          this.stopRecordingAndSend();
+        }
+      }, 250);
+    } catch (error) {
+      console.warn('No se pudo acceder al micrófono.', error);
+      this.notifications.warning(this.i18n.translate('No se pudo acceder al micrófono. Revisa los permisos del navegador.'));
+    }
+  }
+
+  private pickAudioMimeType(): string | null {
+    if (typeof MediaRecorder === 'undefined') return null;
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+    for (const candidate of candidates) {
+      if (MediaRecorder.isTypeSupported(candidate)) return candidate;
+    }
+    return null;
+  }
+
+  private stopRecordingAndSend(): void {
+    this.teardownRecording(true);
+  }
+
+  private teardownRecording(send: boolean): void {
+    const recorder = this.mediaRecorder;
+    if (this.recordInterval) {
+      clearInterval(this.recordInterval);
+      this.recordInterval = undefined;
+    }
+    this.mediaRecorder = null;
+    this.recording.set(false);
+    if (!recorder || recorder.state === 'inactive') {
+      this.recordedChunks = [];
+      this.recordSeconds.set(0);
+      return;
+    }
+    recorder.onstop = () => {
+      const type = recorder.mimeType || 'audio/webm';
+      const blob = new Blob(this.recordedChunks, { type });
+      const duration = Math.max(1, Math.round((Date.now() - this.recordStartedAt) / 1000));
+      this.recordedChunks = [];
+      this.recordSeconds.set(0);
+      for (const track of recorder.stream.getTracks()) track.stop();
+      if (send) {
+        void this.sendAudioNote(blob, duration);
+      }
+    };
+    recorder.stop();
+  }
+
+  private async sendAudioNote(blob: Blob, duration: number): Promise<void> {
+    const chatId = this.chatId();
+    const user = this.currentUser;
+    if (!chatId || !user) return;
+    this.audioSending.set(true);
+    try {
+      await this.social.sendAudioMessage(chatId, {
+        blob,
+        durationSeconds: duration,
+        senderId: user.uid,
+        senderName: user.displayName || user.email || 'Usuario',
+        senderPhotoURL: user.photoURL ?? null,
+      });
+      this.atBottom.set(true);
+      this.markSeen(chatId);
+      setTimeout(() => this.scrollToBottom());
+    } catch (error) {
+      this.error.set(this.i18n.firebaseError(error, 'No se pudo enviar la nota de voz.'));
+      this.notifications.error(this.error(), this.i18n.translate('No se pudo enviar la nota de voz'));
+    } finally {
+      this.audioSending.set(false);
+    }
+  }
+
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
     if (this.copyMessageTimer) clearTimeout(this.copyMessageTimer);
+    if (this.mediaRecorder) {
+      try {
+        this.mediaRecorder.stop();
+      } catch {
+        // Ya estaba detenido.
+      }
+      this.mediaRecorder.stream?.getTracks().forEach((track) => track.stop());
+      this.mediaRecorder = null;
+    }
+    if (this.recordInterval) clearInterval(this.recordInterval);
   }
 
   /**
