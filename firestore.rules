@@ -796,6 +796,18 @@ service cloud.firestore {
             && request.resource.data.joinedAt >= request.time.toMillis() - 300000
             && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
           || (request.resource.data.userId == request.auth.uid
+            && request.resource.data.role in ['viewer', 'editor', 'owner']
+            && existsAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid))
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.projectId == request.resource.data.projectId
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.invitedUid is string
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.invitedUid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.status == 'accepted'
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.role == request.resource.data.role
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.respondedAt is number
+            && getAfter(/databases/$(database)/documents/projectInvitations/$(request.resource.data.projectId + '_' + request.auth.uid)).data.expiresAt >= request.time.toMillis()
+            && request.resource.data.joinedAt >= request.time.toMillis() - 300000
+            && request.resource.data.joinedAt <= request.time.toMillis() + 300000)
+          || (request.resource.data.userId == request.auth.uid
             && request.resource.data.role in ['viewer', 'editor']
             && request.resource.data.joinedViaShareLink is string
             && exists(/databases/$(database)/documents/projectShareLinks/$(request.resource.data.joinedViaShareLink))
