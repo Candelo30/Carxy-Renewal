@@ -861,7 +861,6 @@ input[type='range'] {
   background: transparent;
   cursor: pointer;
 }
-}
 
 .material-row input[type='color'],
 .setting-row input[type='color'] {

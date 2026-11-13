@@ -319,9 +319,11 @@ export class ModelEditor implements OnInit, OnDestroy {
         void this.resolveShareAccess(this.shareToken);
       }
 
-      // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales
+      // Auto-guardar escena en el proyecto al cambiar (debounced), solo cambios locales.
+      // 2 s: los cambios en continuo ya se guardan al soltar el gizmo; con 400 ms
+      // se escribía la escena entera varias veces por segundo durante un arrastre.
       this.autoSaveSub = merge(this.threeEngine.sceneChanged$, this.threeEngine.transformChanged$)
-        .pipe(debounceTime(400))
+        .pipe(debounceTime(2000))
         .subscribe(() => {
           if (!this.projectId || this.isApplyingRemote || !this.canWrite) return;
           const json = this.threeEngine.serializeScene();
@@ -372,8 +374,9 @@ export class ModelEditor implements OnInit, OnDestroy {
       });
 
       // Escritura agregada de la presencia propia (cursor + transform) para colaboradores remotos.
+      // 500 ms de cadencia: suficiente para ver al otro colaborador moverse en vivo.
       this.subscriptions.add(
-        this.presenceWrite$.pipe(auditTime(150)).subscribe(async () => {
+        this.presenceWrite$.pipe(auditTime(500)).subscribe(async () => {
           if (!this.projectId) return;
           const uid = this.auth.currentUser?.uid;
           if (!uid) return;
@@ -415,7 +418,7 @@ export class ModelEditor implements OnInit, OnDestroy {
           if (isPlatformBrowser(this.platformId)) {
             this.presenceHeartbeat = setInterval(() => {
               void this.updateOwnPresence(this.threeEngine.getSelectedNodeId() ?? null);
-            }, 3000);
+            }, 12000);
           }
           this.notifications.success(
             this.i18n.translate('projects.youJoinedProject', { name: this.projectName || this.projectId }),
@@ -478,24 +481,54 @@ export class ModelEditor implements OnInit, OnDestroy {
         }
       }));
 
-      // Bloquear el objeto mientras se transforma (audit 700ms; se libera 3s tras el último cambio)
-      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(700)).subscribe(() => {
+      // Bloqueo de objetos: lockear al empezar el arrastre y soltar con cadencia
+      // baja (los transforms en continuo ya lockean al inicio; el unlock es 3 s tras
+      // el último cambio). Los sliders sin gizmo usan el audit de respaldo.
+      const armAutoUnlock = (objectId: string) => {
+        if (this.transformLockTimer) clearTimeout(this.transformLockTimer);
+        this.transformLockTimer = setTimeout(() => {
+          void this.collaboration.unlockObject(this.projectId!, objectId);
+        }, 3000);
+      };
+      this.subscriptions.add(this.threeEngine.transformStart$.subscribe(() => {
         const selId = this.threeEngine.getSelectedNodeId();
-        if (selId && this.canWrite) {
+        if (selId && this.projectId && this.canWrite) {
           if (this.transformLockTimer) clearTimeout(this.transformLockTimer);
-          void this.collaboration.lockObject(this.projectId!, selId, this.auth.currentUser?.uid ?? '');
-          this.transformLockTimer = setTimeout(() => {
-            void this.collaboration.unlockObject(this.projectId!, selId);
-          }, 3000);
+          void this.collaboration.lockObject(this.projectId, selId, this.auth.currentUser?.uid ?? '');
+        }
+      }));
+      this.subscriptions.add(this.threeEngine.transformEnd$.subscribe(() => {
+        const selId = this.threeEngine.getSelectedNodeId();
+        if (selId && this.projectId && this.canWrite) armAutoUnlock(selId);
+      }));
+      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(2500)).subscribe(() => {
+        const selId = this.threeEngine.getSelectedNodeId();
+        if (selId && this.projectId && this.canWrite) {
+          if (this.transformLockTimer) clearTimeout(this.transformLockTimer);
+          void this.collaboration.lockObject(this.projectId, selId, this.auth.currentUser?.uid ?? '');
+          armAutoUnlock(selId);
         }
       }));
 
-      // Registrar actividad de colaboración (audit 3s; no serializar escena en cada cambio)
-      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(3000)).subscribe(() => {
+      // Registrar actividad 'object_updated' SOLO al soltar el gizmo y, como
+      // respaldo para sliders, una vez cada 30 s por objeto. Con auditTime(3000)
+      // se acumulaban miles de documentos en `projectActivity` por cada arrastre.
+      const lastActivityLogAt = new Map<string, number>();
+      const ACTIVITY_LOG_MIN_INTERVAL_MS = 10_000;
+      const logObjectUpdated = (selId: string, minInterval: number) => {
+        const now = Date.now();
+        const last = lastActivityLogAt.get(selId) ?? 0;
+        if (now - last < minInterval) return;
+        lastActivityLogAt.set(selId, now);
+        logActivityDebounced('object_updated', selId, 'object');
+      };
+      this.subscriptions.add(this.threeEngine.transformEnd$.subscribe(() => {
         const selId = this.threeEngine.getSelectedNodeId();
-        if (selId && this.canWrite) {
-          logActivityDebounced('object_updated', selId, 'object');
-        }
+        if (selId && this.canWrite && this.projectId) logObjectUpdated(selId, ACTIVITY_LOG_MIN_INTERVAL_MS);
+      }));
+      this.subscriptions.add(this.threeEngine.transformChanged$.pipe(auditTime(30000)).subscribe(() => {
+        const selId = this.threeEngine.getSelectedNodeId();
+        if (selId && this.canWrite && this.projectId) logObjectUpdated(selId, ACTIVITY_LOG_MIN_INTERVAL_MS);
       }));
 
       // --- Colaboración en tiempo real: cursores y selecciones remotas ---

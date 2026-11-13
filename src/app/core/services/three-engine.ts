@@ -60,6 +60,10 @@ export class ThreeEngineService implements OnDestroy {
   public readonly materialsLoaded$ = new Subject<void>();
   public readonly sceneChanged$ = new Subject<void>();
   public readonly selectionChanged$ = new Subject<void>();
+  /** Inicio de un arrastre con los manejadores (transform controls). */
+  public readonly transformStart$ = new Subject<void>();
+  /** Fin de arrastre: señal canónica para autoguardar/loguear/bloquear una sola vez. */
+  public readonly transformEnd$ = new Subject<void>();
   public currentMaterials: EditableMaterial[] = [];
   public isWireframeEnabled = false;
   public isOrthographic = false;
@@ -233,6 +237,8 @@ export class ThreeEngineService implements OnDestroy {
     this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
     this.transformControls.addEventListener('dragging-changed', (event) => {
       if (this.controls) this.controls.enabled = !event.value;
+      if (event.value) this.transformStart$.next();
+      else this.transformEnd$.next();
     });
     this.transformControls.addEventListener('change', () => this.transformChanged$.next());
     this.scene!.add(this.transformControls.getHelper());
@@ -2063,6 +2069,8 @@ export class ThreeEngineService implements OnDestroy {
     this.materialsLoaded$.complete();
     this.sceneChanged$.complete();
     this.selectionChanged$.complete();
+    this.transformStart$.complete();
+    this.transformEnd$.complete();
     this.hotspotsChanged$.complete();
     this.presentationChanged$.complete();
     this.xrStatus$.complete();

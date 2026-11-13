@@ -38,7 +38,14 @@
 .sidebar-item:hover:not(:disabled) { background: var(--surface-raised); color: var(--text-primary); }
 .sidebar-item.active { background: color-mix(in srgb, var(--accent-color) 14%, var(--surface-panel)); color: var(--accent-color); border-color: color-mix(in srgb, var(--accent-color) 35%, transparent); }
 .sidebar-item:disabled { opacity: 0.45; cursor: not-allowed; }
-.sidebar-icon { width: 20px; text-align: center; }
+.sidebar-icon {
+  width: 20px;
+  text-align: center;
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.9;
+}
 .sidebar-label { flex: 1; }
 .sidebar-badge { font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border-color); }
 .sidebar-badge.warn { background: color-mix(in srgb, #f59e0b 18%, var(--surface-panel)); color: #f59e0b; border-color: color-mix(in srgb, #f59e0b 35%, transparent); }
@@ -418,7 +425,7 @@ select, input, textarea {
 .trend-embedded { border: none; border-radius: 0; background: transparent; padding: 6px 4px 14px; }
 .trend-bars { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 7px; height: 92px; align-items: end; }
 .trend-bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; height: 100%; min-width: 0; }
-.trend-bar-fill { width: 100%; border-radius: 4px 4px 2px 2px; min-height: 3px; transition: height 450ms ease; box-shadow: 0 0 12px color-mix(in srgb, #60a5fa 35%, transparent); }
+.trend-bar-fill { width: 100%; border-radius: 4px 4px 2px 2px; min-height: 3px; transition: height 450ms ease; box-shadow: 0 0 12px color-mix(in srgb, var(--bar, #60a5fa) 45%, transparent); }
 .trend-bar-label { font-size: .54rem; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* Stat icons: semantic color tiles */

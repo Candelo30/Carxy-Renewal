@@ -176,7 +176,7 @@
                   <span class="section-label">Registros · últimos 14 días</span>
                   <div class="trend-bars">
                     <div class="trend-bar" *ngFor="let b of registrationTrend; let i = index">
-                      <div class="trend-bar-fill" [style.height.%]="b.pct" [style.background]="b.color" [attr.title]="b.label + ' · ' + b.value + ' registros'"></div>
+                      <div class="trend-bar-fill" [style.height.%]="b.pct" [style.background]="b.color" [style.--bar]="b.color" [attr.title]="b.label + ' · ' + b.value + ' registros'"></div>
                       <span class="trend-bar-label">{{ i % 2 === 0 ? b.label : '' }}</span>
                     </div>
                   </div>
@@ -712,7 +712,7 @@
               <div class="trend-strip trend-embedded">
                 <div class="trend-bars">
                   <div class="trend-bar" *ngFor="let b of registrationTrend; let i = index">
-                    <div class="trend-bar-fill" [style.height.%]="b.pct" [style.background]="b.color" [attr.title]="b.label + ' · ' + b.value + ' registros'"></div>
+                    <div class="trend-bar-fill" [style.height.%]="b.pct" [style.background]="b.color" [style.--bar]="b.color" [attr.title]="b.label + ' · ' + b.value + ' registros'"></div>
                     <span class="trend-bar-label">{{ i % 2 === 0 ? b.label : '' }}</span>
                   </div>
                 </div>
