@@ -1,4 +1,8 @@
 .chat-settings {
+  /* El reset global de styles.css anula el margin:auto que centra el <dialog>
+     nativo: hay que restaurarlo o el panel queda corrido hacia la esquina. */
+  inset: 0;
+  margin: auto;
   width: min(440px, calc(100vw - 24px));
   max-height: min(86dvh, 720px);
   padding: 0;
