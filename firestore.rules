@@ -156,17 +156,14 @@ service cloud.firestore {
           allow update: if false;
         }
 
-        // Las rutas de un `match` anidado son RELATIVAS al `match` padre.
-        // Escribir aquí `/users/{uid}/notifications` resolvería a
-        // `/users/{uid}/users/{uid}/notifications`, una ruta que no existe:
-        // la regla quedaba muerta y las notificaciones nunca se creaban ni se
-        // leían ("Missing or insufficient permissions").
-        match /notifications {
+        // Sin comodín `{notificationId}` el motor real ignora este `match` por
+        // completo: un `match /notifications { ... }` sin documento no enlaza
+        // ninguna regla a las lecturas (el simulador `:test` sí lo interpreta,
+        // por eso las pruebas pasaban y producción devolvía 403). El `list`
+        // vive dentro del match del documento.
+        match /notifications/{notificationId} {
           allow read: if signedIn() && request.auth.uid == uid;
           allow list: if signedIn() && request.auth.uid == uid;
-        }
-
-        match /notifications/{notificationId} {
           allow create: if isActiveUser()
             && request.resource.data.keys().hasOnly([
               'id', 'recipientId', 'actorId', 'actorName', 'actorPhotoURL', 'kind', 'targetId', 'createdAt', 'read'
@@ -569,19 +566,12 @@ service cloud.firestore {
       }
     }
 
-    match /chats {
-      // Consultas sobre la colección `chats` reservadas a administradores
-      // (limpieza de cuentas eliminadas). Las conversaciones de un usuario se
-      // listan desde su subcolección `users/{uid}/recentChats`, con reglas de
-      // pertenencia estándar y sin exponer las conversaciones de terceros.
-      allow list: if isAdmin();
-    }
-
     match /chats/{chatId} {
       // La administración de los documentos de la colección vive aquí. El
       // listado por usuario vive en `users/{uid}/recentChats`; una consulta a
-      // `/chats` no alcanza a esta regla y solo está permitida a
-      // administradores (ver `match /chats`).
+      // `/chats` solo está permitida a administradores (limpieza de cuentas
+      // eliminadas). El `list` vive aquí; un `match /chats { ... }` sin
+      // comodín no enlazaría regla alguna en el motor real.
       function isParticipant(participants) {
         return signedIn()
           && participants is list
@@ -596,6 +586,7 @@ service cloud.firestore {
           && participants[0] < participants[1]
           && chatId == participants[0] + '__' + participants[1];
       }
+      allow list: if isAdmin();
       allow get: if signedIn()
         && chatId.split('__').hasAny([request.auth.uid])
         && (!exists(/databases/$(database)/documents/chats/$(chatId))
