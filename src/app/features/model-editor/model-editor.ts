@@ -249,6 +249,23 @@ export class ModelEditor implements OnInit, OnDestroy {
     const qp = this.route.snapshot.queryParamMap.get('project');
     const share = this.route.snapshot.queryParamMap.get('share');
     this.shareToken = share;
+    const initialProject = qp ?? null;
+
+    // El editor y su motor son instancias en memoria: el contenido de la
+    // escena NO sobrevive a un cambio de ?project sin destruir/recrear el
+    // componente. Si la ruta cambia a otro proyecto (p.ej. el usuario abre
+    // un proyecto distinto desde el panel en el mismo tab) y el componente
+    // se reutiliza sin re-crear, el motor se quedaría mostrando la escena
+    // ANTERIOR al proyecto nuevo. Rebaseamos con recarga completa. Solo se
+    // compara contra el valor capturado al montar el componente.
+    this.subscriptions.add(
+      this.route.queryParamMap.subscribe((params) => {
+        if ((params.get('project') ?? null) !== initialProject) {
+          window.location.reload();
+        }
+      }),
+    );
+
     if (qp) {
       // Suprimir el cubo de arranque: cada cliente plantaba el suyo al abrir
       // un proyecto compartido y las escenas divergían (los remotos nunca se
