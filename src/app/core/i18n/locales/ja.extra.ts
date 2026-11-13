@@ -754,4 +754,6 @@ export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': '一括公開設定',
   'Moderación pendiente': '保留中のモデレーション',
   'Firebase Storage no está configurado.': 'Firebase Storage が設定されていません。',
+  'Cargando escena del proyecto…': 'プロジェクトシーンを読み込み中…',
+  'Descargando geometría y materiales del proyecto': 'プロジェクトのジオメトリとマテリアルをダウンロード中',
 };

@@ -379,3 +379,52 @@
     transition: none;
   }
 }
+
+/* Overlay de carga de escena de proyecto */
+.scene-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background:
+    radial-gradient(620px 340px at 50% 42%, color-mix(in srgb, var(--accent-color) 13%, transparent), transparent 70%),
+    color-mix(in srgb, var(--surface-main) 45%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: scene-loading-in 240ms ease both;
+}
+@keyframes scene-loading-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.scene-loading-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 22px 30px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 35%, var(--border-color));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-panel) 78%, transparent);
+  box-shadow: 0 22px 60px color-mix(in srgb, #000 40%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent-color) 18%, transparent), inset 0 1px 0 rgba(255,255,255,.06);
+  text-align: center;
+}
+.scene-loading-card strong { font-size: .92rem; letter-spacing: -0.01em; }
+.scene-loading-card small { color: var(--text-muted); font-size: .74rem; }
+.scene-loading-spinner {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--accent-color) 22%, transparent);
+  border-top-color: var(--accent-color);
+  animation: scene-loading-spin 0.9s linear infinite;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+@keyframes scene-loading-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-loading-spinner { animation: none; }
+  .scene-loading { animation: none; }
+}

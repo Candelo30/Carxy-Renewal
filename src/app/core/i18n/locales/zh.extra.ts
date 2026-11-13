@@ -754,4 +754,6 @@ export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': '批量可见性',
   'Moderación pendiente': '待处理审核',
   'Firebase Storage no está configurado.': 'Firebase Storage 未配置。',
+  'Cargando escena del proyecto…': '正在加载项目场景…',
+  'Descargando geometría y materiales del proyecto': '正在下载项目的几何体和材质',
 };

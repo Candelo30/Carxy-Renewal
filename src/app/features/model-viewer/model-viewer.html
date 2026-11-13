@@ -6,6 +6,16 @@
     (mousemove)="onCanvasMouseMove($event)"
   ></canvas>
 
+  @if (sceneLoading) {
+    <div class="scene-loading" role="status" aria-live="polite">
+      <div class="scene-loading-card">
+        <span class="scene-loading-spinner" aria-hidden="true"></span>
+        <strong>{{ 'Cargando escena del proyecto…' | translate }}</strong>
+        <small>{{ 'Descargando geometría y materiales del proyecto' | translate }}</small>
+      </div>
+    </div>
+  }
+
   <div class="hotspot-layer">
     @for (hotspot of hotspots; track hotspot.id) {
       @if (hotspot.visible) {

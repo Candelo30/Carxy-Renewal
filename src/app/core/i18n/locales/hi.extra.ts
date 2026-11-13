@@ -754,4 +754,6 @@ export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': 'बल्क दृश्यता',
   'Moderación pendiente': 'लंबित मॉडरेशन',
   'Firebase Storage no está configurado.': 'Firebase Storage कॉन्फ़िगर नहीं है।',
+  'Cargando escena del proyecto…': 'प्रोजेक्ट सीन लोड हो रही है…',
+  'Descargando geometría y materiales del proyecto': 'प्रोजेक्ट की ज्यामिति और सामग्री डाउनलोड हो रही है',
 };

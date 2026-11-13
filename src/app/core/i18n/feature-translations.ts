@@ -2059,5 +2059,7 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
   'Visibilidad masiva': t('Bulk visibility', 'Visibilité groupée', 'Visibilidade em massa'),
   'Moderación pendiente': t('Pending moderation', 'Modération en attente', 'Moderação pendente'),
   'Firebase Storage no está configurado.': t('Firebase Storage is not configured.', 'Firebase Storage n’est pas configuré.', 'O Firebase Storage não está configurado.'),
+  'Cargando escena del proyecto…': t('Loading project scene…', 'Chargement de la scène du projet…', 'A carregar a cena do projeto…'),
+  'Descargando geometría y materiales del proyecto': t('Downloading project geometry and materials', 'Téléchargement de la géométrie et des matériaux du projet', 'A baixar a geometria e os materiais do projeto'),
 
 };

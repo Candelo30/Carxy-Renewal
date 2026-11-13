@@ -756,4 +756,6 @@ export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': '일괄 공개 설정',
   'Moderación pendiente': '대기 중인 모더레이션',
   'Firebase Storage no está configurado.': 'Firebase Storage가 구성되지 않았습니다.',
+  'Cargando escena del proyecto…': '프로젝트 장면을 불러오는 중…',
+  'Descargando geometría y materiales del proyecto': '프로젝트의 지오메트리와 재질을 다운로드하는 중',
 };

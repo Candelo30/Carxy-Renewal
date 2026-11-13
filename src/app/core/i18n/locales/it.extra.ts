@@ -754,4 +754,6 @@ export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': 'Visibilità multipla',
   'Moderación pendiente': 'Moderazione in sospeso',
   'Firebase Storage no está configurado.': 'Firebase Storage non è configurato.',
+  'Cargando escena del proyecto…': 'Caricamento della scena del progetto…',
+  'Descargando geometría y materiales del proyecto': 'Download della geometria e dei materiali del progetto',
 };

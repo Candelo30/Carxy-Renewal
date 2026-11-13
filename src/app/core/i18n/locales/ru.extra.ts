@@ -754,4 +754,6 @@ export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': 'Массовое изменение видимости',
   'Moderación pendiente': 'Ожидает модерации',
   'Firebase Storage no está configurado.': 'Firebase Storage не настроен.',
+  'Cargando escena del proyecto…': 'Загрузка сцены проекта…',
+  'Descargando geometría y materiales del proyecto': 'Загрузка геометрии и материалов проекта',
 };

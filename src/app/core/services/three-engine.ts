@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, NgZone, OnDestroy, PLATFORM_ID } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, BehaviorSubject } from 'rxjs';
 import * as THREE from 'three';
 import { I18nService } from './i18n';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -69,6 +69,11 @@ export class ThreeEngineService implements OnDestroy {
   public isOrthographic = false;
   public readonly hotspotsChanged$ = new Subject<void>();
   public readonly presentationChanged$ = new Subject<boolean>();
+  /** Emite true cuando el motor tiene escena y cámara listas para restaurar contenido. */
+  private readonly _ready$ = new BehaviorSubject<boolean>(false);
+  public readonly ready$ = this._ready$.asObservable();
+  /** Emite cuando una escena se restauró con éxito (carga inicial o remota). */
+  public readonly sceneRestored$ = new Subject<void>();
   public readonly xrStatus$ = new Subject<string>();
   public hotspotMode = false;
   public bloomEnabled = false;
@@ -199,6 +204,7 @@ export class ThreeEngineService implements OnDestroy {
       ground.receiveShadow = true;
       this.scene.add(ground, new THREE.GridHelper(30, 30, '#596174', '#343a49'));
       this.sceneInitialized = true;
+      this._ready$.next(true);
     }
 
     const width = Math.max(canvas.clientWidth, 1);
@@ -342,7 +348,10 @@ export class ThreeEngineService implements OnDestroy {
   private suppressSceneEvents = 0;
 
   public restoreScene(serialized: string): boolean {
-    if (!this.scene) return false;
+    if (!this.scene) {
+      console.warn('Motor 3D aún no inicializado: no se pudo restaurar la escena.');
+      return false;
+    }
     try {
       const parsed = new THREE.ObjectLoader().parse(JSON.parse(serialized) as THREE.Object3DJSON);
       if (!(parsed instanceof THREE.Group) || parsed.children.length === 0) return false;
@@ -376,6 +385,7 @@ export class ThreeEngineService implements OnDestroy {
       } finally {
         this.suppressSceneEvents--;
       }
+      this.sceneRestored$.next();
       return true;
     } catch (error) {
       console.error('No se pudo restaurar el borrador de la escena.', error);
@@ -2074,5 +2084,7 @@ export class ThreeEngineService implements OnDestroy {
     this.hotspotsChanged$.complete();
     this.presentationChanged$.complete();
     this.xrStatus$.complete();
+    this.sceneRestored$.complete();
+    this._ready$.complete();
   }
 }

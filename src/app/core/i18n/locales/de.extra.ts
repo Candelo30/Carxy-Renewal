@@ -754,4 +754,6 @@ export const DE_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': 'Massensichtbarkeit',
   'Moderación pendiente': 'Ausstehende Moderation',
   'Firebase Storage no está configurado.': 'Firebase Storage ist nicht konfiguriert.',
+  'Cargando escena del proyecto…': 'Projekt-Szene wird geladen…',
+  'Descargando geometría y materiales del proyecto': 'Geometrie und Materialien des Projekts werden geladen',
 };

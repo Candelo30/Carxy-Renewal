@@ -51,6 +51,9 @@ export class ModelViewer implements OnDestroy {
   public measurementDistance: number | null = null;
   public measureFirstObject: string | null = null;
   private measureFirstModelId: string | null = null;
+  /** true mientras la escena del proyecto se descarga/restaura en el motor. */
+  public sceneLoading = false;
+  private sceneLoadingTimer?: number;
   public isAutoRotate = false;
   private hotspotSubscription?: Subscription;
   private cursorSubscription?: Subscription;
@@ -73,6 +76,14 @@ export class ModelViewer implements OnDestroy {
     if (!inProject) {
       const draft = this.localState.loadDraft();
       if (draft) this.threeEngine.restoreScene(draft);
+    } else {
+      // El usuario ve una espera vacía mientras el proyecto se descarga;
+      // ocultemos la nada bajo un overlay hasta que la escena restaure.
+      this.sceneLoading = true;
+      this.subscription.add(this.threeEngine.sceneRestored$.subscribe(() => this.hideSceneLoading()));
+      if (isPlatformBrowser(this.platformId)) {
+        this.sceneLoadingTimer = window.setTimeout(() => this.hideSceneLoading(), 25000);
+      }
     }
     this.hotspotSubscription = this.threeEngine.hotspotsChanged$.subscribe(() => this.refreshHotspots());
     this.cursorSubscription = this.threeEngine.remoteCursor$.subscribe((c) => {
@@ -213,6 +224,15 @@ export class ModelViewer implements OnDestroy {
     this.hotspots = this.threeEngine.getHotspots();
   }
 
+  private hideSceneLoading(): void {
+    if (!this.sceneLoading) return;
+    this.sceneLoading = false;
+    if (this.sceneLoadingTimer !== undefined) {
+      window.clearTimeout(this.sceneLoadingTimer);
+      this.sceneLoadingTimer = undefined;
+    }
+  }
+
   @HostListener('window:resize')
   onResize(): void {
     this.threeEngine.resize();
@@ -223,6 +243,7 @@ export class ModelViewer implements OnDestroy {
     this.hotspotSubscription?.unsubscribe();
     this.cursorSubscription?.unsubscribe();
     this.subscription.unsubscribe();
+    if (this.sceneLoadingTimer !== undefined) window.clearTimeout(this.sceneLoadingTimer);
     if (this.projectionTimer !== undefined) window.clearInterval(this.projectionTimer);
     this.threeEngine.releaseViewport();
   }

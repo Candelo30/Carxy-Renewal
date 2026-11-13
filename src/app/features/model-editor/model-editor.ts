@@ -17,7 +17,7 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { interval, Subscription, Subject, firstValueFrom, take, catchError, map, of } from 'rxjs';
+import { interval, Subscription, Subject, firstValueFrom, take, catchError, map, of, combineLatest, filter } from 'rxjs';
 import { auditTime, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 import { ThreeEngineService } from '../../core/services/three-engine';
 import { AudioReactiveService } from '../../core/services/audio-reactive';
@@ -288,19 +288,31 @@ export class ModelEditor implements OnInit, OnDestroy {
       // La carga inicial debe leer SIEMPRE desde el servidor: la primera
       // emisión del listener puede servir contenido obsoleto de la caché
       // local, y el autosave lo re-escribiría sobre el proyecto.
-      this.collaboration.getProjectSceneOnce(this.projectId).pipe(take(1)).subscribe((sceneJson) => {
-        if (sceneJson) {
-          this.threeEngine.loadProjectScene(sceneJson);
-          this.projectSceneLoaded = true;
-        }
-        this.sceneObjects = this.threeEngine.getSceneObjects();
-        this.selectedObjectId = this.threeEngine.getSceneObjects().at(-1)?.id ?? '';
-        this.updateSelectionState();
-        this.refreshSceneNodes();
-        this.loadMaterialsFromEngine();
-        this.applyAppearance();
-        this.cdr.detectChanges();
-      });
+      // Además, el motor (renderer/escena) se crea en el visor, que se
+      // inicializa DESPUÉS de este subscribe: esperamos a que el motor esté
+      // listo para restaurar, si no `restoreScene` devuelve false en silencio
+      // y el proyecto queda vacío por la carrera.
+      this.subscriptions.add(
+        combineLatest([
+          this.collaboration.getProjectSceneOnce(this.projectId).pipe(take(1)),
+          this.threeEngine.ready$.pipe(filter((ready) => ready), take(1)),
+        ]).subscribe(([sceneJson]) => {
+          if (sceneJson) {
+            const restored = this.threeEngine.loadProjectScene(sceneJson);
+            this.projectSceneLoaded = restored;
+            if (!restored) {
+              console.warn('No se pudo restaurar la escena del proyecto en el motor 3D.');
+            }
+          }
+          this.sceneObjects = this.threeEngine.getSceneObjects();
+          this.selectedObjectId = this.threeEngine.getSceneObjects().at(-1)?.id ?? '';
+          this.updateSelectionState();
+          this.refreshSceneNodes();
+          this.loadMaterialsFromEngine();
+          this.applyAppearance();
+          this.cdr.detectChanges();
+        }),
+      );
 
       // Permisos reactivos (miembros/rol pueden cambiar o cargar con retraso)
       this.subscriptions.add(

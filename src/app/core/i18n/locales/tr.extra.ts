@@ -756,4 +756,6 @@ export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
   'Visibilidad masiva': 'Toplu görünürlük',
   'Moderación pendiente': 'Bekleyen moderasyon',
   'Firebase Storage no está configurado.': 'Firebase Storage yapılandırılmadı.',
+  'Cargando escena del proyecto…': 'Proje sahnesi yükleniyor…',
+  'Descargando geometría y materiales del proyecto': 'Proje geometri ve malzemeleri indiriliyor',
 };
