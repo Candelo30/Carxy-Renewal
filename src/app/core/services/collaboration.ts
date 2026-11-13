@@ -761,7 +761,7 @@ export class CollaborationService implements OnDestroy {
       action,
       objectId,
       objectType,
-      snapshot,
+      ...(snapshot === undefined ? {} : { snapshot }),
       createdAt: Date.now(),
     });
   }
