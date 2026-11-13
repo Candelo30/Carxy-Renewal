@@ -16,8 +16,10 @@
   padding-top: var(--shell-header-height, 64px); /* Altura del header fijo */
   grid-template-rows: minmax(0, 1fr);
   grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
-  grid-template-areas: "sidebar viewer";
-  transition: grid-template-columns 220ms ease, grid-template-rows 220ms ease;
+  grid-template-areas: 'sidebar viewer';
+  transition:
+    grid-template-columns 220ms ease,
+    grid-template-rows 220ms ease;
 }
 
 /* Header usa el shell-header componente (sticky, fuera del grid principal para móvil) */
@@ -34,7 +36,9 @@
   padding: 18px 17px;
   border-right: 1px solid var(--border-color);
   background: var(--surface-panel);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
 }
 
 .viewer-area {
@@ -133,7 +137,7 @@
     padding-top: var(--shell-header-height, 56px);
     grid-template-rows: minmax(0, 1fr) minmax(0, 40dvh);
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "viewer" "sidebar";
+    grid-template-areas: 'viewer' 'sidebar';
   }
 
   .editor-panel-area {
@@ -206,7 +210,7 @@
     padding-top: var(--shell-header-height, 56px);
     grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "viewer";
+    grid-template-areas: 'viewer';
   }
 
   .editor-panel-area {
@@ -303,7 +307,7 @@
 .saved-views-toolbar {
   position: absolute;
   left: 12px;
-  bottom: 86px;
+  bottom: 90px;
   z-index: 40;
   display: flex;
   align-items: center;
