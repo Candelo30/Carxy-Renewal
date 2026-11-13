@@ -726,4 +726,13 @@ export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '无法加载 3D 模型。请确认 GLB 文件有效。',
 
+  'Guardar miniatura': 'Küçük resmi kaydet',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': 'Projelerim kartındaki resmi güncelle',
+  'Necesitas abrir un proyecto para guardar la miniatura.': 'Küçük resmi kaydetmek için önce bir proje açın.',
+  'Miniatura guardada en el proyecto.': 'Küçük resim projeye kaydedildi.',
+  'No se pudo guardar la miniatura.': 'Küçük resim kaydedilemedi.',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': 'Çoklu seçim: öğe eklemek veya kaldırmak için satıra dokunun',
+  'Marcadores de luz/vacío': 'Işık/Boş sahne işaretçileri',
+
 };

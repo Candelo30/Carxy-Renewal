@@ -726,4 +726,13 @@ export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3Dモデルを読み込めませんでした。GLBファイルが有効であることを確認してください。',
 
+  'Guardar miniatura': 'サムネイルを保存',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': 'マイプロジェクトのカード画像を更新',
+  'Necesitas abrir un proyecto para guardar la miniatura.': 'サムネイルを保存するにはまずプロジェクトを開きます',
+  'Miniatura guardada en el proyecto.': 'サムネイルをプロジェクトに保存しました',
+  'No se pudo guardar la miniatura.': 'サムネイルを保存できませんでした',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': 'マルチ選択: 行をタップしてアイテムを追加・削除',
+  'Marcadores de luz/vacío': 'ライト/Emptyマーカー',
+
 };

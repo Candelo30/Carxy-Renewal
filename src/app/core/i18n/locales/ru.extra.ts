@@ -726,4 +726,13 @@ export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': 'Не удалось загрузить 3D-модель. Убедитесь, что файл GLB корректен.',
 
+  'Guardar miniatura': '썸네일 저장',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': '내 프로젝트 카드 이미지 갱신',
+  'Necesitas abrir un proyecto para guardar la miniatura.': '먼저 프로젝트를 열어야 썸네일을 저장할 수 있습니다.',
+  'Miniatura guardada en el proyecto.': '썸네일을 프로젝트에 저장했습니다.',
+  'No se pudo guardar la miniatura.': '썸네일을 저장할 수 없습니다.',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': '다중 선택: 행을 탭하여 항목 추가/제거',
+  'Marcadores de luz/vacío': '조명/빈 객체 마커',
+
 };

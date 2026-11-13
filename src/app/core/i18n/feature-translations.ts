@@ -2031,4 +2031,13 @@ export const FEATURE_TRANSLATIONS: Record<string, SourceTranslation> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': t('Could not load the 3D model. Make sure the GLB file is valid.', 'Impossible de charger le modèle 3D. Vérifiez que le fichier GLB est valide.', 'Não foi possível carregar o modelo 3D. Verifique se o arquivo GLB é válido.'),
 
+  'Guardar miniatura': t('Save thumbnail', 'Enregistrer la vignette', 'Salvar miniatura'),
+  'Actualiza la imagen de la tarjeta en Mis proyectos': t('Refresh the project card image in My projects', 'Mettre à jour l’image de la carte dans Mes projets', 'Atualizar a imagem do cartão em Meus projetos'),
+  'Necesitas abrir un proyecto para guardar la miniatura.': t('Open a project first to save a thumbnail.', 'Ouvrez d’abord un projet pour enregistrer la vignette.', 'Abra um projeto primeiro para salvar a miniatura.'),
+  'Miniatura guardada en el proyecto.': t('Thumbnail saved to the project.', 'Vignette enregistrée dans le projet.', 'Miniatura salva no projeto.'),
+  'No se pudo guardar la miniatura.': t('Could not save the thumbnail.', 'Impossible d’enregistrer la vignette.', 'Não foi possível salvar a miniatura.'),
+
+  'Multiselección: toca filas para añadirlas o quitarlas': t('Multi-select: tap rows to add or remove items', 'Multi-sélection : touchez les lignes pour ajouter ou retirer des éléments', 'Multi-seleção: toque nas linhas para adicionar ou remover itens'),
+  'Marcadores de luz/vacío': t('Light/empty markers', 'Marqueurs lumières/vides', 'Marcadores de luz/vazio'),
+
 };

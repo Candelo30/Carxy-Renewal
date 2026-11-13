@@ -726,4 +726,13 @@ export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': 'Impossibile caricare il modello 3D. Assicurati che il file GLB sia valido.',
 
+  'Guardar miniatura': 'Salva anteprima',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': 'Aggiorna l’immagine della scheda in I miei progetti',
+  'Necesitas abrir un proyecto para guardar la miniatura.': 'Apri prima un progetto per salvare l’anteprima.',
+  'Miniatura guardada en el proyecto.': 'Anteprima salvata nel progetto.',
+  'No se pudo guardar la miniatura.': 'Impossibile salvare l’anteprima.',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': 'Multiselezione: tocca le righe per aggiungere o rimuovere elementi',
+  'Marcadores de luz/vacío': 'Marker luci/vuoti',
+
 };

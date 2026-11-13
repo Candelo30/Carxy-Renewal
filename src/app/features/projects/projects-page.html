@@ -189,7 +189,12 @@
     } @else {
       <div class="projects-grid">
         @for (project of filteredProjects(); track trackById($index, project)) {
-          <article class="project-card" (click)="openProject(project.id)" tabindex="0" (keydown.enter)="openProject(project.id)">
+          <article class="project-card" [class.has-thumb]="!!project.thumbnailUrl" (click)="openProject(project.id)" tabindex="0" (keydown.enter)="openProject(project.id)">
+            @if (project.thumbnailUrl) {
+              <div class="project-thumb" aria-hidden="true">
+                <img [src]="project.thumbnailUrl" alt="" loading="lazy" referrerpolicy="no-referrer" />
+              </div>
+            }
             <div class="project-card-top">
               <div class="title-wrap">
                 <h3>{{ project.name }}</h3>

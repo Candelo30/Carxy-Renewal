@@ -726,4 +726,13 @@ export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3D मॉडल लोड नहीं हो सका। सुनिश्चित करें कि GLB फ़ाइल मान्य है।',
 
+  'Guardar miniatura': 'थंबनेल सहेजें',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': 'मेरे प्रोजेक्ट्स कार्ड की छवि अपडेट करें',
+  'Necesitas abrir un proyecto para guardar la miniatura.': 'थंबनेल सहेजने के लिए पहले एक प्रोजेक्ट खोलें।',
+  'Miniatura guardada en el proyecto.': 'थंबनेल प्रोजेक्ट में सहेज दिया गया।',
+  'No se pudo guardar la miniatura.': 'थंबनेल सहेजा नहीं जा सका।',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': 'मल्टी-सेलेक्शन: आइटम जोड़ने/हटाने के लिए पंक्तियों पर टैप करें',
+  'Marcadores de luz/vacío': 'लाइट/खाली मार्कर',
+
 };

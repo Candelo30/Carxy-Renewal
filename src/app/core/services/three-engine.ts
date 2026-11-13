@@ -566,7 +566,9 @@ export class ThreeEngineService implements OnDestroy {
     this.scene.add(group);
     const rootObjects = new Set(selected.map((item) => item.object));
     this.objects = this.objects.filter((item) => !rootObjects.has(item.object));
+    // Conserva el id original en userData para poder restablecerlo al desagrupar
     for (const item of selected) {
+      item.object.userData['originalObjectId'] = item.id;
       group.attach(item.object);
     }
     const id = this.addObject(group, group.name);
@@ -610,7 +612,12 @@ export class ThreeEngineService implements OnDestroy {
         wrapper.attach(child);
         root = wrapper;
       }
-      const childId = `object-${this.nextObjectId++}`;
+      // Recupera el id original si el usuario no cambió el objeto desde la agrupación
+      const originalId = root.userData?.['originalObjectId'] as string | undefined;
+      const childId = originalId && !this.objects.some((entry) => entry.id === originalId)
+        ? originalId
+        : `object-${this.nextObjectId++}`;
+      delete root.userData?.['originalObjectId'];
       this.objects.push({ id: childId, name: root.name || 'Objeto', object: root });
     }
     if (members.length > 0) {
@@ -706,6 +713,33 @@ export class ThreeEngineService implements OnDestroy {
       if (node.uuid === uuid) node.visible = visible;
     });
     this.sceneChanged$.next();
+  }
+
+  /**
+   * Muestra u oculta "en bloque" todos los marcadores auxiliares (luces y vacíos).
+   * Los objetos son interactivos (clicables en 3D); ocultarlos sólo cambia su
+   * visibilidad, no los elimina de la escena ni de la serialización.
+   */
+  public setMarkersVisible(visible: boolean): void {
+    if (!this.scene) return;
+    this.scene.traverse((node) => {
+      if (!(node instanceof THREE.Mesh)) return;
+      const u = node.userData ?? {};
+      if (u['isLightMarker'] === true || u['isEmptyMarker'] === true) {
+        node.visible = visible;
+      }
+    });
+  }
+
+  public get markersVisibleCount(): number {
+    if (!this.scene) return 0;
+    let count = 0;
+    this.scene.traverse((node) => {
+      if (!(node instanceof THREE.Mesh)) return;
+      const u = node.userData ?? {};
+      if ((u['isLightMarker'] === true || u['isEmptyMarker'] === true) && node.visible) count++;
+    });
+    return count;
   }
 
   public setExplodedView(amount: number): void {
@@ -1285,6 +1319,7 @@ export class ThreeEngineService implements OnDestroy {
     const markerMaterial = new THREE.MeshBasicMaterial({ color: markerColor, toneMapped: false });
     const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), markerMaterial);
     marker.name = 'Marcador de luz';
+    marker.userData['isLightMarker'] = true;
     let light: THREE.PointLight | THREE.SpotLight | THREE.DirectionalLight;
     if (kind === 'point') {
       light = new THREE.PointLight(0xffd9a0, 30, 0, 1.8);

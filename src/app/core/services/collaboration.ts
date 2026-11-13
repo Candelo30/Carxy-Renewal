@@ -19,6 +19,12 @@ import {
   where,
   limit,
 } from '@angular/fire/firestore';
+import {
+  Storage,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from '@angular/fire/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, BehaviorSubject, Observable, of, switchMap, catchError, map, combineLatest, from, shareReplay } from 'rxjs';
 import { SOCIAL_COLLECTIONS } from '../config/app.constants';
@@ -52,6 +58,7 @@ export function hasPermission(role: ProjectRole, permission: ProjectPermission):
 export class CollaborationService implements OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly auth = inject(AuthService, { optional: true });
+  private readonly storage = inject(Storage, { optional: true });
   private readonly i18n = inject(I18nService);
   private readonly platformId = inject(PLATFORM_ID);
 
@@ -254,6 +261,26 @@ export class CollaborationService implements OnDestroy {
       ...patch,
       updatedAt: Date.now(),
     });
+  }
+
+  /**
+   * Sube una miniatura del proyecto a Storage y la persiste en el doc del proyecto.
+   * Devuelve la URL pública (limitada por reglas: miembros del proyecto o público).
+   */
+  async uploadProjectThumbnail(projectId: string, blob: Blob): Promise<string> {
+    const storage = this.storage;
+    const db = this.firestore;
+    if (!storage) throw new Error(this.i18n.translate('Firebase Storage no está configurado.'));
+    if (!db) throw new Error(this.i18n.translate('Firebase no está configurado.'));
+    const path = `projectThumbnails/${projectId}/thumb-${Date.now()}.png`;
+    const refUpload = ref(storage, path);
+    await uploadBytes(refUpload, blob, { contentType: 'image/png' });
+    const url = await getDownloadURL(refUpload);
+    await updateDoc(doc(db, `${SOCIAL_COLLECTIONS.projects}/${projectId}`), {
+      thumbnailUrl: url,
+      updatedAt: Date.now(),
+    });
+    return url;
   }
 
   async deleteProject(projectId: string): Promise<void> {

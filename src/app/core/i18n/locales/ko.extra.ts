@@ -728,4 +728,13 @@ export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3D 모델을 불러올 수 없습니다. GLB 파일이 유효한지 확인하세요.',
 
+  'Guardar miniatura': '保存缩略图',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': '更新“我的项目”卡片图片',
+  'Necesitas abrir un proyecto para guardar la miniatura.': '请先打开项目，才能保存缩略图。',
+  'Miniatura guardada en el proyecto.': '缩略图已保存到项目。',
+  'No se pudo guardar la miniatura.': '无法保存缩略图。',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': '多选: 点击行以添加或移除条目',
+  'Marcadores de luz/vacío': '灯光/空对象标记',
+
 };

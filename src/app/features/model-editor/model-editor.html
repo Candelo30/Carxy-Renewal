@@ -15,7 +15,17 @@
           <span class="eyebrow">{{ 'PROYECTO' | translate }}</span>
           <h2>{{ 'Objetos' | translate }}</h2>
         </div>
-        <span class="count-badge">{{ sceneObjects.length }}</span>
+        <div class="heading-actions">
+          <button
+            type="button"
+            class="heading-icon"
+            [class.active]="multiSelectMode"
+            [title]="'Multiselección: toca filas para añadirlas o quitarlas' | translate"
+            [attr.aria-pressed]="multiSelectMode"
+            (click)="toggleMultiSelect()"
+          >◉</button>
+          <span class="count-badge">{{ sceneObjects.length }}</span>
+        </div>
       </div>
       <div class="primitive-grid">
         <button [disabled]="shareLinkBlocksEditing" [title]="'Agregar cubo' | translate" (click)="addPrimitive('box')"><span>▧</span>{{ 'Cubo' | translate }}</button>
@@ -479,6 +489,13 @@
             <small>{{ 'Captura exacta de la cámara activa, lista para subir al marketplace' | translate }}</small>
           </span>
         </button>
+        <button class="export-caption-button" [disabled]="thumbnailBusy || !projectId" (click)="saveProjectThumbnail()">
+          <span>📸</span>
+          <span class="export-caption-label">
+            <strong>{{ 'Guardar miniatura' | translate }}</strong>
+            <small>{{ 'Actualiza la imagen de la tarjeta en Mis proyectos' | translate }}</small>
+          </span>
+        </button>
         <p class="material-hint">{{ 'El GLB incluye materiales, luces y agrupación. La miniatura se descarga con el nombre del proyecto.' | translate }}</p>
       </div>
     </details>
@@ -597,6 +614,9 @@
       </button>
       <button class="setting-toggle" [class.enabled]="showShadows" (click)="onToggleShadows()">
         <span>{{ 'Sombras en tiempo real' | translate }}</span><span>{{ showShadows ? 'ON' : 'OFF' }}</span>
+      </button>
+      <button class="setting-toggle" [class.enabled]="markersVisible" (click)="onToggleMarkersVisible()">
+        <span>{{ 'Marcadores de luz/vacío' | translate }}</span><span>{{ markersVisible ? 'ON' : 'OFF' }}</span>
       </button>
       <button class="setting-toggle" [class.enabled]="autoRotate" (click)="autoRotate = !autoRotate; onAutoRotateChange()">
         <span>{{ 'Rotación automática' | translate }}</span><span>{{ autoRotate ? 'ON' : 'OFF' }}</span>

@@ -26,6 +26,14 @@ service firebase.storage {
         );
     }
 
+    function isProjectMember(projectId) {
+      return firestore.exists(/databases/(default)/documents/projectMembers/$(projectId + '_' + request.auth.uid));
+    }
+
+    function isProjectPublic(projectId) {
+      return firestore.get(/databases/(default)/documents/projects/$(projectId)).data.isPublic == true;
+    }
+
     match /models/{uid}/{fileName} {
       allow read: if (fileName.matches('^[A-Za-z0-9-]+\\.glb$')
         && ((signedIn() && request.auth.uid == uid)
@@ -52,6 +60,20 @@ service firebase.storage {
           || request.resource.contentType == 'application/octet-stream'
           || request.resource.contentType.matches('image/png;.*'));
       allow delete: if (signedIn() && request.auth.uid == uid) || isModerator();
+    }
+
+    match /projectThumbnails/{projectId}/{fileName} {
+      allow read: if (firestore.exists(/databases/(default)/documents/projects/$(projectId))
+        && (isProjectPublic(projectId)
+          || (signedIn() && isProjectMember(projectId))
+          || isModerator()));
+      allow create, update: if signedIn()
+        && isProjectMember(projectId)
+        && request.resource.size <= 4 * 1024 * 1024
+        && (request.resource.contentType == 'image/png'
+          || request.resource.contentType == 'application/octet-stream'
+          || request.resource.contentType.matches('image/png;.*'));
+      allow delete: if signedIn() && (isProjectMember(projectId) || isModerator());
     }
   }
 }

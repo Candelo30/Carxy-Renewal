@@ -106,6 +106,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public showGrid = true;
   public showShadows = true;
   public showAxes = false;
+  public markersVisible = true;
   public autoRotate = false;
   public exposure = 1.15;
   public explodedAmount = 0;
@@ -161,6 +162,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public exportBusy = false;
   public importBusy = false;
   public presentationBusy = false;
+  public thumbnailBusy = false;
   public shareBusy = false;
   public measuringDistance = false;
   public distanceMeasurement: { idA: string; idB: string; distance: number } | null = null;
@@ -169,6 +171,7 @@ export class ModelEditor implements OnInit, OnDestroy {
   public layerVisibility: Record<string, boolean> = {};
   public savedViews: CameraBookmark[] = [];
   public snapEnabled = false;
+  public multiSelectMode = false;
 
   public collaborationOpen = false;
   public showShortcutsHelp = false;
@@ -680,8 +683,26 @@ export class ModelEditor implements OnInit, OnDestroy {
   }
 
   selectObject(id: string, event?: MouseEvent): void {
-    const additive = !!event && (event.ctrlKey || event.metaKey);
+    const additive = (!!event && (event.ctrlKey || event.metaKey)) || this.multiSelectMode;
     this.threeEngine.selectObject(id, additive);
+  }
+
+  toggleMultiSelect(): void {
+    this.multiSelectMode = !this.multiSelectMode;
+    if (!this.multiSelectMode) {
+      // Al salir del modo, deja solamente el último seleccionado para evitar estados raros
+      const ids = this.threeEngine.getSelectedObjectIds();
+      if (ids.length > 1) {
+        this.threeEngine.selectObject(ids[ids.length - 1]);
+      }
+    }
+    this.cdr.detectChanges();
+  }
+
+  clearMultiSelect(): void {
+    this.multiSelectMode = false;
+    this.threeEngine.selectObject(this.selectedObjectId);
+    this.cdr.detectChanges();
   }
 
   selectNode(id: string): void {
@@ -952,6 +973,40 @@ export class ModelEditor implements OnInit, OnDestroy {
     this.notifications.success(this.i18n.translate('Miniatura PNG descargada.'), this.i18n.translate('Exportar'));
   }
 
+  async saveProjectThumbnail(): Promise<void> {
+    if (this.thumbnailBusy) return;
+    if (!this.projectId) {
+      this.notifications.warning(this.i18n.translate('Necesitas abrir un proyecto para guardar la miniatura.'));
+      return;
+    }
+    const image = this.threeEngine.captureImageDataUrl();
+    if (!image) {
+      this.notifications.warning(this.i18n.translate('No se pudo capturar la vista actual.'));
+      return;
+    }
+    this.thumbnailBusy = true;
+    try {
+      const blob = this.dataUrlToBlob(image);
+      await this.collaboration.uploadProjectThumbnail(this.projectId, blob);
+      this.notifications.success(this.i18n.translate('Miniatura guardada en el proyecto.'), this.i18n.translate('Exportar'));
+    } catch (error) {
+      console.warn('No se pudo guardar la miniatura del proyecto.', error);
+      this.notifications.error(this.i18n.translate('No se pudo guardar la miniatura.'));
+    } finally {
+      this.thumbnailBusy = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private dataUrlToBlob(dataUrl: string): Blob {
+    const [meta, content] = dataUrl.split(',');
+    const mime = /data:([^;]+);/.exec(meta)?.[1] ?? 'image/png';
+    const bin = atob(content);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
   formatAssetDate(timestamp: number): string {
     if (!timestamp) return '';
     return new Date(timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -1067,6 +1122,11 @@ export class ModelEditor implements OnInit, OnDestroy {
 
   onToggleShadows(): void {
     this.showShadows = this.threeEngine.toggleShadows();
+  }
+
+  onToggleMarkersVisible(): void {
+    this.markersVisible = !this.markersVisible;
+    this.threeEngine.setMarkersVisible(this.markersVisible);
   }
 
   onToggleAxes(): void {

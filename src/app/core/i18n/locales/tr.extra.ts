@@ -728,4 +728,13 @@ export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
 
   'No se pudo cargar el modelo 3D. Comprueba que el archivo GLB sea válido.': '3D modeli yükleinemedi. GLB dosyasının geçerli olduğundan emin olun.',
 
+  'Guardar miniatura': 'Сохранить миниатюру',
+  'Actualiza la imagen de la tarjeta en Mis proyectos': 'Обновить изображение карточки в «Мои проекты»',
+  'Necesitas abrir un proyecto para guardar la miniatura.': 'Сначала откройте проект, чтобы сохранить миниатюру.',
+  'Miniatura guardada en el proyecto.': 'Миниатюра сохранена в проекте.',
+  'No se pudo guardar la miniatura.': 'Не удалось сохранить миниатюру.',
+
+  'Multiselección: toca filas para añadirlas o quitarlas': 'Мультивыбор: нажимайте на строки, чтобы добавить или убрать элементы',
+  'Marcadores de luz/vacío': 'Маркеры света/пустышки',
+
 };
