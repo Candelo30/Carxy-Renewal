@@ -3,6 +3,9 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID скопирован в буфер обмена.',
+  'Más acciones': 'Ещё действия',
+  'Reactivar notificaciones': 'Включить уведомления',
   'Inicia sesión para compartir.': 'Войдите, чтобы поделиться.',
   'Modelo compartido con {name}.': 'Модель поделена с {name}.',
   'No se pudo compartir en el chat.': 'Не удалось поделиться в чате.',

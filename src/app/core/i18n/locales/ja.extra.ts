@@ -3,6 +3,9 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID をクリップボードにコピーしました。',
+  'Más acciones': 'その他の操作',
+  'Reactivar notificaciones': '通知を再有効化',
   'Inicia sesión para compartir.': '共有するにはログインしてください。',
   'Modelo compartido con {name}.': '{name} とモデルを共有しました。',
   'No se pudo compartir en el chat.': 'チャットで共有できませんでした。',

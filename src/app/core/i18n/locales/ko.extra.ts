@@ -5,6 +5,9 @@
  * Completa las traducciones en ko.extra.ts cuando quieras localizarlas.
  */
 export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID가 클립보드에 복사되었습니다.',
+  'Más acciones': '더 보기',
+  'Reactivar notificaciones': '알림 다시 켜기',
   'Inicia sesión para compartir.': '공유하려면 로그인하세요.',
   'Modelo compartido con {name}.': '{name}와(과) 모델을 공유했습니다.',
   'No se pudo compartir en el chat.': '채팅에 공유하지 못했습니다.',

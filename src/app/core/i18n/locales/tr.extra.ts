@@ -5,6 +5,9 @@
  * Completa las traducciones en tr.extra.ts cuando quieras localizarlas.
  */
 export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID panoya kopyalandı.',
+  'Más acciones': 'Diğer eylemler',
+  'Reactivar notificaciones': 'Bildirimleri etkinleştir',
   'Inicia sesión para compartir.': 'Paylaşmak için giriş yapın.',
   'Modelo compartido con {name}.': '{name} ile model paylaşıldı.',
   'No se pudo compartir en el chat.': 'Sohbette paylaşılamadı.',

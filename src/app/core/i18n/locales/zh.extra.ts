@@ -3,6 +3,9 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID 已复制到剪贴板。',
+  'Más acciones': '更多操作',
+  'Reactivar notificaciones': '重新启用通知',
   'Inicia sesión para compartir.': '请登录后分享。',
   'Modelo compartido con {name}.': '已与 {name} 分享模型。',
   'No se pudo compartir en el chat.': '无法分享到聊天。',

@@ -3,6 +3,9 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const DE_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID ins Zwischenablage kopiert.',
+  'Más acciones': 'Weitere Aktionen',
+  'Reactivar notificaciones': 'Benachrichtigungen reaktivieren',
   'Inicia sesión para compartir.': 'Melde dich an, um zu teilen.',
   'Modelo compartido con {name}.': 'Modell geteilt mit {name}.',
   'No se pudo compartir en el chat.': 'Im Chat konnte nicht geteilt werden.',

@@ -3,6 +3,9 @@
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'ID copiado al portapapeles.': 'ID क्लिपबोर्ड पर कॉपी किया गया।',
+  'Más acciones': 'अधिक क्रियाएँ',
+  'Reactivar notificaciones': 'सूचनाएँ पुनः सक्रिय करें',
   'Inicia sesión para compartir.': 'साझा करने के लिए लॉगिन करें।',
   'Modelo compartido con {name}.': '{name} के साथ मॉडल साझा किया गया।',
   'No se pudo compartir en el chat.': 'चैट में साझा नहीं किया जा सका।',

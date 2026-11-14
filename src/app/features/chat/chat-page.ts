@@ -304,9 +304,36 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       label: 'Bosque',
       css: 'radial-gradient(90% 60% at 50% 0%, rgba(16, 185, 129, 0.14), transparent 60%), #07130f',
     },
+    {
+      id: 'nebula',
+      label: 'Nebulosa',
+      css: 'radial-gradient(100% 70% at 50% 0%, rgba(168, 85, 247, 0.22), transparent 55%), radial-gradient(70% 50% at 85% 100%, rgba(34, 211, 238, 0.15), transparent 60%), #0a0812',
+    },
+    {
+      id: 'caramel',
+      label: 'Caramelo',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(217, 119, 6, 0.18), transparent 60%), #160e05',
+    },
+    {
+      id: 'nocturne',
+      label: 'Nocturno',
+      css: 'radial-gradient(100% 70% at 50% 0%, rgba(59, 130, 246, 0.16), transparent 55%), radial-gradient(60% 50% at 15% 100%, rgba(99, 102, 241, 0.12), transparent 60%), #050a18',
+    },
+    {
+      id: 'cerezo',
+      label: 'Cerezo',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(244, 114, 182, 0.16), transparent 60%), #150a10',
+    },
+    {
+      id: 'meadow',
+      label: 'Pradera',
+      css: 'radial-gradient(90% 60% at 50% 0%, rgba(74, 222, 128, 0.13), transparent 60%), #060f0a',
+    },
   ];
   /** Caché de los fondos por conversación (evita leer `localStorage` en cada render). */
   private readonly backgroundOverrides = new Map<string, string>();
+  /** ¿Está abierto el menú ⋯ de acciones de la conversación? */
+  readonly moreMenuOpen = signal(false);
   /** Fondo efectivo de la conversación abierta. */
   chatBackgroundId = 'default';
   /** Fondo global por defecto; se restaura desde `localStorage`. */
@@ -637,6 +664,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.stopTyping();
     this.stopAudioNote();
     this.clearConversationUiState();
+    this.moreMenuOpen.set(false);
     this.chatBackgroundId = this.effectiveChatBackgroundId('');
     this.messages.set(undefined);
     this.partnerProfile.set(undefined);
@@ -763,8 +791,9 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       this.copiedId.set('copied');
       if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
       this.copyIdTimer = setTimeout(() => this.copiedId.set(''), 1800);
+      this.notifications.success(this.i18n.translate('ID copiado al portapapeles.'), this.i18n.translate('UID del creador'));
     } catch {
-      this.notifications.warning(this.i18n.translate('No se pudo copiar.'));
+      this.notifications.warning(this.i18n.translate('No se pudo copiar.'), this.i18n.translate('Copiar UID'));
     }
   }
 
@@ -1241,6 +1270,15 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /** Abre el panel de ajustes del chat. */
+  /** Alterna el menú ⋯ de acciones de la conversación. */
+  toggleMoreMenu(): void {
+    this.moreMenuOpen.update((open) => !open);
+  }
+
+  closeMoreMenu(): void {
+    this.moreMenuOpen.set(false);
+  }
+
   openSettings(): void {
     this.settingsDialog?.nativeElement.showModal();
   }
