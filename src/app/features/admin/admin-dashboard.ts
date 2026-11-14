@@ -1305,6 +1305,48 @@ export class AdminDashboardComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  /**
+   * Separador de columnas según la configuración regional del equipo.
+   *
+   * Excel en español (y la mayoría de Europa/LATAM) usa ';' como
+   * separador de listas porque la coma es el separador decimal; en esos
+   * locales un CSV separado por comas abre todo en la columna A. Se detecta
+   * mirando el separador decimal del sistema: si lleva coma → Excel espera ';'.
+   */
+  private get csvDelimiter(): string {
+    try {
+      return new Intl.NumberFormat().format(1.1).includes(',') ? ';' : ',';
+    } catch {
+      return ';';
+    }
+  }
+
+  /** Fecha legible para humanos (es-CO, fecha + hora corta); cadena vacía si falta. */
+  private formatCsvDate(ms: number | undefined): string {
+    if (!ms) return '';
+    try {
+      return new Date(ms).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    } catch {
+      return String(ms);
+    }
+  }
+
+  /** Booleano en español para exportaciones legibles. */
+  private yesNo(value: boolean | undefined): string {
+    return value ? 'Sí' : 'No';
+  }
+
+  /** Traduce claves de catálogos de moderación para exportarlas en español. */
+  private translateCsvValue(kind: 'reportReason' | 'reportStatus' | 'feedbackType' | 'feedbackStatus', value: string): string {
+    const maps: Record<string, Record<string, string>> = {
+      reportReason: { spam: 'Spam', inappropriate: 'Contenido inapropiado', copyright: 'Derechos de autor', other: 'Otro' },
+      reportStatus: { open: 'Abierto', resolved: 'Resuelto', dismissed: 'Descartado' },
+      feedbackType: { bug: 'Error', idea: 'Idea', account: 'Cuenta', collaboration: 'Colaboración', other: 'Otro' },
+      feedbackStatus: { new: 'Nuevo', reviewing: 'En revisión', resolved: 'Resuelto' },
+    };
+    return maps[kind][value] ?? value;
+  }
+
   private toCsvRow(v: string | number | null | undefined): string {
     if (v == null) return '';
     const s = String(v);
@@ -1313,7 +1355,8 @@ export class AdminDashboardComponent {
   }
 
   private toCsv(rows: string[][]): string {
-    return rows.map((row) => row.map((v) => this.toCsvRow(v)).join(',')).join('\r\n');
+    const delimiter = this.csvDelimiter;
+    return rows.map((row) => row.map((v) => this.toCsvRow(v)).join(delimiter)).join('\r\n');
   }
 
   private downloadCsv(filename: string, rows: string[][]): void {
@@ -1331,9 +1374,9 @@ export class AdminDashboardComponent {
   exportUsersCsv(): void {
     const users = this.vmSubject.value.users;
     if (!users.length) return;
-    const rows: string[][] = [['uid', 'displayName', 'email', 'role', 'isBanned', 'createdAt']];
+    const rows: string[][] = [['UID', 'Nombre', 'Correo', 'Rol', 'Suspendido', 'Creado']];
     for (const u of users) {
-      rows.push([u.uid, u.displayName, u.email ?? '', u.role, String(u.isBanned), String(u.createdAt ?? '')]);
+      rows.push([u.uid, u.displayName, u.email ?? '', u.role, this.yesNo(u.isBanned), this.formatCsvDate(u.createdAt)]);
     }
     this.downloadCsv(`carxy-usuarios-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de usuarios', `CSV export de ${users.length} usuario(s)`);
@@ -1342,9 +1385,9 @@ export class AdminDashboardComponent {
   exportPostsCsv(): void {
     const posts = this.vmSubject.value.posts;
     if (!posts.length) return;
-    const rows: string[][] = [['id', 'title', 'author', 'visibility', 'likes', 'views', 'remixes', 'createdAt']];
+    const rows: string[][] = [['ID', 'Título', 'Autor', 'Visibilidad', 'Likes', 'Vistas', 'Remixes', 'Publicado']];
     for (const p of posts) {
-      rows.push([p.id, p.title, p.author?.displayName ?? '', p.isPrivate ? 'private' : 'public', String(p.likesCount ?? p.likes ?? 0), String(p.viewsCount ?? 0), String(p.remixCount ?? 0), String(p.createdAt)]);
+      rows.push([p.id, p.title, p.author?.displayName ?? '', p.isPrivate ? 'Privado' : 'Público', String(p.likesCount ?? p.likes ?? 0), String(p.viewsCount ?? 0), String(p.remixCount ?? 0), this.formatCsvDate(p.createdAt)]);
     }
     this.downloadCsv(`carxy-modelos-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de publicaciones', `CSV export de ${posts.length} publicación(es)`);
@@ -1353,9 +1396,9 @@ export class AdminDashboardComponent {
   exportReportsCsv(): void {
     const reports = this.vmSubject.value.reports;
     if (!reports.length) return;
-    const rows: string[][] = [['id', 'postTitle', 'reporter', 'reason', 'status', 'createdAt']];
+    const rows: string[][] = [['ID', 'Modelo reportado', 'Reportado por', 'Motivo', 'Estado', 'Fecha']];
     for (const r of reports) {
-      rows.push([r.id, r.postTitle, r.reporterName, r.reason, r.status, String(r.createdAt)]);
+      rows.push([r.id, r.postTitle, r.reporterName, this.translateCsvValue('reportReason', r.reason), this.translateCsvValue('reportStatus', r.status), this.formatCsvDate(r.createdAt)]);
     }
     this.downloadCsv(`carxy-reportes-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de reportes', `CSV export de ${reports.length} reporte(s)`);
@@ -1364,9 +1407,9 @@ export class AdminDashboardComponent {
   exportFeedbackCsv(): void {
     const feedback = this.vmSubject.value.feedback;
     if (!feedback.length) return;
-    const rows: string[][] = [['id', 'type', 'name', 'email', 'subject', 'status', 'createdAt']];
+    const rows: string[][] = [['ID', 'Tipo', 'Nombre', 'Correo', 'Asunto', 'Estado', 'Fecha']];
     for (const f of feedback) {
-      rows.push([f.id, f.type, f.name, f.email ?? '', f.subject, f.status, String(f.createdAt)]);
+      rows.push([f.id, this.translateCsvValue('feedbackType', f.type), f.name, f.email ?? '', f.subject, this.translateCsvValue('feedbackStatus', f.status), this.formatCsvDate(f.createdAt)]);
     }
     this.downloadCsv(`carxy-feedback-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de feedback', `CSV export de ${feedback.length} mensaje(s)`);
@@ -1375,9 +1418,9 @@ export class AdminDashboardComponent {
   exportQuestionsCsv(): void {
     const questions = this.vmSubject.value.questions;
     if (!questions.length) return;
-    const rows: string[][] = [['id', 'title', 'author', 'resolved', 'pinned', 'locked', 'createdAt']];
+    const rows: string[][] = [['ID', 'Título', 'Autor', 'Resuelta', 'Fijada', 'Bloqueada', 'Creada']];
     for (const q of questions) {
-      rows.push([q.id, q.title, q.authorName ?? '', String(q.resolved), String(q.pinned), String(q.locked), String(q.createdAt)]);
+      rows.push([q.id, q.title, q.authorName ?? '', this.yesNo(q.resolved), this.yesNo(q.pinned), this.yesNo(q.locked), this.formatCsvDate(q.createdAt)]);
     }
     this.downloadCsv(`carxy-preguntas-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de preguntas', `CSV export de ${questions.length} pregunta(s)`);
