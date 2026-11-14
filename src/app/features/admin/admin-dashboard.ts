@@ -29,6 +29,7 @@ import { I18nService } from '../../core/services/i18n';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { CollaborationService } from '../../core/services/collaboration';
+import { ExcelExportService } from '../../core/services/excel-export';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
@@ -83,6 +84,7 @@ export class AdminDashboardComponent {
   readonly social = inject(SocialService);
   readonly community = inject(CommunityService);
   readonly collaboration = inject(CollaborationService);
+  private readonly excelExport = inject(ExcelExportService);
   readonly i18n = inject(I18nService);
   readonly notifications = inject(NotificationService);
 
@@ -1305,35 +1307,14 @@ export class AdminDashboardComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  /**
-   * Separador de columnas según la configuración regional del equipo.
-   *
-   * Excel en español (y la mayoría de Europa/LATAM) usa ';' como
-   * separador de listas porque la coma es el separador decimal; en esos
-   * locales un CSV separado por comas abre todo en la columna A. Se detecta
-   * mirando el separador decimal del sistema: si lleva coma → Excel espera ';'.
-   */
-  private get csvDelimiter(): string {
-    try {
-      return new Intl.NumberFormat().format(1.1).includes(',') ? ';' : ',';
-    } catch {
-      return ';';
-    }
-  }
-
-  /** Fecha legible para humanos (es-CO, fecha + hora corta); cadena vacía si falta. */
-  private formatCsvDate(ms: number | undefined): string {
+  /** Fecha legible para humanos y para subtítulos de exportación (es-CO). */
+  private formatExportDate(ms: number | undefined): string {
     if (!ms) return '';
     try {
       return new Date(ms).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
     } catch {
       return String(ms);
     }
-  }
-
-  /** Booleano en español para exportaciones legibles. */
-  private yesNo(value: boolean | undefined): string {
-    return value ? 'Sí' : 'No';
   }
 
   /** Traduce claves de catálogos de moderación para exportarlas en español. */
@@ -1347,83 +1328,152 @@ export class AdminDashboardComponent {
     return maps[kind][value] ?? value;
   }
 
-  private toCsvRow(v: string | number | null | undefined): string {
-    if (v == null) return '';
-    const s = String(v);
-    if (/[",\n\r;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-  }
-
-  private toCsv(rows: string[][]): string {
-    const delimiter = this.csvDelimiter;
-    return rows.map((row) => row.map((v) => this.toCsvRow(v)).join(delimiter)).join('\r\n');
-  }
-
-  private downloadCsv(filename: string, rows: string[][]): void {
-    if (typeof document === 'undefined') return;
-    const bom = '\ufeff';
-    const blob = new Blob([bom + this.toCsv(rows)], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  exportUsersCsv(): void {
+  async exportUsersCsv(): Promise<void> {
     const users = this.vmSubject.value.users;
     if (!users.length) return;
-    const rows: string[][] = [['UID', 'Nombre', 'Correo', 'Rol', 'Suspendido', 'Creado']];
-    for (const u of users) {
-      rows.push([u.uid, u.displayName, u.email ?? '', u.role, this.yesNo(u.isBanned), this.formatCsvDate(u.createdAt)]);
-    }
-    this.downloadCsv(`carxy-usuarios-${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de usuarios', `CSV export de ${users.length} usuario(s)`);
+    const rows = users.map((u) => [
+      u.uid,
+      u.displayName,
+      u.email ?? '',
+      u.role,
+      u.isBanned,
+      this.formatExportDate(u.createdAt),
+    ]);
+    await this.excelExport.downloadStyledSheet({
+      filename: `carxy-usuarios-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Usuarios',
+      subtitle: `Cuentas registradas · ${users.length} usuario(s) · ${this.formatExportDate(Date.now())}`,
+      columns: [
+        { header: 'UID', key: 'uid', width: 28 },
+        { header: 'Nombre', key: 'nombre', width: 26 },
+        { header: 'Correo', key: 'correo', width: 34 },
+        { header: 'Rol', key: 'rol', width: 12 },
+        { header: 'Suspendido', key: 'suspendido', width: 13 },
+        { header: 'Creado', key: 'creado', width: 22 },
+      ],
+      rows,
+    });
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación Excel de usuarios', `Excel export de ${users.length} usuario(s)`);
   }
 
-  exportPostsCsv(): void {
+  async exportPostsCsv(): Promise<void> {
     const posts = this.vmSubject.value.posts;
     if (!posts.length) return;
-    const rows: string[][] = [['ID', 'Título', 'Autor', 'Visibilidad', 'Likes', 'Vistas', 'Remixes', 'Publicado']];
-    for (const p of posts) {
-      rows.push([p.id, p.title, p.author?.displayName ?? '', p.isPrivate ? 'Privado' : 'Público', String(p.likesCount ?? p.likes ?? 0), String(p.viewsCount ?? 0), String(p.remixCount ?? 0), this.formatCsvDate(p.createdAt)]);
-    }
-    this.downloadCsv(`carxy-modelos-${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de publicaciones', `CSV export de ${posts.length} publicación(es)`);
+    const rows = posts.map((p) => [
+      p.id,
+      p.title,
+      p.author?.displayName ?? '',
+      p.isPrivate ? 'Privado' : 'Público',
+      p.likesCount ?? p.likes ?? 0,
+      p.viewsCount ?? 0,
+      p.remixCount ?? 0,
+      this.formatExportDate(p.createdAt),
+    ]);
+    await this.excelExport.downloadStyledSheet({
+      filename: `carxy-modelos-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Modelos',
+      subtitle: `Publicaciones · ${posts.length} modelo(s) · ${this.formatExportDate(Date.now())}`,
+      columns: [
+        { header: 'ID', key: 'id', width: 26 },
+        { header: 'Título', key: 'titulo', width: 36 },
+        { header: 'Autor', key: 'autor', width: 24 },
+        { header: 'Visibilidad', key: 'visibilidad', width: 13 },
+        { header: 'Likes', key: 'likes', width: 10 },
+        { header: 'Vistas', key: 'vistas', width: 10 },
+        { header: 'Remixes', key: 'remixes', width: 11 },
+        { header: 'Publicado', key: 'publicado', width: 22 },
+      ],
+      rows,
+    });
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación Excel de publicaciones', `Excel export de ${posts.length} publicación(es)`);
   }
 
-  exportReportsCsv(): void {
+  async exportReportsCsv(): Promise<void> {
     const reports = this.vmSubject.value.reports;
     if (!reports.length) return;
-    const rows: string[][] = [['ID', 'Modelo reportado', 'Reportado por', 'Motivo', 'Estado', 'Fecha']];
-    for (const r of reports) {
-      rows.push([r.id, r.postTitle, r.reporterName, this.translateCsvValue('reportReason', r.reason), this.translateCsvValue('reportStatus', r.status), this.formatCsvDate(r.createdAt)]);
-    }
-    this.downloadCsv(`carxy-reportes-${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de reportes', `CSV export de ${reports.length} reporte(s)`);
+    const rows = reports.map((r) => [
+      r.id,
+      r.postTitle,
+      r.reporterName,
+      this.translateCsvValue('reportReason', r.reason),
+      this.translateCsvValue('reportStatus', r.status),
+      this.formatExportDate(r.createdAt),
+    ]);
+    await this.excelExport.downloadStyledSheet({
+      filename: `carxy-reportes-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Reportes',
+      subtitle: `Moderación de contenido · ${reports.length} reporte(s) · ${this.formatExportDate(Date.now())}`,
+      columns: [
+        { header: 'ID', key: 'id', width: 26 },
+        { header: 'Modelo reportado', key: 'modelo', width: 38 },
+        { header: 'Reportado por', key: 'reportero', width: 24 },
+        { header: 'Motivo', key: 'motivo', width: 22 },
+        { header: 'Estado', key: 'estado', width: 13 },
+        { header: 'Fecha', key: 'fecha', width: 22 },
+      ],
+      rows,
+    });
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación Excel de reportes', `Excel export de ${reports.length} reporte(s)`);
   }
 
-  exportFeedbackCsv(): void {
+  async exportFeedbackCsv(): Promise<void> {
     const feedback = this.vmSubject.value.feedback;
     if (!feedback.length) return;
-    const rows: string[][] = [['ID', 'Tipo', 'Nombre', 'Correo', 'Asunto', 'Estado', 'Fecha']];
-    for (const f of feedback) {
-      rows.push([f.id, this.translateCsvValue('feedbackType', f.type), f.name, f.email ?? '', f.subject, this.translateCsvValue('feedbackStatus', f.status), this.formatCsvDate(f.createdAt)]);
-    }
-    this.downloadCsv(`carxy-feedback-${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de feedback', `CSV export de ${feedback.length} mensaje(s)`);
+    const rows = feedback.map((f) => [
+      f.id,
+      this.translateCsvValue('feedbackType', f.type),
+      f.name,
+      f.email ?? '',
+      f.subject,
+      this.translateCsvValue('feedbackStatus', f.status),
+      this.formatExportDate(f.createdAt),
+    ]);
+    await this.excelExport.downloadStyledSheet({
+      filename: `carxy-feedback-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Feedback',
+      subtitle: `Mensajes recibidos · ${feedback.length} registro(s) · ${this.formatExportDate(Date.now())}`,
+      columns: [
+        { header: 'ID', key: 'id', width: 26 },
+        { header: 'Tipo', key: 'tipo', width: 15 },
+        { header: 'Nombre', key: 'nombre', width: 26 },
+        { header: 'Correo', key: 'correo', width: 32 },
+        { header: 'Asunto', key: 'asunto', width: 40 },
+        { header: 'Estado', key: 'estado', width: 15 },
+        { header: 'Fecha', key: 'fecha', width: 22 },
+      ],
+      rows,
+    });
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación Excel de feedback', `Excel export de ${feedback.length} mensaje(s)`);
   }
 
-  exportQuestionsCsv(): void {
+  async exportQuestionsCsv(): Promise<void> {
     const questions = this.vmSubject.value.questions;
     if (!questions.length) return;
-    const rows: string[][] = [['ID', 'Título', 'Autor', 'Resuelta', 'Fijada', 'Bloqueada', 'Creada']];
-    for (const q of questions) {
-      rows.push([q.id, q.title, q.authorName ?? '', this.yesNo(q.resolved), this.yesNo(q.pinned), this.yesNo(q.locked), this.formatCsvDate(q.createdAt)]);
-    }
-    this.downloadCsv(`carxy-preguntas-${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación CSV de preguntas', `CSV export de ${questions.length} pregunta(s)`);
+    const rows = questions.map((q) => [
+      q.id,
+      q.title,
+      q.authorName ?? '',
+      q.resolved,
+      q.pinned,
+      q.locked,
+      this.formatExportDate(q.createdAt),
+    ]);
+    await this.excelExport.downloadStyledSheet({
+      filename: `carxy-preguntas-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Preguntas',
+      subtitle: `Comunidad de ayuda · ${questions.length} pregunta(s) · ${this.formatExportDate(Date.now())}`,
+      columns: [
+        { header: 'ID', key: 'id', width: 26 },
+        { header: 'Título', key: 'titulo', width: 44 },
+        { header: 'Autor', key: 'autor', width: 26 },
+        { header: 'Resuelta', key: 'resuelta', width: 12 },
+        { header: 'Fijada', key: 'fijada', width: 12 },
+        { header: 'Bloqueada', key: 'bloqueada', width: 12 },
+        { header: 'Creada', key: 'creada', width: 22 },
+      ],
+      rows,
+    });
+    void this.log('inactive_users_purged', 'system', `export-${Date.now()}`, 'Exportación Excel de preguntas', `Excel export de ${questions.length} pregunta(s)`);
   }
 
   get pendingModeration(): number {

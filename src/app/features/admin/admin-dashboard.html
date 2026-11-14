@@ -314,7 +314,7 @@
               <div class="panel-actions">
                 <label class="activity-filter-label">{{ 'projects.filter' | translate }}<select [ngModel]="activityFilterValue" (ngModelChange)="activityFilterValue = $event" name="activity-filter"><option value="all">{{ 'communityHelp.filter.all' | translate }}</option><option value="active">{{ 'admin.filterActive' | translate }}</option><option value="inactive">{{ 'admin.filterInactive' | translate }}</option><option value="suspended">{{ 'admin.filterSuspended' | translate }}</option></select></label>
                 <button class="small-button danger" (click)="purgeInactiveUsers()" [disabled]="!(inactiveUsers$ | async)?.length">{{ 'admin.purgeInactive' | translate }} (+{{ inactiveDeleteDays }}d)</button>
-                <button class="small-button" (click)="exportUsersCsv()">Exportar CSV</button>
+                <button class="small-button" (click)="exportUsersCsv()">Exportar Excel</button>
               </div>
             </div>
             <div class="alert alert-warning" *ngIf="duplicateEmails.length">
@@ -390,7 +390,7 @@
             <div class="panel-header">
               <div class="panel-title-row"><h2>{{ 'admin.contentModeration' | translate }}</h2><span>{{ (sortedPosts$ | async)?.length || 0 }} modelos</span></div>
               <div class="panel-actions">
-                <button class="small-button" (click)="exportPostsCsv()">Exportar CSV</button>
+                <button class="small-button" (click)="exportPostsCsv()">Exportar Excel</button>
               </div>
             </div>
             <div class="bulk-bar" *ngIf="(bulkToggleAllPosts$ | async) as bulk">
@@ -434,7 +434,7 @@
                   <option value="resolved">{{ 'admin.resolved' | translate }}</option>
                   <option value="dismissed">{{ 'admin.dismissed' | translate }}</option>
                 </select>
-                <button class="small-button" (click)="exportReportsCsv()">Exportar CSV</button>
+                <button class="small-button" (click)="exportReportsCsv()">Exportar Excel</button>
               </div>
             </div>
             <div class="table-wrap" *ngIf="sortedReports$ | async as reports">
@@ -479,7 +479,7 @@
             <div class="panel-header">
               <div class="panel-title-row"><h2>{{ 'admin.feedbackAndContact' | translate }}</h2><span>{{ (filteredFeedback$ | async)?.length || 0 }} mensajes</span></div>
               <div class="panel-actions">
-                <button class="small-button" (click)="exportFeedbackCsv()">Exportar CSV</button>
+                <button class="small-button" (click)="exportFeedbackCsv()">Exportar Excel</button>
               </div>
             </div>
             <div class="table-wrap" *ngIf="filteredFeedback$ | async as items">
@@ -511,7 +511,7 @@
             <div class="panel-header">
               <div class="panel-title-row"><h2>{{ 'admin.communityQuestions' | translate }}</h2><span>{{ (filteredQuestions$ | async)?.length || 0 }} preguntas</span></div>
               <div class="panel-actions">
-                <button class="small-button" (click)="exportQuestionsCsv()">Exportar CSV</button>
+                <button class="small-button" (click)="exportQuestionsCsv()">Exportar Excel</button>
               </div>
             </div>
             <div class="table-wrap" *ngIf="filteredQuestions$ | async as questions">
@@ -790,3 +790,4 @@
     </footer>
   </div>
 </main>
+

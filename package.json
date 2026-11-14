@@ -26,6 +26,7 @@
     "@angular/router": "^22.2.0",
     "@angular/ssr": "^22.2.3",
     "dompurify": "^3.4.17",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "firebase": "^12.19.0",
     "marked": "^18.2.0",
