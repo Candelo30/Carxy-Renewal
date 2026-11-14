@@ -1,10 +1,20 @@
-import type { SourceTranslation } from './source-translations';
+import type {
+  SourceTranslation } from './source-translations';
 
 /**
  * Traducciones de las páginas y componentes que históricamente estaban
  * escritos solo en español. La clave es el texto original en español.
  */
-export const PAGE_TRANSLATIONS: Record<string, SourceTranslation> = {
+export const PAGE_TRANSLATIONS: Record<string, SourceTranslation> = {'Chat cifrado y notas de voz': { en: 'Encrypted chat and voice notes', fr: 'Chat chiffré et notes vocales', pt: 'Chat cifrado e notas de voz' },
+  'Mensajes privados cifrados de extremo a extremo: citas, imágenes y audio.': { en: 'Private end-to-end encrypted messages: quotes, images and audio.', fr: 'Messages privés chiffrés de bout en bout : citations, images et audio.', pt: 'Mensagens privadas cifradas de ponta a ponta: citações, imagens e áudio.' },
+  'Exportar datos como Excel': { en: 'Export data as Excel', fr: 'Exporter les données en Excel', pt: 'Exportar dados em Excel' },
+  'Descargas .xlsx con marca desde el panel de administración.': { en: 'Branded .xlsx downloads from the admin panel.', fr: 'Téléchargements .xlsx personnalisés depuis le panneau d’administration.', pt: 'Downloads .xlsx com marca a partir do painel de administração.' },
+
+  'Escribe a los creadores': { en: 'Message the creators', fr: 'Écrire aux créateurs', pt: 'Escreva aos criadores' },
+  'Envía mensajes privados cifrados de extremo a extremo: texto, imágenes y notas de voz.': { en: 'Send end-to-end encrypted private messages: text, images and voice notes.', fr: 'Envoyez des messages privés chiffrés de bout en bout : texte, images et notes vocales.', pt: 'Envie mensagens privadas cifradas de ponta a ponta: texto, imagens e notas de voz.' },
+  'Abrir el chat': { en: 'Open chat', fr: 'Ouvrir le chat', pt: 'Abrir o chat' },
+  'El candado 🔒 en la conversación indica que tus mensajes van cifrados.': { en: 'The 🔒 lock in the conversation means your messages are encrypted.', fr: 'Le cadenas 🔒 dans la conversation indique que vos messages sont chiffrés.', pt: 'O cadeado 🔒 na conversa indica que suas mensagens estão cifradas.' },
+
   // --- Sobre nosotros ---
   'ORÍGENES': { en: 'ORIGINS', fr: 'ORIGINES', pt: 'ORIGENS' },
   'De proyecto de estudio a plataforma 3D': {
@@ -505,7 +515,7 @@ export const PAGE_TRANSLATIONS: Record<string, SourceTranslation> = {
     fr: "L'histoire, la mission et la feuille de route du projet.",
     pt: 'A história, a missão e o roadmap do projeto.',
   },
-  'Los seis pasos': { en: 'The six steps', fr: 'Les six étapes', pt: 'As seis etapas' },
+  'Los siete pasos': { en: 'The seven steps', fr: 'Les sept étapes', pt: 'As sete etapas' },
   'Mueve, rota, escala y deshaz sin soltar el teclado.': {
     en: 'Move, rotate, scale and undo without leaving the keyboard.',
     fr: 'Déplacez, pivotez, redimensionnez et annulez sans quitter le clavier.',
@@ -519,10 +529,10 @@ export const PAGE_TRANSLATIONS: Record<string, SourceTranslation> = {
   },
   'RECURSOS ÚTILES': { en: 'USEFUL RESOURCES', fr: 'RESSOURCES UTILES', pt: 'RECURSOS ÚTEIS' },
   'Reiniciar progreso': { en: 'Reset progress', fr: 'Réinitialiser la progression', pt: 'Reiniciar progresso' },
-  'Seis pasos para pasar de una cuenta nueva a tu primer modelo publicado. Marca cada paso al terminarlo: el progreso se guarda en este dispositivo.': {
-    en: 'Six steps from a new account to your first published model. Check each step when you finish it: progress is saved on this device.',
-    fr: "Six étapes pour passer d'un nouveau compte à votre premier modèle publié. Cochez chaque étape terminée : la progression est enregistrée sur cet appareil.",
-    pt: 'Seis passos para passar de uma conta nova ao seu primeiro modelo publicado. Marque cada passo ao concluí-lo: o progresso é salvo neste dispositivo.',
+  'Siete pasos para pasar de una cuenta nueva a tu primer modelo publicado y tus primeros mensajes con otros creadores. Marca cada paso al terminarlo: el progreso se guarda en este dispositivo.': {
+    en: 'Seven steps from a brand-new account to your first published model and your first messages with other creators. Check off each step as you finish it: progress is saved on this device.',
+    fr: "Sept étapes d'un compte tout neuf vers votre premier modèle publié et vos premiers messages avec d'autres créateurs. Cochez chaque étape terminée : la progression est enregistrée sur cet appareil.",
+    pt: 'Sete etapas da conta nova ao seu primeiro modelo publicado e as suas primeiras mensagens com outros criadores. Marque cada etapa ao concluí-la: o progresso fica guardado neste dispositivo.',
   },
   'Siguiente': { en: 'Next', fr: 'Suivant', pt: 'Próximo' },
   'Sobre CARXY': { en: 'About CARXY', fr: 'À propos de CARXY', pt: 'Sobre o CARXY' },

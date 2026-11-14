@@ -40,7 +40,8 @@ const SECTIONS: DocsSection[] = [
       { label: 'Enlaces de acceso', description: 'Comparte un proyecto con cualquier persona por enlace.', route: '/help', fragment: 'enlaces-acceso' },
       { label: 'Notificaciones', description: 'Tu buzón: likes, mensajes, seguimientos, remixes e invitaciones.', route: '/help', fragment: 'notificaciones' },
       { label: 'Guardado automático', description: 'Cómo la escena se guarda sola y se recupera tras cerrar.', route: '/help', fragment: 'guardado-auto' },
-      { label: 'Mensajería directa', description: 'Escribe a cualquier creador desde su perfil o el feed.', route: '/help', fragment: 'mensajes-directos' },
+      { label: 'Chat cifrado y notas de voz', description: 'Mensajes privados cifrados de extremo a extremo: citas, imágenes y audio.', route: '/help', fragment: 'mensajes-directos' },
+      { label: 'Exportar datos como Excel', description: 'Descargas .xlsx con marca desde el panel de administración.', route: '/help', fragment: 'exportar-excel' },
     ],
   },
   {

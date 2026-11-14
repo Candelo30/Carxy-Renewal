@@ -76,6 +76,15 @@ const STEPS: GuideStep[] = [
     route: '/feed',
     tip: 'Si remixes un modelo, menciona al creador original en la descripción.',
   },
+  {
+    id: 'conecta',
+    icon: '💬',
+    title: 'Escribe a los creadores',
+    description: 'Envía mensajes privados cifrados de extremo a extremo: texto, imágenes y notas de voz.',
+    actionLabel: 'Abrir el chat',
+    route: '/chat',
+    tip: 'El candado 🔒 en la conversación indica que tus mensajes van cifrados.',
+  },
 ];
 
 @Component({
