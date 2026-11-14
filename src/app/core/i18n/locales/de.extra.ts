@@ -1,8 +1,33 @@
-/**
+﻿/**
  * Alemán (de): textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const DE_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': 'Melde dich an, um zu teilen.',
+  'Modelo compartido con {name}.': 'Modell geteilt mit {name}.',
+  'No se pudo compartir en el chat.': 'Im Chat konnte nicht geteilt werden.',
+  'Imagen': 'Bild',
+  'Imagen enviada': 'Bild gesendet',
+  'Descifrando imagen…': 'Bild wird entschlüsselt…',
+  'Adjuntar imagen': 'Bild anhängen',
+  'Solo se pueden enviar imágenes.': 'Es können nur Bilder gesendet werden.',
+  'La imagen está vacía.': 'Das Bild ist leer.',
+  'La imagen supera el tamaño máximo de 10 MB.': 'Das Bild überschreitet die maximale Größe von 10 MB.',
+  'No se pudo leer la imagen.': 'Das Bild konnte nicht gelesen werden.',
+  'No se pudo enviar la imagen.': 'Das Bild konnte nicht gesendet werden.',
+  'Ver imagen': 'Bild ansehen',
+  'Mensaje citado': 'Zitierte Nachricht',
+  'Responder': 'Antworten',
+  'Cancelar respuesta': 'Antwort abbrechen',
+  'escribiendo…': 'schreibt…',
+  'Leído': 'Gelesen',
+  'Enviado': 'Gesendet',
+  'Mira este modelo:': 'Schau dir dieses Modell an:',
+  'Compartir en chat': 'Im Chat teilen',
+  'Elige una conversación': 'Wähle eine Unterhaltung',
+  'Aún no tienes conversaciones.': 'Du hast noch keine Gespräche.',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': 'Neue Nachrichten in diesem Gespräch sind Ende-zu-Ende verschlüsselt.',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': 'Dein Kontakt hat die Verschlüsselung in CARXY noch nicht aktiviert. Bitte ihn, die App zu öffnen, und versuche es erneut.',
 
   'ASUNTO': 'BETREFF',
   'AUTOR': 'AUTOR',

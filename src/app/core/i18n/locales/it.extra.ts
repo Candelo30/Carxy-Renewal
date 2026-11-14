@@ -1,8 +1,33 @@
-/**
+﻿/**
  * Italiano (it): textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const IT_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': 'Accedi per condividere.',
+  'Modelo compartido con {name}.': 'Modello condiviso con {name}.',
+  'No se pudo compartir en el chat.': 'Impossibile condividere nella chat.',
+  'Imagen': 'Immagine',
+  'Imagen enviada': 'Immagine inviata',
+  'Descifrando imagen…': 'Decifratura dell’immagine…',
+  'Adjuntar imagen': 'Allega immagine',
+  'Solo se pueden enviar imágenes.': 'Si possono inviare solo immagini.',
+  'La imagen está vacía.': 'L’immagine è vuota.',
+  'La imagen supera el tamaño máximo de 10 MB.': 'L’immagine supera la dimensione massima di 10 MB.',
+  'No se pudo leer la imagen.': 'Impossibile leggere l’immagine.',
+  'No se pudo enviar la imagen.': 'Impossibile inviare l’immagine.',
+  'Ver imagen': 'Visualizza immagine',
+  'Mensaje citado': 'Messaggio citato',
+  'Responder': 'Rispondi',
+  'Cancelar respuesta': 'Annulla risposta',
+  'escribiendo…': 'sta scrivendo…',
+  'Leído': 'Letto',
+  'Enviado': 'Inviato',
+  'Mira este modelo:': 'Guarda questo modello:',
+  'Compartir en chat': 'Condividi in chat',
+  'Elige una conversación': 'Scegli una conversazione',
+  'Aún no tienes conversaciones.': 'Non hai ancora conversazioni.',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': 'I nuovi messaggi di questa conversazione sono cifrati end-to-end.',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': 'Il tuo contatto non ha ancora attivato la cifratura su CARXY. Chiedigli di aprire l’app e riprova.',
 
   'ASUNTO': 'OGGETTO',
   'AUTOR': 'AUTORE',

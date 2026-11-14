@@ -881,3 +881,85 @@ h2 {
     transition: none;
   }
 }
+
+/* ============ Compartir en chat ============ */
+.share-chat-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+.share-chat-button svg { width: 18px; height: 18px; }
+.share-chat-button:hover { background: rgba(255, 255, 255, 0.08); color: var(--accent-color, #7c6cff); }
+
+.share-chat-dialog {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: #141a33;
+  color: inherit;
+  max-width: 380px;
+  width: calc(100vw - 32px);
+  padding: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.share-chat-dialog::backdrop { background: rgba(4, 8, 18, 0.6); }
+.share-chat-dialog .dialog-dismiss,
+.share-chat-dialog .dismiss { float: right; }
+.share-chat-dialog h2 { font-size: 1.05rem; margin: 2px 0 10px; }
+.share-chat-search {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.share-chat-list {
+  display: grid;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.share-chat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+.share-chat-row:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.share-chat-row:disabled { opacity: 0.6; cursor: default; }
+.share-chat-row img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+.share-chat-name { flex: 1 1 auto; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.share-chat-arrow { width: 17px; height: 17px; opacity: 0.6; flex: 0 0 auto; }
+.share-chat-loading { display: flex; justify-content: center; padding: 18px; }
+.share-chat-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--accent-color, #7c6cff);
+  animation: share-chat-spin 0.8s linear infinite;
+}
+@keyframes share-chat-spin { to { transform: rotate(360deg); } }
+.share-chat-empty { color: var(--text-muted); font-size: 0.85rem; padding: 14px 6px; text-align: center; }

@@ -1,6 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Cuerpo de un mensaje de chat en cualquiera de sus dos formas:
+    //   a) plano (mensajes antiguos y etiquetas de audio como "Nota de voz");
+    //   b) cifrado de extremo a extremo (`encrypted: true`, AES-GCM), donde
+    //      `text` es una cadena vacía y el cuerpo vive en `ciphertext`.
+    // Nota: las escrituras del cliente siempre incluyen `text` (vacío si va
+    // cifrado), así que `msg.text is string` es un invariante.
+    function validMessageBody(msg) {
+      return msg.text is string
+        && ((msg.text.size() > 0 && msg.text.size() <= 2000)
+          || (msg.text.size() == 0
+            && msg.encrypted == true
+            && msg.algorithm == 'AES-GCM'
+            && msg.iv is string && msg.iv.size() <= 32
+            && msg.ciphertext is string
+            && msg.ciphertext.size() > 0
+            && msg.ciphertext.size() <= 4096));
+    }
+
     function signedIn() {
       return request.auth != null;
     }
@@ -252,9 +270,7 @@ service cloud.firestore {
             && request.resource.data.updatedAt is number
             && (!('lastMessage' in request.resource.data)
               || (request.resource.data.lastMessage.senderId in request.resource.data.participantIds
-                && request.resource.data.lastMessage.text is string
-                && request.resource.data.lastMessage.text.size() > 0
-                && request.resource.data.lastMessage.text.size() <= 2000));
+                && validMessageBody(request.resource.data.lastMessage)));
           allow delete: if signedIn() && request.auth.uid == uid;
         }
     }
@@ -284,6 +300,52 @@ service cloud.firestore {
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['email', 'createdAt']);
       allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    /* Estado cooperativo de conversación por usuario (lectura): typing +
+       recibo de lectura. Un documento por `chatId` con una clave por usuario.
+       Cada quien lee el doc completo (son los dos participantes) y solo puede
+       escribir su propia clave. */
+    function isChatParticipant(chatId) {
+      return signedIn()
+        && chatId.split('__').size() == 2
+        && chatId.split('__')[0] < chatId.split('__')[1]
+        && chatId.split('__').hasAny([request.auth.uid]);
+    }
+    function validChatStateEntry(entry) {
+      return entry is map
+        && entry.keys().hasOnly(['isTyping', 'readAt', 'updatedAt'])
+        && (!('isTyping' in entry) || entry.isTyping is bool)
+        && (!('readAt' in entry) || entry.readAt is number)
+        && entry.updatedAt is number;
+    }
+    match /chatState/{chatId} {
+      allow read: if isChatParticipant(chatId);
+      allow create: if isChatParticipant(chatId)
+        && isActiveUser()
+        && request.resource.data.keys().hasOnly([request.auth.uid])
+        && validChatStateEntry(request.resource.data[request.auth.uid]);
+      allow update: if isChatParticipant(chatId)
+        && isActiveUser()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid])
+        && validChatStateEntry(request.resource.data[request.auth.uid]);
+      allow delete: if false;
+    }
+
+    /* Claves públicas E2E de los usuarios (ECDH P-256). Lectura autenticada:
+       cualquier participante necesita la pública del otro para cifrar mensajes.
+       Escritura: solo el dueño de la clave. El valor es un JWK serializado
+       (≤ 1000 caracteres); la privada nunca sale del navegador del usuario. */
+    match /chatKeys/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['key', 'createdAt'])
+        && request.resource.data.key is string
+        && request.resource.data.key.size() > 0
+        && request.resource.data.key.size() <= 1000
+        && request.resource.data.createdAt is number;
       allow delete: if signedIn() && request.auth.uid == uid;
     }
 
@@ -636,9 +698,7 @@ service cloud.firestore {
         && request.resource.data.updatedAt is number
         && (!('lastMessage' in request.resource.data)
           || (request.resource.data.participantIds.hasAny([request.resource.data.lastMessage.senderId])
-            && request.resource.data.lastMessage.text is string
-            && request.resource.data.lastMessage.text.size() > 0
-            && request.resource.data.lastMessage.text.size() <= 2000));
+            && validMessageBody(request.resource.data.lastMessage)));
       allow update: if (
           isActiveUser()
           && isParticipant(resource.data.participantIds)
@@ -650,9 +710,7 @@ service cloud.firestore {
           // previa de una conversación cuyo último mensaje escribió el
           // interlocutor.
           && request.resource.data.lastMessage.senderId in resource.data.participantIds
-          && request.resource.data.lastMessage.text is string
-          && request.resource.data.lastMessage.text.size() > 0
-          && request.resource.data.lastMessage.text.size() <= 2000
+          && validMessageBody(request.resource.data.lastMessage)
         ) || (
           isParticipant(resource.data.participantIds)
           && request.resource.data.participantIds is list
@@ -684,9 +742,7 @@ service cloud.firestore {
         allow create: if isParticipant()
         && isActiveUser()
         && request.resource.data.senderId == request.auth.uid
-        && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 2000;
+        && validMessageBody(request.resource.data);
         allow update: if isParticipant()
           && resource.data.senderId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()

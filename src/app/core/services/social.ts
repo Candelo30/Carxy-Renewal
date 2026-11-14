@@ -30,10 +30,11 @@ import {
   ref,
   uploadBytes,
 } from '@angular/fire/storage';
-import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, map, of, retry, shareReplay, switchMap, take, timer, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, distinctUntilChanged, firstValueFrom, from, map, of, retry, shareReplay, switchMap, take, timeout, timer, throwError } from 'rxjs';
 import { LOCAL_KEYS, SOCIAL_COLLECTIONS, SOCIAL_STORAGE_PATHS } from '../config/app.constants';
 import { firebaseErrorMessage } from '../utils/firebase-error';
 import { AuthService } from './auth';
+import { ChatCryptoService } from './chat-crypto.service';
 import { I18nService } from './i18n';
 import {
   ActivityNotification,
@@ -117,6 +118,7 @@ export class SocialService {
     this.readLocal(LOCAL_KEYS.accountDeletionAudit, []),
   );
   private readonly auth = inject(AuthService, { optional: true });
+  private readonly chatCrypto = inject(ChatCryptoService);
   private lastActivityWrite = 0;
   private readonly likeInFlight = new Set<string>();
   private static readonly LIKE_COOLDOWN_MS = 2000;
@@ -126,6 +128,8 @@ export class SocialService {
   static readonly MAX_AUDIO_BYTES = 5 * 1024 * 1024;
   /** Duración máxima de una nota de voz en segundos. */
   static readonly MAX_AUDIO_DURATION_SECONDS = 300;
+  /** Texto visible cuando un mensaje cifrado no puede descifrarse en este dispositivo. */
+  static readonly ENCRYPTED_UNREADABLE = '🔒 [Mensaje cifrado]';
   readonly INACTIVE_DELETE_DAYS = 30;
   /** Máx. documentos del feed público que el listener de Firestore carga de golpe (con orden por createdAt desc). */
   readonly POSTS_FEED_LIMIT = 120;
@@ -1246,6 +1250,9 @@ export class SocialService {
         { idField: 'id' },
       ).pipe(
         map((items) => items.map((item) => this.normalizeMessage(item as Record<string, unknown>))),
+        // Descifra el cuerpo antes de que la interfaz lo vea. Los mensajes
+        // antiguos (sin `encrypted`) pasan tal cual.
+        switchMap((items) => from(this.decryptMessages(items, chatId))),
         // Un fallo transitorio (red, refreshing del token) no puede dejar el
         // hilo congelado para siempre: se reintenta con espera creciente y,
         // si el error persiste, se propaga para que la interfaz lo muestre en
@@ -1287,6 +1294,10 @@ export class SocialService {
         map((items) => items
           .map((item) => this.normalizeChatConversation(item as Record<string, unknown>))
           .sort((first, second) => second.updatedAt - first.updatedAt)),
+        // Descifra la vista previa (lastMessage) del índice de recientes.
+        switchMap((items) => from(
+          Promise.all(items.map((conversation) => this.decryptConversationPreview(conversation, uid))),
+        )),
         retry({ count: 3, delay: (_error, index) => timer(800 * (index + 1)) }),
         shareReplay({ bufferSize: 1, refCount: true }),
       );
@@ -1353,6 +1364,11 @@ export class SocialService {
       throw new Error(this.i18n.translate('No se pudo validar la conversación.'));
     }
     if (!this.firestore) return;
+
+    // Mejor esfuerzo: asegura que mi clave pública existe en `chatKeys/{uid}`
+    // (necesario para que otros puedan cifrar mensajes para mí). No bloquea la
+    // apertura del hilo si falla.
+    await this.chatCrypto.ensureMyKeyPair().catch(() => false);
 
     const chatRef = doc(this.firestore, SOCIAL_COLLECTIONS.chats, chatId);
     const latestMessageSnapshot = await getDocs(query(
@@ -1433,13 +1449,35 @@ export class SocialService {
       createdAt: Date.now(),
       kind: 'text',
     };
+    // En Firebase los mensajes de texto viajan cifrados (E2E). En modo local
+    // (sin Firebase) nunca salen del navegador y se guardan en claro.
+    if (this.firestore) {
+      const peerUid = participantIds.find((id) => id !== message.senderId) ?? '';
+      try {
+        const encrypted = await this.chatCrypto.encryptText(peerUid, text);
+        Object.assign(entry, {
+          encrypted: true,
+          iv: encrypted.iv,
+          ciphertext: encrypted.ciphertext,
+          algorithm: encrypted.algorithm,
+          text: '',
+        });
+      } catch (error) {
+        if ((error as Error)?.message === 'PEER_KEY_MISSING') {
+          throw new Error(this.i18n.translate('Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.'));
+        }
+        throw error;
+      }
+    }
     await this.persistChatMessage(chatId, entry, participantIds);
   }
 
   /**
    * Sube una nota de voz a Storage y la entrega como mensaje kind='audio'.
-   * El `text` conserva la etiqueta "Nota de voz" para que las reglas y las
-   * vistas previas (lastMessage) sigan validando sin cambios estructurales.
+   * El audio viaja CIFRADO (E2E) con la misma clave compartida que los
+   * mensajes de texto: en Storage solo hay bytes opacos (`.enc`); se descifran
+   * en el dispositivo al reproducir. El `text` conserva la etiqueta
+   * "Nota de voz" como marcador no sensible para las vistas previas.
    */
   async sendAudioMessage(
     chatId: string,
@@ -1481,15 +1519,41 @@ export class SocialService {
       if (!this.storage) {
         throw new Error(this.i18n.translate('Firebase Storage no está configurado.'));
       }
-      const ext = payload.blob.type.includes('ogg') ? 'ogg' : payload.blob.type.includes('mp4') || payload.blob.type.includes('aac') ? 'm4a' : 'webm';
+      // El audio viaja cifrado con la misma clave compartida que los mensajes:
+      // en Storage solo quedan bytes opacos; se descifran al reproducir.
+      const peerUid = participantIds.find((id) => id !== payload.senderId) ?? '';
+      let uploadBytesData: Blob | ArrayBuffer = payload.blob;
+      let contentType = payload.blob.type || 'audio/webm';
+      let ext = payload.blob.type.includes('ogg') ? 'ogg' : payload.blob.type.includes('mp4') || payload.blob.type.includes('aac') ? 'm4a' : 'webm';
+      let iv: string | undefined;
+      let encryptedMime: string | undefined;
+      try {
+        const encrypted = await this.chatCrypto.encryptBlob(peerUid, payload.blob);
+        uploadBytesData = encrypted.data;
+        contentType = 'application/octet-stream';
+        ext = 'enc';
+        iv = encrypted.iv;
+        encryptedMime = payload.blob.type || 'audio/webm';
+      } catch (error) {
+        if ((error as Error)?.message === 'PEER_KEY_MISSING') {
+          throw new Error(this.i18n.translate('Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.'));
+        }
+        throw error;
+      }
       const storagePath = `chatAudio/${chatId}/${entryBase.id}.${ext}`;
       const audioRef = ref(this.storage, storagePath);
-      await uploadBytes(audioRef, payload.blob, {
-        contentType: payload.blob.type || 'audio/webm',
-        customMetadata: { duration: String(duration) },
+      await uploadBytes(audioRef, uploadBytesData, {
+        contentType,
+        customMetadata: iv
+          ? { duration: String(duration), encrypted: 'aes-gcm', mime: encryptedMime ?? '' }
+          : { duration: String(duration) },
       });
       const audioUrl = await getDownloadURL(audioRef);
-      const entry: ChatMessage = { ...entryBase, audioUrl };
+      const entry: ChatMessage = {
+        ...entryBase,
+        audioUrl,
+        ...(iv ? { encrypted: true, iv, algorithm: 'AES-GCM' as const, audioMime: encryptedMime } : {}),
+      };
       await this.persistChatMessage(chatId, entry, participantIds);
       return;
     }
@@ -1503,6 +1567,139 @@ export class SocialService {
     });
     const entry: ChatMessage = { ...entryBase, audioUrl: dataUrl };
     await this.persistChatMessage(chatId, entry, participantIds);
+  }
+
+  /**
+   * Sube una imagen cifrada a Storage (`chatImages/{chatId}/{id}.enc`, bytes
+   * opacos) y la entrega como mensaje kind='image'. Se descifra en el
+   * dispositivo al mostrarse. Límite: 10 MB.
+   */
+  static readonly MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
+  async sendImageMessage(
+    chatId: string,
+    payload: { file: File; senderId: string; senderName: string; senderPhotoURL?: string | null },
+  ): Promise<void> {
+    const participantIds = chatId.split('__');
+    if (
+      participantIds.length !== 2
+      || participantIds[0] >= participantIds[1]
+      || !participantIds.includes(payload.senderId)
+    ) {
+      throw new Error(this.i18n.translate('No se pudo validar la conversación y el remitente del mensaje.'));
+    }
+    if (!(payload.file instanceof File) || payload.file.size === 0) {
+      throw new Error(this.i18n.translate('La imagen está vacía.'));
+    }
+    if (payload.file.size > SocialService.MAX_IMAGE_BYTES) {
+      throw new Error(this.i18n.translate('La imagen supera el tamaño máximo de 10 MB.'));
+    }
+    if (!payload.file.type.startsWith('image/')) {
+      throw new Error(this.i18n.translate('Solo se pueden enviar imágenes.'));
+    }
+
+    const entryBase = {
+      text: this.i18n.translate('Imagen'),
+      kind: 'image' as const,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      senderId: payload.senderId,
+      senderName: payload.senderName,
+      senderPhotoURL: payload.senderPhotoURL ?? null,
+    };
+
+    if (this.firestore) {
+      if (!this.storage) {
+        throw new Error(this.i18n.translate('Firebase Storage no está configurado.'));
+      }
+      // Los bytes viajan cifrados con la misma clave compartida que los mensajes.
+      const peerUid = participantIds.find((id) => id !== payload.senderId) ?? '';
+      let uploadBytesData: Blob | ArrayBuffer = payload.file;
+      let contentType = payload.file.type || 'image/png';
+      let ext = 'png';
+      let iv: string | undefined;
+      let mediaMime: string | undefined;
+      try {
+        const encrypted = await this.chatCrypto.encryptBlob(peerUid, payload.file);
+        uploadBytesData = encrypted.data;
+        contentType = 'application/octet-stream';
+        ext = 'enc';
+        iv = encrypted.iv;
+        mediaMime = payload.file.type || 'image/png';
+      } catch (error) {
+        if ((error as Error)?.message === 'PEER_KEY_MISSING') {
+          throw new Error(this.i18n.translate('Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.'));
+        }
+        throw error;
+      }
+      const storagePath = `chatImages/${chatId}/${entryBase.id}.${ext}`;
+      const imageRef = ref(this.storage, storagePath);
+      await uploadBytes(imageRef, uploadBytesData, {
+        contentType,
+        customMetadata: iv ? { encrypted: 'aes-gcm', mime: mediaMime ?? '' } : {},
+      });
+      const imageUrl = await getDownloadURL(imageRef);
+      const entry: ChatMessage = {
+        ...entryBase,
+        audioUrl: imageUrl,
+        ...(iv ? { encrypted: true, iv, algorithm: 'AES-GCM' as const, mediaMime } : {}),
+      };
+      await this.persistChatMessage(chatId, entry, participantIds);
+      return;
+    }
+
+    // Fallback local (sin Firebase): se guarda como data URL en localStorage.
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error(this.i18n.translate('No se pudo leer la imagen.')));
+      reader.onload = () => resolve(String(reader.result ?? ''));
+      reader.readAsDataURL(payload.file);
+    });
+    const entry: ChatMessage = { ...entryBase, audioUrl: dataUrl };
+    await this.persistChatMessage(chatId, entry, participantIds);
+  }
+
+  /**
+   * Escribe MI clave en `chatState/{chatId}` (merge; el otro usuario tiene la
+   * suya). Se usa para "escribiendo…" ({ isTyping, updatedAt }) y para el
+   * recibo de lectura ({ readAt }). Best effort.
+   */
+  async writeChatState(chatId: string, patch: { isTyping?: boolean; readAt?: number }): Promise<void> {
+    if (!this.firestore) return;
+    const myUid = await this.currentUid();
+    if (!myUid) return;
+    try {
+      const entry: Record<string, unknown> = { updatedAt: Date.now() };
+      if (patch.isTyping !== undefined) entry['isTyping'] = patch.isTyping;
+      if (patch.readAt !== undefined) entry['readAt'] = patch.readAt;
+      await setDoc(doc(this.firestore, 'chatState', chatId), { [myUid]: entry }, { merge: true });
+    } catch {
+      // Best effort: ni el indicador de escritura ni el recibo de lectura son críticos.
+    }
+  }
+
+  /** Stream con el estado del OTRO participante (typing + readAt) en `chatState/{chatId}`. */
+  chatPeerState$(
+    chatId: string,
+    myUid: string,
+  ): Observable<{ isTyping: boolean; readAt: number; updatedAt: number } | null> {
+    if (!this.firestore) return of(null);
+    const peerUid = chatId.split('__').find((uid) => uid !== myUid) ?? '';
+    if (!peerUid) return of(null);
+    return docData(doc(this.firestore, 'chatState', chatId)).pipe(
+      map((data) => {
+        if (!data) return null;
+        const state = (data as Record<string, { isTyping?: boolean; readAt?: number; updatedAt?: number } | undefined>)[peerUid];
+        if (!state) return null;
+        return {
+          isTyping: !!state.isTyping,
+          readAt: typeof state.readAt === 'number' ? state.readAt : 0,
+          updatedAt: typeof state.updatedAt === 'number' ? state.updatedAt : 0,
+        };
+      }),
+      retry({ count: 3, delay: (_error, index) => timer(800 * (index + 1)) }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
   }
 
   private async persistChatMessage(chatId: string, entry: ChatMessage, participantIds: string[]): Promise<void> {
@@ -2350,8 +2547,119 @@ export class SocialService {
     } as Comment;
   }
 
+  /** Garantiza que mi par de claves E2E existe y mi clave pública está subida. */
+  async ensureMyChatKeyPair(): Promise<boolean> {
+    try {
+      return await this.chatCrypto.ensureMyKeyPair();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Resuelve el uid esperando a que Auth restaure la sesión. El getter síncrono
+   * puede devolver `null` en el primer frame de una recarga dura.
+   */
+  private async currentUid(): Promise<string | null> {
+    try {
+      await this.auth?.waitForAuthReady();
+    } catch {
+      // Se intenta igualmente con el getter/user\$.
+    }
+    const syncUid = this.auth?.currentUser?.uid;
+    if (syncUid) return syncUid;
+    if (!this.auth) return null;
+    try {
+      const user = await firstValueFrom(this.auth.user$.pipe(take(1), timeout(10000), catchError(() => of(null))));
+      return user?.uid ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Descifra (in place) los mensajes de un hilo. Los mensajes sin `encrypted`
+   * (anteriores al despliegue del cifrado) se devuelven tal cual; los que fallan
+   * se muestran como `[Mensaje cifrado]` en lugar de romper el hilo.
+   */
+  private async decryptMessages(items: ChatMessage[], chatId: string): Promise<ChatMessage[]> {
+    const myUid = await this.currentUid();
+    if (!myUid || !items.some((item) => item.encrypted)) return items;
+    const peerUid = this.chatCrypto.peerUidFor(chatId, myUid);
+    return Promise.all(items.map(async (item) => {
+      if (!item.encrypted) return item;
+      if (item.kind === 'audio' || item.kind === 'image') {
+        // El cuerpo de audios/imágenes no lleva texto sensible: se descifran
+        // los bytes al reproducir/ver (ver `decryptMediaForChat`).
+        return { ...item, text: this.i18n.translate(item.kind === 'audio' ? 'Nota de voz' : 'Imagen') };
+      }
+      if (!item.iv || !item.ciphertext) return { ...item, text: SocialService.ENCRYPTED_UNREADABLE };
+      const text = await this.chatCrypto.decryptText(peerUid, item.iv, item.ciphertext);
+      return { ...item, text: text ?? SocialService.ENCRYPTED_UNREADABLE };
+    }));
+  }
+
+  /**
+   * Descifra la vista previa `lastMessage` del índice de recientes de un
+   * usuario. Igual que `decryptMessages` pero derivando el peer desde
+   * `participantIds` (el `chatId` coincide con el id del documento).
+   */
+  private async decryptConversationPreview(
+    conversation: ChatConversation,
+    uid: string,
+  ): Promise<ChatConversation> {
+    const last = conversation.lastMessage;
+    if (!last?.encrypted) return conversation;
+    if (last.kind === 'audio' || last.kind === 'image') {
+      return { ...conversation, lastMessage: { ...last, text: this.i18n.translate(last.kind === 'audio' ? 'Nota de voz' : 'Imagen') } };
+    }
+    if (!last.iv || !last.ciphertext) {
+      return { ...conversation, lastMessage: { ...last, text: SocialService.ENCRYPTED_UNREADABLE } };
+    }
+    const peerUid = (conversation.participantIds ?? []).find((id) => id !== uid)
+      ?? (last.senderId === uid ? '' : last.senderId);
+    const text = peerUid
+      ? await this.chatCrypto.decryptText(peerUid, last.iv, last.ciphertext)
+      : null;
+    return { ...conversation, lastMessage: { ...last, text: text ?? SocialService.ENCRYPTED_UNREADABLE } };
+  }
+
+  /**
+   * Descifra los bytes de un binario cifrado (nota de voz o imagen) con la
+   * clave compartida. Devuelve `null` si no se puede descifrar en este
+   * dispositivo. El MIME se toma de `mediaMime` (imágenes) o `audioMime`
+   * (notas de voz).
+   */
+  async decryptMediaForChat(chatId: string, message: ChatMessage): Promise<Blob | null> {
+    if (!message.encrypted || !message.iv || !message.audioUrl) return null;
+    const myUid = await this.currentUid();
+    if (!myUid) return null;
+    const peerUid = this.chatCrypto.peerUidFor(chatId, myUid);
+    try {
+      const response = await fetch(message.audioUrl);
+      if (!response.ok) return null;
+      const data = await response.arrayBuffer();
+      return await this.chatCrypto.decryptBlob(
+        peerUid,
+        message.iv,
+        data,
+        message.mediaMime ?? message.audioMime ?? 'application/octet-stream',
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Descifra los bytes de una nota de voz cifrada (kind='audio' con `encrypted`).
+   * Devuelve `null` si no se puede descifrar en este dispositivo.
+   */
+  async decryptAudioForChat(chatId: string, message: ChatMessage): Promise<Blob | null> {
+    return this.decryptMediaForChat(chatId, message);
+  }
+
   private normalizeMessage(data: Record<string, unknown>): ChatMessage {
-    const kind = data['kind'] === 'audio' ? 'audio' : 'text';
+    const kind = data['kind'] === 'audio' ? 'audio' : data['kind'] === 'image' ? 'image' : 'text';
     const audioDuration = typeof data['audioDuration'] === 'number' && Number.isFinite(data['audioDuration'])
       ? Math.max(0, data['audioDuration'] as number)
       : undefined;
@@ -2363,7 +2671,7 @@ export class SocialService {
       senderName: String(data['senderName'] ?? ''),
       createdAt: this.normalizeTimestamp(data['createdAt']),
       kind,
-      ...(kind === 'audio' && typeof data['audioUrl'] === 'string' ? { audioUrl: data['audioUrl'] as string } : {}),
+      ...((kind === 'audio' || kind === 'image') && typeof data['audioUrl'] === 'string' ? { audioUrl: data['audioUrl'] as string } : {}),
       ...(audioDuration !== undefined ? { audioDuration } : {}),
     } as ChatMessage;
   }

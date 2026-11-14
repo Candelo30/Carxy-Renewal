@@ -1,10 +1,35 @@
-/**
+﻿/**
  * TR: textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  * NOTA: esta capa está inicializada con el valor en inglés (fallback válido).
  * Completa las traducciones en tr.extra.ts cuando quieras localizarlas.
  */
 export const TR_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': 'Paylaşmak için giriş yapın.',
+  'Modelo compartido con {name}.': '{name} ile model paylaşıldı.',
+  'No se pudo compartir en el chat.': 'Sohbette paylaşılamadı.',
+  'Imagen': 'Görsel',
+  'Imagen enviada': 'Gönderilen görsel',
+  'Descifrando imagen…': 'Görsel şifre çözülüyor…',
+  'Adjuntar imagen': 'Görsel ekle',
+  'Solo se pueden enviar imágenes.': 'Yalnızca görsel gönderilebilir.',
+  'La imagen está vacía.': 'Görsel boş.',
+  'La imagen supera el tamaño máximo de 10 MB.': 'Görsel 10 MB sınırını aşıyor.',
+  'No se pudo leer la imagen.': 'Görsel okunamadı.',
+  'No se pudo enviar la imagen.': 'Görsel gönderilemedi.',
+  'Ver imagen': 'Görseli görüntüle',
+  'Mensaje citado': 'Alıntılanan mesaj',
+  'Responder': 'Yanıtla',
+  'Cancelar respuesta': 'Yanıtı iptal et',
+  'escribiendo…': 'yazıyor…',
+  'Leído': 'Okundu',
+  'Enviado': 'Gönderildi',
+  'Mira este modelo:': 'Bu modele göz atın:',
+  'Compartir en chat': 'Sohbette paylaş',
+  'Elige una conversación': 'Bir sohbet seçin',
+  'Aún no tienes conversaciones.': 'Henüz sohbetiniz yok.',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': 'Bu konuşmadaki yeni mesajlar uçtan uca şifreli.',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': 'Kişiniz henüz CARXY’de şifrelemeyi etkinleştirmedi. Uygulamayı açmasını isteyin ve tekrar deneyin.',
 
   'ASUNTO': '',
   'AUTOR': '',

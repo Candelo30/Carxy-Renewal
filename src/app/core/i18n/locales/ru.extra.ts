@@ -1,8 +1,33 @@
-/**
+﻿/**
  * Ruso (ru): textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const RU_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': 'Войдите, чтобы поделиться.',
+  'Modelo compartido con {name}.': 'Модель поделена с {name}.',
+  'No se pudo compartir en el chat.': 'Не удалось поделиться в чате.',
+  'Imagen': 'Изображение',
+  'Imagen enviada': 'Отправленное изображение',
+  'Descifrando imagen…': 'Расшифровка изображения…',
+  'Adjuntar imagen': 'Прикрепить изображение',
+  'Solo se pueden enviar imágenes.': 'Можно отправлять только изображения.',
+  'La imagen está vacía.': 'Изображение пусто.',
+  'La imagen supera el tamaño máximo de 10 MB.': 'Изображение превышает максимальный размер 10 МБ.',
+  'No se pudo leer la imagen.': 'Не удалось прочитать изображение.',
+  'No se pudo enviar la imagen.': 'Не удалось отправить изображение.',
+  'Ver imagen': 'Просмотреть изображение',
+  'Mensaje citado': 'Цитируемое сообщение',
+  'Responder': 'Ответить',
+  'Cancelar respuesta': 'Отменить ответ',
+  'escribiendo…': 'печатает…',
+  'Leído': 'Прочитано',
+  'Enviado': 'Отправлено',
+  'Mira este modelo:': 'Посмотрите эту модель:',
+  'Compartir en chat': 'Поделиться в чате',
+  'Elige una conversación': 'Выберите беседу',
+  'Aún no tienes conversaciones.': 'У вас ещё нет бесед.',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': 'Новые сообщения этого чата зашифрованы сквозным шифрованием.',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': 'Ваш собеседник ещё не включил шифрование в CARXY. Попросите его открыть приложение и повторите попытку.',
 
   'ASUNTO': 'ТЕМА',
   'AUTOR': 'АВТОР',

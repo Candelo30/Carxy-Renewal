@@ -1,8 +1,33 @@
-/**
+﻿/**
  * Hindi (hi): textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const HI_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': 'साझा करने के लिए लॉगिन करें।',
+  'Modelo compartido con {name}.': '{name} के साथ मॉडल साझा किया गया।',
+  'No se pudo compartir en el chat.': 'चैट में साझा नहीं किया जा सका।',
+  'Imagen': 'छवि',
+  'Imagen enviada': 'भेजी गई छवि',
+  'Descifrando imagen…': 'छवि डिक्रिप्ट हो रही है…',
+  'Adjuntar imagen': 'छवि संलग्न करें',
+  'Solo se pueden enviar imágenes.': 'केवल छवियाँ ही भेजी जा सकती हैं।',
+  'La imagen está vacía.': 'छवि खाली है।',
+  'La imagen supera el tamaño máximo de 10 MB.': 'छवि 10 MB की अधिकतम सीमा से बड़ी है।',
+  'No se pudo leer la imagen.': 'छवि पढ़ी नहीं जा सकी।',
+  'No se pudo enviar la imagen.': 'छवि भेजी नहीं जा सकी।',
+  'Ver imagen': 'छवि देखें',
+  'Mensaje citado': 'उद्धृत संदेश',
+  'Responder': 'जवाब दें',
+  'Cancelar respuesta': 'जवाब रद्द करें',
+  'escribiendo…': 'लिख रहा है…',
+  'Leído': 'पढ़ा गया',
+  'Enviado': 'भेजा गया',
+  'Mira este modelo:': 'यह मॉडल देखें:',
+  'Compartir en chat': 'चैट में साझा करें',
+  'Elige una conversación': 'एक बातचीत चुनें',
+  'Aún no tienes conversaciones.': 'आपकी अभी कोई बातचीत नहीं है।',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': 'इस बातचीत के नए संदेश एंड-टू-एंड एन्क्रिप्टेड हैं।',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': 'आपके संपर्क ने अभी तक CARXY में एन्क्रिप्शन सक्षम नहीं किया है। उनसे ऐप खोलने के लिए कहें और फिर से प्रयास करें।',
 
   'ASUNTO': 'विषय',
   'AUTOR': 'लेखक',

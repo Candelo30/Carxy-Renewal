@@ -1,8 +1,9 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output, ViewChild } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, inject, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Observable } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, filter, Observable } from 'rxjs';
 import { AppLanguage, isAppLanguage } from '../../../core/i18n/languages';
 import { AuthService } from '../../../core/services/auth';
 import { I18nService } from '../../../core/services/i18n';
@@ -48,6 +49,21 @@ export class ShellHeaderComponent {
     role: string;
     emailVerified: boolean;
   } | null>;
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    // Cualquier persona que abra CARXY con sesión iniciada sube su clave
+    // pública E2E del chat (best effort): así otros pueden cifrar mensajes
+    // para ella aunque aún no haya abierto la sección de chat.
+    this.user$.pipe(
+      filter((user): user is NonNullable<typeof user> => !!user),
+      distinctUntilChanged((first, second) => first.uid === second.uid),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => {
+      void this.social.ensureMyChatKeyPair().catch(() => undefined);
+    });
+  }
 
   readonly languages = this.i18n.languages;
   readonly currentLanguage = this.i18n.language;

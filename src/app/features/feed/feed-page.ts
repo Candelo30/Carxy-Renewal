@@ -86,6 +86,92 @@ export class FeedPage {
     { value: 'other', label: 'Otro' },
   ];
 
+  /** --- Compartir modelo en un chat privado --- */
+  readonly shareChatItems = signal<{ id: string; peerUid: string; name: string; photoURL: string | null }[]>([]);
+  shareChatSearch = '';
+  shareChatLoading = false;
+  sharingToChat = false;
+  shareChatTarget: Post3D | null = null;
+
+  /** Conversaciones recientes filtradas por la búsqueda del diálogo. */
+  filteredShareChatItems(): { id: string; peerUid: string; name: string; photoURL: string | null }[] {
+    const query = this.shareChatSearch.trim().toLowerCase();
+    const items = this.shareChatItems();
+    if (!query) return items;
+    return items.filter((item) =>
+      item.name.toLowerCase().includes(query) || item.peerUid.toLowerCase().includes(query));
+  }
+
+  /** Abre el diálogo "Compartir en chat" y precarga las conversaciones recientes. */
+  async openShareChat(post: Post3D, dialog: HTMLDialogElement): Promise<void> {
+    const me = await firstValueFrom(this.user$.pipe(take(1)));
+    if (!me) {
+      this.notifications.warning(this.i18n.translate('Inicia sesión para compartir.'));
+      void this.router.navigate(['/login']);
+      return;
+    }
+    this.shareChatTarget = post;
+    this.shareChatSearch = '';
+    this.shareChatLoading = true;
+    this.shareChatItems.set([]);
+    dialog.showModal();
+    try {
+      const conversations = await firstValueFrom(this.socialService.recentChats$(me.uid).pipe(take(1)));
+      const items = await Promise.all(conversations.slice(0, 30).map(async (conversation) => {
+        const peerUid = conversation.participantIds.find((id) => id !== me.uid) ?? '';
+        if (!peerUid) return null;
+        const profile = await firstValueFrom(
+          this.socialService.profile$(peerUid).pipe(take(1), catchError(() => of(null))),
+        );
+        return {
+          id: conversation.id,
+          peerUid,
+          name: profile?.displayName || this.i18n.translate('Usuario'),
+          photoURL: profile?.photoURL ?? null,
+        };
+      }));
+      this.shareChatItems.set(items.filter((item): item is NonNullable<typeof item> => item !== null));
+    } catch {
+      this.shareChatItems.set([]);
+    } finally {
+      this.shareChatLoading = false;
+    }
+  }
+
+  /** Envía "Mira este modelo: …" a la conversación elegida (la tarjeta se renderiza en el hilo). */
+  async sendToChat(
+    item: { id: string; peerUid: string; name: string },
+    dialog: HTMLDialogElement,
+  ): Promise<void> {
+    const post = this.shareChatTarget;
+    if (!post || this.sharingToChat) return;
+    const me = await firstValueFrom(this.user$.pipe(take(1)));
+    if (!me) {
+      this.notifications.warning(this.i18n.translate('Inicia sesión para compartir.'));
+      return;
+    }
+    this.sharingToChat = true;
+    try {
+      const url = absoluteAppUrl(`feed?post=${encodeURIComponent(post.id)}`, this.document.baseURI);
+      await this.socialService.sendMessage(item.id, {
+        text: `${this.i18n.translate('Mira este modelo:')} ${post.title} ${url}`,
+        senderId: me.uid,
+        senderName: me.displayName || me.email || 'Usuario',
+        senderPhotoURL: me.photoURL ?? null,
+      });
+      this.notifications.success(
+        this.i18n.translate('Modelo compartido con {name}.', { name: item.name }),
+        this.i18n.translate('Compartir en chat'),
+      );
+      dialog.close();
+      this.shareChatTarget = null;
+    } catch (error) {
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo compartir en el chat.'));
+    } finally {
+      this.sharingToChat = false;
+    }
+  }
+
   private readonly search$ = new BehaviorSubject('');
   private readonly tag$ = new BehaviorSubject('');
   private readonly sort$ = new BehaviorSubject<FeedSort>('recent');

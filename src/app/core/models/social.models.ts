@@ -138,19 +138,34 @@ export interface Comment {
   createdAt: number;
 }
 
-export type ChatMessageKind = 'text' | 'audio';
+export type ChatMessageKind = 'text' | 'audio' | 'image';
 
 export interface ChatMessage {
   id: string;
+  /** Texto en claro (mensajes antiguos), 'Imagen'/'Nota de voz' como etiqueta, o cadena vacía cuando va cifrado (ver `encrypted`). */
   text: string;
   senderId: string;
   senderName: string;
   /** Avatar del remitente (opcional: sirve para la notificación de mensaje). */
   senderPhotoURL?: string | null;
   createdAt: number;
-  /** 'audio' para las notas de voz; ausente/'text' para texto normal. */
+  /** 'audio' notas de voz, 'image' imágenes; ausente/'text' para texto normal. */
   kind?: ChatMessageKind;
-  /** URL pública del audio (kind='audio'). */
+  /** Referencia al mensaje citado (responder). Solo id + autor; el texto se resuelve en cliente desde los mensajes cargados. */
+  replyTo?: { id: string; senderId: string; senderName: string };
+  /** MIME original del binario cifrado (imágenes; en claro, no revela contenido). */
+  mediaMime?: string;
+  /** `true` cuando el cuerpo va cifrado de extremo a extremo (AES-GCM con clave por par derivada de ECDH). */
+  encrypted?: boolean;
+  /** Vector de inicialización AES-GCM en base64 (12 bytes). Presente si `encrypted`. */
+  iv?: string;
+  /** Ciphertext AES-GCM en base64 (incluye el tag). Presente si `encrypted`. */
+  ciphertext?: string;
+  /** Algoritmo del cifrado: actualmente solo 'AES-GCM'. */
+  algorithm?: string;
+  /** MIME original del audio **solo cuando va cifrado** (en claro, no revela contenido). */
+  audioMime?: string;
+  /** URL pública del audio (kind='audio'). El blob apuntado puede estar cifrado (ver `encrypted`). */
   audioUrl?: string;
   /** Duración en segundos (kind='audio'). */
   audioDuration?: number;

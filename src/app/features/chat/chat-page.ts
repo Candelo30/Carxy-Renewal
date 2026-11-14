@@ -250,11 +250,28 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   readonly recording = signal(false);
   readonly recordSeconds = signal(0);
   readonly audioSending = signal(false);
+  /** --- Responder / citar mensaje --- */
+  readonly replyTarget = signal<ChatMessage | null>(null);
+  /** --- Imagen enviada --- */
+  readonly imageSending = signal(false);
+  /** --- Estado del otro participante (escribiendo… + recibo de lectura) --- */
+  readonly peerState = signal<{ isTyping: boolean; readAt: number; updatedAt: number } | null>(null);
+  private peerStateSubscription?: Subscription;
+  /** --- Visor de imagen a pantalla completa (lightbox) --- */
+  readonly lightboxUrl = signal<string | null>(null);
+  /** URLs de objeto (blob) de imágenes descifradas, por id de mensaje. */
+  readonly imageUrls = signal<Map<string, string>>(new Map());
+  private readonly imageDecrypting = new Set<string>();
+  private typingIdleTimer?: ReturnType<typeof setTimeout>;
+  private lastTypingWrite = 0;
+  private lastReadReceiptWrite = 0;
   /** --- Reproductor de notas de voz (un solo elemento activo a la vez) --- */
   readonly audioNotePlayingId = signal<string | null>(null);
   readonly audioNoteCurrent = signal(0);
   readonly audioNoteDuration = signal(0);
   private audioElement?: HTMLAudioElement;
+  /** URL de objeto (blob) de la última nota de voz descifrada; se libera al parar. */
+  private audioObjectUrl?: string;
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
   private recordInterval?: ReturnType<typeof setInterval>;
@@ -327,6 +344,8 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.listError.set('');
     this.threadError.set('');
     this.stopAudioNote();
+    this.stopTyping();
+    this.clearConversationUiState();
     const nextChatId = [this.currentUser.uid, peer].sort().join('__');
     if (this.chatId() === nextChatId) {
       // Misma conversación: no se recrea el stream, pero se refresca el estado visual.
@@ -359,6 +378,13 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.firstUnreadId.set('');
     this.searchCursor.set(-1);
     this.markSeen(this.chatId());
+    // Recibo de lectura inmediato al abrir el hilo (throttled dentro del helper).
+    this.writeReadReceipt();
+    // Estado del otro participante: "escribiendo…" y recibo de lectura.
+    this.peerStateSubscription?.unsubscribe();
+    this.peerState.set(null);
+    this.peerStateSubscription = this.social.chatPeerState$(this.chatId(), this.currentUser.uid)
+      .subscribe((state) => this.peerState.set(state));
     // Que el badge de la campana no siga contando los mensajes del interlocutor
     // como pendientes una vez que fueron abiertos a través de aquí.
     void this.social.markMessageNotificationsRead(this.currentUser.uid, peer).catch(() => undefined);
@@ -399,6 +425,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
    */
   private syncReadState(messages: ChatMessage[]): void {
     this.chatMessages.set(messages);
+    this.ensureImageUrls(messages);
     this.newestMessageAt = messages.at(-1)?.createdAt ?? 0;
     if (this.atBottom()) {
       this.markMessagesRead();
@@ -418,6 +445,163 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.lastReadAt = this.newestMessageAt;
     this.unreadCount.set(0);
     this.firstUnreadId.set('');
+    this.writeReadReceipt();
+  }
+
+  /** Recibo de lectura para el otro participante (throttled a 5 s). */
+  private writeReadReceipt(): void {
+    const chatId = this.chatId();
+    const myUid = this.currentUser?.uid;
+    if (!chatId || !myUid) return;
+    const now = Date.now();
+    if (now - this.lastReadReceiptWrite < 5000) return;
+    this.lastReadReceiptWrite = now;
+    void this.social.writeChatState(chatId, { readAt: now });
+  }
+
+  /** Recibo: el otro participante leyó mis mensajes hasta este `createdAt`. */
+  ownMessageRead(message: ChatMessage): boolean {
+    const state = this.peerState();
+    return !!state && state.readAt >= message.createdAt;
+  }
+
+  /** ¿El otro participante está escribiendo ahora? (ventana de 6 s) */
+  peerTyping(): boolean {
+    const state = this.peerState();
+    return !!state?.isTyping && Date.now() - state.updatedAt < 6000;
+  }
+
+  /** Escribiendo… con throttling: máx. 1 escritura cada 4 s + corte tras 3.5 s sin teclas. */
+  private noteTyping(): void {
+    const chatId = this.chatId();
+    if (!chatId) return;
+    const now = Date.now();
+    if (now - this.lastTypingWrite >= 4000) {
+      this.lastTypingWrite = now;
+      void this.social.writeChatState(chatId, { isTyping: true });
+    }
+    clearTimeout(this.typingIdleTimer);
+    this.typingIdleTimer = setTimeout(() => {
+      void this.social.writeChatState(chatId, { isTyping: false });
+    }, 3500);
+  }
+
+  private onMessageInput(value: string): void {
+    this.message.set(value);
+    this.noteTyping();
+  }
+
+  private stopTyping(): void {
+    clearTimeout(this.typingIdleTimer);
+    const chatId = this.chatId();
+    if (chatId) void this.social.writeChatState(chatId, { isTyping: false });
+  }
+
+  /** --- Responder / citar --- */
+  startReply(message: ChatMessage): void {
+    this.replyTarget.set(message);
+    this.composer?.nativeElement.focus();
+  }
+
+  cancelReply(): void {
+    this.replyTarget.set(null);
+  }
+
+  /** Mensaje citado resuelto desde los mensajes cargados (puede no estar cargado). */
+  quotedMessage(message: ChatMessage): ChatMessage | undefined {
+    if (!message.replyTo) return undefined;
+    return this.chatMessages().find((candidate) => candidate.id === message.replyTo!.id);
+  }
+
+  /** Vista previa de una sola línea para la burbuja citada. */
+  quotedPreview(message: ChatMessage): string {
+    const quoted = this.quotedMessage(message);
+    if (!quoted) return this.i18n.translate('Mensaje citado');
+    if (quoted.kind === 'audio') return this.i18n.translate('Nota de voz');
+    if (quoted.kind === 'image') return this.i18n.translate('Imagen');
+    return quoted.text.replace(/\s+/g, ' ').trim().slice(0, 140);
+  }
+
+  /** Lleva al usuario al mensaje citado y lo resalta brevemente. */
+  scrollToQuotedMessage(id: string): void {
+    const container = this.messageListContainer?.nativeElement;
+    if (!container) return;
+    const element = container.querySelector<HTMLElement>(`[data-message-id="${id}"]`);
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element.classList.add('flash');
+    setTimeout(() => element.classList.remove('flash'), 1500);
+  }
+
+  /** Resuelve la URL de una imagen (descifrada en cliente), cacheada por id. */
+  messageImageUrl(message: ChatMessage): string | null {
+    if (message.kind !== 'image' || !message.audioUrl) return null;
+    if (message.encrypted) return this.imageUrls().get(message.id) ?? null;
+    return message.audioUrl; // modo local/demo o previews antiguas en claro
+  }
+
+  isImageMessage(message: ChatMessage): boolean {
+    return message.kind === 'image' && !!message.audioUrl;
+  }
+
+  private ensureImageUrls(messages: ChatMessage[]): void {
+    for (const message of messages) {
+      if (message.kind !== 'image' || !message.encrypted || !message.audioUrl) continue;
+      if (this.imageUrls().has(message.id) || this.imageDecrypting.has(message.id)) continue;
+      this.imageDecrypting.add(message.id);
+      void this.social.decryptMediaForChat(this.chatId(), message).then((blob) => {
+        this.imageDecrypting.delete(message.id);
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        this.imageUrls.update((map) => {
+          const next = new Map(map);
+          next.set(message.id, url);
+          return next;
+        });
+      }).catch(() => this.imageDecrypting.delete(message.id));
+    }
+  }
+
+  private releaseImageUrls(): void {
+    for (const url of this.imageUrls().values()) URL.revokeObjectURL(url);
+    this.imageUrls.set(new Map());
+  }
+
+  /** Abre la imagen a pantalla completa (ya descifrada). */
+  openImage(message: ChatMessage): void {
+    const url = this.messageImageUrl(message);
+    if (url) this.lightboxUrl.set(url);
+  }
+
+  closeLightbox(): void {
+    this.lightboxUrl.set(null);
+  }
+
+  /** Envía el archivo elegido en el `<input type="file">` oculto. */
+  async sendImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    const chatId = this.chatId();
+    const user = this.currentUser;
+    if (!file || !chatId || !user || this.imageSending()) return;
+    this.imageSending.set(true);
+    try {
+      await this.social.sendImageMessage(chatId, {
+        file,
+        senderId: user.uid,
+        senderName: user.displayName || user.email || 'Usuario',
+        senderPhotoURL: user.photoURL ?? null,
+      });
+      this.atBottom.set(true);
+      this.markSeen(chatId);
+      this.stopTyping();
+      setTimeout(() => this.scrollToBottom());
+    } catch (error) {
+      this.notifications.error(this.i18n.firebaseError(error, 'No se pudo enviar la imagen.'));
+    } finally {
+      this.imageSending.set(false);
+    }
   }
 
   /** Vuelve al final del hilo y salta al último mensaje. */
@@ -450,7 +634,9 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   deselectChat(): void {
     this.chatId.set('');
     this.partnerId = '';
+    this.stopTyping();
     this.stopAudioNote();
+    this.clearConversationUiState();
     this.chatBackgroundId = this.effectiveChatBackgroundId('');
     this.messages.set(undefined);
     this.partnerProfile.set(undefined);
@@ -458,6 +644,16 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.listError.set('');
     this.threadError.set('');
     this.copiedId.set('');
+  }
+
+  /** Limpia el estado efímero de una conversación (reply, lightbox, imágenes, peerState). */
+  private clearConversationUiState(): void {
+    this.replyTarget.set(null);
+    this.lightboxUrl.set(null);
+    this.peerStateSubscription?.unsubscribe();
+    this.peerStateSubscription = undefined;
+    this.peerState.set(null);
+    this.releaseImageUrls();
   }
 
   peerId(conversation: ChatConversation, uid: string): string {
@@ -1070,16 +1266,21 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
         this.notifications.warning(this.error());
         return;
       }
+      const reply = this.replyTarget();
       await this.social.sendMessage(chatId, {
         text,
         senderId: user.uid,
         senderName: user.displayName || user.email || 'Usuario',
         senderPhotoURL: user.photoURL ?? null,
+        ...(reply ? { replyTo: { id: reply.id, senderId: reply.senderId, senderName: reply.senderName } } : {}),
       });
       this.message.set('');
+      this.replyTarget.set(null);
+      this.stopTyping();
       this.error.set('');
       this.atBottom.set(true);
       this.markSeen(chatId);
+      this.writeReadReceipt();
       setTimeout(() => this.scrollToBottom());
     } catch (error) {
       this.error.set(this.i18n.firebaseError(error, 'No se pudo enviar el mensaje.'));
@@ -1117,7 +1318,33 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
     this.stopAudioNote();
-    const audio = new Audio(message.audioUrl);
+    // Las notas de voz viajan cifradas (E2E): hay que descifrar los bytes en
+    // este dispositivo antes de poder reproducirlos.
+    if (message.encrypted) {
+      // Marca de "cargando" inmediata; si el usuario cancela mientras se
+      // descifra, el callback respeta su elección y no arranca el audio.
+      this.audioNotePlayingId.set(message.id);
+      this.audioNoteCurrent.set(0);
+      this.audioNoteDuration.set(message.audioDuration ?? 0);
+      void this.social.decryptAudioForChat(this.chatId(), message).then((blob) => {
+        if (this.audioNotePlayingId() !== message.id) return; // cancelada mientras tanto
+        if (!blob) {
+          this.audioNotePlayingId.set(null);
+          this.notifications.warning(this.i18n.translate('No se pudo reproducir la nota de voz.'));
+          return;
+        }
+        this.startAudioPlayback(message, URL.createObjectURL(blob), true);
+      });
+      return;
+    }
+    this.startAudioPlayback(message, message.audioUrl, false);
+  }
+
+  /** Crea el elemento de audio y lo reproduce (URL ya usable: local o blob descifrado). */
+  private startAudioPlayback(message: ChatMessage, url: string, temporaryObjectUrl: boolean): void {
+    this.releaseAudioObjectUrl();
+    if (temporaryObjectUrl) this.audioObjectUrl = url;
+    const audio = new Audio(url);
     audio.preload = 'metadata';
     audio.onloadedmetadata = () => {
       if (this.audioNotePlayingId() !== message.id) return;
@@ -1131,11 +1358,13 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       if (this.audioNotePlayingId() === message.id) {
         this.audioNotePlayingId.set(null);
         this.audioNoteCurrent.set(0);
+        this.releaseAudioObjectUrl();
       }
     };
     audio.onerror = () => {
       this.notifications.warning(this.i18n.translate('No se pudo reproducir la nota de voz.'));
       this.audioNotePlayingId.set(null);
+      this.releaseAudioObjectUrl();
     };
     this.audioElement = audio;
     this.audioNotePlayingId.set(message.id);
@@ -1143,8 +1372,16 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     this.audioNoteDuration.set(message.audioDuration ?? 0);
     void audio.play().catch(() => {
       this.audioNotePlayingId.set(null);
+      this.releaseAudioObjectUrl();
       this.notifications.warning(this.i18n.translate('No se pudo reproducir la nota de voz.'));
     });
+  }
+
+  private releaseAudioObjectUrl(): void {
+    if (this.audioObjectUrl) {
+      URL.revokeObjectURL(this.audioObjectUrl);
+      this.audioObjectUrl = undefined;
+    }
   }
 
   /** Busca un punto concreto dentro de la nota de voz desde la pista clicable. */
@@ -1203,6 +1440,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       audio.load();
     }
     this.audioElement = undefined;
+    this.releaseAudioObjectUrl();
     this.audioNotePlayingId.set(null);
     this.audioNoteCurrent.set(0);
   }
@@ -1313,6 +1551,8 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    this.stopTyping();
+    this.clearConversationUiState();
     this.stopAudioNote();
     if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
     if (this.copyMessageTimer) clearTimeout(this.copyMessageTimer);

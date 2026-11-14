@@ -79,6 +79,10 @@ service firebase.storage {
     match /chatAudio/{conversationId}/{fileName} {
       // Solo los dos participantes del chat pueden leer/escribir el audio.
       // `conversationId` = `$(participantes ordenados)` (uidA__uidB).
+      // Las notas de voz viajan CIFRADAS (E2E): los bytes subidos son opacos
+      // (contentType `application/octet-stream`, extensión `.enc`); se
+      // descifran en el dispositivo al reproducir. Los audios antiguos en
+      // claro (`audio/*`) siguen aceptándose.
       function isConversationParticipant() {
         return signedIn()
           && conversationId.split('__').hasAny([request.auth.uid])
@@ -87,8 +91,28 @@ service firebase.storage {
       allow read: if isConversationParticipant();
       allow create: if isConversationParticipant()
         && request.resource.size <= 5 * 1024 * 1024
-        && request.resource.contentType.matches('audio/.*')
-        && fileName.matches('^[A-Za-z0-9-]+\\.(webm|ogg|m4a|mp4|mp3|wav)$');
+        && (request.resource.contentType.matches('audio/.*')
+          || request.resource.contentType == 'application/octet-stream')
+        && fileName.matches('^[A-Za-z0-9-]+\\.(webm|ogg|m4a|mp4|mp3|wav|enc)$');
+      allow update, delete: if false;
+    }
+
+    match /chatImages/{conversationId}/{fileName} {
+      // Igual que las notas de voz: las imágenes viajan CIFRADAS (E2E); los
+      // bytes subidos son opacos (`application/octet-stream`, `.enc`). Se
+      // descifran en el dispositivo al mostrarse. En claro siguen
+      // permitiéndose previews antiguas (`image/*`).
+      function isConversationParticipant() {
+        return signedIn()
+          && conversationId.split('__').hasAny([request.auth.uid])
+          && conversationId.size() <= 160;
+      }
+      allow read: if isConversationParticipant();
+      allow create: if isConversationParticipant()
+        && request.resource.size <= 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/octet-stream')
+        && fileName.matches('^[A-Za-z0-9-]+\\.(png|jpe?g|webp|gif|avif|enc)$');
       allow update, delete: if false;
     }
   }

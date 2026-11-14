@@ -26,7 +26,12 @@ function createSocialStub(overrides: Partial<Record<string, unknown>> = {}): Rec
     markMessageNotificationsRead: vi.fn().mockResolvedValue(undefined),
     markAllActivityNotificationsRead: vi.fn().mockResolvedValue(undefined),
     sendMessage: vi.fn().mockResolvedValue(undefined),
+    sendImageMessage: vi.fn().mockResolvedValue(undefined),
+    decryptMediaForChat: vi.fn().mockResolvedValue(null),
     ensureChatConversation: vi.fn().mockResolvedValue(undefined),
+    ensureMyChatKeyPair: vi.fn().mockResolvedValue(true),
+    writeChatState: vi.fn().mockResolvedValue(undefined),
+    chatPeerState$: vi.fn(() => of(null)),
     ...overrides,
   };
 }

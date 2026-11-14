@@ -1,8 +1,33 @@
-/**
+﻿/**
  * Chino simplificado (zh): textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const ZH_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': '请登录后分享。',
+  'Modelo compartido con {name}.': '已与 {name} 分享模型。',
+  'No se pudo compartir en el chat.': '无法分享到聊天。',
+  'Imagen': '图片',
+  'Imagen enviada': '已发送图片',
+  'Descifrando imagen…': '正在解密图片…',
+  'Adjuntar imagen': '添加图片',
+  'Solo se pueden enviar imágenes.': '只能发送图片。',
+  'La imagen está vacía.': '图片为空。',
+  'La imagen supera el tamaño máximo de 10 MB.': '图片超过 10 MB 的大小限制。',
+  'No se pudo leer la imagen.': '无法读取图片。',
+  'No se pudo enviar la imagen.': '无法发送图片。',
+  'Ver imagen': '查看图片',
+  'Mensaje citado': '引用的消息',
+  'Responder': '回复',
+  'Cancelar respuesta': '取消回复',
+  'escribiendo…': '正在输入…',
+  'Leído': '已读',
+  'Enviado': '已发送',
+  'Mira este modelo:': '看看这个模型：',
+  'Compartir en chat': '分享到聊天',
+  'Elige una conversación': '选择一个对话',
+  'Aún no tienes conversaciones.': '您还没有对话。',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': '此对话中的新消息已启用端到端加密。',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': '您的联系人尚未在 CARXY 中启用加密。请让对方打开应用后重试。',
 
   'ASUNTO': '主题',
   'AUTOR': '作者',

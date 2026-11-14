@@ -196,7 +196,7 @@
           </span>
           <div class="header-copy">
             <strong>{{ peer?.displayName || ('Conversación directa' | translate) }}</strong>
-            <small class="presence-line"><span class="presence-text" [class.online]="activity && activityClass(activity) === 'online'">{{ activity ? activityLabel(activity) : ('Sin actividad' | translate) }}</span></small>
+            <small class="presence-line"><span class="presence-lock" [title]="'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.' | translate" aria-hidden="true">🔒</span><span class="presence-text" [class.online]="activity && activityClass(activity) === 'online'">{{ activity ? activityLabel(activity) : ('Sin actividad' | translate) }}</span>@if (peerTyping()) { <span class="presence-typing">{{ 'escribiendo…' | translate }}</span> }</small>
             <small class="uid-line">
               <span class="uid-text">{{ partnerId }}</span>
               <button type="button" class="copy-uid" (click)="copyPartnerId()" [attr.aria-label]="'Copiar UID' | translate">
@@ -291,6 +291,7 @@
                     [class.own]="own"
                     [class.run-start]="item.firstOfRun"
                     [attr.data-match]="isMatch(item.message) ? '' : null"
+                    [attr.data-message-id]="item.message.id"
                   >
                     @if (!own) {
                       <span class="message-avatar">
@@ -302,6 +303,12 @@
                     <div class="bubble" [class.copied]="copiedMessageId() === item.message.id">
                       @if (item.firstOfRun) {
                         <b>{{ own ? ('Tú' | translate) : (peer?.displayName || item.message.senderName || ('Usuario' | translate)) }}</b>
+                      }
+                      @if (item.message.replyTo) {
+                        <button type="button" class="quoted-block" (click)="scrollToQuotedMessage(item.message.replyTo!.id)" [attr.aria-label]="'Mensaje citado' | translate">
+                          <span class="quoted-author">{{ item.message.replyTo.senderName }}</span>
+                          <span class="quoted-text">{{ quotedPreview(item.message) }}</span>
+                        </button>
                       }
                       @if (isAudioMessage(item.message)) {
                         <div class="audio-note">
@@ -317,6 +324,15 @@
                           </button>
                           <span class="audio-time" aria-live="off">{{ audioNoteTimeLabel(item.message) }}</span>
                         </div>
+                      } @else if (isImageMessage(item.message)) {
+                        @let imageUrl = messageImageUrl(item.message);
+                        @if (imageUrl) {
+                          <button type="button" class="chat-image-button" (click)="openImage(item.message)" [attr.aria-label]="'Ver imagen' | translate" [title]="'Ver imagen' | translate">
+                            <img class="chat-image" [src]="imageUrl" [alt]="'Imagen enviada' | translate" />
+                          </button>
+                        } @else {
+                          <div class="chat-image-loading">{{ 'Descifrando imagen…' | translate }}</div>
+                        }
                       } @else {
                         <p [innerHTML]="highlightedHtml(item.message.text)"></p>
                       }
@@ -338,6 +354,9 @@
                         }
                       }
                       <span class="bubble-actions">
+                        <button type="button" class="reply-message" (click)="startReply(item.message)" [attr.aria-label]="'Responder' | translate" [title]="'Responder' | translate">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                        </button>
                         <button type="button" class="copy-message" (click)="copyMessage(item.message)" [attr.aria-label]="'Copiar mensaje' | translate" [title]="copiedMessageId() === item.message.id ? ('Copiado' | translate) : ('Copiar mensaje' | translate)">
                           @if (copiedMessageId() === item.message.id) {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
@@ -346,6 +365,11 @@
                           }
                         </button>
                         <time>{{ item.message.createdAt | date: 'shortTime' }}</time>
+                        @if (own) {
+                          <span class="ticks" [class.ticks--read]="ownMessageRead(item.message)" [title]="(ownMessageRead(item.message) ? 'Leído' : 'Enviado') | translate" [attr.aria-label]="(ownMessageRead(item.message) ? 'Leído' : 'Enviado') | translate">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12.5l5 5L15.5 8"/><path d="M9.5 12.5l5 5L24 8"/></svg>
+                          </span>
+                        }
                       </span>
                     </div>
                   </article>
@@ -382,8 +406,28 @@
             </div>
             <span class="char-count" [class.near-limit]="message().length > 1800">{{ message().length }}/2000</span>
           </div>
+          @if (replyTarget(); as reply) {
+            <div class="quote-bar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+              <div class="quote-bar-text">
+                <span class="quote-bar-author">{{ reply.senderName }}</span>
+                <span class="quote-bar-preview">{{ reply.kind === 'image' ? ('Imagen' | translate) : reply.kind === 'audio' ? ('Nota de voz' | translate) : reply.text.replace(/\s+/g, ' ').trim().slice(0, 80) }}</span>
+              </div>
+              <button type="button" class="quote-bar-close" (click)="cancelReply()" [attr.aria-label]="'Cancelar respuesta' | translate" [title]="'Cancelar respuesta' | translate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          }
           @if (!recording()) {
             <div class="composer-input-row">
+              <button type="button" class="attach-button" (click)="fileInput.click()" [disabled]="imageSending()" [attr.aria-label]="'Adjuntar imagen' | translate" [title]="'Adjuntar imagen' | translate">
+                @if (imageSending()) {
+                  <span class="attach-spinner" aria-hidden="true"></span>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 0 1 18 8.49l-8.59 8.58a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                }
+              </button>
+              <input #fileInput type="file" accept="image/*" hidden (change)="sendImage($event)" />
               <button type="button" class="mic-button" (click)="toggleRecording()" [disabled]="audioSending()" [attr.aria-label]="'Grabar nota de voz' | translate" [title]="'Grabar nota de voz' | translate">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="9" y="2" width="6" height="12" rx="3"/>
@@ -396,7 +440,7 @@
               rows="1"
               maxlength="2000"
               [ngModel]="message()"
-              (ngModelChange)="message.set($event)"
+              (ngModelChange)="onMessageInput($event)"
               (keydown)="onComposerKeydown($event)"
               (input)="autoGrow($event)"
               [placeholder]="'Escribe un mensaje.' | translate"
@@ -561,4 +605,13 @@
       </footer>
     </div>
   </dialog>
+
+  @if (lightboxUrl(); as url) {
+    <div class="lightbox" role="dialog" aria-modal="true" [attr.aria-label]="'Imagen enviada' | translate" (click)="closeLightbox()" (keydown.Escape)="closeLightbox()">
+      <button type="button" class="lightbox-close" (click)="closeLightbox()" [attr.aria-label]="'Cerrar' | translate" [title]="'Cerrar' | translate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <img class="lightbox-image" [src]="url" alt="" (click)="$event.stopPropagation()" />
+    </div>
+  }
 </main>

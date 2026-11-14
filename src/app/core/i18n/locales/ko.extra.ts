@@ -1,10 +1,35 @@
-/**
+﻿/**
  * KO: textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  * NOTA: esta capa está inicializada con el valor en inglés (fallback válido).
  * Completa las traducciones en ko.extra.ts cuando quieras localizarlas.
  */
 export const KO_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': '공유하려면 로그인하세요.',
+  'Modelo compartido con {name}.': '{name}와(과) 모델을 공유했습니다.',
+  'No se pudo compartir en el chat.': '채팅에 공유하지 못했습니다.',
+  'Imagen': '이미지',
+  'Imagen enviada': '보낸 이미지',
+  'Descifrando imagen…': '이미지 복호화 중…',
+  'Adjuntar imagen': '이미지 첨부',
+  'Solo se pueden enviar imágenes.': '이미지만 보낼 수 있습니다.',
+  'La imagen está vacía.': '이미지가 비어 있습니다.',
+  'La imagen supera el tamaño máximo de 10 MB.': '이미지가 최대 10 MB를 초과했습니다.',
+  'No se pudo leer la imagen.': '이미지를 읽을 수 없습니다.',
+  'No se pudo enviar la imagen.': '이미지를 보낼 수 없습니다.',
+  'Ver imagen': '이미지 보기',
+  'Mensaje citado': '인용된 메시지',
+  'Responder': '답장',
+  'Cancelar respuesta': '답장 취소',
+  'escribiendo…': '입력 중…',
+  'Leído': '읽음',
+  'Enviado': '보냄',
+  'Mira este modelo:': '이 모델을 확인해 보세요:',
+  'Compartir en chat': '채팅에 공유',
+  'Elige una conversación': '대화를 선택하세요',
+  'Aún no tienes conversaciones.': '아직 대화가 없습니다.',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': '이 대화의 새 메시지는 엔드투엔드로 암호화됩니다.',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': '상대방이 아직 CARXY에서 암호화를 활성화하지 않았습니다. 앱을 열어 달라고 요청한 후 다시 시도하세요.',
 
   'ASUNTO': '',
   'AUTOR': '',

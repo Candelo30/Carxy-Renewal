@@ -209,6 +209,15 @@
                       [aria-label]="'Compartir modelo' | translate"
                       (click)="share(post)"
                     >⧉</button>
+                    <button
+                      type="button"
+                      class="share-chat-button"
+                      [title]="'Compartir en chat' | translate"
+                      [aria-label]="'Compartir en chat' | translate"
+                      (click)="openShareChat(post, shareChatDialog)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.7 8.7 0 0 1-3.9-.9L3 20l1.3-5.4a7.9 7.9 0 0 1-1-4A8.4 8.4 0 0 1 11.8 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
+                    </button>
                     <button type="button" class="remix" (click)="remix(post)">
                       {{ '↗ Remix / Editar en 3D' | translate }}
                     </button>
@@ -285,6 +294,35 @@
           {{ (reporting ? 'Enviando…' : 'Enviar reporte') | translate }}
         </button>
       </footer>
+    </form>
+  </dialog>
+  <dialog #shareChatDialog class="share-chat-dialog">
+    <form method="dialog">
+      <button class="dismiss" value="cancel" type="submit">×</button>
+      <p class="eyebrow">{{ 'Compartir en chat' | translate }}</p>
+      <h2>{{ 'Elige una conversación' | translate }}</h2>
+      <input
+        class="share-chat-search"
+        name="shareChatSearch"
+        [(ngModel)]="shareChatSearch"
+        [placeholder]="'Buscar conversación…' | translate"
+        autocomplete="off"
+      />
+      @if (shareChatLoading) {
+        <div class="share-chat-loading" aria-hidden="true"><span class="share-chat-spinner"></span></div>
+      } @else {
+        <div class="share-chat-list">
+          @for (item of filteredShareChatItems(); track item.id) {
+            <button type="button" class="share-chat-row" (click)="sendToChat(item, shareChatDialog)" [disabled]="sharingToChat">
+              <img [src]="item.photoURL || 'user-avatar.svg'" alt="" loading="lazy" />
+              <span class="share-chat-name">{{ item.name }}</span>
+              <svg class="share-chat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          } @empty {
+            <p class="share-chat-empty">{{ 'Aún no tienes conversaciones.' | translate }}</p>
+          }
+        </div>
+      }
     </form>
   </dialog>
 </main>

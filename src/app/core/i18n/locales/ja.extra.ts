@@ -1,8 +1,33 @@
-/**
+﻿/**
  * Japonés (ja): textos de páginas, ayuda y mensajes secundarios.
  * Traducción progresiva: las claves ausentes caen a inglés y luego a español.
  */
 export const JA_EXTRA_TRANSLATIONS: Record<string, string> = {
+  'Inicia sesión para compartir.': '共有するにはログインしてください。',
+  'Modelo compartido con {name}.': '{name} とモデルを共有しました。',
+  'No se pudo compartir en el chat.': 'チャットで共有できませんでした。',
+  'Imagen': '画像',
+  'Imagen enviada': '送信済み画像',
+  'Descifrando imagen…': '画像を復号中…',
+  'Adjuntar imagen': '画像を添付',
+  'Solo se pueden enviar imágenes.': '画像のみ送信できます。',
+  'La imagen está vacía.': '画像が空です。',
+  'La imagen supera el tamaño máximo de 10 MB.': '画像が最大サイズ 10 MB を超えています。',
+  'No se pudo leer la imagen.': '画像を読み込めませんでした。',
+  'No se pudo enviar la imagen.': '画像を送信できませんでした。',
+  'Ver imagen': '画像を表示',
+  'Mensaje citado': '引用されたメッセージ',
+  'Responder': '返信',
+  'Cancelar respuesta': '返信をキャンセル',
+  'escribiendo…': '入力中…',
+  'Leído': '既読',
+  'Enviado': '送信済み',
+  'Mira este modelo:': 'このモデルを見てください:',
+  'Compartir en chat': 'チャットで共有',
+  'Elige una conversación': '会話を選択',
+  'Aún no tienes conversaciones.': 'まだ会話がありません。',
+  'Los mensajes nuevos de esta conversación están cifrados de extremo a extremo.': 'この会話の新しいメッセージはエンドツーエンドで暗号化されています。',
+  'Tu contacto aún no ha activado el cifrado en CARXY. Pídele que abra la app y vuelve a intentarlo.': '相手がまだCARXYの暗号化を有効にしていません。アプリを開いてもらってから、もう一度お試しください。',
 
   'ASUNTO': '件名',
   'AUTOR': '作者',

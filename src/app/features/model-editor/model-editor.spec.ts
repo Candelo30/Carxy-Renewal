@@ -30,6 +30,7 @@ describe('ModelEditor', () => {
       cursorMoved$: new Subject<{ x: number; y: number }>(),
       currentMaterials: [],
       getSceneObjects: vi.fn(() => []),
+      getSelectedObjects: vi.fn(() => []),
       getSelectedSceneNodes: vi.fn(() => []),
       getSelectedNodeId: vi.fn(() => null),
       getCurrentModel: vi.fn(() => null),
