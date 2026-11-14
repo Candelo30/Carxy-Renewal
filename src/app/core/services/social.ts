@@ -1348,8 +1348,10 @@ export class SocialService {
             writtenBy,
             ...(lastMessage ? { lastMessage } : {}),
           },
-          { merge: true },
-        )));
+          // Sin merge: el mapa anidado `lastMessage` se reemplaza por
+          // completo; con merge:true acumularía claves de mensajes antiguos.
+        ),
+      ));
     } catch (error) {
       console.warn('[carxy] No se pudo actualizar el índice de chats recientes', error);
     }
@@ -1707,11 +1709,15 @@ export class SocialService {
       const chatRef = doc(this.firestore, SOCIAL_COLLECTIONS.chats, chatId);
       const messageRef = doc(collection(chatRef, 'messages'));
       const batch = writeBatch(this.firestore);
+      // setDoc SIN merge: con merge:true Firestore hace DEEP MERGE del mapa
+      // `lastMessage`, con lo que claves de mensajes antiguos (ciphertext
+      // obsoleto, audioDuration vieja, replyTo del anterior…) quedarían
+      // para siempre. El sobrescribiendo total deja exactamente el último mensaje.
       batch.set(chatRef, {
         participantIds,
         updatedAt: entry.createdAt,
         lastMessage: entry,
-      }, { merge: true });
+      });
       batch.set(messageRef, entry);
       await batch.commit();
       // Índice por usuario (habitación de "Recientes"): tras el commit el chat

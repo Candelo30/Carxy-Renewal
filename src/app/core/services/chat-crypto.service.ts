@@ -187,11 +187,13 @@ export class ChatCryptoService {
           const jwk = JSON.parse(await this.exportPairPublicKeyHint());
           const publicKey = await this.importPeerPublicKey(jwk);
           if (publicKey) return { publicKey, privateKey: stored };
-        } catch {
-          // Si no cuadra (cambio de dispositivo parcial), se descarta el par.
+        } catch (error) {
+          // NUNCA regenerar ni sobrescribir: si la restauración falla, este
+          // dispositivo simplemente no puede leer el historial; destruir el par
+          // publicada llevaría a que el usuario perdiera el acceso a TODO.
+          console.warn('[carxy] No se pudo restaurar el par E2E local. El cifrado queda desactivado en esta sesión.', error);
+          return null;
         }
-        // Par inconsistente: borra y regenera.
-        await this.idbDelete(db, PRIVATE_KEY_ID);
       }
     }
     if (!crypto?.subtle) return null;
@@ -231,13 +233,19 @@ export class ChatCryptoService {
     const firestore = this.firestore;
     const uid = await this.currentUid();
     if (!firestore || !uid) return;
-    // Solo subimos si falta o difiere (evita escrituras redundantes).
+    // Solo subimos si falta (primera publicación) o la existente es EXACTAMENTE la
+    // nuestra. Nunca se pisa la clave de otra sesión/origen: eso deja CIFRADO
+    // ROTO para todos los dispositivos.
     try {
       const refDoc = doc(firestore, PUBLIC_KEY_DOC, uid);
       const existing = await getDoc(refDoc);
       const jwk = await this.exportPublicKey(publicKey);
-      const existingKey = existing.exists() ? String((existing.data() as { key?: unknown })['key'] ?? '') : '';
-      if (existing.exists() && existingKey === jwk) return;
+      if (existing.exists()) {
+        const existingKey = String((existing.data() as { key?: unknown })['key'] ?? '');
+        if (existingKey === jwk) return; // ya está publicada la nuestra
+        console.warn('[carxy] Este navegador tiene una clave pública distinta a la publicada. No se sobrescribe: el historial se abrirá en la sesión original.');
+        return;
+      }
       await setDoc(refDoc, { key: jwk, createdAt: Date.now() });
     } catch (error) {
       // Es best effort (al enviar/abrir el chat se reintenta explícitamente),

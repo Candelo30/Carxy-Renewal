@@ -335,17 +335,22 @@ service cloud.firestore {
 
     /* Claves públicas E2E de los usuarios (ECDH P-256). Lectura autenticada:
        cualquier participante necesita la pública del otro para cifrar mensajes.
-       Escritura: solo el dueño de la clave. El valor es un JWK serializado
-       (≤ 1000 caracteres); la privada nunca sale del navegador del usuario. */
+       Escritura: SOLO crear la propia (ningún segundo origen/dispositivo puede
+       pisar la clave publicada de otro; si hiciera falta rotarla, es una
+       operación explícita del usuario: borrarla y volver a crearla).
+       get: cualquier autenticado; list: NUNCA. */
     match /chatKeys/{uid} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
         && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/chatKeys/$(uid))
         && request.resource.data.keys().hasOnly(['key', 'createdAt'])
         && request.resource.data.key is string
         && request.resource.data.key.size() > 0
         && request.resource.data.key.size() <= 1000
         && request.resource.data.createdAt is number;
+      allow update: if false;
       allow delete: if signedIn() && request.auth.uid == uid;
     }
 
