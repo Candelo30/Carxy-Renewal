@@ -4,9 +4,15 @@
  */
 
 export async function copyText(text: string): Promise<void> {
+  // Primer intento: la API moderna. Puede lanzar NotAllowedError (permiso
+  // denegado) o NotReadableError (portapapeles ocupado) incluso con foco.
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // cae al fallback siguiente
+    }
   }
 
   if (typeof document === 'undefined') {
@@ -21,6 +27,7 @@ export async function copyText(text: string): Promise<void> {
   textarea.style.opacity = '0';
   document.body.appendChild(textarea);
   textarea.select();
+  textarea.setSelectionRange(0, text.length);
   const copied = document.execCommand('copy');
   textarea.remove();
 

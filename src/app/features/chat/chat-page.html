@@ -409,14 +409,6 @@
         }
         <p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
         <form class="composer" (ngSubmit)="send()">
-          <div class="composer-row">
-            <div class="emoji-strip" [attr.aria-label]="'Insertar emoji' | translate">
-              @for (emoji of emojis; track emoji) {
-                <button type="button" class="emoji-btn" (click)="insertEmoji(emoji)">{{ emoji }}</button>
-              }
-            </div>
-            <span class="char-count" [class.near-limit]="message().length > 1800">{{ message().length }}/2000</span>
-          </div>
           @if (replyTarget(); as reply) {
             <div class="quote-bar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
@@ -439,12 +431,6 @@
                 }
               </button>
               <input #fileInput type="file" accept="image/*" hidden (change)="sendImage($event)" />
-              <button type="button" class="mic-button" (click)="toggleRecording()" [disabled]="audioSending()" [attr.aria-label]="'Grabar nota de voz' | translate" [title]="'Grabar nota de voz' | translate">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="9" y="2" width="6" height="12" rx="3"/>
-                  <path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>
-                </svg>
-              </button>
               <textarea
               #composer
               name="message"
@@ -458,7 +444,13 @@
               [attr.aria-label]="'Escribe un mensaje.' | translate"
               required
             ></textarea>
-            <button type="submit" class="send-button" [disabled]="!message().trim() || sending()" [attr.aria-label]="'Enviar' | translate">
+              <button type="button" class="mic-button" (click)="toggleRecording()" [disabled]="audioSending()" [attr.aria-label]="'Grabar nota de voz' | translate" [title]="'Grabar nota de voz' | translate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="2" width="6" height="12" rx="3"/>
+                  <path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>
+                </svg>
+              </button>
+              <button type="submit" class="send-button" [disabled]="!message().trim() || sending()" [attr.aria-label]="'Enviar' | translate">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M22 2L11 13"/>
                 <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
@@ -479,6 +471,16 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
                 <span class="record-send-label">{{ 'Enviar' | translate }}</span>
               </button>
+            </div>
+          }
+          @if (!recording()) {
+            <div class="composer-row">
+              <div class="emoji-strip" [attr.aria-label]="'Insertar emoji' | translate">
+                @for (emoji of emojis; track emoji) {
+                  <button type="button" class="emoji-btn" (click)="insertEmoji(emoji)">{{ emoji }}</button>
+                }
+              </div>
+              <span class="char-count" [class.near-limit]="message().length > 1800">{{ message().length }}/2000</span>
             </div>
           }
         </form>

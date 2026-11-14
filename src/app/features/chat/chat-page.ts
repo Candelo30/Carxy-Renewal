@@ -29,6 +29,7 @@ import { AuthService } from '../../core/services/auth';
 import { SocialService } from '../../core/services/social';
 import { NotificationService } from '../../core/services/notifications';
 import { I18nService } from '../../core/services/i18n';
+import { copyText } from '../../core/utils/share';
 import { LoadingSpinner } from '../../shared/components/loading-spinner/loading-spinner';
 import { ShellHeaderComponent } from '../../shared/components/shell-header/shell-header';
 import {
@@ -244,6 +245,8 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private lastReadAt = 0;
   /** `createdAt` del mensaje más reciente conocido. */
   private newestMessageAt = 0;
+  /** Último número de mensajes conocido: para detectar cuándo llegan nuevos y solo entonces auto-scroll. */
+  private lastMessageCount = 0;
   /** Evita envíos duplicados por doble clic o Enter repetido. */
   readonly sending = signal(false);
   /** --- Notas de voz --- */
@@ -401,6 +404,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     // como nuevos los mensajes que lleguen después.
     this.lastReadAt = Date.now();
     this.newestMessageAt = 0;
+    this.lastMessageCount = 0;
     this.unreadCount.set(0);
     this.firstUnreadId.set('');
     this.searchCursor.set(-1);
@@ -430,8 +434,16 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
     return this.i18n.firebaseError(error, this.i18n.translate(fallback));
   }
 
+  /**
+   * Pinta el hilo al final si hace falta. Se invoca al abrir la conversación
+   * (tras render) y cuando llegan mensajes nuevos con el hilo ya al final.
+   * NUNCA en ngAfterViewChecked: eso haría imposible subir con la rueda.
+   */
+  private pinToBottomSoon(): void {
+    setTimeout(() => this.scrollToBottom(), 60);
+  }
+
   ngAfterViewChecked(): void {
-    if (this.atBottom()) this.scrollToBottom();
     if (this.chatId()) this.markSeen(this.chatId());
   }
 
@@ -453,8 +465,13 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private syncReadState(messages: ChatMessage[]): void {
     this.chatMessages.set(messages);
     this.ensureImageUrls(messages);
+    const freshArrivals = messages.length > this.lastMessageCount;
+    this.lastMessageCount = messages.length;
     this.newestMessageAt = messages.at(-1)?.createdAt ?? 0;
     if (this.atBottom()) {
+      // Solo auto-scroll cuando LLEGAN mensajes nuevos: forzarlo en cada change
+      // detector estrangularía el scroll del usuario hacia arriba.
+      if (freshArrivals) this.pinToBottomSoon();
       this.markMessagesRead();
       return;
     }
@@ -785,9 +802,9 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
 
   async copyPartnerId(): Promise<void> {
     const target = this.partnerId.trim();
-    if (!target || typeof navigator === 'undefined' || !navigator.clipboard) return;
+    if (!target) return;
     try {
-      await navigator.clipboard.writeText(target);
+      await copyText(target);
       this.copiedId.set('copied');
       if (this.copyIdTimer) clearTimeout(this.copyIdTimer);
       this.copyIdTimer = setTimeout(() => this.copiedId.set(''), 1800);
